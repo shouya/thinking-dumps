@@ -1,0 +1,42 @@
+
+(define (my-cons a b)
+  (* (expt 2 a)
+     (expt 3 b)))
+
+(define (my-car x)
+  (if (= (modulo x 3) 0)
+      (my-car (/ x 3))
+      (/ (log x) (log 2))))
+(define (my-cdr x)
+  (if (= (modulo x 2) 0)
+      (my-cdr (/ x 2))
+      (/ (log x) (log 3))))
+
+
+(let ((cons1 (my-cons 1 5))
+      (cons2 (my-cons 0 3))
+      (cons3 (my-cons 7 8)))
+  (display cons1)
+  (newline)
+  (display (my-car cons1))
+  (newline)
+  (display (my-cdr cons1))
+  (newline)
+  (newline)
+
+  (display cons2)
+  (newline)
+  (display (my-car cons2))
+  (newline)
+  (display (my-cdr cons2))
+  (newline)
+  (newline)
+
+  (display cons3)
+  (newline)
+  (display (my-car cons3))
+  (newline)
+  (display (my-cdr cons3))
+  (newline)
+  (newline))
+
