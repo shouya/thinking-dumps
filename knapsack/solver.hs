@@ -11,11 +11,19 @@ type Item = (Id, (Weight, Value))
 type Solution = [Item]
 
 
+itemvalue item = snd . snd
+itemweigth item = fst . snd
+itemid item = fst
+
+
 main = do
   interact (output . solve . load)
 
 solve :: (Weight, [Item]) -> (Integer, Solution)
-solve (w, items) = (fromIntegral $ length items, map ((!!) items) [1,3,3])
+solve (w, items) = (len, result)
+  where algorithm = greedy
+        len = fromIntegral $ length items
+        result = algorithm w items
 
 load :: String -> (Weight, [Item])
 load str = (weight, items')
@@ -27,9 +35,31 @@ load str = (weight, items')
 
 output :: (Integer, Solution) -> String
 output (len, xs) = show value ++ " 1\n" ++ unwords (map show bitset)
-  where value = foldl' (+) 0 $ map (snd . snd) xs
-        ids = map fst xs
+  where value = foldl' (+) 0 $ map itemvalue xs
+        ids = map itemid xs
         bitset = map (bool2int . (`elem` ids)) [0..(len-1)]
         bool2int x
           | x == True  = 1
           | x == False = 0
+
+
+
+
+---------------- Main Part ----------------
+
+{-
+   Solution 1: greedy
+-}
+greedy :: (Item -> Integer) -> Weight -> [Item] -> Solution
+greedy f w items = takeItem w items
+  where
+    sortedItem = sortBy (\a b -> f a `compare` f b) items
+    takeItem _ [] carry = carry
+    takeItem wleft (i:is) carry =
+      if itemweigth i < wleft
+      then takeItem (wleft - (itemweight i)) is i:carry
+      else takeItem wleft is carry
+
+
+greedyValue = greedy itemvalue
+greedyNumber = greedy itemvalue -- TODO
