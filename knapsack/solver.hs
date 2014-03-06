@@ -1,5 +1,6 @@
 import System.IO
 import Data.List
+import Data.Function
 import Control.Applicative
 import Control.Monad
 
@@ -11,9 +12,12 @@ type Item = (Id, (Weight, Value))
 type Solution = [Item]
 
 
-itemvalue item = snd . snd
-itemweigth item = fst . snd
-itemid item = fst
+itemvalue :: Item -> Value
+itemvalue = snd . snd
+itemweight :: Item -> Weight
+itemweight = fst . snd
+itemid :: Item -> Id
+itemid = fst
 
 
 main = do
@@ -21,7 +25,7 @@ main = do
 
 solve :: (Weight, [Item]) -> (Integer, Solution)
 solve (w, items) = (len, result)
-  where algorithm = greedy
+  where algorithm = greedyDensity
         len = fromIntegral $ length items
         result = algorithm w items
 
@@ -35,7 +39,7 @@ load str = (weight, items')
 
 output :: (Integer, Solution) -> String
 output (len, xs) = show value ++ " 1\n" ++ unwords (map show bitset)
-  where value = foldl' (+) 0 $ map itemvalue xs
+  where value = foldl1 (+) $ map itemvalue xs
         ids = map itemid xs
         bitset = map (bool2int . (`elem` ids)) [0..(len-1)]
         bool2int x
@@ -50,16 +54,19 @@ output (len, xs) = show value ++ " 1\n" ++ unwords (map show bitset)
 {-
    Solution 1: greedy
 -}
-greedy :: (Item -> Integer) -> Weight -> [Item] -> Solution
-greedy f w items = takeItem w items
+greedy :: (Item -> Item -> Ordering) -> Weight -> [Item] -> Solution
+greedy f w items = takeItem w items []
   where
-    sortedItem = sortBy (\a b -> f a `compare` f b) items
-    takeItem _ [] carry = carry
+    sortedItem = sortBy f items
+    takeItem _     []     carry = carry
     takeItem wleft (i:is) carry =
-      if itemweigth i < wleft
-      then takeItem (wleft - (itemweight i)) is i:carry
+      if itemweight i < wleft
+      then takeItem (wleft - (itemweight i)) is (i:carry)
       else takeItem wleft is carry
 
 
-greedyValue = greedy itemvalue
-greedyNumber = greedy itemvalue -- TODO
+greedyValue = greedy $ flip (compare `on` itemvalue)
+greedyNumber = greedy (compare `on` itemweight)
+greedyDensity = greedy $ flip $ (compare `on` \x ->
+                                  (fromIntegral $ itemvalue x) /
+                                  (fromIntegral $ itemweight x))
