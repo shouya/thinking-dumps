@@ -25,7 +25,7 @@ main = do
 
 solve :: (Weight, [Item]) -> (Integer, Solution)
 solve (w, items) = (len, result)
-  where algorithm = greedyDensity
+  where algorithm = greedyNumber
         len = fromIntegral $ length items
         result = algorithm w items
 
@@ -34,7 +34,7 @@ load str = (weight, items')
   where lns = lines str
         weight = read $ head . tail $ words $ head lns
         items  = map (map read . words) $ tail lns
-        items' = zip [0..] $ zip (map head items) (map (head . tail) items)
+        items' = zip [0..] $ zip (map (head . tail) items) (map head items)
 
 
 output :: (Integer, Solution) -> String
@@ -60,7 +60,7 @@ greedy f w items = takeItem w items []
     sortedItem = sortBy f items
     takeItem _     []     carry = carry
     takeItem wleft (i:is) carry =
-      if itemweight i < wleft
+      if itemweight i <= wleft
       then takeItem (wleft - (itemweight i)) is (i:carry)
       else takeItem wleft is carry
 
