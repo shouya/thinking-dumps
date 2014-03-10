@@ -1,10 +1,13 @@
 import System.IO
 import Data.List
 import Data.Function
+import Data.Monoid
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Writer
 
 
+{- An implement of Monad.Writer -}
 type Weight = Integer
 type Value = Integer
 type Id = Integer
@@ -21,13 +24,33 @@ itemid = fst
 
 
 main = do
-  interact (output . solve . load)
+--  interact (output . solve . load)
+--  interact (show . (fst . runWriter . solve) . load)
+  getContents >>= execution . runWriter . solve . load
+  where execution = debugProgram
 
-solve :: (Weight, [Item]) -> (Integer, Solution)
-solve (w, items) = (len, result)
-  where algorithm = greedyNumber
+debugProgram :: ((Integer, Solution), [String]) -> IO ()
+debugProgram result = do
+  putStrLn "Calculated result"
+  putStrLn $ output $ fst result
+
+  putStrLn "----------\nItems taken"
+  putStrLn $ showItems $ reverse $ snd $ fst result
+
+  putStrLn "----------\nLogs"
+  putStrLn $ showLog log
+  where log = snd result
+
+formalProgram :: ((Integer, Solution), [String]) -> IO ()
+formalProgram result = do
+  putStrLn $ output $ fst result
+
+
+solve :: (Weight, [Item]) -> Writer [String] (Integer, Solution)
+solve (w, items) = writer ((len, fst result), snd result)
+  where algorithm = greedyDensity                --- change algorithm here
         len = fromIntegral $ length items
-        result = algorithm w items
+        result = runWriter $ algorithm w items
 
 load :: String -> (Weight, [Item])
 load str = (weight, items')
@@ -46,16 +69,25 @@ output (len, xs) = show value ++ " 1\n" ++ unwords (map show bitset)
           | x == True  = 1
           | x == False = 0
 
+showLog :: [String] -> String
+showLog = concat . intersperse "\n"
 
-
+showItem x =
+  (show $ itemid x) ++
+  ": w " ++ (show $ itemweight x) ++
+  ", v " ++ (show $ itemvalue x)
+showItems = concat . intersperse "\n" . map showItem
 
 ---------------- Main Part ----------------
 
 {-
    Solution 1: greedy
 -}
-greedy :: (Item -> Item -> Ordering) -> Weight -> [Item] -> Solution
-greedy f w items = takeItem w items []
+greedy :: (Item -> Item -> Ordering) -> Weight -> [Item] ->
+          Writer [String] Solution
+greedy f w items = do
+  tell $ [showItems sortedItem]
+  return $ takeItem w sortedItem []
   where
     sortedItem = sortBy f items
     takeItem _     []     carry = carry
