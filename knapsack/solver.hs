@@ -6,14 +6,11 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Writer
 
-
-{- An implement of Monad.Writer -}
 type Weight = Integer
 type Value = Integer
 type Id = Integer
 type Item = (Id, (Weight, Value))
 type Solution = [Item]
-
 
 itemvalue :: Item -> Value
 itemvalue = snd . snd
@@ -102,3 +99,23 @@ greedyNumber = greedy (compare `on` itemweight)
 greedyDensity = greedy $ flip $ (compare `on` \x ->
                                   (fromIntegral $ itemvalue x) /
                                   (fromIntegral $ itemweight x))
+
+
+{-
+    Solution 2: dynamic programming
+-}
+
+type ValueList = [Value]
+
+dp :: [Item] -> Writer [String] Solution
+dp items = writer [] $ foldl dpstep (replicate (length items) 0) items
+
+dpstep :: ValueList -> Item -> ValueList
+dpstep xs i =
+  map newval xs'
+  where wi = itemweight i
+        vi = itemvalue i
+        xs' = zip [0..] xs
+        newval (idx,x) =
+          if idx < wi then x
+          else max x (vi + xs !! (fromIntegral (idx - wi)))
