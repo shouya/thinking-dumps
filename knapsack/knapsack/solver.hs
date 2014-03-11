@@ -1,10 +1,12 @@
 import System.IO
+import System.Environment
 import Data.List
 import Data.Function
 import Data.Monoid
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Writer
+
 
 type Weight = Integer
 type Value = Integer
@@ -25,7 +27,9 @@ emptyitem = (0,(0,0))
 main = do
 --  interact (output . solve . load)
 --  interact (show . (fst . runWriter . solve) . load)
-  getContents >>= execution . runWriter . solve . load
+  arg <- getArgs >>= (return . head)
+  withFile arg ReadMode $
+    (\h -> hGetContents h >>= execution . runWriter . solve . load)
   where execution = debugProgram
 
 debugProgram :: ((Integer, Solution), [String]) -> IO ()
