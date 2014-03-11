@@ -19,6 +19,8 @@ itemweight = fst . snd
 itemid :: Item -> Id
 itemid = fst
 
+emptyitem :: Item
+emptyitem = (0,(0,0))
 
 main = do
 --  interact (output . solve . load)
@@ -45,7 +47,7 @@ formalProgram result = do
 
 solve :: (Weight, [Item]) -> Writer [String] (Integer, Solution)
 solve (w, items) = writer ((len, fst result), snd result)
-  where algorithm = greedyDensity                --- change algorithm here
+  where algorithm = dp                --- change algorithm here
         len = fromIntegral $ length items
         result = runWriter $ algorithm w items
 
@@ -107,8 +109,20 @@ greedyDensity = greedy $ flip $ (compare `on` \x ->
 
 type ValueList = [Value]
 
-dp :: [Item] -> Writer [String] Solution
-dp items = writer [] $ foldl dpstep (replicate (length items) 0) items
+dp :: Weight -> [Item] -> Writer [String] Solution
+dp w items = writer (reverse result,[])
+  where mergestep xs x = xs ++ [dpstep (last xs) x]
+        firstcol = genericReplicate (w + 1) 0
+        table = foldl mergestep [firstcol] items
+        zippedtbl = zip (emptyitem:items) table
+        foldrX = (([], w), last zippedtbl)
+        result = fst $ fst $ foldr dptrace foldrX zippedtbl
+
+dptrace :: (Item,ValueList) -> (([Item], Integer), (Item, ValueList)) ->
+           (([Item], Integer), (Item, ValueList))
+dptrace (iy,ys) ((result, w), (ix,xs))
+  | ((==) `on` (flip genericIndex w)) xs ys = ((result, w), (iy,ys))
+  | otherwise          = ((ix:result, w - itemweight ix), (iy,ys))
 
 dpstep :: ValueList -> Item -> ValueList
 dpstep xs i =
@@ -119,3 +133,7 @@ dpstep xs i =
         newval (idx,x) =
           if idx < wi then x
           else max x (vi + xs !! (fromIntegral (idx - wi)))
+
+{-
+
+-}
