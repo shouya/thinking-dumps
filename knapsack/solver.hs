@@ -1,12 +1,10 @@
 import System.IO
-import System.Environment
 import Data.List
 import Data.Function
 import Data.Monoid
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Writer
-
 
 type Weight = Integer
 type Value = Integer
@@ -27,10 +25,8 @@ emptyitem = (0,(0,0))
 main = do
 --  interact (output . solve . load)
 --  interact (show . (fst . runWriter . solve) . load)
-  inputfile <- getArgs >>= return . head
-  withFile inputfile ReadMode $
-    (\f -> hGetContents f >>= execution . runWriter . solve . load)
-  where execution = formalProgram
+  getContents >>= execution . runWriter . solve . load
+  where execution = debugProgram
 
 debugProgram :: ((Integer, Solution), [String]) -> IO ()
 debugProgram result = do
@@ -51,7 +47,7 @@ formalProgram result = do
 
 solve :: (Weight, [Item]) -> Writer [String] (Integer, Solution)
 solve (w, items) = writer ((len, fst result), snd result)
-  where algorithm = dp                --- change algorithm here
+  where algorithm = greedyDensity                --- change algorithm here
         len = fromIntegral $ length items
         result = runWriter $ algorithm w items
 
