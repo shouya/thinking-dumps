@@ -1,12 +1,29 @@
 import System.IO
 import System.Environment
 import Data.List
+import Data.Array
 import Data.Function
 import Data.Monoid
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Writer
 
+
+type Array' = Array Integer
+alo = fst . bounds
+ahi = snd . bounds
+
+foldra :: (a -> b -> b) -> b -> Array' a -> b
+foldra f z0 ar = go (alo ar)
+  where go i
+          | i > ahi ar = z0
+          | otherwise = f (ar ! i) (go (i + 1))
+
+foldla :: (b -> a -> b) -> b -> Array' a -> b
+foldla f z0 ar = go z0 (alo ar)
+  where go z i
+          | i > ahi ar = z
+          | otherwise = go (f z (ar ! i)) (i + 1)
 
 type Weight = Integer
 type Value = Integer
@@ -30,7 +47,7 @@ main = do
   inputfile <- getArgs >>= return . head
   withFile inputfile ReadMode $
     (\f -> hGetContents f >>= execution . runWriter . solve . load)
-  where execution = formalProgram
+  where execution = debugProgram
 
 debugProgram :: ((Integer, Solution), [String]) -> IO ()
 debugProgram result = do
@@ -111,32 +128,34 @@ greedyDensity = greedy $ flip $ (compare `on` \x ->
     Solution 2: dynamic programming
 -}
 
-type ValueList = [Value]
+type ValueList = Array' Value
 
 dp :: Weight -> [Item] -> Writer [String] Solution
-dp w items = writer (reverse result,[])
-  where mergestep xs x = xs ++ [dpstep (last xs) x]
-        firstcol = genericReplicate (w + 1) 0
-        table = foldl mergestep [firstcol] items
+dp w items = writer (reverse result,[foldl showtable "" table])
+  where firstcol = listArray (0,w) $ genericReplicate (w + 1) 0
+        table = firstcol : (reverse $ calctable firstcol (emptyitem:items))
         zippedtbl = zip (emptyitem:items) table
         foldrX = (([], w), last zippedtbl)
         result = fst $ fst $ foldr dptrace foldrX zippedtbl
 
+showtable :: String -> ValueList -> String
+showtable l x = l ++ "\n" ++ concat (intersperse " " [show (x ! i) | i <- [0..ahi x]])
+
 dptrace :: (Item,ValueList) -> (([Item], Integer), (Item, ValueList)) ->
            (([Item], Integer), (Item, ValueList))
 dptrace (iy,ys) ((result, w), (ix,xs))
-  | ((==) `on` (flip genericIndex w)) xs ys = ((result, w), (iy,ys))
+  | xs ! w == ys ! w   = ((result, w), (iy,ys))
   | otherwise          = ((ix:result, w - itemweight ix), (iy,ys))
 
-dpstep :: ValueList -> Item -> ValueList
-dpstep xs i =
-  map newval xs'
-  where wi = itemweight i
-        vi = itemvalue i
-        xs' = zip [0..] xs
-        newval (idx,x) =
-          if idx < wi then x
-          else max x (vi + xs !! (fromIntegral (idx - wi)))
+
+calctable :: ValueList -> [Item] -> [ValueList]
+calctable _ []      = []
+calctable xs (i:is) = newval:(calctable newval is)
+  where (wi,vi) = (itemweight i, itemvalue i)
+        newval = listArray (0,ahi xs) [helper i (xs!i) | i <- [0..ahi xs]]
+        helper idx x
+          | idx < wi = x
+          | otherwise = max x (vi + xs ! (idx - wi))
 
 {-
 
