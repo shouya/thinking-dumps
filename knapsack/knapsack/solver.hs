@@ -68,7 +68,7 @@ formalProgram result = do
 
 solve :: (Weight, [Item]) -> Writer [String] (Integer, Solution)
 solve (w, items) = writer ((len, fst result), snd result)
-  where algorithm = dp                --- change algorithm here
+  where algorithm = greedyDensity                --- change algorithm here
         len = fromIntegral $ length items
         result = runWriter $ algorithm w items
 
@@ -81,7 +81,7 @@ load str = (weight, items')
 
 
 output :: (Integer, Solution) -> String
-output (len, xs) = show value ++ " 1\n" ++ unwords (map show bitset)
+output (len, xs) = show value ++ " 0\n" ++ unwords (map show bitset)
   where value = foldl1 (+) $ map itemvalue xs
         ids = map itemid xs
         bitset = map (bool2int . (`elem` ids)) [0..(len-1)]
