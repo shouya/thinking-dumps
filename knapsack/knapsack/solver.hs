@@ -150,6 +150,16 @@ dptrace (iy,ys) ((result, w), (ix,xs))
   | otherwise          = ((ix:result, w - itemweight ix), (iy,ys))
 
 
+{-
+calctable :: ValueList ->
+             [Item] ->    -- items to be taken
+             [Item] ->    -- item list
+calctable _  _   []     = []
+calctable xs (i:is) = if itemtaken then i:following else following
+  where following = calctable newval is
+        newval = listArray (0,ahi xs) [helper i (xs!i) | i <- [0..ahi xs]]
+-}
+
 calctable :: ValueList -> [Item] -> [ValueList]
 calctable _ []      = []
 calctable xs (i:is) = newval:(calctable newval is)
