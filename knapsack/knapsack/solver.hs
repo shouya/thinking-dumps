@@ -131,9 +131,11 @@ greedyDensity = greedy $ flip $ (compare `on` \x ->
 type ValueList = Array' Value
 
 dp :: Weight -> [Item] -> Writer [String] Solution
-dp w items = writer (reverse result,[foldl showtable "" table])
+dp w items = do
+--  tell $ [foldl showtable "" table]
+  return $ reverse result
   where firstcol = listArray (0,w) $ genericReplicate (w + 1) 0
-        table = firstcol : (reverse $ calctable firstcol (emptyitem:items))
+        table = calctable firstcol (emptyitem:items)
         zippedtbl = zip (emptyitem:items) table
         foldrX = (([], w), last zippedtbl)
         result = fst $ fst $ foldr dptrace foldrX zippedtbl
