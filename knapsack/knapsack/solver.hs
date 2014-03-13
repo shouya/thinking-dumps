@@ -47,7 +47,7 @@ main = do
   inputfile <- getArgs >>= return . head
   withFile inputfile ReadMode $
     (\f -> hGetContents f >>= execution . runWriter . solve . load)
-  where execution = debugProgram
+  where execution = formalProgram
 
 debugProgram :: ((Integer, Solution), [String]) -> IO ()
 debugProgram result = do
