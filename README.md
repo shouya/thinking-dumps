@@ -7,12 +7,12 @@ foundations coq tutorial.
 
 ## Coq Study Resources
 
--[Software Foundations](http://www.cis.upenn.edu/~bcpierce/sf/current/index.html)
--[Chapter 8: tactics](http://coq.inria.fr/distrib/current/refman/Reference-Manual010.html)
--[IRC #coq](http://webchat.freenode.net/?channels=%23coq&uio=Mj10cnVlJjM9ZmFsc2UmOT10cnVlJjEwPXRydWU76)
--[Reference Manual](http://coq.inria.fr/distrib/current/refman/toc.html)
--[proofgeneral (a coq IDE for emacs)](http://pldev.blogspot.jp/2012/01/getting-started-with-coq-and-proof.html)
--[prooftree (proofgeneral plugin)](http://askra.de/software/prooftree/)
+- [Software Foundations](http://www.cis.upenn.edu/~bcpierce/sf/current/index.html)
+- [Chapter 8: tactics](http://coq.inria.fr/distrib/current/refman/Reference-Manual010.html)
+- [IRC #coq](http://webchat.freenode.net/?channels=%23coq&uio=Mj10cnVlJjM9ZmFsc2UmOT10cnVlJjEwPXRydWU76)
+- [Reference Manual](http://coq.inria.fr/distrib/current/refman/toc.html)
+- [proofgeneral (a coq IDE for emacs)](http://pldev.blogspot.jp/2012/01/getting-started-with-coq-and-proof.html)
+- [prooftree (proofgeneral plugin)](http://askra.de/software/prooftree/)
 
 
 ## License
