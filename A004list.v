@@ -331,5 +331,326 @@ Proof. reflexivity. Qed.
 Example test_rev2: rev nil = nil.
 Proof. reflexivity. Qed.
 
+
 Theorem rev_length_firsttry : forall l : natlist,
   length (rev l) = length l.
+Proof.
+  intros l. induction l as [| n l'].
+  Case "l = []".
+    reflexivity.
+  Case "l = n :: l'".
+    (* This is the tricky case.  Let's begin as usual
+       by simplifying. *)
+    simpl.
+    (* Now we seem to be stuck: the goal is an equality
+       involving snoc, but we don't have any equations
+       in either the immediate context or the global
+       environment that have anything to do with snoc!
+
+       We can make a little progress by using the IH to
+       rewrite the goal... *)
+    rewrite <- IHl'.
+    (* ... but now we can't go any further. *)
+Abort.
+
+
+Theorem length_snoc : forall n : nat, forall l : natlist,
+  length (snoc l n) = S (length l).
+Proof.
+  intros n l.
+  induction l.
+  reflexivity.
+  simpl. rewrite <- IHl. reflexivity.
+Qed.
+
+Theorem rev_length : forall l : natlist,
+  length (rev l) = length l.
+Proof.
+  intro l.
+  induction l.
+  reflexivity.
+  simpl. rewrite length_snoc. rewrite IHl. reflexivity.
+Qed.
+
+Theorem app_nil_end : forall l : natlist,
+  l ++ [] = l.
+Proof.
+  intro l.
+  induction l.
+  reflexivity.
+  simpl. rewrite IHl. reflexivity.
+Qed.
+
+Lemma rev_snoc_rev : forall t : natlist, forall h : nat,
+                       rev (snoc (rev t) h) = h :: rev (rev t).
+Proof.
+  intros.
+  induction t.
+  reflexivity.
+  simpl.
+
+  replace (rev (snoc (rev t) n)) with (n :: (rev (rev t))).
+Abort.
+
+Theorem snoc_append : forall (l:natlist) (n:nat),
+  snoc l n = l ++ [n].
+Proof.
+  intros.
+  induction l.
+  reflexivity.
+  simpl. rewrite IHl. reflexivity.
+Qed.
+
+Lemma cons_rev : forall n : nat, forall l : natlist,
+                   n :: rev l = rev (l ++ [n]).
+Proof.
+  intros.
+  induction l.
+  reflexivity.
+  simpl.
+  rewrite <- IHl.
+  simpl.
+  reflexivity.
+Qed.
+
+Theorem rev_involutive : forall l : natlist,
+  rev (rev l) = l.
+Proof.
+  intro l.
+  induction l as [| h t].
+  Case "l = []".
+    reflexivity.
+  Case "l = h :: t".
+    simpl.
+    replace (rev (snoc (rev t) h)) with (h :: rev (rev t)).
+    rewrite IHt.
+    reflexivity.
+    SCase "h :: rev (rev t) = rev (snoc (rev t) h)".
+      rewrite IHt.
+      rewrite snoc_append.
+      rewrite <- cons_rev.
+      rewrite IHt.
+      reflexivity.
+Qed.
+
+
+Theorem app_assoc4 : forall l1 l2 l3 l4 : natlist,
+  l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
+Proof.
+  intros.
+  rewrite <- app_assoc.
+  rewrite <- app_assoc.
+  reflexivity.
+Qed.
+
+Lemma app_nil_r : forall l : natlist,
+                    l ++ [] = l.
+Proof.
+  induction l. reflexivity. simpl. rewrite IHl. reflexivity.
+Qed.
+
+Theorem distr_rev : forall l1 l2 : natlist,
+  rev (l1 ++ l2) = (rev l2) ++ (rev l1).
+Proof.
+  intros.
+  induction l1 as [| h1 t1].
+  Case "l1 = []".
+    simpl.
+    rewrite app_nil_r.
+    reflexivity.
+  Case "l1 = h1 :: t1".
+    simpl.
+    rewrite snoc_append.
+    rewrite IHt1.
+    rewrite app_assoc.
+    rewrite snoc_append.
+    reflexivity.
+Qed.
+
+
+Lemma cons_app_assoc : forall h : nat, forall l1 l2 : natlist,
+                         (h :: l1) ++ l2 = h :: l1 ++ l2.
+Proof. intros. reflexivity. Qed.
+
+Lemma nonzeros_app : forall l1 l2 : natlist,
+  nonzeros (l1 ++ l2) = (nonzeros l1) ++ (nonzeros l2).
+Proof.
+  intros l1 l2.
+  induction l1 as [| h1 t1].
+  Case "l1 = []".
+    reflexivity.
+  Case "l1 = h1 :: t1".
+    rewrite cons_app_assoc.
+    induction h1 as [| h1'].
+    SCase "h1 = 0".
+      simpl.
+      rewrite IHt1.
+      reflexivity.
+    SCase "h1 = S h1'".
+      simpl.
+      rewrite IHt1.
+      reflexivity.
+Qed.
+
+
+Fixpoint beq_natlist (l1 l2 : natlist) : bool :=
+  match l1, l2 with
+    | [], [] => true
+    | h1 :: t1, [] => false
+    | [], h2 :: t2 => false
+    | h1 :: t1, h2 :: t2 =>
+      (andb (beq_nat h1 h2) (beq_natlist t1 t2))
+  end.
+
+
+Example test_beq_natlist1 : (beq_natlist nil nil = true).
+Proof. reflexivity. Qed.
+Example test_beq_natlist2 : beq_natlist [1;2;3] [1;2;3] = true.
+Proof. reflexivity. Qed.
+Example test_beq_natlist3 : beq_natlist [1;2;3] [1;2;4] = false.
+Proof. reflexivity. Qed.
+
+
+Theorem beq_natlist_refl : forall l:natlist,
+  true = beq_natlist l l.
+Proof.
+  intro.
+  induction l.
+  reflexivity.
+  simpl.
+  rewrite <- beq_nat_refl.
+  rewrite <- IHl.
+  reflexivity.
+Qed.
+
+
+Theorem count_member_nonzero : forall (s : bag),
+  ble_nat 1 (count 1 (1 :: s)) = true.
+Proof.
+  reflexivity.
+Qed.  (* WHAT THE ****!! YOU'RE SO AMAZING COQ!! *)
+
+Theorem ble_n_Sn : forall n,
+  ble_nat n (S n) = true.
+Proof.
+  intros n. induction n as [| n'].
+  Case "0".
+    simpl. reflexivity.
+  Case "S n'".
+    simpl. rewrite IHn'. reflexivity. Qed.
+
+Theorem remove_decreases_count: forall (s : bag),
+  ble_nat (count 0 (remove_one 0 s)) (count 0 s) = true.
+Proof.
+  intro.
+  induction s.
+  Case "s = []". reflexivity.
+  Case "s = n :: s".
+    induction n.
+    SCase "n = 0".
+      simpl.
+      rewrite ble_n_Sn.
+      reflexivity.
+    SCase "n = S n".
+      simpl.
+      rewrite IHs.
+      reflexivity.
+Qed.
+
+
+Theorem bag_count_sum: forall s1 s2 : bag,
+  count 0 (sum s1 s2) = count 0 s1 + count 0 s2.
+Proof.
+  intros.
+  induction s1, s2.
+  Case "s1 = [], s2 = []". reflexivity.
+  Case "s1 = [], s2 = n :: s2". reflexivity.
+  Case "s1 = n :: s1, s2 = []".
+    induction n.
+    SCase "n = 0".
+      rewrite plus_0_r.
+      rewrite app_nil_r.
+      reflexivity.
+    SCase "n = S n".
+      rewrite plus_0_r.
+      rewrite app_nil_r.
+      reflexivity.
+  Case "s1 = n0 :: s1, s2 = n :: s2".
+    induction n0, n; (simpl; rewrite IHs1; reflexivity).
+(*
+    induction n0, n.
+    SCase "n0 = n = 0".
+      simpl. rewrite IHs1.
+      reflexivity.
+    SCase "n0 = 0, n = S n".
+      simpl. rewrite IHs1.
+      reflexivity.
+    SCase "n0 = S n0, n = 0".
+      simpl. rewrite IHs1.
+      reflexivity.
+    SCase "n0 = S n0, n = S n".
+      simpl. rewrite IHs1.
+      reflexivity.
+*)
+Qed.
+
+
+Theorem rev_injective: forall (l1 l2 : natlist),
+                         rev l1 = rev l2 -> l1 = l2.
+Proof.
+Abort.  (* TODO *)
+
+Inductive natoption : Type :=
+  | Some : nat -> natoption
+  | None : natoption.
+
+Fixpoint index (n:nat) (l:natlist) : natoption :=
+  match l with
+  | nil => None
+  | a :: l' => match beq_nat n 0 with
+               | true => Some a
+               | false => index (pred n) l'
+               end
+  end.
+
+Definition option_elim (d : nat) (o : natoption) : nat :=
+  match o with
+  | Some n' => n'
+  | None => d
+  end.
+
+Example test_index1 : index 0 [4;5;6;7] = Some 4.
+Proof. reflexivity. Qed.
+Example test_index2 : index 3 [4;5;6;7] = Some 7.
+Proof. reflexivity. Qed.
+Example test_index3 : index 10 [4;5;6;7] = None.
+Proof. reflexivity. Qed.
+
+Fixpoint index' (n:nat) (l:natlist) : natoption :=
+  match l with
+  | nil => None
+  | a :: l' => if beq_nat n 0 then Some a else index' (pred n) l'
+  end.
+
+Definition hd_opt (l : natlist) : natoption :=
+  match l with
+    | nil => None
+    | a :: _ => Some a
+  end.
+
+
+Example test_hd_opt1 : hd_opt [] = None.
+Proof. reflexivity. Qed.
+Example test_hd_opt2 : hd_opt [1] = Some 1.
+Proof. reflexivity. Qed.
+Example test_hd_opt3 : hd_opt [5;6] = Some 5.
+Proof. reflexivity. Qed.
+
+Theorem option_elim_hd : forall (l:natlist) (default:nat),
+  hd default l = option_elim default (hd_opt l).
+Proof.
+  intros.
+  induction l.
+  reflexivity.
+  reflexivity.
+Qed.
