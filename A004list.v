@@ -594,7 +594,17 @@ Proof.
 *)
 Qed.
 
+(* this question is a four-star exercise.
 
+  my idea is to apply induction on l1 and l2, then deny all false assumptions:
+   - l1 = [], l2 <> []
+   - l1 <> [], l1 = []
+  and prove the true assumptions:
+   - l1 = l2 = []
+   - l1 = l2 <> []
+
+  currently i have no idea about how to cope with such false hypotheses.
+ *)
 Theorem rev_injective: forall (l1 l2 : natlist),
                          rev l1 = rev l2 -> l1 = l2.
 Proof.
@@ -654,3 +664,49 @@ Proof.
   reflexivity.
   reflexivity.
 Qed.
+
+Module Dictionary.
+
+Inductive dictionary : Type :=
+  | empty : dictionary
+  | record : nat -> nat -> dictionary -> dictionary.
+
+Definition insert (key value : nat) (d : dictionary) : dictionary :=
+  (record key value d).
+
+Fixpoint find (key : nat) (d : dictionary) : natoption :=
+  match d with
+  | empty => None
+  | record k v d' => if (beq_nat key k)
+                       then (Some v)
+                       else (find key d')
+  end.
+
+
+Theorem dictionary_invariant1' : forall (d : dictionary) (k v: nat),
+  (find k (insert k v d)) = Some v.
+Proof.
+  intros.
+  induction d.
+  Case "d = {}".
+    simpl.
+    rewrite <- beq_nat_refl.
+    reflexivity.
+  Case "d = (k:v)::d".
+    simpl.
+    rewrite <- beq_nat_refl.
+    reflexivity.
+Qed.
+
+Theorem dictionary_invariant2' : forall (d : dictionary) (m n o: nat),
+  beq_nat m n = false -> find m d = find m (insert n o d).
+Proof.
+  intros.
+  simpl.
+  rewrite H.
+  reflexivity.
+Qed.
+
+End Dictionary.
+
+End NatList.
