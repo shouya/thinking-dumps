@@ -125,6 +125,10 @@ Proof. reflexivity. Qed.
 Example test_blt_nat3: (blt_nat 4 2) = false.
 Proof. reflexivity. Qed.
 
+Definition bgt_nat (n m : nat) : bool := negb (ble_nat n m).
+Definition bge_nat (n m : nat) : bool := negb (blt_nat n m).
+
+
 
 (* proof by simplification *)
 
