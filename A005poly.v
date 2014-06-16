@@ -474,6 +474,30 @@ Example test_fold_length1 : fold_length [4;7;0] = 3.
 Proof. reflexivity. Qed.
 
 
-Theorem fold_length_correct : ∀X (l : list X),
+Theorem fold_length_correct : forall X (l : list X),
   fold_length l = length l.
 Proof.
+  intros.
+  induction l.
+  reflexivity.
+  simpl.
+  rewrite <- IHl.
+  unfold fold_length.
+  reflexivity.
+Qed.
+
+
+Definition fold_map {X Y:Type} (f : X -> Y) (l : list X) : list Y :=
+  fold (fun x ys => f x :: ys) l [].
+
+Theorem foldmap_correct : forall X Y (f : X -> Y) (l : list X),
+                            fold_map f l = map f l.
+Proof.
+  intros.
+  induction l as [| x l'].
+  reflexivity.
+  simpl.
+  rewrite <- IHl'.
+  unfold fold_map.
+  reflexivity.
+Qed.
