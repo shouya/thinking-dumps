@@ -75,6 +75,7 @@ Arguments app {X} l1 l2.
 Arguments rev {X} l.
 Arguments snoc {X} l v.
 
+End MumbleBaz.
 
 Notation "x :: y" := (cons x y)
                      (at level 60, right associativity).
