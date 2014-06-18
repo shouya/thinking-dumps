@@ -393,12 +393,31 @@ Theorem double_induction: forall (P : nat -> nat -> Prop),
   forall m n, P m n.
 Proof.
   intros.
+  generalize dependent n.
   induction m.
+  intro n.
   induction n.
   assumption.
   apply H1. assumption.
+  intro n.
   induction n.
-  apply H0. assumption.
+  apply H0.
+  apply IHm.
   apply H2.
-  reset.
-Abort.
+  apply IHm.
+Qed.
+
+Definition sillyfun (n : nat) : bool :=
+  if beq_nat n 3 then false
+  else if beq_nat n 5 then false
+  else false.
+
+Theorem sillyfun_false : forall (n : nat),
+  sillyfun n = false.
+Proof.
+  intros n. unfold sillyfun.
+  destruct (beq_nat n 3).
+    Case "beq_nat n 3 = true". reflexivity.
+    Case "beq_nat n 3 = false". destruct (beq_nat n 5).
+      SCase "beq_nat n 5 = true". reflexivity.
+      SCase "beq_nat n 5 = false". reflexivity. Qed.
