@@ -421,3 +421,37 @@ Proof.
     Case "beq_nat n 3 = false". destruct (beq_nat n 5).
       SCase "beq_nat n 5 = true". reflexivity.
       SCase "beq_nat n 5 = false". reflexivity. Qed.
+
+Theorem override_shadow : forall (X:Type) x1 x2 k1 k2 (f : nat -> X),
+  (override (override f k1 x2) k1 x1) k2 = (override f k1 x1) k2.
+Proof.
+  intros.
+  unfold override.
+  destruct (beq_nat k1 k2).
+  reflexivity.
+  reflexivity.
+Qed.
+
+
+Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
+  split l = (l1, l2) ->
+  combine l1 l2 = l.
+Proof.
+  intros X Y l.
+  induction l as [| [x y] l'].
+  Case "l = []".
+    simpl.
+    intros.
+    inversion H.
+    simpl.
+    reflexivity.
+  Case "l' = S l'".
+    simpl.
+    destruct (split l') as [l1' l2'].
+    intros l1 l2 H.
+    inversion H.
+    simpl.
+    apply f_equal.
+    apply IHl'.
+    reflexivity.
+Qed.
