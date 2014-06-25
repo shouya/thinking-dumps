@@ -438,20 +438,81 @@ Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   combine l1 l2 = l.
 Proof.
   intros X Y l.
-  induction l as [| [x y] l'].
+  induction l.
   Case "l = []".
     simpl.
     intros.
     inversion H.
-    simpl.
     reflexivity.
-  Case "l' = S l'".
-    simpl.
-    destruct (split l') as [l1' l2'].
-    intros l1 l2 H.
+  Case "l = (x,y) :: l".
+    intros.
+    simpl in H.
+    destruct x.
+    destruct (split l).
     inversion H.
     simpl.
     apply f_equal.
-    apply IHl'.
+    apply IHl.
     reflexivity.
 Qed.
+
+Definition sillyfun1 (n : nat) : bool :=
+  if beq_nat n 3 then true
+  else if beq_nat n 5 then true
+  else false.
+
+(*
+  My Note: destruct <expr> eqn:<eqn>. is used when the destructed case should be
+           used in the following proof.
+
+*)
+
+Theorem bool_fn_applied_thrice :
+  forall (f : bool -> bool) (b : bool),
+  f (f (f b)) = f b.
+Proof.
+  intros f b.
+  destruct (f b) eqn:f'.
+  destruct b eqn:b'.
+  Case "b = true, f true = true".
+    rewrite f'. assumption.
+  Case "b = false, f false = true".
+    destruct (f true) eqn:f''.
+    SCase "f true = true".
+      rewrite f''. reflexivity.
+    SCase "f true = false".
+      rewrite f'. reflexivity.
+  destruct b.
+  Case "b = true, f true = false".
+    destruct (f false) eqn:f''.
+    SCase "f false = true". assumption.
+    SCase "f false = false". assumption.
+  Case "b = false".
+    rewrite f'. assumption.
+Qed.
+
+Theorem override_same : forall (X:Type) x1 k1 k2 (f : nat -> X),
+  f k1 = x1 ->
+  (override f k1 x1) k2 = f k2.
+Proof.
+  intros.
+  unfold override.
+  destruct (beq_nat k1 k2) eqn:eq.
+  Case "k1 = k2".
+    apply beq_nat_true in eq.
+    rewrite <- eq. rewrite H. reflexivity.
+  Case "k1 /= k2".
+    reflexivity.
+Qed.
+
+Theorem beq_nat_sym : forall (n m : nat),
+  beq_nat n m = beq_nat m n.
+Proof.
+  intros.
+  destruct (beq_nat n m) eqn:eq.
+  Case "n = m".
+    apply beq_nat_true in eq.
+    rewrite eq. rewrite <- beq_nat_refl.
+    reflexivity.
+  Case "n /= m".
+    induction n.
