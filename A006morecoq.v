@@ -508,11 +508,120 @@ Qed.
 Theorem beq_nat_sym : forall (n m : nat),
   beq_nat n m = beq_nat m n.
 Proof.
+  intro n.
+  induction n as [| n'].
+  Case "n = 0".
+    intros m.
+    destruct m.
+    SCase "m = 0". reflexivity.
+    SCase "m = S m".
+      destruct (beq_nat 0 m).
+      SSCase "0 = m". reflexivity.
+      SSCase "0 /= m". reflexivity.
+  Case "n = S n'".
+    destruct m.
+    SCase "m = 0". reflexivity.
+    SCase "m = S m".
+      destruct (beq_nat (S n') (S m)) eqn:eq.
+      SSCase "S n = S m".
+        simpl in eq. simpl. rewrite <- eq.
+        apply IHn'.
+      SSCase "S n /= S m".
+        simpl in eq. simpl. rewrite <- eq.
+        apply IHn'.
+Qed.
+
+
+Theorem beq_nat_trans : forall n m p,
+  beq_nat n m = true ->
+  beq_nat m p = true ->
+  beq_nat n p = true.
+Proof.
   intros.
-  destruct (beq_nat n m) eqn:eq.
-  Case "n = m".
-    apply beq_nat_true in eq.
-    rewrite eq. rewrite <- beq_nat_refl.
+  apply beq_nat_true in H.
+  apply beq_nat_true in H0.
+  rewrite H. rewrite H0.
+  symmetry. apply beq_nat_refl.
+Qed.
+
+
+Definition split_combine_statement : Prop :=
+  forall {X Y} (l : list (X * Y)) l1 l2,
+    (l1,l2) = split l -> combine l1 l2 = l.
+
+Theorem split_combine : split_combine_statement.
+Proof.
+  unfold split_combine_statement.
+  intros X Y l.
+  induction l as [| [x y] l'].
+  Case "l = []".
+    simpl. intros.
+    inversion H.
     reflexivity.
-  Case "n /= m".
-    induction n.
+  Case "l = (x,y) :: l'".
+    simpl. destruct (split l') as [lx ly]. intros.
+    inversion H. simpl. apply f_equal. apply IHl'. reflexivity.
+Qed.
+
+
+Theorem override_permute : forall (X:Type) x1 x2 k1 k2 k3 (f : nat -> X),
+  beq_nat k2 k1 = false ->
+  (override (override f k2 x2) k1 x1) k3 = (override (override f k1 x1) k2 x2) k3.
+Proof.
+  intros.
+  unfold override.
+  destruct (beq_nat k2 k3) eqn:eq.
+  Case "k2 = k3".
+    apply beq_nat_true in eq. rewrite <- eq.
+    rewrite beq_nat_sym. rewrite H. reflexivity.
+  Case "k2 /= k3".
+    reflexivity.
+Qed.
+
+Theorem filter_exercise : forall (X : Type) (test : X -> bool)
+                             (x : X) (l lf : list X),
+     filter test l = x :: lf ->
+     test x = true.
+Proof.
+  intros X test x l.
+  induction l as [| x' l'].
+  Case "l = []".
+    intros.
+    inversion H.
+  Case "l = x' :: l'".
+    destruct (test x') eqn:eq.
+    SCase "test x' = true".
+      simpl. rewrite eq. intros. inversion H. rewrite <- H1. assumption.
+    SCase "test x' = false".
+      simpl. rewrite eq. intro lf. apply IHl'.
+Qed.
+
+Fixpoint forallb {X} (f : X -> bool) (l : list X) : bool :=
+  match l with
+    | []       => true
+    | x :: xs  => andb (f x) (forallb f xs)
+  end.
+
+Fixpoint existsb {X} f (l : list X) : bool :=
+  match l with
+    | []       => false
+    | x :: xs  => orb (f x) (existsb f xs)
+  end.
+
+Definition existsb' {X} f (l : list X) := negb (forallb (fun x => negb (f x)) l).
+
+Theorem existsb_variant : forall {X: Type} (f : X -> bool) (l: list X),
+                            existsb f l = existsb' f l.
+Proof.
+  intros.
+  induction l.
+  Case "l = []".
+    reflexivity.
+  Case "l = x :: l".
+    unfold existsb'.
+    simpl.
+    unfold existsb' in IHl.
+    destruct (f x) eqn:fx.
+    reflexivity.
+    simpl. assumption.
+Qed.
