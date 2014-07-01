@@ -231,6 +231,14 @@ Definition not (A:Prop) := A -> False.
 Notation "~ x" := (not x) : type_scope.
 
 
+Theorem ex_falso_quodlibet : forall (P:Prop),
+  False -> P.
+Proof.
+  (* WORKED IN CLASS *)
+  intros P contra.
+  inversion contra. Qed.
+
+
 Theorem contradiction_implies_anything : forall P Q : Prop,
   (P /\ ~P) -> Q.
 Proof.
@@ -287,6 +295,7 @@ Definition de_morgan_not_and_not := forall P Q:Prop,
 Definition implies_to_or := forall P Q:Prop,
   (P->Q) -> (~P\/Q).
 
+
 Theorem peirce_classic : peirce -> classic.
 Proof.
   unfold peirce. unfold classic.
@@ -306,13 +315,41 @@ Proof.
   left. apply classic. intro. apply H. right. assumption.
 Qed.
 
+
 Theorem excluded_middle_de_morgan_not_and_not:
   excluded_middle -> de_morgan_not_and_not.
 Proof.
   unfold excluded_middle. unfold de_morgan_not_and_not.
-  intro exc_mid. intros P Q.
-  unfold not.
-  intro. unfold not in H.
-  assert (forall (X Y: Prop),
-            ((X /\ Y) -> False) -> ((X -> False) \/ (Y -> False))).
-  intros X Y G.
+  intros.
+  assert (P \/ ~P). apply H.
+  assert (Q \/ ~Q). apply H.
+  inversion H1. left. assumption.
+  inversion H2. right. assumption.
+  unfold not in H0, H3, H4.
+  apply ex_falso_quodlibet. apply H0. split; assumption.
+Qed.
+
+Theorem de_morgan_not_and_not_implies_to_or:
+  de_morgan_not_and_not -> implies_to_or.
+Proof.
+  unfold de_morgan_not_and_not. unfold implies_to_or.
+  intros.
+  assert (~(~~P /\ ~Q)-> ~P \/ Q).
+  apply H.
+  apply H1.
+  intro. inversion H2. apply H3. intro. apply H0 in H5.
+  apply H4 in H5. inversion H5.
+Qed.
+
+Theorem implies_to_or_peirce : implies_to_or -> peirce.
+Proof.
+  unfold implies_to_or. unfold peirce.
+  intros.
+  apply H0.
+  intro.
+  assert (~(~P \/ Q) \/ P).
+  apply H. intro. assumption.
+  apply H in H0.
+  unfold not in H, H0, H2.
+  inversion H2.
+  apply ex_falso_quodlibet. apply H3. right.
