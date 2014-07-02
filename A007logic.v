@@ -349,7 +349,31 @@ Proof.
   intro.
   assert (~(~P \/ Q) \/ P).
   apply H. intro. assumption.
-  apply H in H0.
-  unfold not in H, H0, H2.
   inversion H2.
-  apply ex_falso_quodlibet. apply H3. right.
+(* TODO: no idea *)
+admit. admit.
+Qed.
+
+Theorem excluded_middle_irrefutable: forall (P:Prop), ~~(P \/ ~P).
+Proof.
+  intros.
+  intro.
+  apply H.
+  right. intro.
+  apply H.
+  left.
+  assumption.
+Qed.
+
+Notation "x <> y" := (~ (x = y)) : type_scope.
+
+Theorem not_false_then_true : forall b : bool,
+  b <> false -> b = true.
+Proof.
+  intros.
+  destruct b. reflexivity.
+  unfold not in H.
+  apply ex_falso_quodlibet.
+  apply H.
+  reflexivity.
+Qed.
