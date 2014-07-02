@@ -377,3 +377,53 @@ Proof.
   apply H.
   reflexivity.
 Qed.
+
+
+
+(** **** Exercise: 2 stars (false_beq_nat) *)
+Theorem false_beq_nat : forall n m : nat,
+     n <> m ->
+     beq_nat n m = false.
+Proof.
+  intros.
+  generalize dependent m.
+  induction n.
+  intros.
+
+  induction m.
+  apply ex_falso_quodlibet. apply H. reflexivity.
+  reflexivity.
+
+  intros.
+  induction m.
+  reflexivity.
+  apply IHn.
+  intro.
+  apply H.
+  apply f_equal.
+  assumption.
+Qed.
+
+
+
+Theorem beq_nat_false : forall n m,
+  beq_nat n m = false -> n <> m.
+Proof.
+  intro n.
+  induction n.
+  intros.
+
+  induction m.
+  inversion H.
+  intro. inversion H0.
+
+  intros.
+  induction m.
+  intro. inversion H0.
+
+  simpl in H.
+  apply IHn in H.
+  intro.
+  apply H.
+  inversion H0. reflexivity.
+Qed.
