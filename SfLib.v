@@ -100,7 +100,7 @@ Proof.
 Theorem false_beq_nat: forall n n' : nat,
      n <> n' ->
      beq_nat n n' = false.
-Proof. 
+Proof.
 (* An exercise in Logic.v *)
 Admitted.
 
@@ -112,7 +112,7 @@ Proof.
 
 Theorem ev_not_ev_S : forall n,
   ev n -> ~ ev (S n).
-Proof. 
+Proof.
 (* An exercise in Logic.v *)
 Admitted.
 
@@ -143,9 +143,9 @@ Inductive empty_relation : nat -> nat -> Prop := .
 Definition relation (X:Type) := X -> X -> Prop.
 
 Definition deterministic {X: Type} (R: relation X) :=
-  forall x y1 y2 : X, R x y1 -> R x y2 -> y1 = y2. 
+  forall x y1 y2 : X, R x y1 -> R x y2 -> y1 = y2.
 
-Inductive multi (X:Type) (R: relation X) 
+Inductive multi (X:Type) (R: relation X)
                             : X -> X -> Prop :=
   | multi_refl  : forall (x : X),
                  multi X R x x
@@ -153,7 +153,7 @@ Inductive multi (X:Type) (R: relation X)
                     R x y ->
                     multi X R y z ->
                     multi X R x z.
-Implicit Arguments multi [[X]]. 
+Implicit Arguments multi [[X]].
 
 Tactic Notation "multi_cases" tactic(first) ident(c) :=
   first;
@@ -175,7 +175,7 @@ Proof.
 
 (**  Identifiers and polymorphic partial maps. *)
 
-Inductive id : Type := 
+Inductive id : Type :=
   Id : nat -> id.
 
 Theorem eq_id_dec : forall id1 id2 : id, {id1 = id2} + {id1 <> id2}.
@@ -187,24 +187,24 @@ Proof.
      left. rewrite Heq. reflexivity.
    Case "n1 <> n2".
      right. intros contra. inversion contra. apply Hneq. apply H0.
-Defined. 
+Defined.
 
-Lemma eq_id : forall (T:Type) x (p q:T), 
-              (if eq_id_dec x x then p else q) = p. 
+Lemma eq_id : forall (T:Type) x (p q:T),
+              (if eq_id_dec x x then p else q) = p.
 Proof.
-  intros. 
-  destruct (eq_id_dec x x); try reflexivity. 
+  intros.
+  destruct (eq_id_dec x x); try reflexivity.
   apply ex_falso_quodlibet; auto.
 Qed.
 
-Lemma neq_id : forall (T:Type) x y (p q:T), x <> y -> 
-               (if eq_id_dec x y then p else q) = q. 
+Lemma neq_id : forall (T:Type) x y (p q:T), x <> y ->
+               (if eq_id_dec x y then p else q) = q.
 Proof.
   (* FILL IN HERE *) Admitted.
 
 Definition partial_map (A:Type) := id -> option A.
 
-Definition empty {A:Type} : partial_map A := (fun _ => None). 
+Definition empty {A:Type} : partial_map A := (fun _ => None).
 
 Notation "'\empty'" := empty.
 
@@ -214,14 +214,14 @@ Definition extend {A:Type} (Gamma : partial_map A) (x:id) (T : A) :=
 Lemma extend_eq : forall A (ctxt: partial_map A) x T,
   (extend ctxt x T) x = Some T.
 Proof.
-  intros. unfold extend. rewrite eq_id; auto. 
+  intros. unfold extend. rewrite eq_id; auto.
 Qed.
 
 Lemma extend_neq : forall A (ctxt: partial_map A) x1 T x2,
   x2 <> x1 ->
   (extend ctxt x2 T) x1 = ctxt x1.
 Proof.
-  intros. unfold extend. rewrite neq_id; auto. 
+  intros. unfold extend. rewrite neq_id; auto.
 Qed.
 
 Lemma extend_shadow : forall A (ctxt: partial_map A) t1 t2 x1 x2,
@@ -234,9 +234,9 @@ Qed.
 
 (** * Some useful tactics *)
 
-Tactic Notation "solve_by_inversion_step" tactic(t) :=  
-  match goal with  
-  | H : _ |- _ => solve [ inversion H; subst; t ] 
+Tactic Notation "solve_by_inversion_step" tactic(t) :=
+  match goal with
+  | H : _ |- _ => solve [ inversion H; subst; t ]
   end
   || fail "because the goal is not solvable by inversion.".
 
