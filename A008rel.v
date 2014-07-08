@@ -8,6 +8,8 @@ Definition relation (X: Type) := X->X->Prop.
 Definition partial_function {X: Type} (R: relation X) :=
   forall x y1 y2 : X, R x y1 -> R x y2 -> y1 = y2.
 
+Inductive next_nat (n:nat) : nat -> Prop :=
+  | nn : next_nat n (S n).
 
 Theorem le_not_a_partial_function :
   ~ (partial_function le).
@@ -349,4 +351,69 @@ Proof.
   unfold order.
   split. apply le_reflexive.
   split. apply le_antisymmetric. apply le_trans.
+Qed.
+
+Inductive clos_refl_trans {A: Type} (R: relation A) : relation A :=
+    | rt_step : forall x y, R x y -> clos_refl_trans R x y
+    | rt_refl : forall x, clos_refl_trans R x x
+    | rt_trans : forall x y z,
+          clos_refl_trans R x y ->
+          clos_refl_trans R y z ->
+          clos_refl_trans R x z.
+
+
+Theorem next_nat_closure_is_le : forall n m,
+  (n <= m) <-> ((clos_refl_trans next_nat) n m).
+Proof.
+  intros. split.
+  Case "->".
+    intro.
+    induction H.
+    apply rt_refl.
+    apply rt_trans with m. assumption.
+    apply rt_step. apply nn.
+
+  Case "<-".
+    intro. induction H.
+    induction H. apply le_S. apply le_n.
+    apply le_n.
+    apply le_trans with y. assumption. assumption.
+Qed.
+
+Inductive refl_step_closure {X:Type} (R: relation X) : relation X :=
+  | rsc_refl : forall (x : X), refl_step_closure R x x
+  | rsc_step : forall (x y z : X),
+                    R x y ->
+                    refl_step_closure R y z ->
+                    refl_step_closure R x z.
+
+Tactic Notation "rt_cases" tactic(first) ident(c) :=
+  first;
+  [ Case_aux c "rt_step" | Case_aux c "rt_refl"
+  | Case_aux c "rt_trans" ].
+
+Tactic Notation "rsc_cases" tactic(first) ident(c) :=
+  first;
+  [ Case_aux c "rsc_refl" | Case_aux c "rsc_step" ].
+
+
+
+Theorem rsc_R : forall (X:Type) (R:relation X) (x y : X),
+       R x y -> refl_step_closure R x y.
+Proof.
+  intros.
+  apply rsc_step with y. assumption.
+  apply rsc_refl.
+Qed.
+
+Theorem rsc_trans :
+  forall (X:Type) (R: relation X) (x y z : X),
+      refl_step_closure R x y ->
+      refl_step_closure R y z ->
+      refl_step_closure R x z.
+Proof.
+  intros.
+  induction H. assumption.
+  apply rsc_step with y. assumption.
+  apply IHrefl_step_closure. assumption.
 Qed.
