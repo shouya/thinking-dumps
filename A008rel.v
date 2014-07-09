@@ -417,3 +417,24 @@ Proof.
   apply rsc_step with y. assumption.
   apply IHrefl_step_closure. assumption.
 Qed.
+
+Theorem rtc_rsc_coincide :
+         forall (X:Type) (R: relation X) (x y : X),
+  clos_refl_trans R x y <-> refl_step_closure R x y.
+Proof.
+  intros.
+  split.
+  Case "->".
+    intro. induction H.
+    SCase "R x y". apply rsc_R. assumption.
+    SCase "refl". apply rsc_refl.
+    SCase "trans". apply rsc_trans with y; assumption.
+  Case "<-".
+    intro.
+    induction H.
+    SCase "refl". apply rt_refl.
+    SCase "R x y -> rsc y z -> rsc x z".
+      apply rt_trans with y.
+      SSCase "rt x y". apply rt_step. assumption.
+      SSCase "rt y z". assumption.
+Qed.
