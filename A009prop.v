@@ -186,22 +186,32 @@ Proof.
 Qed.
 
 
-
-   (* FILL IN HERE *) Admitted.
-
-
-n
-
-
-
-(*
+Theorem ev_minus2: forall n,
+  ev n -> ev (pred (pred n)).
+Proof.
+  intros.
+(*(* the induction way *)
   induction H.
-  Case "0".
-    apply g_0.
-  Case "3".
-    apply g_plus3. apply g_0.
-  Case "5".
-    apply g_plus5. apply g_0.
-  Case "m + n".
-    apply gorgeous_sum.
+  simpl. apply ev0.
+  simpl. apply H.
 *)
+  (* the inversion way *)
+  inversion H.
+  simpl. apply ev0.
+  simpl. assumption.
+
+  (* ex: Why not `destruct`?
+     because destruct does not introduce the inductive rule for
+      ev n -> ev (S (S n))
+     therefore the second goal will be `ev (S (S n))` while without an
+     assumption of `ev n`, which is not provable.
+  *)
+ Qed.
+
+Theorem SSev__even : forall n,
+  ev (S (S n)) -> ev n.
+Proof.
+  intros.
+  inversion H.
+  assumption.
+Qed.
