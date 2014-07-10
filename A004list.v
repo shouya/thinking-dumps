@@ -607,7 +607,14 @@ Qed.
 Theorem rev_injective: forall (l1 l2 : natlist),
                          rev l1 = rev l2 -> l1 = l2.
 Proof.
-Abort.  (* TODO *)
+  intros.
+  assert (rev (rev l1) = rev (rev l2)).
+  rewrite H. reflexivity.
+
+  rewrite rev_involutive in H0.
+  rewrite rev_involutive in H0.
+  assumption.
+Qed.
 
 Inductive natoption : Type :=
   | Some : nat -> natoption
