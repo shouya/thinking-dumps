@@ -472,7 +472,7 @@ Theorem bool_fn_applied_thrice :
   f (f (f b)) = f b.
 Proof.
   intros f b.
-  destruct (f b).
+  destruct (f b) eqn:f'.
   destruct b eqn:b'.
   Case "b = true, f true = true".
     rewrite f'. assumption.

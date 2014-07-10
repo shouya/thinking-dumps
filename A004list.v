@@ -1,5 +1,4 @@
 Require Export A003induction.
-Module NatList.
 
 Inductive natprod : Type :=
   pair : nat -> nat -> natprod.
@@ -708,5 +707,3 @@ Proof.
 Qed.
 
 End Dictionary.
-
-End NatList.

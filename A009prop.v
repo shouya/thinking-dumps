@@ -1,4 +1,3 @@
-
 Require Export A007logic.
 
 Definition even (n:nat) : Prop :=
@@ -274,3 +273,45 @@ Proof.
 
   assumption.
 Qed.
+
+
+Inductive pal {X : Type} : list X -> Prop :=
+  | c : forall l, l = rev l -> pal l.
+
+Lemma cons_app: forall {X} (x : X) xs, x :: xs = [x] ++ xs.
+Proof. auto. Qed.
+Lemma snoc_app: forall {X} (x : X) xs, snoc xs x = xs ++ [x].
+Proof.
+  intros. induction xs. reflexivity.
+  simpl. apply f_equal. assumption.
+Qed.
+Lemma rev__xs_x: forall {X} (x : X) xs, rev (xs ++ [x]) = [x] ++ rev xs.
+Proof.
+  intros. induction xs. reflexivity.
+  simpl. rewrite snoc_app. rewrite snoc_app.
+  rewrite IHxs.
+  replace (x :: rev xs ++ [x0]) with ([x] ++ rev xs ++ [x0]).
+  replace (([x] ++ rev xs) ++ [x0]) with ([x] ++ rev xs ++ [x0]).
+  reflexivity.
+  auto. auto.
+Qed.
+
+
+Goal forall {X : Type} (l : list X), pal (l ++ rev l).
+Proof.
+  induction l.
+  simpl. apply c. reflexivity.
+
+  apply c. simpl.
+  inversion IHl. subst.
+
+  rewrite cons_app.
+  rewrite snoc_app.
+  rewrite snoc_app.
+  replace (rev (l ++ rev l ++ [x])) with ([x] ++ rev (l ++ rev l)).
+  replace ([x] ++ rev (l ++ rev l)) with ([x] ++ l ++ rev l).
+  symmetry.
+  (* Why can't I rewrite the goal by app_assoc?!!! Fork!!! *)
+Abort.
+
+Goal forall l, pal l -> l = rev l.
