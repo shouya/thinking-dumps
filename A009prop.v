@@ -215,3 +215,62 @@ Proof.
   inversion H.
   assumption.
 Qed.
+
+Theorem SSSSev__even : forall n,
+  ev (S (S (S (S n)))) -> ev n.
+Proof.
+  intros.
+  inversion H.
+  inversion H1.
+  assumption.
+Qed.
+
+Theorem even5_nonsense :
+  ev 5 -> 2 + 2 = 9.
+Proof.
+  intros.
+  inversion H. inversion H1. inversion H3.
+Qed.
+
+Lemma ev_n__nev_Sn : forall n, ev n -> ~(ev (S n)).
+
+Theorem ev_ev__ev : forall n m,
+  ev (n+m) -> ev n -> ev m.
+Proof.
+  intros.
+  induction H0.
+
+  simpl in H. assumption.
+
+  simpl in H. inversion H.
+  apply IHev in H2. assumption.
+Qed.
+
+Theorem ev_plus_plus : forall n m p,
+  ev (n+m) -> ev (n+p) -> ev (m+p).
+Proof.
+  intros.
+  apply ev_sum with (n := n + p) in H.
+  replace (n + p + (n + m)) with (double n + m + p) in H.
+  rewrite <- plus_assoc in H.
+  apply ev_ev__ev with (m := m + p) in H. assumption.
+
+  (* disgusting.... *)
+  assert (forall n' m', double n' + m' + m' = double (n' + m')).
+  clear. intros. rewrite double_plus.
+  replace (n' + n' + m' + m') with ((n' + m') + (n' + m')).
+  rewrite <- double_plus. reflexivity.
+  rewrite <- plus_assoc. replace (m' + (n' + m')) with (n' + m' + m').
+  rewrite plus_assoc. rewrite plus_assoc. reflexivity.
+  rewrite plus_comm. reflexivity.
+  rewrite H1. apply double_even.
+
+  rewrite double_plus.
+  rewrite plus_assoc. rewrite <- plus_assoc with (m := p).
+  rewrite <- plus_comm with (m := p) (n := n).
+  rewrite plus_assoc. rewrite <- plus_assoc with (m := p).
+  rewrite plus_comm with (m := m) (n := p).
+  rewrite plus_assoc. reflexivity.
+
+  assumption.
+Qed.
