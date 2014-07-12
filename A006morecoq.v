@@ -545,6 +545,61 @@ Proof.
 Qed.
 
 
+
+(*
+Definition split_combine_statement : Prop :=
+  forall (X : Type) (Y : Type)
+         (l1 : list X) (l2 : list Y) (l : list (X * Y)),
+      length l1 = length l
+   -> length l2 = length l
+   -> combine l1 l2 = l
+   -> split l = (l1,l2)
+*)
+
+
+Definition split_combine_statement : Prop :=
+  forall {X Y} (l1 : list X) (l2 : list Y) (l : list (X * Y)),
+    length l1 = length l2 ->
+    combine l1 l2 = l ->
+    split l = (l1,l2).
+
+Theorem split_combine : split_combine_statement.
+Proof.
+  unfold split_combine_statement.
+  intros.
+  generalize dependent l1.
+  generalize dependent l2.
+  induction l as [| [x y] l' ].
+
+  Case "l = []".
+    intros.
+    destruct l1,l2.
+    reflexivity.
+    inversion H. inversion H.
+    inversion H0.
+
+  Case "l = (x,y) :: l'".
+    intros.
+    destruct l1,l2.
+
+    SCase "l1 = l2 = []". inversion H0.
+    SCase "l1 = [], l2 = y0::l2". inversion H.
+    SCase "l1 = x0::l1, l2 = []". inversion H.
+    SCase "l1 = x0::l1, l2 = y0::l2".
+      simpl in H0.
+      inversion H0.
+      simpl.
+      simpl in H. inversion H.
+      apply IHl' in H5.
+      rewrite H4.
+      rewrite H5.
+      reflexivity.
+
+      SSCase "showing 'combine l1 l2 = l'". assumption.
+Qed.
+
+
+(*
 Definition split_combine_statement : Prop :=
   forall {X Y} (l : list (X * Y)) l1 l2,
     (l1,l2) = split l -> combine l1 l2 = l.
@@ -562,7 +617,7 @@ Proof.
     simpl. destruct (split l') as [lx ly]. intros.
     inversion H. simpl. apply f_equal. apply IHl'. reflexivity.
 Qed.
-
+*)
 
 Theorem override_permute : forall (X:Type) x1 x2 k1 k2 k3 (f : nat -> X),
   beq_nat k2 k1 = false ->
