@@ -276,42 +276,55 @@ Qed.
 
 
 Inductive pal {X : Type} : list X -> Prop :=
-  | c : forall l, l = rev l -> pal l.
+  | pal_null : pal []
+  | pal_one  : forall (x : X), pal [x]
+  | pal_induction : forall (xs : list X) (x : X),
+                      pal xs -> pal ([x] ++ xs ++ [x]).
 
-Lemma cons_app: forall {X} (x : X) xs, x :: xs = [x] ++ xs.
-Proof. auto. Qed.
-Lemma snoc_app: forall {X} (x : X) xs, snoc xs x = xs ++ [x].
+Lemma snoc_app :
+  forall {X : Type} (xs : list X) (x : X), snoc xs x = xs ++ [x].
 Proof.
-  intros. induction xs. reflexivity.
-  simpl. apply f_equal. assumption.
+  intros.
+  induction xs.
+  simpl. reflexivity.
+  simpl.
+  rewrite IHxs. reflexivity.
 Qed.
-Lemma rev__xs_x: forall {X} (x : X) xs, rev (xs ++ [x]) = [x] ++ rev xs.
+
+Lemma cons_app :
+  forall {X : Type} (xs : list X) (x : X), cons x xs = [x] ++ xs.
 Proof.
-  intros. induction xs. reflexivity.
-  simpl. rewrite snoc_app. rewrite snoc_app.
-  rewrite IHxs.
-  replace (x :: rev xs ++ [x0]) with ([x] ++ rev xs ++ [x0]).
-  replace (([x] ++ rev xs) ++ [x0]) with ([x] ++ rev xs ++ [x0]).
+  intros.
+  induction xs.
+  simpl. reflexivity.
+  simpl. reflexivity.
+Qed.
+
+Lemma app_assoc' : forall {X : Type} (l m n: list X),
+                     l ++ m ++ n = (l ++ m) ++ n.
+Proof.
+  induction l.
+  simpl.
   reflexivity.
-  auto. auto.
+  simpl.
+  intros.
+  rewrite IHl.
+  reflexivity.
 Qed.
 
 
 Goal forall {X : Type} (l : list X), pal (l ++ rev l).
 Proof.
+  intros.
   induction l.
-  simpl. apply c. reflexivity.
+  Case "l = []".
+    simpl. apply pal_null.
+  Case "l = x :: l".
+    simpl. rewrite cons_app.
+    rewrite snoc_app.
+    replace ([x] ++ l ++ rev l ++ [x]) with ([x] ++ (l ++ rev l) ++ [x]).
+    apply pal_induction. assumption.
 
-  apply c. simpl.
-  inversion IHl. subst.
-
-  rewrite cons_app.
-  rewrite snoc_app.
-  rewrite snoc_app.
-  replace (rev (l ++ rev l ++ [x])) with ([x] ++ rev (l ++ rev l)).
-  replace ([x] ++ rev (l ++ rev l)) with ([x] ++ l ++ rev l).
-  symmetry.
-  (* Why can't I rewrite the goal by app_assoc?!!! Fork!!! *)
-Abort.
-
-Goal forall l, pal l -> l = rev l.
+    replace ((l ++ rev l) ++ [x]) with (l ++ rev l ++ [x]).
+    reflexivity. apply app_assoc'.
+Qed.
