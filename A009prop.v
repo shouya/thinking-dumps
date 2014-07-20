@@ -277,7 +277,6 @@ Qed.
 
 Inductive pal {X : Type} : list X -> Prop :=
   | pal_null : pal []
-  | pal_one  : forall (x : X), pal [x]
   | pal_induction : forall (xs : list X) (x : X),
                       pal xs -> pal ([x] ++ xs ++ [x]).
 
@@ -328,3 +327,40 @@ Proof.
     replace ((l ++ rev l) ++ [x]) with (l ++ rev l ++ [x]).
     reflexivity. apply app_assoc'.
 Qed.
+
+Lemma rev_appl : forall {X:Type} (l : list X) (x : X),
+                   rev (l ++ [x]) = [x] ++ rev l.
+Proof.
+  intros.
+  induction l.
+  reflexivity.
+  simpl.
+  rewrite snoc_app.
+  rewrite snoc_app.
+  rewrite IHl.
+  rewrite cons_app with (xs := (rev l ++ [x0])).
+  symmetry.
+  apply app_assoc'.
+Qed.
+
+Goal forall {X:Type} (l : list X), pal l -> l = rev l.
+Proof.
+  intros.
+  induction H.
+  reflexivity.
+
+  simpl.
+  rewrite snoc_app.
+  rewrite rev_appl.
+  rewrite cons_app.
+  rewrite <- IHpal.
+  apply app_assoc'.
+Qed.
+
+Goal forall {X:Type} (l:list X), l = rev l -> pal l.
+Proof.
+  intros.
+  unfold rev in H.
+  induction l.
+  apply pal_null.
+  simpl in H.
