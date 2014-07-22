@@ -389,3 +389,81 @@ Proof.
 
   (* TODO: too difficult. 5 star question *)
 Abort.
+
+Inductive subseq : list nat -> list nat -> Prop :=
+  | ss_nul : forall ns, subseq [] ns
+  | ss_mat : forall ns ms, subseq ns ms -> (forall n, subseq (n::ns) (n::ms))
+  | ss_notmat : forall ns ms, subseq ns ms -> (forall m, subseq ns (m :: ms)).
+
+Theorem subseq_refl : forall l, subseq l l.
+Proof.
+  intros.
+  induction l.
+
+  constructor.
+  constructor. assumption.
+Qed.
+
+Lemma app_comm_cons' :
+  forall {A:Type} (x y:list A) (a:A), a :: (x ++ y) = (a :: x) ++ y.
+Proof.
+  intros.
+  induction x.
+  reflexivity.
+  reflexivity.
+Qed.
+
+Theorem subseq_app : forall l1 l2 l3, subseq l1 l2 -> subseq l1 (l2 ++ l3).
+Proof.
+  intros.
+  induction H.
+
+  constructor.
+
+  rewrite <- app_comm_cons'.
+  constructor. assumption.
+
+  rewrite <- app_comm_cons'.
+  constructor. assumption.
+Qed.
+
+Lemma subseq_notnull : forall x, forall l1,
+                         ~(subseq (x :: l1) []).
+Proof.
+  intros. intro.
+  inversion H.
+Qed.
+
+
+Theorem subseq_trans : forall l1 l2 l3,
+                         subseq l1 l2 -> subseq l2 l3 -> subseq l1 l3.
+Proof.
+  intros l1 l2 l3 H1 H2.
+  generalize dependent l2.
+  generalize dependent l3.
+
+  induction l1.
+
+  constructor.
+  intros.
+
+  induction l3.
+  inversion H1.
+  rewrite <- H0 in H2.
+  apply subseq_notnull in H2.
+  inversion H2.
+
+  rewrite <- H3 in H2.
+  apply subseq_notnull in H2.
+  inversion H2.
+
+  destruct (beq_nat x x0) eqn:eq.
+  apply beq_nat_true in eq.
+  subst x0.
+  apply ss_notmat.
+  apply IHl3.
+
+  induction l2.
+  constructor.
+  destruct (beq_nat x x0) eqn:eq.
+  apply beq_nat_true in eq. subst x0.
