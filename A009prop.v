@@ -443,27 +443,148 @@ Proof.
   generalize dependent l3.
 
   induction l1.
-
   constructor.
+
   intros.
-
-  induction l3.
-  inversion H1.
-  rewrite <- H0 in H2.
-  apply subseq_notnull in H2.
-  inversion H2.
-
-  rewrite <- H3 in H2.
-  apply subseq_notnull in H2.
-  inversion H2.
-
-  destruct (beq_nat x x0) eqn:eq.
-  apply beq_nat_true in eq.
-  subst x0.
-  apply ss_notmat.
-  apply IHl3.
-
-  induction l2.
+  induction H1.
   constructor.
-  destruct (beq_nat x x0) eqn:eq.
-  apply beq_nat_true in eq. subst x0.
+
+(* To save your life, keep away from such tough questions *)
+Abort.
+
+
+Inductive R : nat -> list nat -> Prop :=
+      | c1 : R 0 []
+      | c2 : forall n l, R n l -> R (S n) (n :: l)
+      | c3 : forall n l, R (S n) l -> R n l.
+
+Goal R 2 [1;0].
+Proof.
+  apply c2. apply c2. apply c1.
+Qed.
+
+Goal R 1 [1;2;1;0].
+Proof.
+  apply c3. apply c2. apply c3. apply c3. apply c2. apply c2. apply c2.
+  apply c1.
+Qed.
+
+Goal R 6 [3;2;1;0].
+Proof.
+  (* impossible to prove this *)
+Abort.
+
+Inductive le : nat -> nat -> Prop :=
+  | le_n : forall n, le n n
+  | le_S : forall n m, (le n m) -> (le n (S m)).
+
+Notation "m <= n" := (le m n).
+
+Inductive square_of : nat -> nat -> Prop :=
+  sq : forall n:nat, square_of n (n * n).
+
+Inductive next_nat (n:nat) : nat -> Prop :=
+  | nn : next_nat n (S n).
+
+Inductive next_even (n:nat) : nat -> Prop :=
+  | ne_1 : ev (S n) -> next_even n (S n)
+  | ne_2 : ev (S (S n)) -> next_even n (S (S n)).
+
+Inductive total_relation : nat -> nat -> Prop :=
+  | tr_0 : forall m, total_relation 0 m
+  | tr_n : forall n m,
+             total_relation n m -> total_relation (S n) m.
+
+Theorem total_relation_all : forall n m, total_relation n m.
+Proof.
+  intros.
+  induction n.
+  constructor.
+  constructor. assumption.
+Qed.
+
+
+Inductive empty_relation : nat -> nat -> Prop :=.
+
+Example er_1: ~(empty_relation 6 5). Proof. intro. induction H. Qed.
+
+
+Lemma le_trans : forall m n o, m <= n -> n <= o -> m <= o.
+Proof.
+  intros.
+  induction H0.
+  assumption.
+  constructor.
+  apply IHle.
+  assumption.
+Qed.
+
+Theorem O_le_n : forall n,
+  0 <= n.
+Proof.
+  induction n.
+  constructor.
+  constructor. assumption.
+Qed.
+
+
+Theorem n_le_m__Sn_le_Sm : forall n m,
+  n <= m -> S n <= S m.
+Proof.
+  intros.
+  induction H.
+  constructor.
+  constructor.
+  assumption.
+Qed.
+
+Theorem Sn_le_Sm__n_le_m : forall n m,
+  S n <= S m -> n <= m.
+Proof.
+  intros.
+  generalize dependent m.
+  induction n.
+  intros.
+  apply O_le_n.
+
+  intros.
+  inversion H.
+  constructor.
+
+  subst.
+
+Theorem le_plus_l : forall a b,
+  a <= a + b.
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+Theorem plus_lt : forall n1 n2 m,
+  n1 + n2 < m ->
+  n1 < m /\ n2 < m.
+Proof.
+ unfold lt.
+ (* FILL IN HERE *) Admitted.
+
+Theorem lt_S : forall n m,
+  n < m ->
+  n < S m.
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+Theorem ble_nat_true : forall n m,
+  ble_nat n m = true -> n <= m.
+Proof.
+  (* FILL IN HERE *) Admitted.
+
+Theorem le_ble_nat : forall n m,
+  n <= m ->
+  ble_nat n m = true.
+Proof.
+  (* Hint: This may be easiest to prove by induction on m. *)
+  (* FILL IN HERE *) Admitted.
+
+Theorem ble_nat_true_trans : forall n m o,
+  ble_nat n m = true -> ble_nat m o = true -> ble_nat n o = true.
+Proof.
+  (* Hint: This theorem can be easily proved without using induction. *)
+  (* FILL IN HERE *) Admitted.
