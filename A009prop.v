@@ -478,6 +478,8 @@ Inductive le : nat -> nat -> Prop :=
   | le_n : forall n, le n n
   | le_S : forall n m, (le n m) -> (le n (S m)).
 
+Definition lt n m := le (S n) m.
+
 Notation "m <= n" := (le m n).
 
 Inductive square_of : nat -> nat -> Prop :=
@@ -541,29 +543,49 @@ Qed.
 Theorem Sn_le_Sm__n_le_m : forall n m,
   S n <= S m -> n <= m.
 Proof.
+  induction m.
   intros.
-  generalize dependent m.
-  induction n.
-  intros.
-  apply O_le_n.
+  inversion H.
+  constructor.
+
+  inversion H2.
 
   intros.
   inversion H.
   constructor.
 
-  subst.
+  apply IHm in H2.
+  constructor.
+  assumption.
+Qed.
+
 
 Theorem le_plus_l : forall a b,
   a <= a + b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction b.
+  rewrite plus_0_r.
+  constructor.
+
+  rewrite plus_comm.
+  simpl.
+  rewrite plus_comm.
+  constructor.
+  assumption.
+Qed.
+
 
 Theorem plus_lt : forall n1 n2 m,
-  n1 + n2 < m ->
-  n1 < m /\ n2 < m.
+  lt (n1 + n2) m ->
+  lt n1 m /\ lt n2 m.
 Proof.
- unfold lt.
- (* FILL IN HERE *) Admitted.
+  unfold lt.
+  intros.
+  inversion H.
+  split.
+  apply n_le_m__Sn_le_Sm with (n:=n1) (m:=n1+n2).
+
+
 
 Theorem lt_S : forall n m,
   n < m ->
