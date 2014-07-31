@@ -14,6 +14,9 @@ class Input i where
 data DFA s i where
   DFA :: (State s, Input i) => (s -> i -> s) -> DFA s i
 
+data NFA s i where
+  NFA :: (State s, Input i) => (s -> i -> S.Set s) -> NFA s i
+
 
 
 evalDFA :: DFA s i -> [i] -> s
