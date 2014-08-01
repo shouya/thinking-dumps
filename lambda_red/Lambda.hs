@@ -1,6 +1,8 @@
 
+import Control.Monad
 import Text.ParserCombinators.Parsec
-import Control.Applicative ((*>), (<*), (<$>))
+import qualified Text.Parsec.Token as Tok
+import Text.Parsec.Language (emptyDef)
 
 -- import System.Environment
 
@@ -21,30 +23,16 @@ instance Show Expr where
   show (Lamb v e) = "\\" ++ v ++ "." ++ show e
 
 -- parser
-parseIdentifier :: Parser String
-parseIdentifier = do h <- (letter <|> char '_')
-                     t <- many (alphaNum <|> char '_')
-                     return (h : t)
 
-parseVar :: Parser Expr
-parseVar = parseIdentifier >>= return . Var
-parseApp :: Parser Expr
-parseApp = chainl1 parseExpr (space >> spaces <$> App)
 
-parseLamb :: Parser Expr
-parseLamb = do char '\\' *> spaces
-               v <- parseIdentifier
-               spaces *> char '.' *> spaces
-               e <- parseExpr
-               return $ Lamb v e
-parseParen :: Parser Expr
-parseParen = char '(' *> spaces
-             *> parseExpr <*
-             spaces <* char ')'
-
-parseExpr :: Parser Expr
-parseExpr =
-      parseVar
-  <|> parseApp
-  <|> parseParen
-  <|> parseLamb
+expr :: Parser Expr
+expr =     (parens expr)
+       <|> do { a <- expr; b <- expr; return (App a b) }
+       <|> do { lamb; v <- ident; dot; e <- expr; return (Lamb v e) }
+       <|> (liftM Var ident)
+  where
+    lexer = Tok.makeTokenParser emptyDef
+    parens = Tok.parens lexer
+    ident = Tok.identifier lexer
+    dot = Tok.symbol lexer "." >> return ()
+    lamb = Tok.symbol lexer "\\" >> return ()
