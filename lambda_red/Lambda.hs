@@ -1,5 +1,6 @@
-
 import Control.Monad
+import Control.Applicative ((<*))
+
 import Text.ParserCombinators.Parsec
 import qualified Text.Parsec.Token as Tok
 import Text.Parsec.Language (emptyDef)
@@ -24,15 +25,17 @@ instance Show Expr where
 
 -- parser
 
-
 expr :: Parser Expr
-expr =     (parens expr)
-       <|> do { a <- expr; b <- expr; return (App a b) }
-       <|> do { lamb; v <- ident; dot; e <- expr; return (Lamb v e) }
-       <|> (liftM Var ident)
+expr = chainl1 expr' (return App)
   where
+    expr' = parens expr
+       <|> do { lamb; v <- ident; dot; e <- expr; return (Lamb v e) }
+       <|> liftM Var ident
     lexer = Tok.makeTokenParser emptyDef
     parens = Tok.parens lexer
     ident = Tok.identifier lexer
     dot = Tok.symbol lexer "." >> return ()
     lamb = Tok.symbol lexer "\\" >> return ()
+
+program :: Parser Expr
+program = expr <* eof
