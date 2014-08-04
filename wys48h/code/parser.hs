@@ -14,6 +14,8 @@ data LispVal = Identifier String
              | DottedList [LispVal] LispVal
              | Number Integer
              | Float Double    -- Exercise 6
+             | Rational Integer Integer -- Exercise 7
+             | Complex Double Double    -- Exercise 7
              | Character Char  -- Exercise 5
              | String String
              | Bool Bool
@@ -41,6 +43,7 @@ charNameTable = [("space", ' ')
 
 parseString :: Parser LispVal
 -- parseString = liftM String (char '"' *> many (noneOf "\"") <* char '"')
+
 {- Exercise 2 -}
 parseString = liftM String (char '"' *> many foo <* char '"')
   where foo =  try bar
@@ -59,25 +62,29 @@ nameToChar xs = case lookup xs charNameTable of
 parseIdentifier :: Parser LispVal
 parseIdentifier = do
   first  <- (symbol <|> letter)
-  (x:xs) <- many (symbol <|> alphaNum <|> char '\\')  -- '\\' is for char syntax
+  (x:xs) <- many (symbol <|> alphaNum <|> char '\\') -- '\\' is for char syntax
   return $ if first == '#' then
                case x of
                  't' -> Bool True
                  'f' -> Bool False
                  'o' -> (Number . fst . head . readOct) xs    -- Exercise 4
                  'h' -> (Number . fst . head . readHex) xs    -- Exercise 4
-                 '\\'-> Character $ if length xs == 1
-                                    then head xs else nameToChar xs -- Exercise 5
+                 '\\'-> Character $ if length xs == 1         -- Exercise 5
+                                    then head xs else nameToChar xs
                  _   -> error "invalid syntax"
+               {- TODO: unify this with parseNumber -}
            else if x == '-' && all isDigit xs then (Number . negate . read) xs
                 else Identifier (first : x : xs)
 
 
+parseInteger :: Parser Integer
+parseInteger = liftM read (many1 digit)
 
 parseNumber :: Parser LispVal
-parseNumber = liftM (Number . read) (many1 digit)
+parseNumber = liftM Number parseInteger
 
 {- Exercise 6 -}
+{- TODO: Sign -}
 parseFloat :: Parser LispVal
 parseFloat = liftM (Float . fst . head) (decForm <|> expForm)
   where decForm = do ipart <- parseNumStr
@@ -92,6 +99,34 @@ parseFloat = liftM (Float . fst . head) (decForm <|> expForm)
                      return $ readFloat (bpart ++ "e" ++ epart)
         parseNumStr = many1 digit
 
+{- Exercise 7 -}
+{- TODO: parse neg rat like: `-1/2` -}
+parseRational :: Parser LispVal
+parseRational = do
+  den <- parseInteger
+  char '/'
+  num <- parseInteger
+  let x = gcd den num
+      d = den `div` x
+      n = num `div` x
+  return $ if n == 1
+           then Number d
+           else Rational d n
+{- Exercise 7 -}
+{- TODO: Omit Sign, because will be implied in parseNumber and parseFloat -}
+parseComplex :: Parser LispVal
+parseComplex = do
+  signr <- option '+' (char '+' <|> char '-')
+  real' <- try parseFloat <|> parseNumber
+  signi <- char '+' <|> char '-'
+  imag' <- option (Float 1) (try parseFloat <|> parseNumber)
+  char 'i'
+  let real = case real' of Float x -> x; Number x -> fromIntegral x
+      imag = case imag' of Float x -> x; Number x -> fromIntegral x
+  return $ Complex (if signr == '-' then -real else real)
+                   (if signi == '-' then -imag else imag)
+
+
 {- Exercise 1.1/1.2 -}
 {-
 parseNumber :: Parser LispVal
@@ -100,10 +135,14 @@ parseNumber = do s <- many1 digit
                  return $ Number $ read s
 -}
 
+
+
 parseExpr :: Parser LispVal
 parseExpr =  parseString
-         <|> parseIdentifier
+         <|> try parseIdentifier
+         <|> try parseComplex
          <|> try parseFloat
+         <|> try parseRational
          <|> try parseNumber
 
 
