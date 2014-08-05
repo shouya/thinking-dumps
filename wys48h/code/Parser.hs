@@ -76,7 +76,6 @@ parseIdentifier = do
                  '\\'-> Character $ if length xs == 1         -- Exercise 5
                                     then head xs else nameToChar xs
                  _   -> error "invalid syntax"
-               {- TODO: unify this with parseNumber -}
            else Identifier (first : rest)
 
 parseSign :: Parser Char
