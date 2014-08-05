@@ -1,8 +1,11 @@
+module Evaluator where
 
 import Parser
+import Primitive
 
 import System.Environment (getArgs)
 import Control.Monad (liftM)
+
 
 instance Show LispVal where
   show (String xs) = show xs
@@ -25,15 +28,20 @@ unwordsList = unwords . map show
 
 
 
-
 eval :: LispVal -> LispVal
 eval val@(String _) = val
 eval val@(Number _) = val
 eval val@(Bool _) = val
 eval (List [Identifier "quote", val]) = val
 
+eval (List (Identifier func : args)) = apply func $ map eval args
 
 
+
+apply :: String -> [LispVal] -> LispVal
+apply func args = case lookup func primitives of
+  Just f  -> f args
+  Nothing -> error $ "function " ++ func ++ " is not defined."
 
 
 
@@ -54,4 +62,4 @@ testEval code = putStrLn $ case parseLispVal code of
     Right x  -> "eval result: " ++ show (eval x)
 
 main :: IO ()
-main = getArgs >>= testShow . head
+main = getArgs >>= testEval . head
