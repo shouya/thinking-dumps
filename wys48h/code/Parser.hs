@@ -1,3 +1,7 @@
+module Parser (LispVal(..)
+              ,parseLispVal
+              ) where
+
 
 import Control.Applicative ((*>), (<*))
 import Control.Monad
@@ -19,7 +23,6 @@ data LispVal = Identifier String
              | Character Char  -- Exercise 5
              | String String
              | Bool Bool
-             deriving Show
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
@@ -204,12 +207,12 @@ parseQuoted = do
 readExpr :: String -> String
 readExpr input = case parse (parseExpr <* eof) "lisp" input of
   Left err -> "No match: " ++ show err
-  Right x  -> "Found value: " ++ show x
+  Right _  -> "Found value."
 
 
+parseLispVal :: String -> Either ParseError LispVal
+parseLispVal = parse (parseExpr <* eof) "input"
 
 
 main :: IO ()
-main = do
-  args <- getArgs
-  putStrLn (readExpr (args !! 0))
+main = getArgs >>= putStrLn . readExpr . head
