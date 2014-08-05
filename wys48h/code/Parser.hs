@@ -203,8 +203,8 @@ parseQuoted = do
       return $ List [Identifier "quote", x]
 
 
-readExpr :: String -> String
-readExpr input = case parse (parseExpr <* eof) "lisp" input of
+testParse :: String -> IO ()
+testParse input = putStrLn $ case parse (parseExpr <* eof) "lisp" input of
   Left err -> "No match: " ++ show err
   Right _  -> "Found value."
 
@@ -214,4 +214,4 @@ parseLispVal = parse (parseExpr <* eof) "input"
 
 
 main :: IO ()
-main = getArgs >>= putStrLn . readExpr . head
+main = getArgs >>= testParse . head
