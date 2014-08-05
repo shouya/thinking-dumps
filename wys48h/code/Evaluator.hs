@@ -31,6 +31,9 @@ unwordsList = unwords . map show
 eval :: LispVal -> LispVal
 eval val@(String _) = val
 eval val@(Number _) = val
+eval val@(Float _) = val
+eval val@(Rational _ _) = val
+eval val@(Complex _ _) = val
 eval val@(Bool _) = val
 eval (List [Identifier "quote", val]) = val
 
@@ -42,7 +45,6 @@ apply :: String -> [LispVal] -> LispVal
 apply func args = case lookup func primitives of
   Just f  -> f args
   Nothing -> error $ "function " ++ func ++ " is not defined."
-
 
 
 
