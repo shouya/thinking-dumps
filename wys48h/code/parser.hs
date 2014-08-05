@@ -76,55 +76,94 @@ parseIdentifier = do
            else if x == '-' && all isDigit xs then (Number . negate . read) xs
                 else Identifier (first : x : xs)
 
+parseSign :: Parser Char
+parseSign = option '+' $ (char '-' <|> char '+')
+
+signify :: (Num a) => Char -> a -> a
+signify '-' a = (-a)
+signify '+' a = a
+signify _ _ = error "invalid sign"
+
+
+parseIntegerNumber :: Parser LispVal
+parseIntegerNumber = do i <- parseInteger
+                        optional $ char 'L'
+                        return $ Number i
 
 parseInteger :: Parser Integer
-parseInteger = liftM read (many1 digit)
+parseInteger = do sign <- parseSign
+                  int <- parseUnsignedInteger
+                  return $ signify sign int
 
-parseNumber :: Parser LispVal
-parseNumber = liftM Number parseInteger
+parseUnsignedInteger :: Parser Integer
+parseUnsignedInteger = liftM read $ many1 digit
+
 
 {- Exercise 6 -}
-{- TODO: Sign -}
-parseFloat :: Parser LispVal
-parseFloat = liftM (Float . fst . head) (decForm <|> expForm)
-  where decForm = do ipart <- parseNumStr
-                     char '.'
-                     fpart <- parseNumStr
-                     optional $ char 'F'
-                     return $ readFloat (ipart ++ "." ++ fpart)
-        expForm = do bpart <- parseNumStr
-                     oneOf "eE"
-                     epart <- parseNumStr
-                     optional $ char 'F'
-                     return $ readFloat (bpart ++ "e" ++ epart)
-        parseNumStr = many1 digit
+parseFloatNumber :: Parser LispVal
+parseFloatNumber = do f <- parseFloat
+                      optional $ char 'F'
+                      return $ Float f
+
+
+parseFloat :: Parser Double
+parseFloat = do sign <- parseSign
+                num  <- parseUnsignedFloat
+                return $ signify sign num
+
+parseUnsignedFloat :: Parser Double
+parseUnsignedFloat = (try parseExponential <|> parseDecimal)
+
+
+
+parseDecimal :: Parser Double
+parseDecimal = do ipart <- parseNumStr
+                  char '.'
+                  fpart <- parseNumStr
+                  return $ fst $ head $ readFloat (ipart ++ "." ++ fpart)
+  where parseNumStr = many1 digit
+
+
+parseExponential :: Parser Double
+parseExponential = do bpart <- (try parseDecimal <|>
+                                liftM fromIntegral parseInteger)
+                      oneOf "eE"
+                      epart <- liftM fromIntegral parseInteger
+                      return (bpart * 10 ** epart)
+
 
 {- Exercise 7 -}
-{- TODO: parse neg rat like: `-1/2` -}
-parseRational :: Parser LispVal
-parseRational = do
+parseRationalNumber :: Parser LispVal
+parseRationalNumber = do
   den <- parseInteger
   char '/'
   num <- parseInteger
   let x = gcd den num
       d = den `div` x
       n = num `div` x
+      d' = if n < 0 then -d else d
+      n' = if n < 0 then -n else n
   return $ if n == 1
-           then Number d
-           else Rational d n
+           then Number d'
+           else Rational d' n'
+
 {- Exercise 7 -}
-{- TODO: Omit Sign, because will be implied in parseNumber and parseFloat -}
-parseComplex :: Parser LispVal
-parseComplex = do
-  signr <- option '+' (char '+' <|> char '-')
-  real' <- try parseFloat <|> parseNumber
-  signi <- char '+' <|> char '-'
-  imag' <- option (Float 1) (try parseFloat <|> parseNumber)
+parseComplexNumber :: Parser LispVal
+parseComplexNumber = do
+  real <- try parseFloat <|> (liftM fromIntegral $ try parseInteger)
+  signi<- char '+' <|> char '-'
+  imag <- option 1 (try parseUnsignedFloat <|>
+                    liftM fromIntegral parseUnsignedInteger)
   char 'i'
-  let real = case real' of Float x -> x; Number x -> fromIntegral x
-      imag = case imag' of Float x -> x; Number x -> fromIntegral x
-  return $ Complex (if signr == '-' then -real else real)
-                   (if signi == '-' then -imag else imag)
+  return $ Complex real (signify signi imag)
+
+
+{- Modified implementation of this function -}
+parseNumber :: Parser LispVal
+parseNumber =  try parseComplexNumber
+           <|> try parseFloatNumber
+           <|> try parseRationalNumber
+           <|> try parseIntegerNumber
 
 
 {- Exercise 1.1/1.2 -}
@@ -139,11 +178,8 @@ parseNumber = do s <- many1 digit
 
 parseExpr :: Parser LispVal
 parseExpr =  parseString
-         <|> try parseIdentifier
-         <|> try parseComplex
-         <|> try parseFloat
-         <|> try parseRational
          <|> try parseNumber
+         <|> try parseIdentifier
 
 
 
