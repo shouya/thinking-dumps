@@ -62,7 +62,8 @@ nameToChar xs = case lookup xs charNameTable of
 parseIdentifier :: Parser LispVal
 parseIdentifier = do
   first  <- (symbol <|> letter)
-  (x:xs) <- many (symbol <|> alphaNum <|> char '\\') -- '\\' is for char syntax
+  rest <- many (symbol <|> alphaNum <|> char '\\') -- '\\' is for char syntax
+  let (x:xs) = rest
   return $ if first == '#' then
                case x of
                  't' -> Bool True
@@ -73,8 +74,7 @@ parseIdentifier = do
                                     then head xs else nameToChar xs
                  _   -> error "invalid syntax"
                {- TODO: unify this with parseNumber -}
-           else if x == '-' && all isDigit xs then (Number . negate . read) xs
-                else Identifier (first : x : xs)
+           else Identifier (first : rest)
 
 parseSign :: Parser Char
 parseSign = option '+' $ (char '-' <|> char '+')
@@ -180,14 +180,33 @@ parseExpr :: Parser LispVal
 parseExpr =  parseString
          <|> try parseNumber
          <|> try parseIdentifier
+         <|> try parseQuoted
+         <|> char '(' *> (try parseList <|> parseDottedList) <* char ')'
 
 
+
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+parseDottedList :: Parser LispVal
+parseDottedList = do
+  head <- endBy parseExpr spaces
+  tail <- char '.' >> spaces >> parseExpr
+  return $ DottedList head tail
+
+parseQuoted :: Parser LispVal
+parseQuoted = do
+      char '\''
+      x <- parseExpr
+      return $ List [Identifier "quote", x]
 
 
 readExpr :: String -> String
 readExpr input = case parse (parseExpr <* eof) "lisp" input of
   Left err -> "No match: " ++ show err
   Right x  -> "Found value: " ++ show x
+
+
 
 
 main :: IO ()
