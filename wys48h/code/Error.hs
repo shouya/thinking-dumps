@@ -1,5 +1,8 @@
 
-module Error where
+module Error (LispError(..)
+             ,ThrowError
+             ,extractValue
+             ,trapError) where
 
 import Control.Monad.Error
 
@@ -29,6 +32,7 @@ instance Error LispError where
 
 type ThrowError = Either LispError
 
+trapError :: ThrowError a -> (LispError -> ThrowError a) -> ThrowError a
 trapError action = action `catchError` (return . show)
 
 extractValue :: ThrowsError a -> a
