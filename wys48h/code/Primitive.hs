@@ -31,6 +31,11 @@ primitives = [ -- Arithmetic functions
              ,("string<=?", strBoolBinop (<=))
              ,("string>=?", strBoolBinop (>=))
 
+              --- Equality test operations
+             ,("eq?",    eqv)
+             ,("eqv?",   eqv)
+             ,("equal?", eqv)
+
               -- Type test functions, as Exercise 3/1 (ex!)
              ,("boolean?", $(predicateOp 'Bool))
              ,("symbol?", $(predicateOp 'Identifier))
@@ -66,21 +71,30 @@ cons [x, DottedList xs s] = return $ DottedList (x:xs) s
 cons [x, y]               = return $ DottedList [x] y
 cons badArgList           = throwError $ NumArgs 2 badArgList
 
-
 eqv :: [LispVal] -> ThrowsError LispVal
-eqv [(Bool arg1), (Bool arg2)]             = return $ Bool $ arg1 == arg2
-eqv [(Number arg1), (Number arg2)]         = return $ Bool $ arg1 == arg2
-eqv [(String arg1), (String arg2)]         = return $
-eqv [(Atom arg1), (Atom arg2)]             = return $ Bool $ arg1 == arg2
-eqv [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x],
-                                                  List $ ys ++ [y]]
-eqv [(List xs), (List ys)] = return $ Bool $ ((==) `on` length) xs ys &&
-                                             (all $ zipWith eqvPair xs xs)
+eqv [(Identifier a), (Identifier b)]       = return $ Bool $ a == b
+eqv [(Bool a), (Bool b)]                   = return $ Bool $ a == b
+eqv [(Number a), (Number b)]               = return $ Bool $ a == b
+eqv [List [], List []]                     = return $ Bool True
+eqv [List _, List _]                       = return $ Bool False
+eqv args@[Character _, Character _]        = charBoolBinop (==)
+eqv [_, _]                                 = return $ Bool False
+eqv x                                      = throwError $ NumArgs 2 x
+
+
+eq :: [LispVal] -> ThrowsError LispVal
+eq = eqv
+
+equal :: [LispVal] -> ThrowsError LispVal
+equal [(String a), (String b)]               = return $ Bool $ a == b
+equal [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x],
+                                                    List $ ys ++ [y]]
+equal [(List xs), (List ys)] = return $ Bool $ ((==) `on` length) xs ys &&
+                                               (all $ zipWith eqvPair xs xs)
   where eqvPair (x1, x2) = case eqv [x1, x2] of Left err -> False
                                                 Right (Bool val) -> val
-eqv [_, _]                                 = return $ Bool False
-eqv badArgList = throwError $ NumArgs 2 badArgList
-
+equal [a, b] = eqv a b
+equal x      = throwError $ NumArgs 2 x
 
 
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
@@ -100,7 +114,7 @@ boolBinop unpacker op args
 numBoolBinop  = boolBinop unpackNum
 strBoolBinop  = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
-
+charBoolBinop = boolBinop unpackChar
 
 unpackStr :: LispVal -> ThrowsError String
 unpackStr (String s) = return s
@@ -110,6 +124,9 @@ unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b)  = return b
 unpackBool x         = throwError $ TypeMismatch "boolean" x
 
+unpackBool :: LispVal -> ThrowsError Bool
+unpackBool (Character c)  = return c
+unpackBool x              = throwError $ TypeMismatch "character" x
 
 
 
