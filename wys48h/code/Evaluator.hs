@@ -38,7 +38,9 @@ eval val@(Bool {}) = return val
 
 eval (List [Identifier "quote", val]) = return val
 eval (List [Identifier "if", cond, cons, alt]) =
-  eval val >>= \result -> eval if result then cond else alt
+  eval val >>= \result -> case result of
+    (Bool b) -> eval if b then cons else alt
+    x        -> throwError $ TypeMismatch "boolean" x  -- Exercise 4/1
 
 
 eval (List (Identifier func : args)) = mapM eval args >>= apply func
