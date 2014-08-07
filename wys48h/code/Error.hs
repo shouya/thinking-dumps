@@ -30,3 +30,12 @@ instance Error LispError where
 type ThrowError = Either LispError
 
 trapError action = action `catchError` (return . show)
+
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val
+
+
+testError :: String -> IO (ThrowError Lispval)
+testError code = putStrLn $ case parseLispVal code of
+  Left err  -> Parser ParserError
+  Right val -> return val
