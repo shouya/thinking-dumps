@@ -31,10 +31,15 @@ primitives = [ -- Arithmetic functions
              ,("string<=?", strBoolBinop (<=))
              ,("string>=?", strBoolBinop (>=))
 
-              --- Equality test operations
+              -- Basic pair manipulation
+             ,("car",  car)
+             ,("cdr",  cdr)
+             ,("cons", cons)
+
+              -- Equality test operations
              ,("eq?",    eqv)
              ,("eqv?",   eqv)
-             ,("equal?", eqv)
+             ,("equal?", equal)
 
               -- Type test functions, as Exercise 3/1 (ex!)
              ,("boolean?", $(predicateOp 'Bool))
@@ -80,10 +85,6 @@ eqv [List _, List _]                       = return $ Bool False
 eqv args@[Character _, Character _]        = charBoolBinop (==)
 eqv [_, _]                                 = return $ Bool False
 eqv x                                      = throwError $ NumArgs 2 x
-
-
-eq :: [LispVal] -> ThrowsError LispVal
-eq = eqv
 
 equal :: [LispVal] -> ThrowsError LispVal
 equal [(String a), (String b)]               = return $ Bool $ a == b
