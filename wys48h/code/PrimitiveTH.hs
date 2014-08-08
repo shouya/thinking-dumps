@@ -11,6 +11,6 @@ predicateOp :: Name -> ExpQ
 predicateOp nam = do
   nn <- newName "p"
   lamE [varP nn] $ caseE (appE [| head |] (varE nn)) [
-    match (recP nam []) (normalB [| Bool True  |]) [],
-    match wildP         (normalB [| Bool False |]) []
+    match (recP nam []) (normalB [| return $ Bool True  |]) [],
+    match wildP         (normalB [| return $ Bool False |]) []
     ]

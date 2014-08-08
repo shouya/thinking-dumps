@@ -1,10 +1,15 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell,
+             ExistentialQuantification,
+             RankNTypes,
+             ImpredicativeTypes #-}
 
 module Primitive (primitives) where
 
 import PrimitiveTH (predicateOp)
+import Error
 import Parser
 
+import Data.Function (on)
 
 primitives :: [(String, [LispVal] -> ThrowError LispVal)]
 primitives = [ -- Arithmetic functions
@@ -30,6 +35,11 @@ primitives = [ -- Arithmetic functions
              ,("string>?", strBoolBinop (>))
              ,("string<=?", strBoolBinop (<=))
              ,("string>=?", strBoolBinop (>=))
+             ,("char=?", charBoolBinop (==))
+             ,("char<?", charBoolBinop (<))
+             ,("char>?", charBoolBinop (>))
+             ,("char<=?", charBoolBinop (<=))
+             ,("char>=?", charBoolBinop (>=))
 
               -- Basic pair manipulation
              ,("car",  car)
@@ -42,6 +52,7 @@ primitives = [ -- Arithmetic functions
              ,("equal?", equal)
 
               -- Type test functions, as Exercise 3/1 (ex!)
+              {- TODO: detect wrong num of args error -}
              ,("boolean?", $(predicateOp 'Bool))
              ,("symbol?", $(predicateOp 'Identifier))
              ,("string?", $(predicateOp 'String))
@@ -51,65 +62,101 @@ primitives = [ -- Arithmetic functions
              ,("complex?", $(predicateOp 'Complex))
 
               -- Exercise 3/3
-             ,("symbol->string", (\x -> let [Identifier a] = x in String a))
-             ,("string->symbol", (\x -> let [String a] = x in Identifier a))
+             ,("symbol->string", sym2str)
+             ,("string->symbol", str2sym)
              ]
 
 
 
-car :: [LispVal] -> ThrowsError LispVal
+car :: [LispVal] -> ThrowError LispVal
 car [List (x : xs)]         = return x
 car [DottedList (x : xs) _] = return x
 car [badArg]                = throwError $ TypeMismatch "pair" badArg
 car badArgList              = throwError $ NumArgs 1 badArgList
 
-cdr :: [LispVal] -> ThrowsError LispVal
+cdr :: [LispVal] -> ThrowError LispVal
 cdr [List (x : xs)]         = return $ List xs
 cdr [DottedList [_] x]      = return x
 cdr [DottedList (_ : xs) x] = return $ DottedList xs x
 cdr [badArg]                = throwError $ TypeMismatch "pair" badArg
 cdr badArgList              = throwError $ NumArgs 1 badArgList
 
-cons :: [LispVal] -> ThrowsError LispVal
+cons :: [LispVal] -> ThrowError LispVal
 cons [x, List []]         = return $ List [x]
 cons [x, DottedList xs s] = return $ DottedList (x:xs) s
 cons [x, y]               = return $ DottedList [x] y
 cons badArgList           = throwError $ NumArgs 2 badArgList
 
-eqv :: [LispVal] -> ThrowsError LispVal
+eqv :: [LispVal] -> ThrowError LispVal
 eqv [(Identifier a), (Identifier b)]       = return $ Bool $ a == b
 eqv [(Bool a), (Bool b)]                   = return $ Bool $ a == b
 eqv [(Number a), (Number b)]               = return $ Bool $ a == b
 eqv [List [], List []]                     = return $ Bool True
 eqv [List _, List _]                       = return $ Bool False
-eqv args@[Character _, Character _]        = charBoolBinop (==)
+eqv args@[Character _, Character _]        = charBoolBinop (==) args
 eqv [_, _]                                 = return $ Bool False
 eqv x                                      = throwError $ NumArgs 2 x
 
-equal :: [LispVal] -> ThrowsError LispVal
+equal :: [LispVal] -> ThrowError LispVal
 equal [(String a), (String b)]               = return $ Bool $ a == b
 equal [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x],
                                                     List $ ys ++ [y]]
 equal [(List xs), (List ys)] = return $ Bool $ ((==) `on` length) xs ys &&
-                                               (all $ zipWith eqvPair xs xs)
-  where eqvPair (x1, x2) = case eqv [x1, x2] of Left err -> False
-                                                Right (Bool val) -> val
-equal [a, b] = eqv a b
+                                               (and $ zipWith eqvPair xs ys)
+  where eqvPair x1 x2 = case eqv [x1, x2] of Left err -> False
+                                             Right (Bool val) -> val
+equal [a,b]  = eqv [a,b]
 equal x      = throwError $ NumArgs 2 x
 
+{- Assuming wrongly that Scheme is weak-typed,
+   this guide does not implement the R5RS eq/eqv/equal.
 
-numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> LispVal
+   While I have written them strictly following the standard instead.
+   For the weak-typed `equal?` function, I named it 'eqweak'(eqweak?).
+-}
+
+data Unpacker = forall a. (Eq a) => Unpacker (LispVal -> ThrowError a)
+
+unpackEquals :: LispVal -> LispVal -> Unpacker -> Bool
+unpackEquals x y (Unpacker unpack) = case do a <- unpack x
+                                             b <- unpack y
+                                             return $ a == b
+                                          `catchError` (const $ return False)
+                                     of Left a  -> undefined -- impossible
+                                        Right a -> a
+{- This function doesn't really work
+   as expect because the unpack functions
+   are strict.
+
+   Iu devas aldoni funkcioj kiel 'needStr'/'needNum'   ('_';)
+-}
+
+eqweak :: [LispVal] -> ThrowError LispVal
+eqweak [a,b] = return $ Bool $ or $ map (\f -> unpackEquals a b f) unpackers
+
+unpackers :: [Unpacker]
+unpackers = [Unpacker unpackStr
+            ,Unpacker unpackBool
+            ,Unpacker unpackNum
+            ,Unpacker unpackChar
+            ]
+
+numericBinop :: (Integer -> Integer -> Integer) ->
+                [LispVal] ->
+                ThrowError LispVal
 numericBinop op params
-  | length params > 2 = mapM unpackNum params >>= return . Number . foldl1 op
-  | otherwise         = throwError $ NumArgs 2 params
+  | length params >= 2 = mapM unpackNum params >>= return . Number . foldl1 op
+  | otherwise          = throwError $ NumArgs 2 params
 
-boolBinop :: (LispVal -> ThrowsError a) ->
+boolBinop :: (LispVal -> ThrowError a) ->
              (a -> a -> Bool) ->
              [LispVal] ->
-             ThrowsError LispVal
+             ThrowError LispVal
 boolBinop unpacker op args
   | length args /= 2 = throwError $ NumArgs 2 args
-  | otherwise = mapM unpacker args >>= \[a,b] -> return Bool $ a `op` b
+  | otherwise = case args of
+    [_,_] -> mapM unpacker args >>= \[a,b] -> return $ Bool $ a `op` b
+    xs    -> throwError $ NumArgs 2 xs
 
 
 numBoolBinop  = boolBinop unpackNum
@@ -117,20 +164,17 @@ strBoolBinop  = boolBinop unpackStr
 boolBoolBinop = boolBinop unpackBool
 charBoolBinop = boolBinop unpackChar
 
-unpackStr :: LispVal -> ThrowsError String
+unpackStr :: LispVal -> ThrowError String
 unpackStr (String s) = return s
 unpackStr x          = throwError $ TypeMismatch "string" x
 
-unpackBool :: LispVal -> ThrowsError Bool
+unpackBool :: LispVal -> ThrowError Bool
 unpackBool (Bool b)  = return b
 unpackBool x         = throwError $ TypeMismatch "boolean" x
 
-unpackBool :: LispVal -> ThrowsError Bool
-unpackBool (Character c)  = return c
-unpackBool x              = throwError $ TypeMismatch "character" x
-
-
-
+unpackChar :: LispVal -> ThrowError Char
+unpackChar (Character c)  = return c
+unpackChar x              = throwError $ TypeMismatch "character" x
 
 
 unpackNum :: LispVal -> ThrowError Integer
@@ -143,4 +187,15 @@ unpackNum (String n) = let parsed = reads n :: [(Integer, String)] in
   else fst $ parsed !! 0
 unpackNum (List [n]) = unpackNum n
 -}
-unpackNum = throwError . TypeMismatch "number"
+unpackNum x = throwError $ TypeMismatch "number" x
+
+
+str2sym :: [LispVal] -> ThrowError LispVal
+str2sym [String x] = return $ Identifier x
+str2sym [a]        = throwError $ TypeMismatch "string" a
+str2sym xs         = throwError $ NumArgs 2 xs
+
+sym2str :: [LispVal] -> ThrowError LispVal
+sym2str [Identifier x] = return $ String x
+sym2str [a]        = throwError $ TypeMismatch "symbol" a
+sym2str xs         = throwError $ NumArgs 2 xs

@@ -2,9 +2,12 @@
 module Error (LispError(..)
              ,ThrowError
              ,extractValue
-             ,trapError) where
+             ,trapError
+             ,throwError
+             ,catchError) where
 
-import Control.Monad.Error
+import Control.Monad.Except
+import Parser
 
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -20,26 +23,23 @@ instance Show LispError where
   show (NotFunction message func)    = message ++ ": " ++ show func
   show (NumArgs expected found)      = "Expected " ++ show expected ++
                                        " args; found values " ++
-                                       unwordsList found
+                                       unwords (map show found)
   show (TypeMismatch expected found) = "Invalid type: expected " ++
                                        expected ++
                                        ", found " ++ show found
   show (Parser parseErr)             = "Parse error at " ++ show parseErr
 
+{- Deprecated for Control.Monad.Except
+
 instance Error LispError where
   noMsg = Default "An error has occured"
   strMsg = Default
+-}
 
 type ThrowError = Either LispError
 
-trapError :: ThrowError a -> (LispError -> ThrowError a) -> ThrowError a
+-- trapError :: (Show a) => ThrowError a -> ThrowError a
 trapError action = action `catchError` (return . show)
 
-extractValue :: ThrowsError a -> a
+extractValue :: ThrowError a -> a
 extractValue (Right val) = val
-
-
-testError :: String -> IO (ThrowError Lispval)
-testError code = putStrLn $ case parseLispVal code of
-  Left err  -> Parser ParserError
-  Right val -> return val

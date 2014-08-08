@@ -2,27 +2,10 @@ module Evaluator where
 
 import Parser
 import Primitive
+import Error
 
 import System.Environment (getArgs)
 import Control.Monad (liftM)
-
-
-instance Show LispVal where
-  show (String xs) = show xs
-  show (Identifier x) = x
-  show (Number x) = show x
-  show (Float x) = show x
-  show (Character x) = "#\\" ++ [x]
-  show (Rational p q) = show p ++ "/" ++ show q
-  show (Complex r i) = show r ++ (if i < 0 then "-" else "+") ++
-                       show (abs i) ++ "i"
-  show (Bool True) = "#t"
-  show (Bool False) = "#f"
-  show (List xs) =  "(" ++ unwordsList xs ++ ")"
-  show (DottedList xs t) = "(" ++ unwordsList xs ++ " . " ++ show t ++ ")"
-
-unwordsList :: [LispVal] -> String
-unwordsList = unwords . map show
 
 
 
@@ -38,8 +21,8 @@ eval val@(Bool {}) = return val
 
 eval (List [Identifier "quote", val]) = return val
 eval (List [Identifier "if", cond, cons, alt]) =
-  eval val >>= \result -> case result of
-    (Bool b) -> eval if b then cons else alt
+  eval cond >>= \result -> case result of
+    (Bool b) -> eval (if b then cons else alt)
     x        -> throwError $ TypeMismatch "boolean" x  -- Exercise 4/1
 
 
@@ -68,7 +51,7 @@ testShow code = putStrLn $ case parseLispVal code of
 
 testEval :: String -> IO ()
 testEval code = putStrLn $ case evalCode code of
-    Left err -> "error parsing: " ++ show err
+    Left err -> "error: " ++ show err
     Right x  -> "eval result: " ++ show x
 
 main :: IO ()

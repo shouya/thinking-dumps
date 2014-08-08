@@ -1,4 +1,5 @@
 module Parser (LispVal(..)
+              ,ParseError
               ,parseLispVal
               ) where
 
@@ -23,6 +24,26 @@ data LispVal = Identifier String
              | Character Char  -- Exercise 5
              | String String
              | Bool Bool
+
+instance Show LispVal where
+  show (String xs) = show xs
+  show (Identifier x) = x
+  show (Number x) = show x
+  show (Float x) = show x
+  show (Character x) = "#\\" ++ [x]
+  show (Rational p q) = show p ++ "/" ++ show q
+  show (Complex r i) = show r ++ (if i < 0 then "-" else "+") ++
+                       show (abs i) ++ "i"
+  show (Bool True) = "#t"
+  show (Bool False) = "#f"
+  show (List xs) =  "(" ++ unwordsList xs ++ ")"
+  show (DottedList xs t) = "(" ++ unwordsList xs ++ " . " ++ show t ++ ")"
+
+unwordsList :: [LispVal] -> String
+unwordsList = unwords . map show
+
+
+
 
 symbol :: Parser Char
 symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
