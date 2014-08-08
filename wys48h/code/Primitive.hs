@@ -10,7 +10,9 @@ import Error
 import Parser
 
 import Data.Function (on)
-import Control.Monad (liftM)
+import Control.Monad (liftM,join)
+import Data.Char (toLower)
+
 
 primitives :: [(String, [LispVal] -> ThrowError LispVal)]
 primitives = [ -- Arithmetic functions
@@ -51,6 +53,22 @@ primitives = [ -- Arithmetic functions
              ,("eq?",    eqv)
              ,("eqv?",   eqv)
              ,("equal?", equal)
+
+              -- String functions (ex 4/4)
+             ,("make-string", makeString)
+             ,("string", stringConstructor)
+             ,("string-length", stringLength)
+             ,("string-ref", stringRef)
+             -- ,("string-set!", stringSet)       -- not able to implement yet
+             ,("string-ci=?", strBoolBinop (\a b -> (map toLower a) ==
+                                                    (map toLower b)))
+
+             ,("substring", substring)
+             ,("string-append", stringAppend)
+             ,("string->list", string2list)
+             ,("list->string", list2string)
+             -- ,("string-copy", stringCopy)
+             -- ,("string-fill!", stringFill)
 
               -- Type test functions, as Exercise 3/1 (ex!)
               {- TODO: detect wrong num of args error -}
@@ -198,7 +216,7 @@ unpackNum (List [n]) = unpackNum n
 -}
 unpackNum x = throwError $ TypeMismatch "number" x
 
-
+{- ex 4/4 : begin -}
 str2sym :: [LispVal] -> ThrowError LispVal
 str2sym [String x] = return $ Identifier x
 str2sym [a]        = throwError $ TypeMismatch "string" a
@@ -208,3 +226,55 @@ sym2str :: [LispVal] -> ThrowError LispVal
 sym2str [Identifier x] = return $ String x
 sym2str [a]        = throwError $ TypeMismatch "symbol" a
 sym2str xs         = throwError $ NumArgs 2 xs
+
+
+makeString [Number n] = return $ String (replicate (fromIntegral n) ' ')
+makeString [Number n, Character c] = return $
+                                     String (replicate (fromIntegral n) c)
+makeString [Number _,x] = throwError $ TypeMismatch "character" x
+makeString [x,_]        = throwError $ TypeMismatch "number" x
+makeString [x]          = throwError $ TypeMismatch "number" x
+makeString xs           = throwError $ NumArgs 1 xs
+
+stringConstructor xs
+  | all isChar xs = (return $ String $ map (\(Character c) -> c) xs)
+  | otherwise     = throwError $ BadSpecialForm "list of characters" (List xs)
+  where isChar x = case x of (Character _) -> True; _ -> False
+
+stringLength [String str] = return $ Number $ fromIntegral $ length str
+stringLength [x]          = throwError $ TypeMismatch "string" x
+stringLength xs           = throwError $ NumArgs 1 xs
+
+stringRef [String str, Number idx] = return $
+                                     Character (str !! (fromIntegral idx))
+stringRef [String _, x]   = throwError $ TypeMismatch "number" x
+stringRef [x, _]          = throwError $ TypeMismatch "string" x
+stringRef xs              = throwError $ NumArgs 2 xs
+
+substring args@[String str, Number s, Number e]
+  | e <= (fromIntegral $ length str) && s <= e && 0 <= s  =
+    return $ String $ drop (fromIntegral s) $ take (fromIntegral (e-s)) str
+  | otherwise = throwError $
+                BadSpecialForm "0 <= s <= e <= len(str)" (List args)
+substring [String _, Number _, x] = throwError $ TypeMismatch "number" x
+substring [String _, x, _]        = throwError $ TypeMismatch "number" x
+substring [x, _, _]               = throwError $ TypeMismatch "string" x
+substring xs = throwError $ NumArgs 3 xs
+
+stringAppend xs
+  | all isString xs = return $ String $ join $ map extractString xs
+  | otherwise       = throwError $ BadSpecialForm "list of strings" (List xs)
+  where isString x = case x of (String _) -> True; _ -> False
+        extractString x = case x of (String x) -> x
+
+string2list [String str] = return $ List $ map Character str
+string2list [x]          = throwError $ TypeMismatch "string" x
+string2list xs           = throwError $ NumArgs 1 xs
+
+list2string [List xs]
+  | all isChar xs = stringConstructor xs
+  | otherwise     = throwError $ BadSpecialForm "list of characters" (List xs)
+  where isChar x = case x of (Character _) -> True; _ -> False
+list2string [x]   = throwError $ TypeMismatch "list" x
+list2string xs    = throwError $ NumArgs 1 xs
+{- ex 4/4 : end -}
