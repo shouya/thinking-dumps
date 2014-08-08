@@ -1,5 +1,5 @@
 
-# Write yourself a Scheme in 48 hours
+# Write Yourself a Scheme in 48 Hours
 In this repo are the trials I would follow the guide to implement a
 scheme interpreter. I just want to level up my haskell skill.
 
