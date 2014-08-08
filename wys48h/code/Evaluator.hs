@@ -29,6 +29,12 @@ eval (List [Identifier "if", cond, cons, alt]) =
 {- ex 4/3 -}
 eval (List [Identifier "cond"]) = throwError $ Default "Missing clauses (cond)"
 eval (List (Identifier "cond" : xs)) = evalCondClauses xs
+{- ex 4/3 -}
+eval (List [Identifier "case", _]) = throwError $ Default "Missing clauses (case)"
+eval (List [Identifier "case"]) = throwError $ Default "Missing clauses (case)"
+eval (List (Identifier "case" : x : cs)) =
+  case eval x of Left err  -> throwError err
+                 Right val -> evalCaseClauses val cs
 
 {-
 eval
@@ -52,6 +58,7 @@ apply func args = case lookup func primitives of
 evalProgn :: [LispVal] -> ThrowError LispVal
 evalProgn = foldl (\c x -> c >> eval x) (return $ List [])
 
+{- ex 4/3 -}
 evalCondClauses :: [LispVal] -> ThrowError LispVal
 evalCondClauses [] = return $ List []
 evalCondClauses (List (Identifier "else" : Identifier "=>" : [x]):_) = eval x
@@ -61,7 +68,6 @@ evalCondClauses (List (cond : Identifier "=>" : [x]) : rest) =
     Bool True  -> eval x
     Bool False -> evalCondClauses rest
     x          -> throwError $ TypeMismatch "boolean" x
-
 evalCondClauses (List (cond : xs) : rest) =
   eval cond >>= \result -> case result of
     Bool True  -> evalProgn xs
@@ -69,6 +75,18 @@ evalCondClauses (List (cond : xs) : rest) =
     x          -> throwError $ TypeMismatch "boolean" x
 evalCondClauses x = throwError $ BadSpecialForm "Unrecognized Special Form"
                                                 (List x)
+{- ex 4/3 -}
+evalCaseClauses :: LispVal -> [LispVal] -> ThrowError LispVal
+evalCaseClauses x [] = return $ List []
+evalCaseClauses x (List (Identifier "else" : xs) : _) = evalProgn xs
+evalCaseClauses x (List (List xs : cons) : rest)    =
+  if matched x xs then evalProgn cons else evalCaseClauses x rest
+  where matched val vals = any (\val' ->
+                                 case eval (List [Identifier "eqv?", val, val']) of
+                                   Right (Bool True) -> True
+                                   _                 -> False) vals
+
+
 
 evalCode :: String -> ThrowError LispVal
 evalCode code = case parseLispVal code of
