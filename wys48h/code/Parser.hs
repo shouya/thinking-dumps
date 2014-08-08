@@ -11,7 +11,7 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import System.Environment
 
 import Data.Char (isDigit)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Numeric (readHex, readOct, readFloat)
 
 data LispVal = Identifier String
@@ -72,20 +72,19 @@ parseString :: Parser LispVal
 parseString = liftM String (char '"' *> many foo <* char '"')
   where foo =  try bar
            <|> char '\\'
-           <|> (noneOf "\"")
+           <|> noneOf "\""
         bar = do char '\\'
                  x <- oneOf (map fst escapingTable)
                  return $ fromJust $ lookup x escapingTable
 
 
 nameToChar :: String -> Char
-nameToChar xs = case lookup xs charNameTable of
-  Just c  -> c
-  Nothing -> error $ "No character names '" ++ xs ++ "' found!"
+nameToChar xs = fromMaybe (error $ "No character names '" ++ xs ++ "' found!")
+                          (lookup xs charNameTable)
 
 parseIdentifier :: Parser LispVal
 parseIdentifier = do
-  first  <- (symbol <|> letter)
+  first  <- symbol <|> letter
   rest <- many (symbol <|> alphaNum <|> char '\\') -- '\\' is for char syntax
   let (x:xs) = rest
   return $ if first == '#' then
@@ -100,10 +99,10 @@ parseIdentifier = do
            else Identifier (first : rest)
 
 parseSign :: Parser Char
-parseSign = option '+' $ (char '-' <|> char '+')
+parseSign = option '+' (char '-' <|> char '+')
 
 signify :: (Num a) => Char -> a -> a
-signify '-' a = (-a)
+signify '-' a = -a
 signify '+' a = a
 signify _ _ = error "invalid sign"
 
@@ -135,7 +134,7 @@ parseFloat = do sign <- parseSign
                 return $ signify sign num
 
 parseUnsignedFloat :: Parser Double
-parseUnsignedFloat = (try parseExponential <|> parseDecimal)
+parseUnsignedFloat = try parseExponential <|> parseDecimal
 
 
 
@@ -148,8 +147,8 @@ parseDecimal = do ipart <- parseNumStr
 
 
 parseExponential :: Parser Double
-parseExponential = do bpart <- (try parseDecimal <|>
-                                liftM fromIntegral parseInteger)
+parseExponential = do bpart <- try parseDecimal <|>
+                               liftM fromIntegral parseInteger
                       oneOf "eE"
                       epart <- liftM fromIntegral parseInteger
                       return (bpart * 10 ** epart)

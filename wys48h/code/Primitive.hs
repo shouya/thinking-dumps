@@ -10,6 +10,7 @@ import Error
 import Parser
 
 import Data.Function (on)
+import Control.Monad (liftM)
 
 primitives :: [(String, [LispVal] -> ThrowError LispVal)]
 primitives = [ -- Arithmetic functions
@@ -88,9 +89,9 @@ cons [x, y]               = return $ DottedList [x] y
 cons badArgList           = throwError $ NumArgs 2 badArgList
 
 eqv :: [LispVal] -> ThrowError LispVal
-eqv [(Identifier a), (Identifier b)]       = return $ Bool $ a == b
-eqv [(Bool a), (Bool b)]                   = return $ Bool $ a == b
-eqv [(Number a), (Number b)]               = return $ Bool $ a == b
+eqv [Identifier a, Identifier b]           = return $ Bool $ a == b
+eqv [Bool a, Bool b]                       = return $ Bool $ a == b
+eqv [Number a, Number b]                   = return $ Bool $ a == b
 eqv [List [], List []]                     = return $ Bool True
 eqv [List _, List _]                       = return $ Bool False
 eqv args@[Character _, Character _]        = charBoolBinop (==) args
@@ -98,11 +99,11 @@ eqv [_, _]                                 = return $ Bool False
 eqv x                                      = throwError $ NumArgs 2 x
 
 equal :: [LispVal] -> ThrowError LispVal
-equal [(String a), (String b)]               = return $ Bool $ a == b
-equal [(DottedList xs x), (DottedList ys y)] = eqv [List $ xs ++ [x],
+equal [String a, String b]               = return $ Bool $ a == b
+equal [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x],
                                                     List $ ys ++ [y]]
-equal [(List xs), (List ys)] = return $ Bool $ ((==) `on` length) xs ys &&
-                                               (and $ zipWith eqvPair xs ys)
+equal [List xs, List ys] = return $ Bool $ ((==) `on` length) xs ys &&
+                                           and (zipWith eqvPair xs ys)
   where eqvPair x1 x2 = case eqv [x1, x2] of Left err -> False
                                              Right (Bool val) -> val
 equal [a,b]  = eqv [a,b]
@@ -121,7 +122,7 @@ unpackEquals :: LispVal -> LispVal -> Unpacker -> Bool
 unpackEquals x y (Unpacker unpack) = case do a <- unpack x
                                              b <- unpack y
                                              return $ a == b
-                                          `catchError` (const $ return False)
+                                          `catchError` const (return False)
                                      of Left a  -> undefined -- impossible
                                         Right a -> a
 {- This function doesn't really work
@@ -132,7 +133,7 @@ unpackEquals x y (Unpacker unpack) = case do a <- unpack x
 -}
 
 eqweak :: [LispVal] -> ThrowError LispVal
-eqweak [a,b] = return $ Bool $ or $ map (\f -> unpackEquals a b f) unpackers
+eqweak [a,b] = return $ Bool $ any (unpackEquals a b) unpackers
 
 unpackers :: [Unpacker]
 unpackers = [Unpacker unpackStr
@@ -145,7 +146,7 @@ numericBinop :: (Integer -> Integer -> Integer) ->
                 [LispVal] ->
                 ThrowError LispVal
 numericBinop op params
-  | length params >= 2 = mapM unpackNum params >>= return . Number . foldl1 op
+  | length params >= 2 = liftM (Number . foldl1 op) $ mapM unpackNum params
   | otherwise          = throwError $ NumArgs 2 params
 
 boolBinop :: (LispVal -> ThrowError a) ->
