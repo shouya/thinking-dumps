@@ -88,6 +88,7 @@ cons [x, DottedList xs s] = return $ DottedList (x:xs) s
 cons [x, y]               = return $ DottedList [x] y
 cons badArgList           = throwError $ NumArgs 2 badArgList
 
+
 eqv :: [LispVal] -> ThrowError LispVal
 eqv [Identifier a, Identifier b]           = return $ Bool $ a == b
 eqv [Bool a, Bool b]                       = return $ Bool $ a == b
