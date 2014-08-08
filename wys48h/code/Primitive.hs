@@ -100,12 +100,11 @@ eqv x                                      = throwError $ NumArgs 2 x
 
 equal :: [LispVal] -> ThrowError LispVal
 equal [String a, String b]               = return $ Bool $ a == b
-equal [DottedList xs x, DottedList ys y] = eqv [List $ xs ++ [x],
-                                                    List $ ys ++ [y]]
+equal [DottedList xs x, DottedList ys y] = equal [List (x:xs), List (y:ys)]
 equal [List xs, List ys] = return $ Bool $ ((==) `on` length) xs ys &&
-                                           and (zipWith eqvPair xs ys)
-  where eqvPair x1 x2 = case eqv [x1, x2] of Left err -> False
-                                             Right (Bool val) -> val
+                                           and (zipWith equalPair xs ys)
+  where equalPair x1 x2 = case equal [x1, x2] of Left err -> False
+                                                 Right (Bool val) -> val
 equal [a,b]  = eqv [a,b]
 equal x      = throwError $ NumArgs 2 x
 
@@ -133,7 +132,15 @@ unpackEquals x y (Unpacker unpack) = case do a <- unpack x
 -}
 
 eqweak :: [LispVal] -> ThrowError LispVal
-eqweak [a,b] = return $ Bool $ any (unpackEquals a b) unpackers
+{- ex 4/2 -}
+eqweak [List xs, List ys] = return $ Bool $ ((==) `on` length) xs ys &&
+                                            and (zipWith eqwPair xs ys)
+  where eqwPair x y = case eqweak [x, y] of Left _ -> False
+                                            Right (Bool v) -> v
+{- ex 4/2 -}
+eqweak [DottedList xs x, DottedList ys y] = eqweak [List (x:xs)
+                                                   ,List (y:ys)] -- ex 4/2
+eqweak [a,b]   = return $ Bool $ any (unpackEquals a b) unpackers
 
 unpackers :: [Unpacker]
 unpackers = [Unpacker unpackStr
