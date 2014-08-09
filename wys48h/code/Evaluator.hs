@@ -1,4 +1,6 @@
-module Evaluator where
+module Evaluator (eval
+                 ,apply
+                 ,evalCode) where
 
 import Parser
 import Primitive
