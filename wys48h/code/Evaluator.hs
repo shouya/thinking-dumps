@@ -8,46 +8,52 @@ import Error
 
 import System.Environment (getArgs)
 import Control.Monad (liftM)
+import Control.Monad.State.Lazy
+import Data.IORef
 
 
+type Env = IORef [(String, IORef LispVal)]
 
 
+nullEnv :: IO Env
+nullEnv = newIORef []
 
-eval :: LispVal -> ThrowError LispVal
-eval val@(String {}) = return val
-eval val@(Number {}) = return val
-eval val@(Float {}) = return val
-eval val@(Rational {}) = return val
-eval val@(Complex {}) = return val
-eval val@(Bool {}) = return val
+eval :: Env -> LispVal -> IOThrowError LispVal
+eval _ val@(String {}) = return val
+eval _ val@(Number {}) = return val
+eval _ val@(Float {}) = return val
+eval _ val@(Rational {}) = return val
+eval _ val@(Complex {}) = return val
+eval _ val@(Bool {}) = return val
 
-eval (List [Identifier "quote", val]) = return val
-eval (List [Identifier "if", cond, cons, alt]) =
-  eval cond >>= \result -> case result of
-    Bool True  -> eval cons
-    Bool False -> eval alt
+eval _ (List [Identifier "quote", val]) = return val
+eval e (List [Identifier "if", cond, cons, alt]) =
+  eval e cond >>= \result -> case result of
+    Bool True  -> eval e cons
+    Bool False -> eval e alt
     x        -> throwError $ TypeMismatch "boolean" x  -- Exercise 4/1
 
 {- ex 4/3 -}
-eval (List [Identifier "cond"]) = throwError $ Default "Missing clauses (cond)"
-eval (List (Identifier "cond" : xs)) = evalCondClauses xs
+eval _ (List [Identifier "cond"]) = throwError $ Default "Missing clauses (cond)"
+eval e (List (Identifier "cond" : xs)) = evalCondClauses e xs
 {- ex 4/3 -}
-eval (List [Identifier "case", _]) = throwError $ Default "Missing clauses (case)"
-eval (List [Identifier "case"]) = throwError $ Default "Missing clauses (case)"
-eval (List (Identifier "case" : x : cs)) =
-  case eval x of Left err  -> throwError err
-                 Right val -> evalCaseClauses val cs
+eval _ (List [Identifier "case", _]) =
+  throwError $ Default "Missing clauses (case)"
+eval _ (List [Identifier "case"]) = throwError $ Default "Missing clauses (case)"
+eval e (List (Identifier "case" : x : cs)) = do val <- eval e x
+                                                evalCaseClauses e val cs
 
 {-
 eval
 eval (List ((Identifier "cond"):x:xs)) =
 -}
 
-eval (List ((Identifier "progn"):xs)) = evalProgn xs
+eval e (List ((Identifier "progn"):xs)) = evalProgn e xs
 
 
-eval (List (Identifier func : args)) = mapM eval args >>= apply func
-eval x = throwError $ BadSpecialForm "Unrecognized Special Form" x
+eval e (List (Identifier func : args)) =
+  mapM (eval e) args >>= liftThrows . apply func
+eval _ x = throwError $ BadSpecialForm "Unrecognized Special Form" x
 
 
 
@@ -57,43 +63,48 @@ apply func args = case lookup func primitives of
   Nothing -> throwError $ NotFunction "Unrecognized primitive function" func
 
 
-evalProgn :: [LispVal] -> ThrowError LispVal
-evalProgn = foldl (\c x -> c >> eval x) (return $ List [])
+evalProgn :: Env -> [LispVal] -> IOThrowError LispVal
+evalProgn e = foldl (\c x -> c >> eval e x) (return $ List [])
 
 {- ex 4/3 -}
-evalCondClauses :: [LispVal] -> ThrowError LispVal
-evalCondClauses [] = return $ List []
-evalCondClauses (List (Identifier "else" : Identifier "=>" : [x]):_) = eval x
-evalCondClauses (List (Identifier "else" : xs):_) = evalProgn xs
-evalCondClauses (List (cond : Identifier "=>" : [x]) : rest) =
-  eval cond >>= \result -> case result of
-    Bool True  -> eval x
-    Bool False -> evalCondClauses rest
+evalCondClauses :: Env -> [LispVal] -> IOThrowError LispVal
+evalCondClauses _ [] = return $ List []
+evalCondClauses e (List (Identifier "else" : Identifier "=>" : [x]):_) =
+  eval e x
+evalCondClauses e (List (Identifier "else" : xs):_) = evalProgn e xs
+evalCondClauses e (List (cond : Identifier "=>" : [x]) : rest) =
+  eval e cond >>= \result -> case result of
+    Bool True  -> eval e x
+    Bool False -> evalCondClauses e rest
     x          -> throwError $ TypeMismatch "boolean" x
-evalCondClauses (List (cond : xs) : rest) =
-  eval cond >>= \result -> case result of
-    Bool True  -> evalProgn xs
-    Bool False -> evalCondClauses rest
+evalCondClauses e (List (cond : xs) : rest) =
+  eval e cond >>= \result -> case result of
+    Bool True  -> evalProgn e xs
+    Bool False -> evalCondClauses e rest
     x          -> throwError $ TypeMismatch "boolean" x
-evalCondClauses x = throwError $ BadSpecialForm "Unrecognized Special Form"
+evalCondClauses _ x = throwError $ BadSpecialForm "Unrecognized Special Form"
                                                 (List x)
 {- ex 4/3 -}
-evalCaseClauses :: LispVal -> [LispVal] -> ThrowError LispVal
-evalCaseClauses x [] = return $ List []
-evalCaseClauses x (List (Identifier "else" : xs) : _) = evalProgn xs
-evalCaseClauses x (List (List xs : cons) : rest)    =
-  if matched x xs then evalProgn cons else evalCaseClauses x rest
-  where matched val vals = any (\val' ->
-                                 case eval (List [Identifier "eqv?", val, val']) of
-                                   Right (Bool True) -> True
-                                   _                 -> False) vals
+evalCaseClauses :: Env -> LispVal -> [LispVal] -> IOThrowError LispVal
+evalCaseClauses _ x [] = return $ List []
+evalCaseClauses e x (List (Identifier "else" : xs) : _) = evalProgn e xs
+evalCaseClauses e x (List (List xs : cons) : rest)      = do
+  result <- matched x xs
+  if result then evalProgn e cons else evalCaseClauses e x rest
+  where matched val vals = liftM or (sequence $ map (eqv val) vals)
+        eqv v1 v2 = do rst <- evalEqv v1 v2 `catchError`
+                              const (return $ Bool False)
+                       case rst of Bool a -> return a
+                                   _      -> return False
+        evalEqv a b = eval e (List [Identifier "eqv?", a, b])
 
 
 
-evalCode :: String -> ThrowError LispVal
-evalCode code = case parseLispVal code of
+
+evalCode :: Env -> String -> IOThrowError LispVal
+evalCode e code = case parseLispVal code of
   Left err  -> throwError $ Parser err
-  Right val -> eval val
+  Right val -> eval e val
 
 
 testShow :: String -> IO ()
@@ -102,9 +113,10 @@ testShow code = putStrLn $ case parseLispVal code of
     Right x  -> "showing: " ++ show x
 
 testEval :: String -> IO ()
-testEval code = putStrLn $ case evalCode code of
-    Left err -> "error: " ++ show err
-    Right x  -> "eval result: " ++ show x
+testEval code = do
+  env <- nullEnv
+  (evalCode env code >>= \val -> return ("eval result: " ++ show val))
+    `catchError` (\err -> "error: " ++ show err)
 
 main :: IO ()
 main = getArgs >>= testEval . head

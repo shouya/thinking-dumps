@@ -1,13 +1,17 @@
 
 module Error (LispError(..)
              ,ThrowError
+             ,IOThrowError
              ,extractValue
              ,trapError
              ,throwError
+             ,liftThrows
              ,catchError) where
 
 import Control.Monad.Except
+
 import Parser
+
 
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
@@ -37,6 +41,12 @@ instance Error LispError where
 -}
 
 type ThrowError = Either LispError
+type IOThrowError = ExceptT LispError IO
+
+
+liftThrows :: ThrowError a -> IOThrowError a
+liftThrows (Left a)  = throwError a
+liftThrows (Right a) = return a
 
 -- trapError :: (Show a) => ThrowError a -> ThrowError a
 trapError action = action `catchError` (return . show)
