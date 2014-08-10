@@ -8,14 +8,13 @@ module Evaluator (eval
 import Parser
 import Primitive
 import Error
+import Internal
 
 import System.Environment (getArgs)
 import Control.Monad (liftM)
 import Control.Monad.State.Lazy
 import Data.IORef
 
-
-type Env = IORef [(String, IORef LispVal)]
 
 
 nullEnv :: IO Env
