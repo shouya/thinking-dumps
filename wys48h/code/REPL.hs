@@ -4,7 +4,7 @@ module REPL where
 import System.IO
 import System.Environment
 
-import Control.Monad (liftM)
+import Control.Monad (liftM, join)
 
 import Evaluator
 import Error
@@ -18,12 +18,12 @@ flushStr str = putStr str >> hFlush stdout
 readPrompt :: String -> IO String
 readPrompt prompt = flushStr prompt >> getLine
 
-evalString :: String -> IO String
-evalString expr = return $ extractValue $
-                  trapError (liftM show $ evalCode expr)
+evalString :: Env -> String -> IO String
+evalString env expr = runIOThrows $ (evalCode env expr >>= return . show)
 
-evalAndPrint :: String -> IO ()
-evalAndPrint expr = evalString expr >>= putStrLn
+evalAndPrint :: Env -> String -> IO ()
+evalAndPrint env expr = join $ liftM putStrLn $ evalString env expr
+
 
 until_ :: Monad m => (a -> Bool) -> m a -> (a -> m ()) -> m ()
 until_ pred prompt action = do
@@ -33,11 +33,11 @@ until_ pred prompt action = do
     else action result >> until_ pred prompt action
 
 runRepl :: IO ()
-runRepl = until_ (== "quit") (readPrompt "> ") evalAndPrint
+runRepl = nullEnv >>= until_ (== "quit") (readPrompt "> ") . evalAndPrint
 
 main :: IO ()
 main = do args <- getArgs
           case length args of
             0 -> runRepl
-            1 -> evalAndPrint (head args)
+            1 -> nullEnv >>= flip evalAndPrint (head args)
             otherwise -> putStrLn "program takes 0 or 1 argument."

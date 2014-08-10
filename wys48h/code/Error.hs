@@ -6,7 +6,9 @@ module Error (LispError(..)
              ,trapError
              ,throwError
              ,liftThrows
-             ,catchError) where
+             ,catchError
+             ,runExceptT
+             ,runIOThrows) where
 
 import Control.Monad.Except
 
@@ -48,7 +50,12 @@ liftThrows :: ThrowError a -> IOThrowError a
 liftThrows (Left a)  = throwError a
 liftThrows (Right a) = return a
 
--- trapError :: (Show a) => ThrowError a -> ThrowError a
+
+runIOThrows :: IOThrowError String -> IO String
+runIOThrows action = runExceptT (trapError action) >>= return . extractValue
+
+
+-- trapError :: (Monad m) => m String -> m String
 trapError action = action `catchError` (return . show)
 
 extractValue :: ThrowError a -> a

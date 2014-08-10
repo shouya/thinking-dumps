@@ -1,6 +1,9 @@
 module Evaluator (eval
                  ,apply
-                 ,evalCode) where
+                 ,evalCode
+                 ,nullEnv
+                 ,Env
+                 ) where
 
 import Parser
 import Primitive
@@ -113,10 +116,11 @@ testShow code = putStrLn $ case parseLispVal code of
     Right x  -> "showing: " ++ show x
 
 testEval :: String -> IO ()
-testEval code = do
-  env <- nullEnv
-  (evalCode env code >>= \val -> return ("eval result: " ++ show val))
-    `catchError` (\err -> "error: " ++ show err)
+testEval code = do env <- nullEnv
+                   rst <- runExceptT $ evalCode env code
+                   putStrLn $ "eval result: " ++ show rst
+                `catchError` (\err -> putStrLn $ "error: " ++ show err)
+
 
 main :: IO ()
 main = getArgs >>= testEval . head
