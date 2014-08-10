@@ -17,8 +17,10 @@ import Data.IORef
 
 
 
+-- TODO: Add primitive functions
 nullEnv :: IO Env
 nullEnv = newIORef []
+
 
 isBound :: Env -> String -> IO Bool
 isBound e v = readIORef e >>= return . maybe False (const True) . lookup v
@@ -92,16 +94,48 @@ eval (List ((Identifier "cond"):x:xs)) =
 eval e (List ((Identifier "progn"):xs)) = evalProgn e xs
 
 
-eval e (List (Identifier func : args)) =
-  mapM (eval e) args >>= liftThrows . apply func
+eval e (List (Identifier "lambda" : List args : body)) =
+  return $ Func { params = map (\(Identifier a) -> a) args
+                , vararg = Nothing
+                , body = body
+                , closure = e }
+eval e (List (Identifier "lambda" : DottedList args va : body)) =
+  return $ Func { params = map (\(Identifier a) -> a) args
+                , vararg = let (Identifier a) = va in Just a
+                , body = body
+                , closure = e }
+
+
+
+eval e (List (func : args)) = do
+  f <- eval e func
+  a <- mapM (eval e) args
+  apply f a
+
 eval _ x = throwError $ BadSpecialForm "Unrecognized Special Form" x
 
 
+apply :: LispVal -> [LispVal] -> IOThrowError LispVal
+apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (Func p v b c) args = do
+  let (a1,a2) = splitAt (length p) args
+  if length a2 > 0 && v == Nothing
+    then throwError $ NumArgs (fromIntegral $ length p) args
+    else do env <- liftIO $ do pa <- sequence $ zipWith consPair p a1
+                               pa' <- maybe (return pa) (consVarArg pa a2) v
+                               env <- readIORef c
+                               newIORef (pa' ++ env)
+            evalProgn env b
+  where consPair p' a' = do a'' <- newIORef a'
+                            return (p', a'')
+        consVarArg pa a v' = do a' <- newIORef $ List a
+                                return $ (v', a') : pa
 
-apply :: String -> [LispVal] -> ThrowError LispVal
-apply func args = case lookup func primitives of
-  Just f  -> f args
-  Nothing -> throwError $ NotFunction "Unrecognized primitive function" func
+
+
+
+
+
 
 
 evalProgn :: Env -> [LispVal] -> IOThrowError LispVal
