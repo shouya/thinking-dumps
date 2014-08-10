@@ -58,6 +58,7 @@ eval _ val@(Float {}) = return val
 eval _ val@(Rational {}) = return val
 eval _ val@(Complex {}) = return val
 eval _ val@(Bool {}) = return val
+eval e (Identifier var) = getVar e var
 
 eval _ (List [Identifier "quote", val]) = return val
 eval e (List [Identifier "if", cond, cons, alt]) =
@@ -65,6 +66,12 @@ eval e (List [Identifier "if", cond, cons, alt]) =
     Bool True  -> eval e cons
     Bool False -> eval e alt
     x        -> throwError $ TypeMismatch "boolean" x  -- Exercise 4/1
+
+
+eval env (List [Identifier "set!", Identifier var, form]) =
+  eval env form >>= setVar env var
+eval env (List [Identifier "define", Identifier var, form]) =
+  eval env form >>= defineVar env var
 
 {- ex 4/3 -}
 eval _ (List [Identifier "cond"]) = throwError $ Default "Missing clauses (cond)"
@@ -80,6 +87,8 @@ eval e (List (Identifier "case" : x : cs)) = do val <- eval e x
 eval
 eval (List ((Identifier "cond"):x:xs)) =
 -}
+
+
 
 eval e (List ((Identifier "progn"):xs)) = evalProgn e xs
 
