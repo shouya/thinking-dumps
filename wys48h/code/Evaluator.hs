@@ -21,6 +21,36 @@ type Env = IORef [(String, IORef LispVal)]
 nullEnv :: IO Env
 nullEnv = newIORef []
 
+isBound :: Env -> String -> IO Bool
+isBound e v = readIORef e >>= return . maybe False (const True) . lookup v
+
+getVar :: Env -> String -> IOThrowError LispVal
+getVar e var = do env <- liftIO $ readIORef e
+                  maybe (throwError $ UnboundVar "getting" var)
+                        (liftIO . readIORef)
+                        (lookup var env)
+
+defineVar :: Env -> String -> LispVal -> IOThrowError LispVal
+defineVar e var val = do
+  defined <- liftIO $ isBound e var
+  if defined
+    then setVar e var val >> return ()
+    else liftIO $ do refVal <- newIORef val
+                     modifyIORef e ((var,refVal):)
+  return val
+
+
+modifyVar :: Env -> String -> (LispVal -> LispVal) -> IOThrowError ()
+modifyVar e var f = do
+  env <- liftIO $ readIORef e
+  maybe (throwError $ UnboundVar "setting" var)
+    (liftIO . flip modifyIORef f)
+    (lookup var env)
+  return ()
+
+setVar :: Env -> String -> LispVal -> IOThrowError LispVal
+setVar e var val = modifyVar e var (const val) >> return val
+
 eval :: Env -> LispVal -> IOThrowError LispVal
 eval _ val@(String {}) = return val
 eval _ val@(Number {}) = return val
