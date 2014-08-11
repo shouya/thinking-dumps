@@ -33,11 +33,11 @@ until_ pred prompt action = do
     else action result >> until_ pred prompt action
 
 runRepl :: IO ()
-runRepl = nullEnv >>= until_ (== "quit") (readPrompt "> ") . evalAndPrint
+runRepl = primitiveEnv >>= until_ (== "quit") (readPrompt "> ") . evalAndPrint
 
 main :: IO ()
 main = do args <- getArgs
           case length args of
             0 -> runRepl
-            1 -> nullEnv >>= flip evalAndPrint (head args)
+            1 -> primitiveEnv >>= flip evalAndPrint (head args)
             otherwise -> putStrLn "program takes 0 or 1 argument."

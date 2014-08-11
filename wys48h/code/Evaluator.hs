@@ -2,6 +2,7 @@ module Evaluator (eval
                  ,apply
                  ,evalCode
                  ,nullEnv
+                 ,primitiveEnv
                  ,Env
                  ) where
 
@@ -11,8 +12,8 @@ import Error
 import Internal
 
 import System.Environment (getArgs)
-import Control.Monad (liftM)
-import Control.Monad.State.Lazy
+import Control.Monad (liftM,liftM2,foldM)
+import Control.Monad.IO.Class (liftIO)
 import Data.IORef
 
 
@@ -20,6 +21,13 @@ import Data.IORef
 -- TODO: Add primitive functions
 nullEnv :: IO Env
 nullEnv = newIORef []
+
+
+primitiveEnv :: IO Env
+primitiveEnv = nullEnv >>= flip (foldM (superUncurry addBinding))
+                                (map pack primitives)
+  where pack (var, fun) = (var, PrimitiveFunc fun)
+        superUncurry f a (b,c) = f a b c
 
 
 isBound :: Env -> String -> IO Bool
@@ -37,7 +45,7 @@ defineVar e var val = do
   if defined
     then setVar e var val >> return ()
     else liftIO $ do refVal <- newIORef val
-                     modifyIORef e ((var,refVal):)
+                     modifyIORef' e ((var,refVal):)
   return val
 
 
@@ -45,12 +53,17 @@ modifyVar :: Env -> String -> (LispVal -> LispVal) -> IOThrowError ()
 modifyVar e var f = do
   env <- liftIO $ readIORef e
   maybe (throwError $ UnboundVar "setting" var)
-    (liftIO . flip modifyIORef f)
+    (liftIO . flip modifyIORef' f)
     (lookup var env)
   return ()
 
 setVar :: Env -> String -> LispVal -> IOThrowError LispVal
 setVar e var val = modifyVar e var (const val) >> return val
+
+addBinding :: Env -> String -> LispVal -> IO Env
+addBinding env var val = liftM2 (:) (liftM ((,) var) (newIORef val))
+                                    (readIORef env) >>= newIORef
+
 
 eval :: Env -> LispVal -> IOThrowError LispVal
 eval _ val@(String {}) = return val
@@ -130,11 +143,6 @@ apply (Func p v b c) args = do
                             return (p', a'')
         consVarArg pa a v' = do a' <- newIORef $ List a
                                 return $ (v', a') : pa
-
-
-
-
-
 
 
 
