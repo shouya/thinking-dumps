@@ -15,13 +15,6 @@ import Control.Monad.Except
 import Internal
 import Parser
 
-type IOThrowError = ExceptT LispError IO
-
-
-liftThrows :: ThrowError a -> IOThrowError a
-liftThrows (Left a)  = throwError a
-liftThrows (Right a) = return a
-
 
 runIOThrows :: IOThrowError String -> IO String
 runIOThrows action = runExceptT (trapError action) >>= return . extractValue

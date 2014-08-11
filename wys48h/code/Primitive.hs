@@ -3,7 +3,8 @@
              RankNTypes,
              ImpredicativeTypes #-}
 
-module Primitive (primitives) where
+module Primitive (primitives
+                 ,ioprimitives) where
 
 import PrimitiveTH (predicateOp)
 import Error
@@ -12,6 +13,10 @@ import Parser
 import Data.Function (on)
 import Control.Monad (liftM,join)
 import Data.Char (toLower)
+
+import System.IO
+import Control.Monad.IO.Class (liftIO)
+
 
 
 primitives :: [(String, [LispVal] -> ThrowError LispVal)]
@@ -85,6 +90,17 @@ primitives = [ -- Arithmetic functions
              ,("string->symbol", str2sym)
              ]
 
+
+ioprimitives :: [(String, [LispVal] -> IOThrowError LispVal)]
+ioprimitives = [
+--    ("apply", applyProc)
+    ("open-input-file", makePort ReadMode)
+  , ("open-output-file", makePort WriteMode)
+  , ("close-input-port", closePort)
+  , ("close-output-port", closePort)
+  , ("read", readProc)
+  , ("write", writeProc)
+  ]
 
 
 car :: [LispVal] -> ThrowError LispVal
@@ -278,3 +294,20 @@ list2string [List xs]
 list2string [x]   = throwError $ TypeMismatch "list" x
 list2string xs    = throwError $ NumArgs 1 xs
 {- ex 4/4 : end -}
+
+
+
+makePort :: IOMode -> [LispVal] -> IOThrowError LispVal
+makePort mode [String filename] = liftM Port $ liftIO $ openFile filename mode
+
+closePort :: [LispVal] -> IOThrowError LispVal
+closePort [Port p] = liftIO $ hClose p >> (return $ Bool True)
+closePort _        = return $ Bool False
+
+readProc :: [LispVal] -> IOThrowError LispVal
+readProc []       = readProc [Port stdin]
+readProc [Port p] = liftIO (hGetLine p >>= return . String)
+
+writeProc :: [LispVal] -> IOThrowError LispVal
+writeProc [o] = writeProc [o, Port stdout]
+writeProc [o, Port p] = liftIO (hPrint p o >> return (List []))

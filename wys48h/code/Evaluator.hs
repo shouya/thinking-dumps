@@ -25,8 +25,10 @@ nullEnv = newIORef []
 
 primitiveEnv :: IO Env
 primitiveEnv = nullEnv >>= flip (foldM (superUncurry addBinding))
-                                (map pack primitives)
+                                ((map pack primitives) ++
+                                 (map packio ioprimitives))
   where pack (var, fun) = (var, PrimitiveFunc fun)
+        packio (var, fun) = (var, IOFunc fun)
         superUncurry f a (b,c) = f a b c
 
 
@@ -127,9 +129,9 @@ eval e (List (func : args)) = do
 
 eval _ x = throwError $ BadSpecialForm "Unrecognized Special Form" x
 
-
 apply :: LispVal -> [LispVal] -> IOThrowError LispVal
 apply (PrimitiveFunc func) args = liftThrows $ func args
+apply (IOFunc func) args = func args
 apply (Func p v b c) args = do
   let (a1,a2) = splitAt (length p) args
   if length a2 > 0 && v == Nothing
@@ -144,10 +146,10 @@ apply (Func p v b c) args = do
         consVarArg pa a v' = do a' <- newIORef $ List a
                                 return $ (v', a') : pa
 
-
-
 evalProgn :: Env -> [LispVal] -> IOThrowError LispVal
 evalProgn e = foldl (\c x -> c >> eval e x) (return $ List [])
+
+
 
 {- ex 4/3 -}
 evalCondClauses :: Env -> [LispVal] -> IOThrowError LispVal

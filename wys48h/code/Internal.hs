@@ -1,7 +1,11 @@
 module Internal where
 
 import Text.ParserCombinators.Parsec (ParseError)
-import Data.IORef (IORef)
+import Data.IORef (IORef,newIORef,readIORef)
+
+import Control.Monad.Except (throwError,ExceptT)
+import Control.Monad.IO.Class (liftIO)
+import System.IO (Handle)
 
 data LispVal = Identifier String
              | List [LispVal]
@@ -14,6 +18,8 @@ data LispVal = Identifier String
              | String String
              | Bool Bool
              | PrimitiveFunc ([LispVal] -> ThrowError LispVal)
+             | IOFunc ([LispVal] -> IOThrowError LispVal)
+             | Port Handle
              | Func { params :: [String]
                     , vararg :: Maybe String
                     , body :: [LispVal]
@@ -36,10 +42,13 @@ instance Show LispVal where
   show (Func p v _ _) = "(lambda (" ++ args p v ++ ") ...)"
     where args p (Just x) = unwords p ++ " . " ++ x
           args p Nothing  = unwords p
+  show (IOFunc _) = "<IO primitive procedure>"
+  show (Port _)   = "<IO port>"
+
+
 
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map show
-
 
 
 data LispError = NumArgs Integer [LispVal]
@@ -70,6 +79,12 @@ instance Error LispError where
 -}
 
 type ThrowError = Either LispError
+type IOThrowError = ExceptT LispError IO
+
+liftThrows :: ThrowError a -> IOThrowError a
+liftThrows (Left a)  = throwError a
+liftThrows (Right a) = return a
+
 
 
 type Env = IORef [(String, IORef LispVal)]
