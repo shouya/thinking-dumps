@@ -1,7 +1,6 @@
 Module Chap4.
 
 Require Import Relations.
-(* Require Import Coq.Setoids.Setoid. (* for the use of rewrite *) *)
 
 (* Ordered Series *)
 
