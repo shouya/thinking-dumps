@@ -139,3 +139,7 @@ Definition many_one {X} (R : relation X) : Prop :=
   forall x y, R x y -> forall y', ~(R x y').
 Definition one_one {X} (R : relation X) : Prop :=
   many_one R /\ one_many R.
+
+
+Definition domain {X} (R : relation X) := {x | forall y, R x y }.
+Definition converse_domain {X} (R : relation X) := {y | forall x, R x y }.
