@@ -31,7 +31,7 @@ relation in question to y, there is no other term x' which also has the
 relation to y.
 *)
 Definition one_many {X} (R : relation X) : Prop :=
-  forall x y, R x y -> forall x', ~(R x' y).
+  forall x y, R x y -> forall x', x <> x' -> ~(R x' y).
 
 (*
 Or, again, they may be defined as follows: Given two terms x and x',
@@ -39,7 +39,7 @@ the terms to which x has the given relation and those to which x' has
 it have no member in common.
 *)
 Definition one_many' {X} (R : relation X) : Prop :=
-  forall x x' y, ~(R x y /\ R x' y).
+  forall x x' y, x <> x' -> ~(R x y /\ R x' y).
 
 (* Or, again, they may be defined as relations such that the relative *)
 (*product of one of them and its converse implies identity, where the *)
@@ -57,7 +57,7 @@ Inductive id {X} : relation X :=
   | id0 : forall x, id x x.
 
 Definition one_many'' {X} (R : relation X) : Prop :=
-  forall x, relative_product R (converse R) x x.
+  forall x y, relative_product R (converse R) x y <-> id x y.
 
 (* I'll try to prove the equivalence between these three definitions *)
 
@@ -66,54 +66,74 @@ Theorem one_many_eqv1 :
 Proof.
   unfold one_many. unfold one_many'.
   intros. intro.
-  inversion H0; clear H0.
+  inversion H1; clear H1.
 
-  apply H with (x':=x') in H1.
-  apply H1; assumption.
-Qed.
-
-Lemma and_reproduce :
-  forall a : Prop, a -> a /\ a.
-Proof.
-  intros. split; assumption.
+  apply H with (x':=x') in H2.
+  apply H2 in H3.
+  inversion H3. assumption.
 Qed.
 
 Theorem one_many_eqv2 :
-  forall {X} (R : relation X), one_many' R -> one_many'' R.
+  forall {X} (R : relation X), one_many' R -> one_many R.
 Proof.
-  unfold one_many'; unfold one_many''.
+  unfold one_many. unfold one_many'.
+  intros. intro.
+
+  apply H with (y:=y) in H1.
+  apply H1. split; assumption.
+Qed.
+
+Lemma id_eqv : forall {X} (x:X) (y:X), x = y <-> id x y.
+Proof.
+  intros. split.
+  intro. rewrite H. apply id0.
+  intro. inversion H. reflexivity.
+Qed.
+
+
+Lemma expand_one_many'' :
+  forall {X} (R : relation X),
+    one_many'' R <-> (forall x y, R x y -> forall x', converse R y x' -> x = x').
+Proof.
+  intros. unfold one_many''. split.
+
   intros.
+  assert (relative_product R (converse R) x x' <-> id x x'). apply H.
+  inversion H2. apply id_eqv. apply H3.
+  apply rp0 with y. assumption. assumption.
+
+  intros.
+  split. intro.
+  inversion H0. subst.
+  apply id_eqv. apply H with y0.
+  assumption. assumption.
 
 
-  assert (forall x x' y : X, ~ (S y x /\ R y x')).
-  apply S.
+  rename y into x'. intro.
+  inversion H0. clear H0. subst x0.
+  assert (y:X); intuition.
 
-  induction H0.
-  induction H1.
-  assert (R x y /\ R x0 y). split; assumption.
-  apply H in H2. inversion H2.
+  (* Skip skip skip this~ too tough *)
+  admit.
+Admitted.
 
-  intro. induction H0.
-  assert (Hid : forall x, ~(R x x /\ R x x)); intros. apply H.
-  assert (Hid' : forall x, ~(R x x)); intros.
-  intro.
-  apply and_reproduce in H0.
-  apply Hid in H0. assumption.
-
-  apply rp0 with x.
-
-Admitted.  (* TODO: finish this proof *)
 
 Theorem one_many_eqv3 :
+  forall {X} (R : relation X), one_many R -> one_many'' R.
+Proof.
+  admit.
+Admitted.  (* Skip *)
+
+Theorem one_many_eqv4 :
   forall {X} (R : relation X), one_many'' R -> one_many R.
 Proof.
   unfold one_many; unfold one_many''.
-  intros.
+  intros. intro.
 
   assert (relative_product R (converse R) x y <-> id x y). apply H.
-  inversion H1.
-  intro.
-
+  inversion H3.
+  admit.
+Admitted. (* Skip *)
 
 Definition many_one {X} (R : relation X) : Prop :=
   forall x y, R x y -> forall y', ~(R x y').
