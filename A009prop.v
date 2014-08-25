@@ -231,7 +231,7 @@ Proof.
   inversion H. inversion H1. inversion H3.
 Qed.
 
-Lemma ev_n__nev_Sn : forall n, ev n -> ~(ev (S n)).
+
 
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
@@ -574,39 +574,267 @@ Proof.
   assumption.
 Qed.
 
+Lemma plus_le_l : forall n1 n2 m,
+                    le (n1 + n2) m -> le n1 m.
+Proof.
+  intros.
+  generalize dependent n2.
+  induction n2.
+
+  intros.
+  replace (n1 + 0) with n1 in H. assumption.
+  rewrite plus_0_r. reflexivity.
+
+  intros. apply IHn2.
+  replace (n1 + S n2) with (S (n1 + n2)) in H.
+  apply le_S in H.
+  apply Sn_le_Sm__n_le_m in H. assumption.
+  rewrite plus_comm with (m := S n2) (n := n1).
+  simpl.
+  rewrite plus_comm with (m := n2) (n := n1). reflexivity.
+Qed.
+
+Lemma plus_le_self : forall n m, le n (n + m).
+Proof.
+  intros.
+  induction n.
+  simpl. apply O_le_n.
+  simpl.
+  apply n_le_m__Sn_le_Sm. assumption.
+Qed.
 
 Theorem plus_lt : forall n1 n2 m,
   lt (n1 + n2) m ->
   lt n1 m /\ lt n2 m.
 Proof.
   unfold lt.
-  intros.
-  inversion H.
+  intros. inversion H.
   split.
-  apply n_le_m__Sn_le_Sm with (n:=n1) (m:=n1+n2).
 
+  apply n_le_m__Sn_le_Sm.
+  apply plus_le_self.
+
+  apply n_le_m__Sn_le_Sm. rewrite plus_comm.
+  apply plus_le_self.
+
+  split. subst.
+
+  apply n_le_m__Sn_le_Sm.
+  apply Sn_le_Sm__n_le_m in H.
+  assert (n1 <= n1 + n2). apply plus_le_self.
+  apply le_trans with (n1+n2); assumption.
+
+  apply n_le_m__Sn_le_Sm. subst.
+  apply Sn_le_Sm__n_le_m in H.
+  assert (n2 <= n1 + n2). rewrite plus_comm. apply plus_le_self.
+  apply le_trans with (n1+n2); assumption.
+Qed.
 
 
 Theorem lt_S : forall n m,
-  n < m ->
-  n < S m.
+  lt n m ->
+  lt n (S m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold lt.
+  intros.
+  apply le_S. assumption.
+Qed.
+
 
 Theorem ble_nat_true : forall n m,
   ble_nat n m = true -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  induction n.
+  intros. apply O_le_n.
+
+  intros.
+  induction m.
+  simpl in H. inversion H.
+  simpl in H. apply n_le_m__Sn_le_Sm. apply IHn.
+  assumption.
+Qed.
+
+Lemma ble_refl : forall m, ble_nat m m = true.
+Proof.
+  intros. induction m. reflexivity. simpl. assumption.
+Qed.
+
 
 Theorem le_ble_nat : forall n m,
   n <= m ->
   ble_nat n m = true.
 Proof.
-  (* Hint: This may be easiest to prove by induction on m. *)
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent n.
+  induction m.
+  intro. intro.
+  inversion H. reflexivity.
+
+  destruct n.
+  simpl. reflexivity.
+
+  intro. simpl. apply IHm. apply Sn_le_Sm__n_le_m in H.
+  assumption.
+Qed.
 
 Theorem ble_nat_true_trans : forall n m o,
   ble_nat n m = true -> ble_nat m o = true -> ble_nat n o = true.
 Proof.
-  (* Hint: This theorem can be easily proved without using induction. *)
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply le_ble_nat.
+  apply ble_nat_true in H.
+  apply ble_nat_true in H0.
+
+  apply le_trans with m; assumption.
+Qed.
+
+Theorem ble_nat_false : forall n m,
+  ble_nat n m = false -> ~(n <= m).
+Proof.
+  intros.
+  generalize dependent n.
+
+  induction m. intros. intro. inversion H0. subst. inversion H.
+
+  intros. intro. destruct n. inversion H.
+
+  simpl in H. apply IHm in H. apply Sn_le_Sm__n_le_m in H0.
+  apply H. assumption.
+Qed.
+
+Module R.
+
+Inductive R : nat -> nat -> nat -> Prop :=
+   | c1 : R 0 0 0
+   | c2 : forall m n o, R m n o -> R (S m) n (S o)
+   | c3 : forall m n o, R m n o -> R m (S n) (S o)
+   | c4 : forall m n o, R (S m) (S n) (S (S o)) -> R m n o
+   | c5 : forall m n o, R m n o -> R n m o.
+
+Example r_test_1 : R 1 1 2.
+Proof. apply c3. apply c2. apply c1. Qed.
+
+Example r_test_2 : R 2 2 6.
+Proof.
+  apply c3. apply c2. apply c3. apply c2.
+Abort.
+
+(* If we dropped constructor c5 from the definition of R, would the set of provable propositions change? Briefly (1 sentence) explain your answer.  *)
+
+(* Answer: No, because c2 and c3 is symmetric over m and n. *)
+
+
+(* If we dropped constructor c4 from the definition of R, would the set of provable propositions change? Briefly (1 sentence) explain your answer. *)
+
+(* Answer: No, because c4 is equivalent to c2 + c3. *)
+
+Goal forall m n o, m + n = o -> R m n o.
+Proof.
+  intros.
+  generalize dependent o.
+  induction m.
+    induction n.
+      destruct o.
+        constructor.
+        intro. inversion H.
+      destruct o.
+        intro. inversion H.
+        intro. constructor. apply IHn. inversion H. reflexivity.
+    induction n.
+      intros. destruct o.
+        inversion H.
+        constructor. apply IHm. inversion H. reflexivity.
+      intros.
+        destruct o.
+          inversion H.
+          destruct o.
+            inversion H. destruct m; inversion H1.
+            constructor. apply IHm. inversion H. reflexivity.
+Qed.
+
+Goal forall m n o, R m n o -> m + n = o.
+Proof.
+  intros.
+  induction H.
+    reflexivity.
+    rewrite plus_Sn_m. apply f_equal. assumption.
+    rewrite <- plus_n_Sm. apply f_equal. assumption.
+    inversion IHR. rewrite <- plus_n_Sm in H1. inversion H1. reflexivity.
+    rewrite plus_comm. assumption.
+Qed.
+
+End R.
+
+
+
+Definition between (n m o: nat) : Prop :=
+  andb (ble_nat n o) (ble_nat o m) = true.
+
+
+Definition teen : nat->Prop := between 13 19.
+
+Definition true_for_zero (P:nat->Prop) : Prop :=
+  P 0.
+
+Definition true_for_all_numbers (P:nat->Prop) : Prop :=
+  forall n, P n.
+
+Definition preserved_by_S (P:nat->Prop) : Prop :=
+  forall n', P n' -> P (S n').
+
+Definition natural_number_induction_valid : Prop :=
+  forall (P:nat->Prop),
+    true_for_zero P ->
+    preserved_by_S P ->
+    true_for_all_numbers P.
+
+Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop :=
+  fun n => if oddb n then Podd n else Peven n.
+
+Theorem combine_odd_even_intro :
+  forall (Podd Peven : nat -> Prop) (n : nat),
+    (oddb n = true -> Podd n) ->
+    (oddb n = false -> Peven n) ->
+    combine_odd_even Podd Peven n.
+Proof.
+  intros.
+  unfold combine_odd_even.
+  destruct (oddb n).
+  apply H. reflexivity.
+  apply H0. reflexivity.
+Qed.
+
+Theorem combine_odd_even_elim_odd :
+  forall (Podd Peven : nat -> Prop) (n : nat),
+    combine_odd_even Podd Peven n ->
+    oddb n = true ->
+    Podd n.
+Proof.
+  intros.
+  unfold combine_odd_even in H.
+  rewrite H0 in H. assumption.
+Qed.
+
+Theorem combine_odd_even_elim_even :
+  forall (Podd Peven : nat -> Prop) (n : nat),
+    combine_odd_even Podd Peven n ->
+    oddb n = false ->
+    Peven n.
+Proof.
+  intros.
+  unfold combine_odd_even in H.
+  rewrite H0 in H. assumption.
+Qed.
+
+Fixpoint true_upto_n__true_everywhere n (P : nat -> Prop) : Prop :=
+  match n with
+    | 0 => (forall m, P m)
+    | S n => P (S n) -> true_upto_n__true_everywhere n P
+  end.
+
+
+Example true_upto_n_example :
+    (true_upto_n__true_everywhere 3 (fun n => even n))
+  = (even 3 -> even 2 -> even 1 -> forall m : nat, even m).
+Proof. reflexivity. Qed.
