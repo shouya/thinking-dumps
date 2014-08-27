@@ -202,3 +202,25 @@ Proof.
   subst.
   unfold not in Hdisj. apply Hdisj with x. apply ai_here. assumption.
 Qed.
+
+Inductive nostutter: list nat -> Prop :=
+  | ns0 : nostutter []
+  | ns1 : forall x, nostutter [x]
+  | nsc : forall x x' xs, nostutter (x'::xs) -> x' <> x -> nostutter (x::x'::xs).
+
+Example test_nostutter_1: nostutter [3;1;4;1;5;6].
+Proof. repeat constructor; apply beq_nat_false; auto. Qed.
+
+Example test_nostutter_2: nostutter [].
+Proof. repeat constructor; apply beq_nat_false; auto. Qed.
+
+Example test_nostutter_3: nostutter [5].
+Proof. repeat constructor; apply beq_nat_false; auto. Qed.
+
+Example test_nostutter_4: not (nostutter [3;1;1;4]).
+Proof. intro.
+  repeat match goal with
+    h: nostutter _ |- _ => inversion h; clear h; subst
+  end.
+  contradiction H5; auto.
+Qed.
