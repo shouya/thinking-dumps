@@ -164,3 +164,43 @@ Proof.
   induction xs. simpl. assumption.
   simpl. apply ai_later. apply IHxs. right. assumption.
 Qed.
+
+Definition disjoint {X} (xs ys : list X) : Prop :=
+  forall a, appears_in a xs -> ~appears_in a ys.
+
+Inductive no_repeats {X} : list X -> Prop :=
+  | nr_null : no_repeats []
+  | nr_cons : forall x xs, no_repeats xs -> ~(appears_in x xs) -> no_repeats (x::xs).
+
+Goal forall {X} (xs ys : list X),
+       no_repeats xs ->
+       no_repeats ys ->
+       disjoint xs ys ->
+       no_repeats (xs ++ ys).
+Proof.
+  intros X xs ys Hxs Hys Hdisj.
+  generalize dependent ys.
+  induction Hxs.
+
+  Case "nr_null []". intros.
+  assumption.
+
+  Case "nr_cons, xs = x::xs".
+  intros ys Hys Hdisj.
+  unfold disjoint in Hdisj.
+  simpl.
+  apply nr_cons.
+  apply IHHxs. assumption.
+  unfold disjoint. intros. apply Hdisj. apply ai_later. assumption.
+
+  intro. apply appears_in_app in H0. inversion H0.
+
+  apply H in H1. inversion H1. inversion H1.
+
+
+
+  induction H0.
+  simpl.
+  subst. simpl. replace (x :: xs0 ++ []) with (x :: xs0). assumption.
+  clear. apply f_equal. induction xs0. reflexivity. simpl. rewrite <- IHxs0. reflexivity.
+  subst.
