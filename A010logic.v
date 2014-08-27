@@ -195,12 +195,10 @@ Proof.
 
   intro. apply appears_in_app in H0. inversion H0.
 
-  apply H in H1. inversion H1. inversion H1.
+  apply H in H1. inversion H1. inversion H1. subst.
+  unfold not in Hdisj. apply Hdisj with x. apply ai_here.
+  assumption.
 
-
-
-  induction H0.
-  simpl.
-  subst. simpl. replace (x :: xs0 ++ []) with (x :: xs0). assumption.
-  clear. apply f_equal. induction xs0. reflexivity. simpl. rewrite <- IHxs0. reflexivity.
   subst.
+  unfold not in Hdisj. apply Hdisj with x. apply ai_here. assumption.
+Qed.
