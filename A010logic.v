@@ -224,3 +224,52 @@ Proof. intro.
   end.
   contradiction H5; auto.
 Qed.
+
+Lemma app_length : forall (X:Type) (l1 l2 : list X),
+  length (l1 ++ l2) = length l1 + length l2.
+Proof.
+  intros.
+  induction l1. reflexivity.
+  simpl. rewrite IHl1. reflexivity.
+Qed.
+
+Lemma appears_in_app_split : forall (X:Type) (x:X) (l:list X),
+  appears_in x l ->
+  exists l1, exists l2, l = l1 ++ (x::l2).
+Proof.
+  intros.
+  induction H.
+
+  exists []. simpl. exists l. reflexivity.
+  inversion IHappears_in as [xs0]. inversion H0 as [xs1].
+  rewrite H1. exists (b :: xs0). simpl. exists xs1. reflexivity.
+Qed.
+
+(* Inductive no_repeats {X} : list X -> Prop := *)
+(*   | nr_null : no_repeats [] *)
+(*   | nr_cons : forall x xs, no_repeats xs -> ~(appears_in x xs) -> no_repeats (x::xs). *)
+
+Inductive repeats {X:Type} : list X -> Prop :=
+  | rp_here  : forall x xs, appears_in x xs -> repeats (x :: xs)
+  | rp_later : forall x xs, repeats xs -> repeats (x :: xs).
+
+
+Theorem pigeonhole_principle: forall (X:Type) (l1 l2:list X),
+   excluded_middle ->
+   (forall x, appears_in x l1 -> appears_in x l2) ->
+   lt (length l2) (length l1) ->
+   repeats l1.
+Proof.
+  unfold lt.
+  induction l1 as [|x xs]. intros. inversion H1.
+  intros l2 Hem Happ Hlen.
+  destruct Hem with (appears_in x xs).
+  apply rp_here. assumption.
+  (*  so tough... i wanna give it up... 好難QAQ... *)
+Admitted.
+
+(*
+Lemma appears_in_app_split : forall (X:Type) (x:X) (l:list X),
+  appears_in x l ->
+  exists l1, exists l2, l = l1 ++ (x::l2).
+*)
