@@ -1,9 +1,44 @@
+![Coq Tan (by @chomado)](https://shouya.github.io/sf-sol/coq-tan.png)
+
 # sf-sol
 
 In this repository are my solutions to the exercises in software
 foundations coq tutorial.
 
-![screenshot to my coq environment](https://raw.githubusercontent.com/shouya/sf-sol/master/coq_with_proofgeneral_and_prooftree.png)
+![screenshot to my coq environment](https://shouya.github.io/sf-sol/screenshot.png)
+
+
+## Current progress
+
+- [X] Preface
+- [X] Basics:        Functional Programming in Coq
+- [X] Induction:     Proof by Induction
+- [X] Lists:         Working with Structured Data
+- [X] Poly:          Polymorphism and Higher-Order Functions
+- [X] MoreCoq:       More About Coq
+- [X] Logic:         Logic in Coq
+- [X] Prop:          Propositions and Evidence
+- [X] MoreLogic
+- [X] ProofObjects:  Working with Explicit Evidence in Coq
+- [ ] MoreInd:       More on Induction
+- [ ] Review1:       Review Session for First Midterm
+- [ ] SfLib:         Software Foundations Library
+- [ ] Imp:           Simple Imperative Programs
+- [ ] ImpParser:     Lexing and Parsing in Coq
+- [ ] ImpCEvalFun:   Evaluation Function for Imp
+- [ ] Extraction:    Extracting ML from Coq
+- [ ] Equiv:         Program Equivalence
+- [ ] Hoare:         Hoare Logic, Part I
+- [ ] Hoare2:        Hoare Logic, Part II
+- [ ] Smallstep:     Small-step Operational Semantics
+- [ ] Review2:       Review Session for Second Midterm
+- [ ] Auto:          More Automation
+- [ ] Types:         Type Systems
+- [ ] Stlc:          The Simply Typed Lambda-Calculus
+- [ ] StlcProp:      Properties of STLC
+- [ ] MoreStlc:      More on the Simply Typed Lambda-Calculus
+- [ ] Sub:           Subtyping
+
 
 ## Coq Study Resources
 
@@ -13,6 +48,9 @@ foundations coq tutorial.
 - [Reference Manual](http://coq.inria.fr/distrib/current/refman/toc.html)
 - [proofgeneral (a coq IDE for emacs)](http://pldev.blogspot.jp/2012/01/getting-started-with-coq-and-proof.html)
 - [prooftree (proofgeneral plugin)](http://askra.de/software/prooftree/)
+- [Tag: Coq on Qiita (Japanese)](http://qiita.com/tags/coq)
+- [ProofCafe (Japanese)](http://proofcafe.org/)
+- [jwiegley's solutions](https://github.com/jwiegley/software-foundations)
 
 
 ## License
