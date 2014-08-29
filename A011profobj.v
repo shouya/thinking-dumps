@@ -163,5 +163,52 @@ Check ex.
 Definition some_nat_is_even : Prop :=
   ex _ ev.
 
+(*
+Inductive ex (X:Type) (P : X->Prop) : Prop :=
+  ex_intro : forall (witness:X), P witness -> ex X P.
+*)
+
 Definition snie : some_nat_is_even :=
-  ex_intro _ ev 4 (ev_SS 2 (ev_SS 0 ev_0)).
+  ex_intro _ ev 4 (evSS 2 (evSS 0 ev0)).
+
+
+
+Definition ex_beautiful_Sn : ex _ (fun n => beautiful (S n)) :=
+  ex_intro _ (fun x => beautiful (S x)) 2 b_3.
+
+Lemma plus_comm_r : forall a b c, c + (b + a) = c + (a + b).
+Proof.
+   intros a b c. Show Proof.
+   rewrite (plus_comm b). Show Proof.
+   (* (fun a b c : nat =>
+         eq_ind_r (fun n : nat => c + n = c + (a + b))
+                  ?128
+                  (plus_comm b a)) *)
+   Print eq_ind_r.
+   (* eq_ind_r = fun (A : Type) (x : A) (P : A -> Prop)
+                     (H : P x) (y : A) (H0 : y = x) =>
+                   eq_ind x (fun y0 : A => P y0) H y (eq_sym H0)
+     : forall (A : Type) (x : A) (P : A -> Prop),
+         P x -> forall y : A, y = x -> P y *)
+   reflexivity. Show Proof.
+Qed.
+
+Example trans_eq_example' : forall (a b c d e f : nat),
+     [a;b] = [c;d] ->
+     [c;d] = [e;f] ->
+     [a;b] = [e;f].
+Proof.
+  intros.
+  apply (trans_eq _ _ [c;d]); assumption.
+Qed.
+
+Definition add1 : nat -> nat.
+intro n.
+Show Proof.
+apply S.
+Show Proof.
+apply n.
+Show Proof.
+Defined.
+
+Compute (add1 2).
