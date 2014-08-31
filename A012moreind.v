@@ -179,3 +179,138 @@ admit.
 Defined.
 
 Check tree_ind.
+
+(*
+      mytype_ind :
+        ∀(X : Type) (P : mytype X → Prop),
+            (∀x : X, P (constr1 X x)) →
+            (∀n : nat, P (constr2 X n)) →
+            (∀m : mytype X, P m →
+               ∀n : nat, P (constr3 X m n)) →
+            ∀m : mytype X, P m
+*)
+
+Inductive mytype (X : Type) :=
+  | constr1 : X -> mytype X
+  | constr2 : nat -> mytype X
+  | constr3 : mytype X -> nat -> mytype X.
+Check mytype_ind.
+(*
+mytype_ind
+     : forall (X : Type) (P : mytype X -> Prop),
+       (forall x : X, P (constr1 X x)) ->
+       (forall n : nat, P (constr2 X n)) ->
+       (forall m : mytype X, P m -> forall n : nat, P (constr3 X m n)) ->
+       forall m : mytype X, P m
+*)
+
+
+(*
+      foo_ind :
+        ∀(X Y : Type) (P : foo X Y → Prop),
+             (∀x : X, P (bar X Y x)) →
+             (∀y : Y, P (baz X Y y)) →
+             (∀f1 : nat → foo X Y,
+               (∀n : nat, P (f1 n)) → P (quux X Y f1)) →
+             ∀f2 : foo X Y, P f2
+*)
+Inductive foo (X : Type) (Y : Type) :=
+  | bar : X -> foo X Y
+  | baz : Y -> foo X Y
+  | quux : (nat -> foo X Y) -> foo X Y.
+Check foo_ind.
+
+(*
+foo_ind
+     : forall (X Y : Type) (P : foo X Y -> Prop),
+       (forall x : X, P (bar X Y x)) ->
+       (forall y : Y, P (baz X Y y)) ->
+       (forall f1 : nat -> foo X Y,
+        (forall n : nat, P (f1 n)) -> P (quux X Y f1)) ->
+       forall f2 : foo X Y, P f2
+*)
+
+Inductive foo' (X:Type) : Type :=
+  | C1 : list X -> foo' X -> foo' X
+  | C2 : foo' X.
+
+(*
+foo'_ind :
+  forall (X : Type) (P : foo' X -> Prop),
+    (forall (l : list X) (f : foo' X), P f -> P (C1 X l f)) ->
+    P (C2 X) ->
+    forall f : foo' X, P f.
+*)
+Check foo'_ind.
+(*
+foo'_ind
+     : forall (X : Type) (P : foo' X -> Prop),
+       (forall (l : list X) (f : foo' X), P f -> P (C1 X l f)) ->
+       P (C2 X) -> forall f1 : foo' X, P f1
+*)
+
+
+Theorem plus_assoc' :
+  forall n m p, n + (m + p) = n + m + p.
+Proof.
+  intros.
+  induction n as [| n'].
+  reflexivity.
+  simpl. rewrite IHn'. reflexivity.
+Qed.
+
+Theorem plus_comm' : forall n m : nat,
+  n + m = m + n.
+Proof.
+  induction n as [| n'].
+  intros. rewrite plus_0_r. reflexivity.
+  intros. simpl. rewrite -> IHn'.
+  rewrite plus_n_Sm. reflexivity.
+Qed.
+
+Definition P_pa : nat -> nat -> nat -> Prop :=
+  fun n => fun m p => n + (m + p) = n + m + p.
+
+Theorem plus_assoc'' :
+  forall m, forall p, forall n, P_pa n m p.
+Proof.
+  intros m p.
+  apply nat_ind. reflexivity.
+  unfold P_pa. intros. simpl. rewrite H. reflexivity.
+Qed.
+
+Definition P_pc (n : nat) (m : nat) : Prop :=
+  n + m = m + n.
+
+Theorem plus_comm'' :
+  forall m n, P_pc n m.
+Proof.
+  intro. apply nat_ind.
+  unfold P_pc. rewrite plus_0_r. reflexivity.
+  unfold P_pc. intros. simpl. rewrite -> H.
+  rewrite plus_n_Sm. reflexivity.
+Qed.
+
+(*
+Inductive beautiful : nat -> Prop :=
+| b_0 : beautiful 0
+| b_3 : beautiful 3
+| b_5 : beautiful 5
+| b_sum : forall m n : nat,
+            beautiful m -> beautiful n ->
+            beautiful (m + n).
+*)
+
+Lemma one_not_beautiful_FAILED: ~ beautiful 1.
+Proof.
+  intro H.
+  remember 1.
+  induction H; inversion Heqn.
+  destruct m.
+    destruct n.
+      inversion H2.
+      simpl in H2. apply IHbeautiful2 in H2. inversion H2.
+    destruct n.
+      rewrite plus_0_r in H2. apply IHbeautiful1 in H2. inversion H2.
+      inversion H2. rewrite NPeano.Nat.add_succ_r in H3. inversion H3.
+Qed.
