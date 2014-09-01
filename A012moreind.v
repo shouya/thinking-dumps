@@ -314,3 +314,10 @@ Proof.
       rewrite plus_0_r in H2. apply IHbeautiful1 in H2. inversion H2.
       inversion H2. rewrite NPeano.Nat.add_succ_r in H3. inversion H3.
 Qed.
+
+
+Goal forall n m o, n <= m -> m <= o -> n <= o.
+Proof.
+  intros.
+  induction H.
+  assumption.

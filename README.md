@@ -20,9 +20,8 @@ foundations coq tutorial.
 - [X] Prop:          Propositions and Evidence
 - [X] MoreLogic
 - [X] ProofObjects:  Working with Explicit Evidence in Coq
-- [ ] MoreInd:       More on Induction
-- [ ] Review1:       Review Session for First Midterm
-- [ ] SfLib:         Software Foundations Library
+- [X] MoreInd:       More on Induction
+- [X] SfLib:         Software Foundations Library
 - [ ] Imp:           Simple Imperative Programs
 - [ ] ImpParser:     Lexing and Parsing in Coq
 - [ ] ImpCEvalFun:   Evaluation Function for Imp
@@ -31,7 +30,6 @@ foundations coq tutorial.
 - [ ] Hoare:         Hoare Logic, Part I
 - [ ] Hoare2:        Hoare Logic, Part II
 - [ ] Smallstep:     Small-step Operational Semantics
-- [ ] Review2:       Review Session for Second Midterm
 - [ ] Auto:          More Automation
 - [ ] Types:         Type Systems
 - [ ] Stlc:          The Simply Typed Lambda-Calculus
