@@ -1,0 +1,9 @@
+optimization-002
+Knapsack
+6
+UB1HKrQ7, ./data/ks_30_0, solver.py, Knapsack Problem 1
+u6sleLfT, ./data/ks_50_0, solver.py, Knapsack Problem 2
+DLtBFO66, ./data/ks_200_0, solver.py, Knapsack Problem 3
+zVGvzWRJ, ./data/ks_400_0, solver.py, Knapsack Problem 4
+yD06cKUp, ./data/ks_1000_0, solver.py, Knapsack Problem 5
+MLjl5jzP, ./data/ks_10000_0, solver.py, Knapsack Problem 6
