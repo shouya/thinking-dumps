@@ -736,3 +736,66 @@ Proof.
   subst. inversion H.
   subst. apply IHcontra2. reflexivity.
 Qed.
+
+Fixpoint no_whiles (c : com) : bool :=
+  match c with
+  | SKIP => true
+  | _ ::= _ => true
+  | c1 ;; c2 => andb (no_whiles c1) (no_whiles c2)
+  | IFB _ THEN ct ELSE cf FI => andb (no_whiles ct) (no_whiles cf)
+  | WHILE _ DO _ END => false
+  end.
+
+Inductive no_whilesR: com -> Prop :=
+  | NW_Skip : no_whilesR SKIP
+  | NW_Ass : forall x a, no_whilesR (x ::= a)
+  | NW_Seq : forall c1 c2, no_whilesR c1 -> no_whilesR c2 -> no_whilesR (c1 ;; c2)
+  | NW_If : forall b ct cf, no_whilesR ct -> no_whilesR cf ->
+                          no_whilesR (IFB b THEN ct ELSE cf FI).
+
+
+Theorem no_whiles_eqv:
+   forall c, no_whiles c = true <-> no_whilesR c.
+Proof.
+  intros. split.
+  Case "->".
+    intro.
+    induction c;
+      try constructor;
+      try (inversion H as [HC];
+           apply andb_true in HC;
+           inversion HC;
+           try (apply IHc1 in H0; assumption);
+           try (apply IHc2 in H1; assumption)).
+
+  Case "<-".
+    intro.
+    induction H; try reflexivity.
+    simpl. apply andb_true_intro; split; assumption.
+    simpl. apply andb_true_intro; split; assumption.
+Qed.
+
+
+Theorem no_whiles_terminating :
+  forall c, no_whilesR c -> forall st, exists st', c / st || st'.
+Proof.
+  intros.
+  generalize dependent st.
+  induction H; intro.
+
+  Case "Skip". exists st. constructor.
+  Case "Ass". exists (update st x (aeval st a)). constructor. reflexivity.
+  Case "Seq".
+    specialize IHno_whilesR1 with st.
+    inversion IHno_whilesR1 as [st'].
+    specialize IHno_whilesR2 with st'.
+    inversion IHno_whilesR2 as [st''].
+    exists st''. apply (E_Seq c1 c2 st st' st''); assumption.
+  Case "If".
+    specialize IHno_whilesR1 with st.
+    specialize IHno_whilesR2 with st.
+    inversion IHno_whilesR1 as [stt]. inversion IHno_whilesR2 as [stf].
+    destruct (beval st b) eqn:eq.
+    exists stt. apply E_IfTrue; assumption.
+    exists stf. apply E_IfFalse; assumption.
+Qed.
