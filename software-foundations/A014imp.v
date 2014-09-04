@@ -736,3 +736,73 @@ Proof.
   subst. inversion H.
   subst. apply IHcontra2. reflexivity.
 Qed.
+
+Fixpoint no_whiles (c : com) : bool :=
+  match c with
+  | SKIP => true
+  | _ ::= _ => true
+  | c1 ;; c2 => andb (no_whiles c1) (no_whiles c2)
+  | IFB _ THEN ct ELSE cf FI => andb (no_whiles ct) (no_whiles cf)
+  | WHILE _ DO _ END => false
+  end.
+
+
+
+(* stack compiler *)
+Inductive sinstr : Type :=
+| SPush : nat -> sinstr
+| SLoad : id -> sinstr
+| SPlus : sinstr
+| SMinus : sinstr
+| SMult : sinstr.
+
+Fixpoint s_execute (st : state) (stack : list nat)
+                   (prog : list sinstr)
+                 : list nat :=
+  match prog with
+    | nil => stack
+    | (x :: xs) =>
+      match x with
+        | SPush a => s_execute st (a :: stack) xs
+        | SLoad a => s_execute st (st a :: stack) xs
+        | SPlus => match stack with
+                     | (a::b::stack') => s_execute st ((a + b)::stack') xs
+                     | _ => stack (* error *)
+                   end
+        | SMinus => match stack with
+                      | (a::b::stack') => s_execute st ((b - a)::stack') xs
+                      | _ => stack (* error *)
+                    end
+        | SMult => match stack with
+                     | (a::b::stack') => s_execute st ((a * b)::stack') xs
+                     | _ => stack (* error *)
+                   end
+      end
+  end.
+
+
+Example s_execute1 :
+     s_execute empty_state []
+       [SPush 5; SPush 3; SPush 1; SMinus]
+   = [2; 5].
+Proof. unfold s_execute. reflexivity. Qed.
+
+Example s_execute2 :
+     s_execute (update empty_state X 3) [3;4]
+       [SPush 4; SLoad X; SMult; SPlus]
+   = [15; 4].
+Proof. unfold s_execute. reflexivity. Qed.
+
+Fixpoint s_compile (e : aexp) : list sinstr :=
+  match e with
+    | ANum n => [SPush n]
+    | AId i => [SLoad i]
+    | APlus a b => (s_compile a) ++ (s_compile b) ++ [SPlus]
+    | AMinus a b => (s_compile a) ++ (s_compile b) ++ [SMinus]
+    | AMult a b => (s_compile a) ++ (s_compile b) ++ [SMult]
+  end.
+
+Example s_compile1 :
+    s_compile (AMinus (AId X) (AMult (ANum 2) (AId Y)))
+  = [SLoad X; SPush 2; SLoad Y; SMult; SMinus].
+Proof. reflexivity. Qed.
