@@ -746,56 +746,63 @@ Fixpoint no_whiles (c : com) : bool :=
   | WHILE _ DO _ END => false
   end.
 
-Inductive no_whilesR: com -> Prop :=
-  | NW_Skip : no_whilesR SKIP
-  | NW_Ass : forall x a, no_whilesR (x ::= a)
-  | NW_Seq : forall c1 c2, no_whilesR c1 -> no_whilesR c2 -> no_whilesR (c1 ;; c2)
-  | NW_If : forall b ct cf, no_whilesR ct -> no_whilesR cf ->
-                          no_whilesR (IFB b THEN ct ELSE cf FI).
 
 
-Theorem no_whiles_eqv:
-   forall c, no_whiles c = true <-> no_whilesR c.
-Proof.
-  intros. split.
-  Case "->".
-    intro.
-    induction c;
-      try constructor;
-      try (inversion H as [HC];
-           apply andb_true in HC;
-           inversion HC;
-           try (apply IHc1 in H0; assumption);
-           try (apply IHc2 in H1; assumption)).
+(* stack compiler *)
+Inductive sinstr : Type :=
+| SPush : nat -> sinstr
+| SLoad : id -> sinstr
+| SPlus : sinstr
+| SMinus : sinstr
+| SMult : sinstr.
 
-  Case "<-".
-    intro.
-    induction H; try reflexivity.
-    simpl. apply andb_true_intro; split; assumption.
-    simpl. apply andb_true_intro; split; assumption.
-Qed.
+Fixpoint s_execute (st : state) (stack : list nat)
+                   (prog : list sinstr)
+                 : list nat :=
+  match prog with
+    | nil => stack
+    | (x :: xs) =>
+      match x with
+        | SPush a => s_execute st (a :: stack) xs
+        | SLoad a => s_execute st (st a :: stack) xs
+        | SPlus => match stack with
+                     | (a::b::stack') => s_execute st ((a + b)::stack') xs
+                     | _ => stack (* error *)
+                   end
+        | SMinus => match stack with
+                      | (a::b::stack') => s_execute st ((b - a)::stack') xs
+                      | _ => stack (* error *)
+                    end
+        | SMult => match stack with
+                     | (a::b::stack') => s_execute st ((a * b)::stack') xs
+                     | _ => stack (* error *)
+                   end
+      end
+  end.
 
 
-Theorem no_whiles_terminating :
-  forall c, no_whilesR c -> forall st, exists st', c / st || st'.
-Proof.
-  intros.
-  generalize dependent st.
-  induction H; intro.
+Example s_execute1 :
+     s_execute empty_state []
+       [SPush 5; SPush 3; SPush 1; SMinus]
+   = [2; 5].
+Proof. unfold s_execute. reflexivity. Qed.
 
-  Case "Skip". exists st. constructor.
-  Case "Ass". exists (update st x (aeval st a)). constructor. reflexivity.
-  Case "Seq".
-    specialize IHno_whilesR1 with st.
-    inversion IHno_whilesR1 as [st'].
-    specialize IHno_whilesR2 with st'.
-    inversion IHno_whilesR2 as [st''].
-    exists st''. apply (E_Seq c1 c2 st st' st''); assumption.
-  Case "If".
-    specialize IHno_whilesR1 with st.
-    specialize IHno_whilesR2 with st.
-    inversion IHno_whilesR1 as [stt]. inversion IHno_whilesR2 as [stf].
-    destruct (beval st b) eqn:eq.
-    exists stt. apply E_IfTrue; assumption.
-    exists stf. apply E_IfFalse; assumption.
-Qed.
+Example s_execute2 :
+     s_execute (update empty_state X 3) [3;4]
+       [SPush 4; SLoad X; SMult; SPlus]
+   = [15; 4].
+Proof. unfold s_execute. reflexivity. Qed.
+
+Fixpoint s_compile (e : aexp) : list sinstr :=
+  match e with
+    | ANum n => [SPush n]
+    | AId i => [SLoad i]
+    | APlus a b => (s_compile a) ++ (s_compile b) ++ [SPlus]
+    | AMinus a b => (s_compile a) ++ (s_compile b) ++ [SMinus]
+    | AMult a b => (s_compile a) ++ (s_compile b) ++ [SMult]
+  end.
+
+Example s_compile1 :
+    s_compile (AMinus (AId X) (AMult (ANum 2) (AId Y)))
+  = [SLoad X; SPush 2; SLoad Y; SMult; SMinus].
+Proof. reflexivity. Qed.
