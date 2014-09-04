@@ -746,7 +746,58 @@ Fixpoint no_whiles (c : com) : bool :=
   | WHILE _ DO _ END => false
   end.
 
+Inductive no_whilesR : com -> Prop :=
+  | nwSKip : no_whilesR SKIP
+  | nwAss : forall x a, no_whilesR (x ::= a)
+  | nwSeq : forall a b, no_whilesR a -> no_whilesR b -> no_whilesR (a ;; b)
+  | nwIf : forall b c1 c2, no_whilesR c1
+                         -> no_whilesR c2
+                         -> no_whilesR (IFB b THEN c1 ELSE c2 FI).
 
+Theorem no_whiles_eqv:
+   forall c, no_whiles c = true <-> no_whilesR c.
+Proof.
+  intros. split; intro.
+  Case "->".
+    induction c; try constructor;
+      try (inversion H;
+           try (apply IHc1; apply andb_true_elim1 in H1);
+           try (apply IHc2; apply andb_true_elim2 in H1);
+           assumption).
+
+  Case "<-".
+    induction H; try reflexivity; try (simpl; apply andb_true_intro; split; assumption).
+Qed.
+
+Theorem no_whiles_terminating :
+  forall c, no_whilesR c ->
+            forall st, exists st', c / st || st'.
+Proof.
+  intros. generalize dependent st.
+  induction H; intro.
+
+  Case "Skip".
+    exists st. constructor.
+  Case "Ass".
+    exists (update st x (aeval st a)).
+    constructor. reflexivity.
+
+  Case "Seq".
+    specialize IHno_whilesR1 with st.
+    inversion IHno_whilesR1 as [st'].
+    specialize IHno_whilesR2 with st'.
+    inversion IHno_whilesR2 as [st''].
+    exists st''. apply E_Seq with st'; assumption.
+
+  Case "If".
+    specialize IHno_whilesR1 with st.
+    specialize IHno_whilesR2 with st.
+    inversion IHno_whilesR1 as [stt].
+    inversion IHno_whilesR2 as [stf].
+    destruct (beval st b) eqn:eq.
+    exists stt. apply E_IfTrue; assumption.
+    exists stf. apply E_IfFalse; assumption.
+Qed.
 
 (* stack compiler *)
 Inductive sinstr : Type :=
@@ -766,7 +817,7 @@ Fixpoint s_execute (st : state) (stack : list nat)
         | SPush a => s_execute st (a :: stack) xs
         | SLoad a => s_execute st (st a :: stack) xs
         | SPlus => match stack with
-                     | (a::b::stack') => s_execute st ((a + b)::stack') xs
+                     | (a::b::stack') => s_execute st ((b + a)::stack') xs
                      | _ => stack (* error *)
                    end
         | SMinus => match stack with
@@ -774,7 +825,7 @@ Fixpoint s_execute (st : state) (stack : list nat)
                       | _ => stack (* error *)
                     end
         | SMult => match stack with
-                     | (a::b::stack') => s_execute st ((a * b)::stack') xs
+                     | (a::b::stack') => s_execute st ((b * a)::stack') xs
                      | _ => stack (* error *)
                    end
       end
@@ -806,3 +857,30 @@ Example s_compile1 :
     s_compile (AMinus (AId X) (AMult (ANum 2) (AId Y)))
   = [SLoad X; SPush 2; SLoad Y; SMult; SMinus].
 Proof. reflexivity. Qed.
+
+Lemma s_compile_correct_aux :
+  forall st e1 e2 a1 a2 op,
+    aeval st e1 = a1 ->
+    aeval st e2 = a2 ->
+    s_execute st [] (s_compile e1 ++ s_compile e2 ++ [op]) =
+    s_execute st [] [SPush a1 ; SPush a2 ; op].
+Proof.
+  intros.
+  induction e1.
+
+Qed.
+(*
+  IHe1 : s_execute st [] (s_compile e1) = [aeval st e1]
+  IHe2 : s_execute st [] (s_compile e2) = [aeval st e2]
+  ============================
+   s_execute st [] (s_compile e1 ++ s_compile e2 ++ [SPlus]) =
+   [aeval st e1 + aeval st e2]
+*)
+
+Theorem s_compile_correct : forall (st : state) (e : aexp),
+  s_execute st [] (s_compile e) = [ aeval st e ].
+Proof.
+  intros.
+  induction e; try reflexivity;
+  simpl; rewrite (s_compile_correct_aux st e1 e2 (aeval st e1) (aeval st e2)); reflexivity.
+Qed.
