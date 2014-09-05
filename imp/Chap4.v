@@ -1,10 +1,8 @@
-Module Chap4.
 
-Require Import Relations.
+Require Export Chap3.
+
 
 (* Ordered Series *)
-
-Load "Chap3.v".
 
 
 Definition asymmetrical {X : Type} (R : relation X) : Prop :=
