@@ -1,6 +1,5 @@
-Module Chap3.
 
-Require Import Relations.
+Require Export Relations.
 
 
 
