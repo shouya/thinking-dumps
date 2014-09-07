@@ -5,6 +5,10 @@
 
 ## Files
 
-* `Automata.hs`: A library for State, Input, DFA, and NFA classes/data types.
-* `DFA.hs`: A series of functions for DFA execution/test.
-* `NFA.hs`: A series of functions about NFA execusion and NFA to DFA conversion.
+* `State.hs`: Definition of the State class
+* `Input.hs`: Definition of the Input class
+* `DFA.hs`: Definition of Deterministic Finite Automata
+* `NFA.hs`: Definition of Non-deterministic Finite Automata
+* `RE.hs`: Definition of Regular Expression
+
+* `<X>Example.hs`: Example code of testing <X>.
