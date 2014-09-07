@@ -30,7 +30,7 @@ the one(S a) has the relation Q to the correlate of the other(S b), and
 Inductive similar {X} (P : relation X) (Q : relation X) : Prop :=
 | similar_intro : forall (S : relation X),
                     one_one S ->
-                    (forall x, domain S x = field P x) ->
+                    (forall x, field P x -> domain S x) ->
                     (forall x y z w, P x y -> S x z -> S y w -> Q z w) ->
                     (forall x y z w, Q z w -> S x z -> S y w -> P x y) ->
                     similar P Q.
@@ -59,16 +59,15 @@ Inductive correlator {X} (P Q : relation X) : relation X -> Prop :=
   | correlator_intro :
       forall (S : relation X),
         one_one S ->
-        (forall x, domain S x = field P x) ->
-        (forall x y,
-           relative_product (relative_product S Q) (converse S) x y -> P x y) ->
+        (forall x, field P x -> domain S x) ->
+        (forall x y, relative_product (relative_product S Q) (converse S) x y -> P x y) ->
         correlator P Q S.
 
 (* Two relations P and Q are said to be “similar,” or to have
 “likeness,” when there is at least one correlator of P and Q.
 *)
 Inductive similar' {X} (P Q : relation X) : Prop :=
-  | similar'_intro : (exists S, correlator P Q S) -> similar' P Q.
+  | similar'_intro : forall S, correlator P Q S -> similar' P Q.
 
 (* NOTE: this defintion is taken from Russel's book
    Principles of Mathematics rather than Introduction to Mathematical Philosophy
@@ -84,8 +83,7 @@ Theorem similar_eqv1 :
   forall {X} (P Q : relation X), similar P Q -> similar' P Q.
 Proof.
   intros.
-  inversion H. apply similar'_intro.
-  exists S.
+  inversion H. apply similar'_intro with S.
   constructor; try assumption; intros.
 
   inversion H4; clear H4.
@@ -100,3 +98,13 @@ Proof.
 
   apply H3; assumption.
 Qed.
+
+Theorem similar_eqv2 :
+  forall {X} (P Q : relation X), similar' P Q -> similar P Q.
+Proof.
+  intros.
+  inversion H. inversion H0. subst.
+  apply similar_intro with S; try assumption; intros.
+  specialize H3 with x y.
+  (* Stuck... *)
+  (* apply rp0 with (relative_product S Q) (converse S) x y w in H4. *)
