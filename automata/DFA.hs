@@ -8,7 +8,6 @@ import State
 import Input
 
 
-
 type DFATransFunc s i = s -> i -> s
 
 data DFA s i where
