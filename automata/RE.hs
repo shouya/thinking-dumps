@@ -26,17 +26,25 @@ instance (Eq a) => Eq (RE a) where
 
 
 concat :: (Eq a) => [RE a] -> RE a
-concat xs = if any (== EmptySet) xs then EmptySet
-            else Concat $ filter (/= Epsilon) xs
+concat xs = case length xs' of
+  0 -> Epsilon
+  1 -> head xs'
+  _ -> Concat xs'
+  where xs' = if any (== EmptySet) xs then []
+              else filter (/= Epsilon) xs
 union :: (Eq a) => [RE a] -> RE a
-union xs = Union $ nub $ filter (/= EmptySet) xs
+union xs = case length xs' of
+  0 -> Epsilon
+  1 -> head xs'
+  _ -> Union xs'
+  where xs' = nub $ filter (/= EmptySet) xs
 
 closure :: RE a -> RE a
 closure Epsilon = Epsilon
 closure x = Closure x
 
 
-{-
+{- {- For debug uses -}
 union = Union
 closure = Closure
 concat = Concat

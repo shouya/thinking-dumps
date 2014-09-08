@@ -34,6 +34,10 @@ transTableToFunc tbl s i =
   where matchSI (s', i', _) = s' == s && i' == i
 
 
+acceptInput :: (Eq s) => DFA s i -> [i] -> Bool
+acceptInput dfa@(DFA _ as _) is = (evalDFA dfa is) `elem` as
+
+
 -- Visualize a DFA with Dot language
 visualizeDot :: (Eq s, Eq i, Show s, Show i) => DFA s i -> String
 visualizeDot (DFA ss as t) =
