@@ -1,0 +1,5 @@
+*.pyc
+submit.py
+sample*
+test*.in
+test*.out
