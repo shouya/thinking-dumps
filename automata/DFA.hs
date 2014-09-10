@@ -34,8 +34,19 @@ transTableToFunc tbl s i =
   where matchSI (s', i', _) = s' == s && i' == i
 
 
+
 acceptInput :: (Eq s) => DFA s i -> [i] -> Bool
 acceptInput dfa@(DFA _ as _) is = (evalDFA dfa is) `elem` as
+
+language :: (Eq s) => DFA s i -> [[i]]
+language dfa = [acceptInput dfa i | i <- star]
+
+-- Product of DFA's
+productDFA :: DFA s1 i -> DFA s2 i -> DFA (s1,s2) i
+productDFA l@(lss las ltr) m@(mss mas mtr) = DFA (lss,mss) [] prod
+  where prod (ls,ms) i = (ltr ls i, mtr ms i)
+
+
 
 
 -- Visualize a DFA with Dot language

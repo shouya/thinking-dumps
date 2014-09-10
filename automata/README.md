@@ -5,6 +5,10 @@
 * [Foundations of Computer Science](http://i.stanford.edu/~ullman/focs.html)
 * [Introduction to Automata Theory, Languages, and Computation](http://infolab.stanford.edu/~ullman/ialc.html)
 
+## Notes
+
+* `notes/mindfa.md`: Minimizing a DFA
+
 
 ## Files
 
