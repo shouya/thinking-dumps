@@ -32,7 +32,18 @@ states on all possible inputs.
 There is another important concepts about distinguishability. That is,
 the inductive rules for distinguishability. Let me make this clear.
 
-Firstly,
+The property of distinguishability of states follows the induction
+rule. That is, firstly, all accepting states are distinguishable from
+all other non-accepting states, because in DFA, accepting states take
+eat an input of &epsilon; to an accepting state, which is obviously
+not equivalent to any non-accepting states. Secondly, if we say two
+states `p` and `q` are distinguishable, and for any input `w`,
+`d(r,w) = p` and `d(s,w) = p`. We will say `r` and `s` are also
+distinguishable.
+
+
+
+
 
 
 ## References
