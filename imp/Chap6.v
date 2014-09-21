@@ -28,17 +28,18 @@ the one(S a) has the relation Q to the correlate of the other(S b), and
 *)
 
 Inductive similar {X} (P : relation X) (Q : relation X) : Prop :=
-| similar_intro : forall (S : relation X),
-                    one_one S ->
-                    (forall x, field P x -> domain S x) ->
-                    (forall x y z w, P x y -> S x z -> S y w -> Q z w) ->
-                    (forall x y z w, Q z w -> S x z -> S y w -> P x y) ->
+| similar_intro : (exists S : relation X,
+                    one_one S /\
+                    (forall x, field P x <-> domain S x) /\
+                    (forall x, field Q x <-> converse_domain S x) /\
+                    (forall x y z w, P x y -> S x z -> S y w -> Q z w) /\
+                    (forall x y z w, Q z w -> S x z -> S y w -> P x y)) ->
                     similar P Q.
 
 (* This theorem is not mentioned on the book but I want to prove it *)
 Theorem one_one_converse_one_one :
   forall {X} (P : relation X), one_one P ->
-                               one_one (converse P).
+                          one_one (converse P).
 Proof.
   intros.
   inversion H. unfold many_one in H0. unfold one_many in H1.
@@ -59,7 +60,8 @@ Inductive correlator {X} (P Q : relation X) : relation X -> Prop :=
   | correlator_intro :
       forall (S : relation X),
         one_one S ->
-        (forall x, field P x -> domain S x) ->
+        (forall x, field P x <-> domain S x) ->
+        (forall x, field Q x <-> converse_domain S x) ->
         (forall x y, relative_product (relative_product S Q) (converse S) x y -> P x y) ->
         correlator P Q S.
 
@@ -67,7 +69,7 @@ Inductive correlator {X} (P Q : relation X) : relation X -> Prop :=
 “likeness,” when there is at least one correlator of P and Q.
 *)
 Inductive similar' {X} (P Q : relation X) : Prop :=
-  | similar'_intro : forall S, correlator P Q S -> similar' P Q.
+  | similar'_intro : (exists S, correlator P Q S) -> similar' P Q.
 
 (* NOTE: this defintion is taken from Russel's book
    Principles of Mathematics rather than Introduction to Mathematical Philosophy
@@ -83,28 +85,80 @@ Theorem similar_eqv1 :
   forall {X} (P Q : relation X), similar P Q -> similar' P Q.
 Proof.
   intros.
-  inversion H. apply similar'_intro with S.
-  constructor; try assumption; intros.
+  inversion H as [HS].
+  inversion HS as [S SProps].
+  inversion SProps as [HS11 SProps'].
+  inversion SProps' as [HSdomain SProps''].
+  inversion SProps'' as [HScdomain SProps'''].
+  inversion SProps''' as [HSPQ HSQP].
 
-  inversion H4; clear H4.
-  inversion H5; clear H5.
-  inversion H6; clear H6.
+  clear SProps SProps' SProps'' SProps''' HS.
+
+  constructor. exists S.
+  constructor; try assumption.
+
+  (*
+Inductive relative_product
+          {X} (R: relation X) (S: relation X) : relation X :=
+  | rp0 : forall x y, forall z, R x y -> S y z -> relative_product R S x z.
+*)
+  intros x y Himp.
+
+  inversion Himp.
+  inversion H0.
+  inversion H1.
   subst.
 
   rename y1 into z.
   rename y0 into w.
-  specialize H2 with x y z w.
-  specialize H3 with x y z w.
+  clear H0 H1.
 
-  apply H3; assumption.
+  specialize HSPQ with x y z w.
+  specialize HSQP with x y z w.
+
+  apply HSQP; assumption.
 Qed.
 
 Theorem similar_eqv2 :
   forall {X} (P Q : relation X), similar' P Q -> similar P Q.
 Proof.
   intros.
-  inversion H. inversion H0. subst.
-  apply similar_intro with S; try assumption; intros.
-  specialize H3 with x y.
-  (* Stuck... *)
-  (* apply rp0 with (relative_product S Q) (converse S) x y w in H4. *)
+  inversion H as [HExCorrelator].
+  inversion HExCorrelator as [S Hcorrelator]. clear HExCorrelator.
+  inversion Hcorrelator as [S' HS11 HSdomain HScodomain HSrp]. subst. clear Hcorrelator.
+
+  constructor. exists S.
+
+  repeat (split; try assumption; try intros; try specialize HSrp with x y);
+    try (apply HSrp; apply rp0 with w; [ apply rp0 with z; assumption |
+                                         apply cv0; assumption ]).
+
+  rename H0 into HP.
+  rename H1 into HSx.
+  rename H2 into HSy.
+
+  pose proof HScodomain as HScodomain'.
+  specialize HScodomain with z.
+  specialize HScodomain' with w.
+
+  inversion HScodomain.
+  inversion HScodomain'.
+  clear H0 H2.
+
+  assert (Qz : converse_domain S z).
+  apply converse_domain_intro with x. assumption.
+
+  assert (Qw : converse_domain S w).
+  apply converse_domain_intro with y. assumption.
+
+  apply H1 in Qz.
+  apply H3 in Qw.
+
+  (*
+  assert (relative_product (relative_product S Q) (converse S) x y).
+  apply rp0 with w; try apply cv0; try assumption.
+  apply rp0 with z; try assumption.
+  *)
+
+  admit.
+Qed.
