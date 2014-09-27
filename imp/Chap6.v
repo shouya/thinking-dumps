@@ -159,6 +159,88 @@ Proof.
   apply rp0 with w; try apply cv0; try assumption.
   apply rp0 with z; try assumption.
   *)
+  (*
+    TODO: Sorry for my insufficient intelligence. I couldn't solve this :(
+  *)
 
   admit.
+Qed.
+
+(* This thorem does not always hold *)
+Theorem prop_similar :
+  forall {X} (R S : relation X) (P : relation X -> Prop),
+    similar R S -> P R -> P S.
+Proof.
+  intros.
+  inversion H.
+  inversion H1.
+  inversion H2.
+  inversion H4.
+  inversion H6.
+  inversion H8.
+  inversion H3.
+
+  unfold many_one in H11.
+  unfold one_many in H12.
+  clear H1 H2 H3 H4 H6 H8.
+
+  unfold relation in x.
+  unfold relation in P.
+  (*
+    TODO: Sorry again for my insufficient intelligence.
+  *)
+  admit.
+  (*
+    UPDATE: This theorem doesn't always hold!!
+    A counterexample:
+      * P : fun R x => R x 1.
+      * R : fun x y => y = 1.
+      * S : fun z w => w = 2.
+      * T : fun x z => z = x + 1.
+      => R S are similar, because T is one-one, and TST^-1 -> P.
+      => P R holds, but P S does not hold.
+    Qed.
+  *)
+Qed.
+
+(* Let me just prove something specific~ *)
+Theorem aliorelative_similar :
+  forall {X} (R S : relation X),
+    similar R S -> aliorelative R -> aliorelative S.
+Proof.
+  intros.
+  inversion H.
+  unfold aliorelative in H0.
+
+  inversion H1. inversion H2. inversion H4. inversion H6. inversion H8.
+  clear H1 H2 H4 H6 H8.
+
+  unfold aliorelative.
+  intro.
+  rename x into T.
+  rename x0 into a.
+
+  inversion H3.
+  unfold many_one in H1.
+  unfold one_many in H2.
+
+  assert (x : X). intuition.
+
+  specialize H0 with x.
+  specialize H1 with x a a.
+  specialize H2 with x a a.
+
+  assert (T x a).
+
+  specialize H5 with x.
+  inversion H5.
+  unfold field in H4.
+
+  (* I'm just an idiot.. ignore me.  *)
+  admit. admit.
+  (*
+  apply H10 with x x a a in H4.
+  apply H0 in H4. contradiction.
+  intro.
+  *)
 Qed.
