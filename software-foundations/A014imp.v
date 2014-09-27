@@ -1028,12 +1028,30 @@ Proof.
     exists st. assumption.
 Qed.
 
+Lemma beval_deterministic : forall b st r r',
+     beval st b = r' ->
+     beval st b = r ->
+     r = r'.
+Proof.
+  intros b st r r'.
+  induction b; simpl; intros; subst; reflexivity.
+Qed.
+
+Lemma while_stop_eqv : forall c b st st',
+     (beval st b) = false ->
+     (WHILE b DO c END) / st || SContinue / st' ->
+     st = st'.
+  intros.
+Admitted.
+
+
 Theorem ceval_deterministic: forall (c:com) st st1 st2 s1 s2,
      c / st || s1 / st1 ->
      c / st || s2 / st2 ->
      st1 = st2 /\ s1 = s2.
 Proof.
   intros.
+
   generalize dependent s2.
   generalize dependent st2.
   ceval_cases (induction H) Case; intros.
@@ -1041,9 +1059,52 @@ Proof.
   inversion H0; subst; split; reflexivity.
   inversion H0; subst; split; reflexivity.
   inversion H0; subst; split; reflexivity.
+
   inversion H0; subst. split; try reflexivity.
-    apply IHceval in H6. inversion H6. assumption.
-    apply IHceval in H3. inversion H3. inversion H2.
+    apply IHceval with SBreak; assumption.
+    apply IHceval in H3; inversion H3; inversion H2.
+
+  inversion H1; subst.
+    split; apply IHceval1 in H7; inversion H7; inversion H3.
+    split; apply IHceval1 in H4; inversion H4; subst;
+           apply IHceval2 in H8; inversion H8; subst; reflexivity.
+
+  inversion H1; subst.
+    split; apply IHceval in H9; inversion H9; assumption.
+    split; apply (beval_deterministic b st true false H8) in H; inversion H.
+
+  inversion H1; subst.
+    split; apply (beval_deterministic b st false true H8) in H; inversion H.
+    split; apply IHceval in H9; inversion H9; assumption.
+
+  inversion H0; subst; split; try reflexivity;
+    apply while_stop_eqv with c b; assumption. (* TODO: Prove this lemma *)
+
+
+
+  inversion H1; subst
+    apply (beval_deterministic b st'' false true H0) in H6; inversion H6.
+(* Too difficult.. it take*)
+
+
+
+
+  | E_While_Stop : forall b c st,
+      beval st b = false ->
+      WHILE b DO c END / st || SContinue / st
+
+
+  | E_While_Stop : forall b c st,
+      beval st b = false ->
+      WHILE b DO c END / st || SContinue / st
+  | E_While_Cont : forall b c st st' st'',
+      c / st || SContinue / st' ->
+      beval st' b = true ->
+      WHILE b DO c END / st' || SContinue / st'' ->
+      WHILE b DO c END / st || SContinue / st''
+  | E_While_Break : forall b c st st',
+      c / st || SBreak / st' ->
+      WHILE b DO c END / st || SContinue / st'
     (* To complex, #DELAYED #TODO *)
 (*  inversion H1; subst
     apply E_Seq_Cont with st st' c1 c2 s st'' in H; try assumption.
