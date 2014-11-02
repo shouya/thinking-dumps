@@ -38,7 +38,7 @@ object Anagrams {
 
   /** Converts a sentence into its character occurrence list. */
   def sentenceOccurrences(s: Sentence): Occurrences =
-    s.map((a) => wordOccurrences(a)).flatten.groupBy((a) => a._1).toList.map((a) => (a._1, a._2.foldLeft(0)((c,a) => c + a._2))).sorted
+    wordOccurrences(s.foldLeft("")(_ + _))
 
   /** The `dictionaryByOccurrences` is a `Map` from different occurrences to a sequence of all
    *  the words that have that occurrence count.
@@ -97,7 +97,8 @@ object Anagrams {
       })
 
   def combinations(occurrences: Occurrences): List[Occurrences] =
-    occurrences :: (occurrences.map((o) => combinations(reducedOn(occurrences, o._1, 1)))).flatten
+    occurrences :: (occurrences.flatMap((o) =>
+      combinations(reducedOn(occurrences, o._1, 1))))
 
 
   /** Subtracts occurrence list `y` from occurrence list `x`.
@@ -155,12 +156,11 @@ object Anagrams {
    *  Note: There is only one anagram of an empty sentence.
    */
   def findSentences(occ : Occurrences) : List[Sentence] =
-    if (occ.isEmpty) List(List()) else {
-      for {
-	subocc <- combinations(occ) if (dictionaryByOccurrences contains subocc)
-	word <- dictionaryByOccurrences(subocc)
-	sent <- findSentences(subtract(occ, subocc))
-      } yield (word :: sent)
+    if (occ.isEmpty) List(List())
+    else {
+      combinations(occ) flatMap (subocc =>
+	dictionaryByOccurrences.getOrElse(subocc, List()) flatMap (w =>
+	  findSentences(subtract(occ, subocc)).map(w :: _)))
     }
 
   def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
