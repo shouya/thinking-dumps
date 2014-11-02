@@ -90,7 +90,7 @@ object Anagrams {
     occurrences.foldRight(List() : Occurrences)((v,c) =>
       if (v._1 != oc) {
         v :: c
-      } else if (v._2 > 1) {
+      } else if (v._2 > on) {
         (v._1, v._2 - on) :: c
       } else {
 	c
