@@ -2,7 +2,6 @@ module DFS where
 
 import Prelude hiding (pred)
 import Data.List ((\\), sort)
-import Data.Array ((!))
 import GenericGraph
 
 
@@ -15,7 +14,7 @@ dfs pred graph begin = reverse $ dfs' [begin] [begin]
               (v:_) -> dfs' (v:x:xs) (v:visited)
               []    -> dfs' xs       visited
         dfs' [] visited = visited
-        pickUnvisited x visited = sort (unGraph graph ! x \\ visited)
+        pickUnvisited x visited = sort (adjacentVertices graph x \\ visited)
 
 
 dfsTraverse :: (Ix a) => Graph a -> a -> [a]

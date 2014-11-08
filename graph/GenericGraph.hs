@@ -10,11 +10,10 @@ import qualified Data.Array as Array
 
 
 
-type Vertices v = [v]
 type Bounds v = (v, v)
 type Edge   v = (v, v)
 
-newtype Graph v = Graph { unGraph :: Array v (Vertices v) }
+newtype Graph v = Graph { unGraph :: Array v [v] }
 
 instance (Ix v, Show v) => Show (Graph v) where
   show (Graph v) = show v
@@ -31,3 +30,9 @@ bounds = Array.bounds . unGraph
 edges :: (Ix v) => Graph v -> [Edge v]
 edges = concat . map foo . assocs . unGraph
   where foo (v,vs) = map ((,) v) vs
+
+adjacentVertices :: (Ix v) => Graph v -> v -> [v]
+adjacentVertices g v = (unGraph g) ! v
+
+edgesFor :: (Ix v) => v -> Graph v -> [Edge v]
+edgesFor v g = map ((,) v) $ adjacentVertices g v
