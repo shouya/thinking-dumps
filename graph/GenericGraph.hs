@@ -1,9 +1,13 @@
 
-module GenericGraph where
+module GenericGraph
+       (module GenericGraph,
+        Ix,
+       ) where
 
 import Data.List (union)
-import qualified Data.Array as Array (bounds)
 import Data.Array hiding (bounds)
+import qualified Data.Array as Array
+
 
 
 type Vertices v = [v]
@@ -23,3 +27,7 @@ buildG bounds edges = Graph $ array bounds vertexmap
 
 bounds :: (Ix v) => Graph v -> Bounds v
 bounds = Array.bounds . unGraph
+
+edges :: (Ix v) => Graph v -> [Edge v]
+edges = concat . map foo . assocs . unGraph
+  where foo (v,vs) = map ((,) v) vs

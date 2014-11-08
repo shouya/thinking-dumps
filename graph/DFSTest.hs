@@ -1,7 +1,7 @@
 module DFSTest where
 
 import DFS
-import Data.Graph hiding (edges)
+import GenericGraph hiding (edges, bounds)
 import Control.Monad (liftM2)
 import Test.QuickCheck
 
@@ -16,14 +16,14 @@ exampleGraph:
 
 -}
 
-edges :: [Edge]
+edges :: [Edge Int]
 edges = [(1,2), (2,3), (2,5), (3,4), (4,5)]
 
-bounds :: Bounds
+bounds :: Bounds Int
 bounds = liftM2 (,) (foldl1 min) (foldl1 max) $
          (map fst edges) ++ (map snd edges)
 
-exampleGraph :: Graph
+exampleGraph :: Graph Int
 exampleGraph = buildG bounds (edges ++ rev edges)
   where rev      = map (\(a,b) -> (b,a))
 

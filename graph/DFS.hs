@@ -3,10 +3,10 @@ module DFS where
 import Prelude hiding (pred)
 import Data.List ((\\), sort)
 import Data.Array ((!))
-import Data.Graph hiding (dfs)
+import GenericGraph
 
 
-dfs :: (Vertex -> Bool) -> Graph -> Vertex -> [Vertex]
+dfs :: (Ix a) => (a -> Bool) -> Graph a -> a -> [a]
 dfs pred graph begin = reverse $ dfs' [begin] [begin]
   where dfs' (x:xs) visited
           | pred x    = visited
@@ -15,11 +15,11 @@ dfs pred graph begin = reverse $ dfs' [begin] [begin]
               (v:_) -> dfs' (v:x:xs) (v:visited)
               []    -> dfs' xs       visited
         dfs' [] visited = visited
-        pickUnvisited x visited = sort (graph ! x \\ visited)
+        pickUnvisited x visited = sort (unGraph graph ! x \\ visited)
 
 
-dfsTraverse :: Graph -> Vertex -> [Vertex]
+dfsTraverse :: (Ix a) => Graph a -> a -> [a]
 dfsTraverse graph begin = dfs (const False) graph begin
 
-dfsSearch :: Graph -> Vertex -> Vertex -> [Vertex]
+dfsSearch :: (Ix a) => Graph a -> a -> a -> [a]
 dfsSearch graph begin end = dfs (== end) graph begin
