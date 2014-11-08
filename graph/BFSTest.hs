@@ -10,14 +10,14 @@ import Test.QuickCheck
 {-
 exampleGraph:
 
-  1--2--3--4
-      \    |
-       ----5
+  +-1--2--3--4
+  +-+    \    |
+         ----5
 
 -}
 
 edges :: [Edge Int]
-edges = [(1,2), (2,3), (2,5), (3,4), (4,5)]
+edges = [(1,1), (1,2), (2,3), (2,5), (3,4), (4,5)]
 
 bounds :: Bounds Int
 bounds = liftM2 (,) (foldl1 min) (foldl1 max) $

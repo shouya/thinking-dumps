@@ -8,17 +8,18 @@ import GenericGraph
 dfs :: (Ix a) => (a -> Bool) -> Graph a -> a -> [a]
 dfs pred graph begin = reverse $ dfs' [begin] [begin]
   where dfs' (x:xs) visited
-          | pred x    = visited
+          | pred x    = result
           | otherwise =
-            case pickUnvisited x visited of
-              (v:_) -> dfs' (v:x:xs) (v:visited)
+            case unvisitedVertices x visited of
               []    -> dfs' xs       visited
-        dfs' [] visited = visited
-        pickUnvisited x visited = sort (adjacentVertices graph x \\ visited)
+              (v:_) -> dfs' (v:x:xs) (v:visited)
+        dfs' [] visited = result
+        unvisitedVertices x visited =
+          sort (adjacentVertices graph x \\ visited)
 
 
 dfsTraverse :: (Ix a) => Graph a -> a -> [a]
 dfsTraverse graph begin = dfs (const False) graph begin
 
 dfsSearch :: (Ix a) => Graph a -> a -> a -> [a]
-dfsSearch graph begin end = dfs (== end) graph begin
+dfsSearch graph begin end = dfs (== end) graph begin ++ [end]

@@ -4,7 +4,7 @@ module GenericGraph
         Ix,
        ) where
 
-import Data.List (union)
+import Data.List (union, nub)
 import Data.Array hiding (bounds)
 import qualified Data.Array as Array
 
@@ -19,8 +19,9 @@ instance (Ix v, Show v) => Show (Graph v) where
   show (Graph v) = show v
 
 buildG :: (Ix v) => Bounds v -> [Edge v] -> Graph v
-buildG bounds edges = Graph $ array bounds vertexmap
-  where vertices = (map fst edges) `union` (map snd edges)
+buildG bounds edges' = Graph $ array bounds vertexmap
+  where edges = nub edges'
+        vertices = (map fst edges) `union` (map snd edges)
         vertexmap = zip vertices (map connected vertices)
         connected v = map snd $ filter ((== v) . fst) edges
 
