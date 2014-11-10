@@ -1,25 +1,32 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module DFS where
 
 import Prelude hiding (pred)
 import Data.List ((\\), sort)
-import GenericGraph
+
+import GraphClass
+
+class (Node n, Ord n) => DFSNode n
+instance (Node n, Ord n) => DFSNode n
 
 
-dfs :: (Ix a) => (a -> Bool) -> Graph a -> a -> [a]
+dfs :: (Graph g n, DFSNode n) => (n -> Bool) -> g n -> n -> [n]
 dfs pred graph begin = reverse $ dfs' [begin] [begin]
   where dfs' (x:xs) visited
-          | pred x    = result
+          | pred x    = visited
           | otherwise =
-            case unvisitedVertices x visited of
+            case unvisitedNodes x visited of
               []    -> dfs' xs       visited
               (v:_) -> dfs' (v:x:xs) (v:visited)
-        dfs' [] visited = result
-        unvisitedVertices x visited =
-          sort (adjacentVertices graph x \\ visited)
+        dfs' [] visited = visited
+        unvisitedNodes x visited =
+          sort (adjacentNodes graph x \\ visited)
 
 
-dfsTraverse :: (Ix a) => Graph a -> a -> [a]
+dfsTraverse :: (Graph g n, DFSNode n) => g n -> n -> [n]
 dfsTraverse graph begin = dfs (const False) graph begin
 
-dfsSearch :: (Ix a) => Graph a -> a -> a -> [a]
-dfsSearch graph begin end = dfs (== end) graph begin ++ [end]
+dfsSearch :: (Graph g n, DFSNode n) => g n -> n -> n -> [n]
+dfsSearch graph begin end = dfs (== end) graph begin

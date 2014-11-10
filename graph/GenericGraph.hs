@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module GenericGraph
        (module GenericGraph,
@@ -5,35 +8,33 @@ module GenericGraph
        ) where
 
 import Data.List (union, nub)
+import qualified Data.Array as Array (bounds)
 import Data.Array hiding (bounds)
-import qualified Data.Array as Array
 
-
+import GraphClass
 
 type Bounds v = (v, v)
 type Edge   v = (v, v)
 
-newtype Graph v = Graph { unGraph :: Array v [v] }
+newtype GenericGraph v = GenericGraph { runGenericGraph :: Array v [v] }
 
-instance (Ix v, Show v) => Show (Graph v) where
-  show (Graph v) = show v
+instance (Ix v, Show v) => Show (GenericGraph v) where
+  show (GenericGraph x) = show x
 
-buildG :: (Ix v) => Bounds v -> [Edge v] -> Graph v
-buildG bounds edges' = Graph $ array bounds vertexmap
+buildG :: (Ix v) => Bounds v -> [Edge v] -> GenericGraph v
+buildG bounds edges' = GenericGraph $ array bounds vertexmap
   where edges = nub edges'
         vertices = (map fst edges) `union` (map snd edges)
         vertexmap = zip vertices (map connected vertices)
         connected v = map snd $ filter ((== v) . fst) edges
 
-bounds :: (Ix v) => Graph v -> Bounds v
-bounds = Array.bounds . unGraph
+bounds :: (Ix v) => GenericGraph v -> Bounds v
+bounds = Array.bounds . runGenericGraph
 
-edges :: (Ix v) => Graph v -> [Edge v]
-edges = concat . map foo . assocs . unGraph
-  where foo (v,vs) = map ((,) v) vs
+instance Ix n => Node n
 
-adjacentVertices :: (Ix v) => Graph v -> v -> [v]
-adjacentVertices g v = (unGraph g) ! v
+instance Ix n => Graph GenericGraph n where
+  adjacentNodes g v =  (runGenericGraph g) ! v
 
-edgesFor :: (Ix v) => v -> Graph v -> [Edge v]
-edgesFor v g = map ((,) v) $ adjacentVertices g v
+instance Ix n => FiniteGraph GenericGraph n where
+  allNodes = indices . runGenericGraph
