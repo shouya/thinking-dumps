@@ -16,6 +16,7 @@ exampleGraph:
 
 -}
 
+
 edges :: [Edge Int]
 edges = [(1,2), (2,3), (2,5), (3,4), (4,5)]
 
@@ -38,8 +39,10 @@ prop_SearchEqvTraverse =
   where inBounds = choose bounds
 
 
+
+
 main :: IO ()
-main = do quickCheck (dfsTraverse exampleGraph 1 == [1..5])
-          quickCheck (dfsTraverse exampleGraph 2 == [2,1,3,4,5])
-          quickCheck (dfsTraverse exampleGraph 3 == [3,2,1,5,4])
+main = do quickCheck (dfsTraverse exampleGraph (1::Int) == [1..5])
+          quickCheck (dfsTraverse exampleGraph (2::Int) == [2,1,3,4,5])
+          quickCheck (dfsTraverse exampleGraph (3::Int) == [3,2,1,5,4])
           quickCheck prop_SearchEqvTraverse

@@ -11,7 +11,7 @@ import GraphClass
 class (Node n, Ord n) => BFSNode n
 instance (Node n, Ord n) => BFSNode n
 
-bfs :: (Graph g n, BFSNode n) => (n -> Bool) -> g n -> n -> [n]
+bfs :: (Graph g n, BFSNode n) => (n -> Bool) -> g -> n -> [n]
 bfs term graph begin = reverse $ bfs' [begin] []
   where bfs' [] visited = visited
         bfs' queue@(x:xs) visited
@@ -22,8 +22,8 @@ bfs term graph begin = reverse $ bfs' [begin] []
         unvisitedNodes x visited =
           sort $ (adjacentNodes graph x \\ visited)
 
-bfsTraverse :: (Graph g n, BFSNode n) => g n -> n -> [n]
+bfsTraverse :: (Graph g n, BFSNode n) => g -> n -> [n]
 bfsTraverse graph begin = bfs (const False) graph begin
 
-bfsSearch :: (Graph g n, BFSNode n) => g n -> n -> n -> [n]
+bfsSearch :: (Graph g n, BFSNode n) => g -> n -> n -> [n]
 bfsSearch graph begin end = bfs (== end) graph begin ++ [end]

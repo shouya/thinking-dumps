@@ -33,8 +33,8 @@ bounds = Array.bounds . runGenericGraph
 
 instance Ix n => Node n
 
-instance Ix n => Graph GenericGraph n where
+instance Ix n => Graph (GenericGraph n) n where
   adjacentNodes g v =  (runGenericGraph g) ! v
 
-instance Ix n => FiniteGraph GenericGraph n where
+instance Ix n => FiniteGraph (GenericGraph n) n where
   allNodes = indices . runGenericGraph

@@ -39,7 +39,7 @@ prop_SearchEqvTraverse =
 
 
 main :: IO ()
-main = do quickCheck (bfsTraverse exampleGraph 1 == [1,2,3,5,4])
-          quickCheck (bfsTraverse exampleGraph 2 == [2,1,3,5,4])
-          quickCheck (bfsTraverse exampleGraph 3 == [3,2,4,1,5])
+main = do quickCheck (bfsTraverse exampleGraph (1::Int) == [1,2,3,5,4])
+          quickCheck (bfsTraverse exampleGraph (2::Int) == [2,1,3,5,4])
+          quickCheck (bfsTraverse exampleGraph (3::Int) == [3,2,4,1,5])
           quickCheck prop_SearchEqvTraverse
