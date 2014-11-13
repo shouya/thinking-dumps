@@ -1,14 +1,19 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module ProgFun.Bloxorz where
 
 import Prelude hiding (Left, Right)
 import GraphClass
+import BFS
 
 type Pos = (Int, Int)
 type Block = (Pos, Pos)
 
 
 terrian :: Pos -> Bool
-terrian (x,y) = x == y
+terrian (x,y) = inBounds (x,y)
 
 bounds :: Pos
 bounds = (4, 4)
@@ -45,7 +50,7 @@ data Dir = Left | Right | Up | Down
 directions :: [Dir]
 directions = [Left, Right, Up, Down]
 
-type DirMatrix = ((Int, Int), (Int, Int))
+type MoveMatrix = ((Int, Int), (Int, Int))
 
 moveMatrix :: Dir -> Block -> MoveMatrix
 moveMatrix Left blk
@@ -79,11 +84,17 @@ move dir b = moveBlockByMatrix (moveMatrix dir b) b
 
 possibleMoves :: Block -> [Block]
 possibleMoves b = filter isLegal $
-                  map (\d -> move dir b) directions
+                  map (\dir -> move dir b) directions
 
 
 instance Node Block
+-- instance BFSNode Block
+
+data T = T
+
+instance Graph T Block where
+  adjacentNodes _ = possibleMoves
 
 
-instance Graph Block where
-  adjacentNodes :: g n -> n -> [n]
+l :: [Block]
+l = bfsSearch T ((0,0),(0,0)) ((0,3),(0,3))
