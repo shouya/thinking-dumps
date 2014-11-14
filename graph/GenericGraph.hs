@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module GenericGraph
        (module GenericGraph,
@@ -33,8 +34,9 @@ bounds = Array.bounds . runGenericGraph
 
 instance Ix n => Node n
 
-instance Ix n => Graph (GenericGraph n) n where
-  adjacentNodes g v =  (runGenericGraph g) ! v
+instance Ix n => Graph (GenericGraph n) n n where
+  edgesFor g n = map (\t -> ((n, t), t)) tgts
+    where tgts = (runGenericGraph g) ! n
 
-instance Ix n => FiniteGraph (GenericGraph n) n where
+instance Ix n => FiniteGraph (GenericGraph n) n n where
   allNodes = indices . runGenericGraph
