@@ -46,6 +46,7 @@ inBounds (x, y) = x >= 0  && y >= 0 &&
 
 
 data Dir = Left | Right | Up | Down
+         deriving (Show, Ord, Eq)
 
 directions :: [Dir]
 directions = [Left, Right, Up, Down]
@@ -82,9 +83,9 @@ moveBlockByMatrix ((dx1,dy1),(dx2,dy2)) ((x1,y1),(x2,y2)) =
 move :: Dir -> Block -> Block
 move dir b = moveBlockByMatrix (moveMatrix dir b) b
 
-possibleMoves :: Block -> [Block]
-possibleMoves b = filter isLegal $
-                  map (\dir -> move dir b) directions
+possibleMoves :: Block -> [LEdge Block Dir]
+possibleMoves b = filter (isLegal . target) $
+                  map (\dir -> ((b, move dir b), dir)) directions
 
 
 instance Node Block
@@ -92,9 +93,11 @@ instance Node Block
 
 data T = T
 
-instance Graph T Block where
-  adjacentNodes _ = possibleMoves
+instance Graph T Block Dir where
+  edgesFor T = possibleMoves
 
 
-l :: [Block]
-l = bfsSearch T ((0,0),(0,0)) ((0,3),(0,3))
+l :: Maybe [Dir]
+l = bfsSearch T beg end
+  where beg = ((0,0),(0,0)) :: Block
+        end = ((0,3),(0,3)) :: Block
