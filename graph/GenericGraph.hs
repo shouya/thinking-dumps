@@ -35,7 +35,7 @@ bounds = Array.bounds . runGenericGraph
 instance Ix n => Node n
 
 instance Ix n => Graph (GenericGraph n) n n where
-  edgesFor g n = map (\t -> ((n, t), t)) tgts
+  edgesFor g n = map (\t -> (t, t)) tgts
     where tgts = (runGenericGraph g) ! n
 
 instance Ix n => FiniteGraph (GenericGraph n) n n where
