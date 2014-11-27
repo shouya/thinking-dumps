@@ -9,14 +9,14 @@ import Control.Monad (liftM2, liftM)
 import Data.List (find)
 
 class Eq n => Node n
-type LEdge n e = ((n,n),e)
+type LEdge n e = (n,e)
 
-origin :: LEdge n e -> n
-origin ((n,_), _) = n
 target :: LEdge n e -> n
-target ((_,n), _) = n
+target (n, _) = n
 label  :: LEdge n e -> e
-label  ((_,_), e) = e
+label  (_, e) = e
+mkLEdge :: n -> e -> LEdge n e
+mkEdge = (,)
 
 
 -- https://www.haskell.org/ghc/docs/latest/html/users_guide/type-class-extensions.html#functional-dependencies
