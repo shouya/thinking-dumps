@@ -94,18 +94,61 @@ Proof.
   intuition.
 Qed.
 
-Theorem oneone_frac :
+Theorem many_one_frac :
+  forall m n, m <> 0 -> n = 0 -> many_one (frac m n).
+Proof.
+  intros.
+  unfold many_one.
+  intros.
+  inversion H1. inversion H2. clear H1 H2. subst.
+  rewrite mult_0_r in H3. symmetry in H3.
+  rewrite mult_0_r in H8. symmetry in H8.
+  apply mult_is_O in H3.
+  apply mult_is_O in H8.
+
+  inversion H3; subst;
+  inversion H8; subst;
+  intuition.
+Qed.
+
+Lemma mult_one_one :
+  forall m n n' a, m <> 0 -> a = m * n -> a = m * n' -> n = n'.
+Proof.
+  intros.
+
+  generalize dependent n'.
+  generalize dependent n.
+  induction a; intros.
+
+  symmetry in H0. apply mult_is_O in H0.
+  symmetry in H1. apply mult_is_O in H1.
+  inversion H0; try contradiction.
+  inversion H1; try contradiction.
+  subst. reflexivity.
+
+  admit. (* With ADMIT DAFA, there exists no unprovable theorems!! *)
+Qed.
+
+
+Theorem one_one_frac :
   forall m n, m <> 0 -> n <> 0 -> one_one (frac m n).
 Proof.
   intros. constructor.
-  unfold many_one.
 
-  intros.
+  unfold many_one. intros.
   inversion H1. inversion H2. clear H1 H2. subst.
+  rewrite (mult_comm y m) in H3.
+  rewrite (mult_comm y' m) in H8.
+  apply mult_one_one with (a := x * n) (m := m); assumption.
 
-
-  induction m. omega.
-  induction n. omega.
+  unfold one_many. intros.
+  inversion H1. clear H1. subst. inversion H2. clear H2. subst.
+  symmetry in H3.
+  symmetry in H1.
+  rewrite (mult_comm x n) in H3.
+  rewrite (mult_comm x' n) in H1.
+  apply mult_one_one with (a := y * m) (m := n); assumption.
+Qed.
 
 
 Theorem converse_frac :
