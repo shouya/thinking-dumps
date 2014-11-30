@@ -1,34 +1,46 @@
-#lang racket
-
-(define (eval! expr env)
-  (undefined))
-
-(define eval eval!)
-
-(define (built-in-op? sym)
-  (member sym (map car built-in-symbol-map)))
+#lang racket/base
 
 
-(define (normal-form? expr)
-  (case (type-of expr)
-    ['num  #t]
-    ['λ    #t]
-    ['appl #f]))
+(define (eval expr)
+  (if (normal? expr) expr
+      (let ([ecar (eval (car expr))])
+        (if (built-in-proc? ecar)
+            (eval-built-in-proc (lookup-built-in-proc (cadr ecar))
+                                (map eval (cdr expr)))
+        (error "unknown expression")))))
 
-(define (getval expr)
-  (if (normal-form? expr)
-      (cdr expr)
-      (error "not value in normal form")))
+(define (normal? expr)
+  (member (car expr) ;; type of expr
+          '(i λ)))
 
+(define (plus xs)
+  (list 'i (foldl + 0 (map cadr xs))))
 
-(define type-of car)
+(define (built-in-proc? proc)
+  (member (cadr proc) (map car proc-maps)))
 
-(define my-prog
-  '[appl (λ '+) (num 1) (num 2)])
+(define (eval-built-in-proc foo args)
+  (foo args))
 
-(define built-in-symbol-map
-  '([+      (λ (rest) (+ (getval (eval (cadr rest)))
-                         (getval (eval (cadr rest)))))]
-    [except (λ (rest) (error "aha! mia G point got touched!"))]))
+(define (lookup-built-in-proc name)
+  (let ([proc (findf (λ (proc) (eq? (car proc) name)) proc-maps)])
+    (if proc
+        (cadr proc)
+        (error "procedure not found"))))
+   
+;; This function compiles '(+ 1 (+ 2 3)) into '((λ +) (i 1) ((λ +) (i 2) (i 3))
+(define (compile a)
+  (cond
+    [(symbol? a) (list 'λ a)]
+    [(number? a) (list 'i a)]
+    [(pair? a) (map compile a)]))
+                 
   
-(define (undefined) (error "meow"))
+(define proc-maps
+  `([+ ,plus]))
+
+(eval (compile
+       '(+ 1 (+ 2 3))))
+
+
+  
