@@ -111,6 +111,7 @@ Proof.
   intuition.
 Qed.
 
+(*
 Lemma mult_one_one :
   forall m n n' a, m <> 0 -> a = m * n -> a = m * n' -> n = n'.
 Proof.
@@ -128,6 +129,31 @@ Proof.
 
   admit. (* With ADMIT DAFA, there exists no unprovable theorems!! *)
 Qed.
+*)
+
+Lemma mult_one_one :
+  forall m n n' a, m <> 0 -> a = m * n -> a = m * n' -> n = n'.
+Proof.
+  intros.
+
+  generalize dependent n'.
+  induction n.
+  induction n'.
+  reflexivity.
+
+  intros.
+  intros.
+
+  intros.
+
+  apply f_equal.
+
+  rewrite mult_succ_l in H0.
+  rewrite mult_succ_l in H1.
+
+
+
+
 
 
 Theorem one_one_frac :
@@ -152,8 +178,10 @@ Qed.
 
 
 Theorem converse_frac :
-  forall m n a, relative_product (frac m n) (frac n m) a a.
+  forall m n, converse (frac m n) = frac n m.
 Proof.
   intros.
+  apply rp0 with .
+
   apply rp0 with
   apply frac0.
