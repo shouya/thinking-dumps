@@ -1,19 +1,26 @@
 #lang racket/base
 
 (define (eval expr env)
-  (if (normal? expr) expr
-      (if (ref? expr) (follow-ref (cadr expr) env)
-          (let ([ecar (eval (car expr) env)])
-            (if (proc? (cadr ecar))
-                (eval-proc (lookup-proc (cadr ecar))
-                           (map (λ (x) (eval x env)) (cdr expr)))
-                (if (lambda? ecar)
-                    (eval-lambda ecar (map (λ (x) (eval x env)) (cdr expr)) env)
-                    (error "unknown expression")))))))
+  (cond
+    [(normal? expr) expr]
+    [(lambda? expr) (create-lambda expr env)]
+    [(ref? expr) (follow-ref (cadr expr) env)]
+    [else (let ([ecar (eval (car expr) env)])
+            (cond
+              [(lambda? ecar)
+               (eval-lambda ecar
+                            (map (eval-env env) (cdr expr)))]
+              [(proc? (cadr ecar))
+               (eval-proc (lookup-proc (cadr ecar))
+                          (map (eval-env env) (cdr expr)))]
+              [else (error "unknown expression")]))]))
+
+
+(define (eval-env env)
+  (λ (x) (eval x env)))
 
 (define (normal? expr)
-  (memq (car expr) ;; type of expr
-          '(i p λ)))
+  (memq (car expr) '(i p))) ;; type of expr
 
 (define (ref? expr)
   ((car expr) . eq? . 'r))
@@ -26,15 +33,19 @@
          cadr
          (λ () (error "undefined reference"))))
 
-(define (eval-lambda lamb arg env)
+(define (create-lambda expr env)
+  (list 'λ (cadr expr) (caddr expr) env))
+
+(define (eval-lambda lamb arg)
   (let ([λparam cadr]
         [λbody caddr]
-        [λenv env])
-    (let ([param (λparam lamb)]
-          [body (λbody lamb)])
-      (set! λenv (cons `(,param . ,arg) env))
-      (eval body λenv))))
-  
+        [λenv cadddr])
+    (let* ([param (λparam lamb)]
+           [body (λbody lamb)]
+           [env (cons `(,param . ,arg)
+                      (λenv lamb))])
+      (eval body env))))
+
 
 (define (plus xs)
   (list 'i (foldl + 0 (map val xs))))
@@ -78,7 +89,8 @@
 ;       '())
 
 (eval (compile
-       '((λ a (+ a a)) 1))
+       '(((λ a (λ b (+ a b))) 1) 2)
+       )
       '())
 
 
