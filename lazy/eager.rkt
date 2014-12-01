@@ -19,6 +19,8 @@
 (define (eval-env env)
   (λ (x) (eval x env)))
 
+
+
 (define (normal? expr)
   (memq (car expr) '(i p))) ;; type of expr
 
@@ -49,6 +51,9 @@
 
 (define (plus xs)
   (list 'i (foldl + 0 (map val xs))))
+
+(define (die anything)
+  (error "you shouldn't see me here because i'm dead."))
 
 (define val cadr)  ;; extracting value, e.g. '(i 1) -> 1
 
@@ -82,16 +87,18 @@
 
 
 (define proc-map
-  `([+ ,plus]))
+  `([+ ,plus]
+    [die ,die]))
 
-; (eval (compile
-;        '(+ 1 (+ 2 3)))
-;       '())
+;; (eval (compile
+;;        '(+ 1 (+ 2 3)))
+;;       '())
 
-(eval (compile
-       '(((λ a (λ b (+ a b))) 1) 2)
-       )
-      '())
+;; (eval (compile
+;;        '(((λ a (λ b (+ a b))) 1) 2)
+;;        )
+;;       '())
 
-
-
+;; (eval (compile
+;;        '((λ () (die))))
+;;       '())
