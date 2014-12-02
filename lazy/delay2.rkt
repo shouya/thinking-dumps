@@ -2,6 +2,7 @@
 
 (require scheme/mpair)
 (require racket/function)
+(require racket/list)
 
 (define (eval-preliminary force?)
   (λ (expr env)
@@ -162,7 +163,19 @@
       (just result)
       (nothing)))
 
-;; This function compiles '(+ 1 (+ 2 3)) into '((p +) (i 1) ((p +) (i 2) (i 3))
+
+;; This function compiles lists like '(1 2 3 4) into
+;;   (appl (appl (appl 1 2) 3) 4)
+(define (compile-fold-appl xs)
+  (if (equal? (length xs) 2)
+      (cons 'appl (map compile xs))
+      (list 'appl
+            (compile-fold-appl (take xs (- (length xs) 1)))
+            (compile (last xs)))))
+
+
+;; This function compiles '(+ 1 (+ 2 3)) into
+;;   '(appl (appl (p +) (i 1)) (appl (appl (p +) (i 2)) (i 3)))
 (define (compile a)
   (cond
    [(and (symbol? a)
@@ -171,9 +184,8 @@
    [(number? a) (list 'i a)]
    [(pair? a) (if (eq? 'λ (car a))
                   (list 'λraw (cadr a) (compile (caddr a)))
-                  (list 'appl
-                        (compile (car a))
-                        (compile (cadr a))))]))
+                  (compile-fold-appl a))]))
+
 
 
 (define proc-map
@@ -196,16 +208,16 @@
 ;;       '())
 
 
+(eval (compile
+       '((λ a (+ a a))
+         ((λ b (+ b b))  ;; so far, this λ will be evaluated twice
+          1))
+       ) empty-env)
+
 ;; (eval (compile
 ;;        '((λ a (+ a a))
-;;          ((λ b (+ b b))  ;; so far, this λ will be evaluated twice
-;;           1))
-;;        ) empty-env)
-
-(eval (compile
-       '((λ a ((+ a) a))
-         ((λ b ((+ b) b)) 1))
-       ) empty-env)
+;;           ((λ b (+ b b)) 1))
+;;         ) empty-env)
 
 ;; (define dcenv (list->mlist '([k . (i 3)])))
 
