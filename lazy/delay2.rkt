@@ -6,8 +6,6 @@
 
 (define (eval-preliminary force?)
   (λ (expr env)
-;    (display expr)
-;    (newline)
     (cond
      [(normal? expr) expr]
      [(redex? expr) (if force? (reduce expr env) expr)]
@@ -19,10 +17,11 @@
           (if force?
               (eval-force expr env)
               (make-closure env expr)))
-
+        (define eval-lambda-opt
+          (if force? eval-lambda-force eval-lambda))
         (cond
          [(λ? ecar)
-          (eval-lambda ecar (make-closure-or-eval (caddr expr)))]
+          (eval-lambda-opt ecar (make-closure-or-eval (caddr expr)))]
          [(proc? ecar)
           (eval-proc (cadr ecar) (caddr expr) env)]
          [else (error "unknown expression")]))])))
@@ -134,6 +133,16 @@
            [newenv (add-binding param arg env)])
       (eval body newenv))))
 
+(define (eval-lambda-force lamb arg)
+  (let ([λparam cadr]
+        [λbody caddr]
+        [λenv cadddr])
+    (let* ([param  (λparam lamb)]
+           [body   (λbody  lamb)]
+           [env    (λenv   lamb)]
+           [newenv (add-binding param arg env)])
+      (eval-force body newenv))))
+
 
 ;;; Built-in functions
 (define (plus arg1 env1)
@@ -208,11 +217,16 @@
 ;;       '())
 
 
-(eval (compile
-       '((λ a (+ a a))
-         ((λ b (+ b b))  ;; so far, this λ will be evaluated twice
-          1))
-       ) empty-env)
+;(eval (compile
+;       '((λ a (+ a a))
+;         ((λ b (+ b b))
+;          1))
+;       ) empty-env)
+
+(eval-force (compile
+             '(((λ a (λ b a))
+                1) s)         ; s is still evaluated, which raises an exception and is not wanted, fix this
+             ) empty-env)
 
 ;; (eval (compile
 ;;        '((λ a (+ a a))
