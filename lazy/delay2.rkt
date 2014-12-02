@@ -3,37 +3,44 @@
 (require scheme/mpair)
 (require racket/function)
 
-(define (eval-preliminary eval-func make-closure?)
+(define (eval-preliminary force?)
   (λ (expr env)
+;    (display expr)
+;    (newline)
     (cond
      [(normal? expr) expr]
-     [(λraw? expr) (make-lambda expr env)]
-     [(ref? expr)  (follow-ref (cadr expr) env)]
+     [(redex? expr) (if force? (reduce expr env) expr)]
      [(appl? expr)
       (let ([ecar (eval-force (cadr expr) env)])
+        (define eval-func
+          (if force? eval-force eval))
         (define (make-closure-or-eval expr)
-          (if make-closure?
-              (make-closure env expr)
-              (eval-func expr env)))
+          (if force?
+              (eval-force expr env)
+              (make-closure env expr)))
+
         (cond
          [(λ? ecar)
           (eval-lambda ecar (make-closure-or-eval (caddr expr)))]
          [(proc? ecar)
-          (eval-proc (lookup-proc (cadr ecar))
-                     (map make-closure-or-eval (cddr expr)))]
+          (eval-proc (cadr ecar) (caddr expr) env)]
          [else (error "unknown expression")]))])))
 
-(define eval '())
-(define eval-force '())
-(set! eval (eval-preliminary eval #t))
-(set! eval-force (eval-preliminary eval-force #t))
+(define eval       (eval-preliminary #f))
+(define eval-force (eval-preliminary #t))
+
+(define (reduce expr env)
+  (cond
+   [(ref?  expr) (follow-ref-force (cadr expr) env)]
+   [(λraw? expr) (make-lambda expr env)]
+   [(closure? expr) (resolve-closure expr)]
+   [else (error "not redex!")]))
+
 
 
 ;;; (Dynamic) closure related manipulations
 (define (make-closure env expr)
-  (if (normal? expr)
-      expr
-      (list 'c env expr)))
+  (list 'c env expr))
 
 (define (resolve-closure c)
   (if (normal? c) c
@@ -45,8 +52,8 @@
           (eval-force expr env)))))
 
 
-
 ;;; Environment manipulations
+
 (define empty-env '())
 (define (add-binding name val env)
   (mcons (cons name val)
@@ -66,6 +73,7 @@
           (set-mcar! env (cons name newval))
           (setval name newval (mcdr env)))))
 
+
 ;; This function appears pure from the outside
 (define (follow-ref-force name env)
   (define refval (follow-ref name env))
@@ -81,6 +89,10 @@
 (define (normal? expr)
   (memq (car expr)
         '(i p λ))) ;; type of expr which are regarded normal
+(define (redex? expr)
+  (memq (car expr)
+        '(c r λraw)))
+
 
 (define (type-predicate typechar)
   (λ (expr)  (eq? (car expr) typechar)))
@@ -94,10 +106,12 @@
 (define appl?    (type-predicate 'appl))
 
 
-
+;;; Built-in procedure related functions
 (define (proc-exists? proc)
   (memq proc (map car proc-map)))
 
+(define (make-proc p)
+  (list 'p p))
 
 
 ;;; Value manipulations
@@ -121,11 +135,12 @@
 
 
 ;;; Built-in functions
-
-(define (plus xs)
-  (display (cadr xs))
-  (newline)
-  (list 'i (foldl + 0 (map normal-val xs))))
+(define (plus arg1 env1)
+  (make-proc
+   (λ (arg2 env2)
+     (let ([a (val (eval-force arg1 env1))]
+           [b (val (eval-force arg2 env2))])
+       (list 'i (+ a b))))))
 
 (define (die _)
   (error "you shouldn't see me here because i'm dead."))
@@ -134,15 +149,8 @@
   (display (val (car xs)))
   (newline))
 
-
-
-
-
-
-
-
-(define (eval-proc foo args)
-  (foo args))
+(define (eval-proc foo args env)
+  (foo args env))
 
 (define (lookup-proc name)
   (maybe (findf (λ (proc) (eq? (car proc) name)) proc-map)
@@ -158,12 +166,14 @@
 (define (compile a)
   (cond
    [(and (symbol? a)
-         (proc-exists? a)) (list 'p a)]
+         (proc-exists? a)) (list 'p (lookup-proc a))]
    [(symbol? a) (list 'r a)]
    [(number? a) (list 'i a)]
    [(pair? a) (if (eq? 'λ (car a))
                   (list 'λraw (cadr a) (compile (caddr a)))
-                  (cons 'appl (map compile a)))]))
+                  (list 'appl
+                        (compile (car a))
+                        (compile (cadr a))))]))
 
 
 (define proc-map
@@ -186,12 +196,16 @@
 ;;       '())
 
 
-(eval (compile
-       '((λ a (+ a a))
-         ((λ b (+ b b))  ;; so far, this λ will be evaluated twice
-          1))
-       ) empty-env)
+;; (eval (compile
+;;        '((λ a (+ a a))
+;;          ((λ b (+ b b))  ;; so far, this λ will be evaluated twice
+;;           1))
+;;        ) empty-env)
 
+(eval (compile
+       '((λ a ((+ a) a))
+         ((λ b ((+ b) b)) 1))
+       ) empty-env)
 
 ;; (define dcenv (list->mlist '([k . (i 3)])))
 
