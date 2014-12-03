@@ -84,7 +84,10 @@
 ;;; Type predicates
 (define (normal? expr)
   (memq (car expr)
-        '(i p λ))) ;; type of expr which are regarded normal
+        '(i p λ)))    ; types of expr which are regarded normal
+(define (whnf? expr)  ; Weak Head Normal Form
+  (memq (car expr)
+        '(i p λ V)))
 (define (redex? expr)
   (memq (car expr)
         '(c r λraw)))
@@ -140,6 +143,29 @@
       (eval-force body newenv))))
 
 
+;;; Type constructors
+;;
+;; representation of typed values:
+;;     '(V <type> <ctor> <valλ>)
+;; Example:
+;;   assume '(T t [c1 a b] expr) is defined
+;;   (c1 2 3) will yield
+;;     '(V t c1 (λ f (f 2 3)))
+
+(define (construct-value type ctor valλ)
+  (list 'V type ctor valλ))
+
+(define (cval-proc type tenv)
+  (λ (ctor ctenv)
+    (λ (valλ λenv)
+      (when (not (ref? type))  (error "invalid type"))
+      (when (not (ref? ctor))  (error "invalid ctor"))
+      (when (not (λraw? valλ)) (error "invalid val-λ"))
+      (construct-value (cadr type)
+                       (cadr ctor)
+                       valλ))))
+
+
 ;;; Built-in functions
 (define (plus arg1 env1)
   (make-proc
@@ -157,6 +183,15 @@
      (display (eval-force arg1 env1))
      (newline)
      (eval-force arg2 env2))))
+
+
+(define (if-proc arg1 env1)
+  (make-proc
+   (λ (arg2 env2)
+     (λ (arg3 env3)
+       (if (= (eval-force arg1 env1) 0)
+           (eval-force arg3 env3)
+           (eval-force arg2 env2))))))
 
 
 (define (eval-proc foo args env)
@@ -186,6 +221,32 @@
 
 
 
+(define (compile-ctor Tname CTname CTargs stack)
+  (if (null? CTargs)
+      (list 'cval Tname CTname
+            (list 'λ 'cf
+                  (list 'cf stack)))
+      (list 'λ (car CTargs)
+            (compile-ctor Tname CTname (cdr CTargs) (const (car CTargs) stack)))))
+
+
+
+;; A type def looks like this, which is eqv to
+;;   '(T t ([c1 a b]    <=>    data t = c1 a b
+;;          [c2 c])                   | c2 c
+;;     expr)                  expr with this type def
+(define (compile-type-def xs)
+  (when (eq? (car xs) 'T) (error "not a type definition"))
+  (let ([Tname (cadr xs)]
+        [ctors (caddr xs)]
+        [expr  (cadddr xs)])
+    (foldl (λ (expr ctor)
+             (let ([CTname (car ctor)]
+                   [CTargs (cdr ctor)])
+               (list (list 'λ CTname expr)
+                     (compile-ctor Tname CTname CTargs '())))))))
+
+
 ;; This function compiles '(+ 1 (+ 2 3)) into
 ;;   '(appl (appl (p +) (i 1)) (appl (appl (p +) (i 2)) (i 3)))
 (define (compile a)
@@ -194,15 +255,18 @@
          (proc-exists? a)) (list 'p (lookup-proc a))]
    [(symbol? a) (list 'r a)]
    [(number? a) (list 'i a)]
-   [(pair? a) (if (eq? 'λ (car a))
-                  (list 'λraw (cadr a) (compile (caddr a)))
-                  (compile-fold-appl a))]))
+   [(pair? a) (case (car a)
+                ['λ (list 'λraw (cadr a) (compile (caddr a)))]
+                ['T (compile (compile-type-def a))]
+                [else (compile-fold-appl a)])]))
 
 
 (define proc-map
-  `([+ ,plus]
-    [die ,die]
+  `([+     ,plus]
+    [die   ,die]
     [trace ,trace]
+    [if    ,if-proc]
+    [cval  ,construct-value]
     ))
 
 
