@@ -27,7 +27,8 @@
 
 (define (reduce expr env)
   (cond
-   [(ref?  expr) (follow-ref-force (cadr expr) env)]
+   [(ref?  expr) (let ([val (follow-ref (cadr expr) env)])
+                   (if (normal? val) val (resolve-closure val)))]
    [(λraw? expr) (make-lambda expr env)]
    [(closure? expr) (resolve-closure expr)]
    [else (error "not redex!")]))
@@ -60,25 +61,6 @@
                 (mlist->list env))
          cdr
          (λ () (error "undefined reference"))))
-
-;; This function modifies the `env`
-(define (setval name newval env)
-  (if (null? env)
-      (error "name not defined")
-      (if (eq? name (car (mcar env)))
-          (set-mcar! env (cons name newval))
-          (setval name newval (mcdr env)))))
-
-
-;; This function appears pure from the outside
-(define (follow-ref-force name env)
-  (define refval (follow-ref name env))
-  (if (normal? refval)
-      refval
-      (let ([resolved-val (resolve-closure refval)])
-        (setval name resolved-val env)
-        resolved-val)))
-
 
 
 ;;; Type predicates
@@ -151,9 +133,13 @@
 (define (die _)
   (error "you shouldn't see me here because i'm dead."))
 
-(define (show xs)
-  (display (val (car xs)))
-  (newline))
+(define (trace arg1 env1)
+  (make-proc
+   (λ (arg2 env2)
+     (display (eval-force arg1 env1))
+     (newline)
+     (eval-force arg2 env2))))
+
 
 (define (eval-proc foo args env)
   (foo args env))
@@ -170,13 +156,16 @@
 
 
 ;; This function compiles lists like '(1 2 3 4) into
-;;   (appl (appl (appl 1 2) 3) 4)
+;;   '(appl (appl (appl 1 2) 3) 4)
 (define (compile-fold-appl xs)
-  (if (equal? (length xs) 2)
-      (cons 'appl (map compile xs))
-      (list 'appl
-            (compile-fold-appl (take xs (- (length xs) 1)))
-            (compile (last xs)))))
+  (cond
+   [(= (length xs) 2) (cons 'appl (map compile xs))]
+   [(= (length xs) 1) (error "zero-argument λ not supported.")]
+   [(= (length xs) 0) (error "what do you want to apply?")]
+   [else (list 'appl
+               (compile-fold-appl (take xs (- (length xs) 1)))
+               (compile (last xs)))]))
+
 
 
 ;; This function compiles '(+ 1 (+ 2 3)) into
@@ -196,7 +185,7 @@
 (define proc-map
   `([+ ,plus]
     [die ,die]
-    [show ,show]
+    [trace ,trace]
     ))
 
 ;; (eval (compile
@@ -219,15 +208,27 @@
 ;          1))
 ;       ) empty-env)
 
+;; Test delay
+(display "---Test delay---\n")
 (eval-force (compile
              '(((λ a (λ b a))
-                1) s)         ; s is still evaluated, which raises an exception and is not wanted, fix this
+                1) s)
              ) empty-env)
+;; this test fails if the unused `s` is evaluated.
+;; only earger evaluation will make this test fail.
 
-;; (eval (compile
-;;        '((λ a (+ a a))
-;;           ((λ b (+ b b)) 1))
-;;         ) empty-env)
+
+;; Test graph reduction
+(display "---Test graph reduction---\n")
+(eval-force (compile
+             '((λ a (+ a a)) (trace 999 1))
+             ) empty-env)
+;; this test prints `999` for two times on
+;; lazy language without proper graph reduction
+;; optimization, it will print `999` once on earger
+;; evaluation and lazy evaluation with graph reduction
+
+
 
 ;; (define dcenv (list->mlist '([k . (i 3)])))
 
