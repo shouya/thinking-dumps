@@ -199,32 +199,28 @@
                   (compile-fold-appl a))]))
 
 
-
 (define proc-map
   `([+ ,plus]
     [die ,die]
     [trace ,trace]
     ))
 
-;; (eval (compile
-;;        '(+ 1 (+ 2 3)))
-;;       '())
-
-;; (eval (compile
-;;        '(((λ a (λ b (+ a b))) 1) 2)
-;;        )
-;;       '())
-
-;; (eval (compile
-;;        '((λ () (die))))
-;;       '())
 
 
-;(eval (compile
-;       '((λ a (+ a a))
-;         ((λ b (+ b b))
-;          1))
-;       ) empty-env)
+
+(display "---Test basic evaluation---\n")
+(eval-force (compile
+             '(+ 1 (+ 2 3)))
+            '())
+;; should get 6
+
+(display "---Test lambda---\n")
+(eval-force (compile
+             '(((λ a (λ b (+ a b))) 1) 2)
+             )
+            '())
+;; should get 3
+
 
 ;; Test delay
 (display "---Test delay---\n")
@@ -245,12 +241,3 @@
 ;; lazy language without proper graph reduction
 ;; optimization, it will print `999` once on earger
 ;; evaluation and lazy evaluation with graph reduction
-
-;; (define dcenv (list->mlist '([k . (i 3)])))
-
-;; (define env `([a . (i 1)]
-;;               [b . ,(make-closure dcenv '(r k))]
-;;               ))
-;; (define menv (list->mlist env))
-
-;; (follow-ref-force 'b menv)
