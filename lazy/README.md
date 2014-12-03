@@ -29,7 +29,7 @@ distracting for me to focus on the implementation itself.
 
 * [X] eager evaluation (`eager.rkt`)
 * [X] delayed evaluation on arguments (`delay.rkt`)
-* [ ] delayed evaluation with graph reduction (`delay2.rkt`)
+* [X] delayed evaluation with graph reduction (`delay2.rkt`)
 * [ ] lazy evaluation with constructor type, capable for recursive
       values (`lazy.rkt`)
 * [ ] non-strict lazy evaluation, just like what haskell does
