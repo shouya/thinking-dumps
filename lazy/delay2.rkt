@@ -13,15 +13,11 @@
       (let ([ecar (eval-force (cadr expr) env)])
         (define eval-func
           (if force? eval-force eval))
-        (define (make-closure-or-eval expr)
-          (if force?
-              (eval-force expr env)
-              (make-closure env expr)))
         (define eval-lambda-opt
           (if force? eval-lambda-force eval-lambda))
         (cond
          [(λ? ecar)
-          (eval-lambda-opt ecar (make-closure-or-eval (caddr expr)))]
+          (eval-lambda-opt ecar (make-closure env (caddr expr)))]
          [(proc? ecar)
           (eval-proc (cadr ecar) (caddr expr) env)]
          [else (error "unknown expression")]))])))
