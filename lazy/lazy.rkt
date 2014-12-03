@@ -236,15 +236,17 @@
 ;;          [c2 c])                   | c2 c
 ;;     expr)                  expr with this type def
 (define (compile-type-def xs)
-  (when (eq? (car xs) 'T) (error "not a type definition"))
+  (when (not (eq? (car xs) 'T)) (error "not a type definition"))
   (let ([Tname (cadr xs)]
         [ctors (caddr xs)]
         [expr  (cadddr xs)])
+    (display ctors)
     (foldl (λ (expr ctor)
              (let ([CTname (car ctor)]
                    [CTargs (cdr ctor)])
                (list (list 'λ CTname expr)
-                     (compile-ctor Tname CTname CTargs '())))))))
+                     (compile-ctor Tname CTname CTargs '()))))
+           expr ctors)))
 
 
 ;; This function compiles '(+ 1 (+ 2 3)) into
@@ -257,7 +259,7 @@
    [(number? a) (list 'i a)]
    [(pair? a) (case (car a)
                 ['λ (list 'λraw (cadr a) (compile (caddr a)))]
-                ['T (compile (compile-type-def a))]
+                ['T (compile-type-def a)]
                 [else (compile-fold-appl a)])]))
 
 
@@ -305,3 +307,6 @@
 ;; lazy language without proper graph reduction
 ;; optimization, it will print `999` once on earger
 ;; evaluation and lazy evaluation with graph reduction
+
+
+(compile '(T t ((c1 a b)) a))
