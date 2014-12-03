@@ -19,7 +19,7 @@
          [(λ? ecar)
           (eval-lambda-opt ecar (make-closure env (caddr expr)))]
          [(proc? ecar)
-          (eval-proc (cadr ecar) (caddr expr) env)]
+          (eval-proc (cadr ecar) (make-closure env (caddr expr)) env)]
          [else (error "unknown expression")]))])))
 
 (define eval       (eval-preliminary #f))
