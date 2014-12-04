@@ -373,8 +373,6 @@
                         0
                         (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
 
-;;                        (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
-
 (eval-force (compile prog)
             recur-env)
 ;; They were like my children that I can't adore more.
