@@ -71,3 +71,55 @@ directly by the users:
 * procedure, ie. built-in functions, (p)
 
 ### Syntax
+The syntax of loli is basicall s-expressions, expressed as a quoted
+list in Racket.
+
+**lambda definition**
+You may define a lambda that perform a simplest plus operation like this:
+
+```racket
+(λ (a b) (+ a b))
+```
+
+for one argument lambda, the paren is optional, ie. you can write
+code like this:
+
+```racket
+(λ a (+ 1 a))
+```
+
+Loli lambdas always curry, that is to say,
+
+```racket
+(λ (a b) (+ a b))
+```
+
+is just a syntatic sugar of writing
+
+```racket
+(λ (a) (λ (b) (+ a b)))
+```.
+
+Because of purity, zero argument lambda is not allowed.
+
+
+**application**
+You can apply values on procedures, as well as lambdas,
+
+```racket
+(+ 1 1)
+((λ (a b) (+ a b)) 1 2)
+```
+
+Because loli curries, applying multiple values is also just a syntatic
+sugar:
+
+```racket
+(+ 1 1)
+```
+
+is equivalent to:
+
+```racket
+((+ 1) 1)
+```
