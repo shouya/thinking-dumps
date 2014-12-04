@@ -263,25 +263,27 @@ directly. *So you don't need to quote anything in Loli.*
 
 ### Built-in procedures
 
-* `+`: takes two arguments, in integers, plus them.
+* `+`: takes two arguments, in integers, `(+ 2 3) => 5`
 * `-`: takes two arguments, in integers, `(- 3 2) => 1`.
 * `die`: takes an argument and ignore it, raise an error and terminate
-  the execution.
-* `trace`: takes two arguments, print the first and return the second,
-  does not interrupt the execution.
-* `if`: takes a condition and two branches, The condition will
+  the evaluation.
+* `trace`: takes two arguments, print the first and return the second.
+  it does not interrupt the evaluation.
+* `if`: takes a condition and two branches. the condition will
   evaluates to an integer, the value of `if` expression is its second
-  argument if the integer is not `0`, otherwise the value is its third
-  argument.
-* `cval`: create a typed-value, you should not use this directly.
+  argument if this integer is not `0`, otherwise the value will be is
+  its third argument.
+* `cval`: create a typed-value, you should never use this directly.
 * `seq`: takes two arguments, force evaluates the first and return the
-  second, just as the same funcition in haskell.
+  second, just as the funcition named the same in haskell.
 * `ctorp`: takes two arguments. the first argument is a constructor's
-  name (keyword), and test if the second argument's value is
-  constructed by this constructor.
+  name (keyword), and the second is an expression. it test if the
+  second argument's value is constructed by this constructor, returns
+  `1` or `0` indicates `true` and `false`.
 * `fval`: takes two arguments, the first is a lambda and the second is
   a typed-value. it applies first argument to the
   constructor-value-storing lambda of the typed-value.
+
 
 
 ### Evaluation model
