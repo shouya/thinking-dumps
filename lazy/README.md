@@ -302,10 +302,38 @@ defined in the languages, for example:
 
 A compiled program is not completely non-readable. Actually the
 compiler is pretty simple; it only does type recognition for tokens
-and expand the syntatic sugars for lambdas, applications, and ADT defs.
+and expand the syntatic sugars for lambdas, applications, and ADT
+defs.
+
+Then you need to evaluate the compiled program in an
+environment. Usually you will use `empty-env`, but you can also use
+`recur-env` if you need and don't want to define the fix-point
+combinator yourself.
+
+There are two evaluation functions, `eval` and
+`eval-force`. `eval-force` will guarantee to produce a
+weak-head normal form
+([WHNF](http://en.wikipedia.org/wiki/Lambda_calculus_definition#Weak_head_normal_form))
+expression when it halts. So you should use `eval-force` if you want
+to see a clear result like `(i 2)` rather than a complex reducible
+expression
+([redex](https://www.haskell.org/haskellwiki/Reducible_expression))<sup>[1]</sup>.
+
+Evaluation function takes two arguments, a compiled Loli program and
+an environment, below is a minimal working example:
+
+```racket
+(eval-force '(+ 1 2) empty-env)
+```
+
+
+**[1]**: Learn more about WHNF and redex on Heinrich Apfelmus's
+    [article](https://hackhands.com/lazy-evaluation-works-haskell/). ([chinese version](http://shouya.github.io/blog/how-lazy-evaluation-works-in-haskell/))
 
 
 ### Tips
+
+#### missing `Let` syntax
 
 You can simulate `let` using lambdas,
 
@@ -316,7 +344,7 @@ You can simulate `let` using lambdas,
   (+ a b c))
 ```
 
-can be written as
+in Scheme, can be written as
 
 ```racket
 ((λ (a b c) (+ a b c))
@@ -324,3 +352,88 @@ can be written as
  b-val
  c-val)
 ```
+
+in Loli.
+
+#### missing recursion support
+
+Loli does not support recursion directly, but you can have
+[fix-point combinators](http://en.wikipedia.org/wiki/Fixed-point_combinator)!
+
+With the environment `recur-env` you can use the Y combinator called
+`Y`, and use it to define recursive lambda or recursive data structures.
+
+Below is an example defining a lambda that calculates a list's length:
+
+```racket
+(Y (λ (len xs) (if (ctorp Nil xs)
+                   0
+                   (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
+```
+
+In haskell, it's like using the `fix` combinator:
+
+```haskell
+Y (\f xs -> if (xs == []) then 0 else 1 + f (tail xs))
+```
+
+You can read more about fix-point combinator elsewhere
+if you are not very familiar with it.
+
+
+Here shows an example definining a infinite list, some like `enumFrom n` in
+Haskell.
+
+```racket
+(Y (λ (iter n) (Cons n (iter (+ n 1)))))
+```
+
+Another practical example definining a lambda to refer to the n-th
+element in a list:
+
+```racket
+(Y (λ (f n xs)
+     (if n
+         (f (- n 1) (fval (λ (_ tl) tl) xs))
+         (fval (λ (hd _) hd) xs))))
+```
+
+
+#### code reuse, ie. defining functions
+
+Basically, you can use the `let` simulation to define a bunch of
+functions and evaluate some expressions within this binding. But if
+you consider it unreadable, you can use the following method.
+
+Although Loli does not aim to support function definition, you can
+always do this in the Racket layer. Here is how to do it.
+
+You may define some variables to represent code snippets, values, or
+lambdas. I will take the code from above:
+
+```racket
+(define prog-nth
+  '(Y (λ (f n xs)
+        (if n
+            (f (- n 1) (fval (λ (_ tl) tl) xs))
+            (fval (λ (hd _) hd) xs)))))
+
+(define inf-list
+  '(Y (λ (iter n) (Cons n (iter (+ n 1))))))
+
+(define list-def
+  '(λ (expr)
+    (T L ((Nil a) (Cons hd tl))
+       expr)))
+```
+
+You can compose your program easily using quasi-quotation in Racket.
+
+```racket
+(eval-force `(,list-def (,prog-nth 3 (,inf-list 2))))
+```
+
+The example above will produce `(i 5)`, as it's equivalent to the
+haskell expression `[2..] !! 3`.
+
+You're more powered than you have thought with Loli. Are you feeling cool now?
