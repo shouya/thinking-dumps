@@ -257,6 +257,18 @@
            expr
            ctors)))
 
+(define (compile-lambda xs)
+  (when (not (eq? (car xs) 'λ)) (error "not a lambda"))
+  (let ([args (cadr xs)]
+        [body (compile (caddr xs))])
+    (define (compile-lambda-dyarg xs)
+      (if (null? xs)
+          body
+          (list 'λraw (car xs) (compile-lambda-dyarg (cdr xs)))))
+    (if (pair? args)
+        (compile-lambda-dyarg args)
+        (list 'λraw args body))))
+
 
 ;; This function compiles '(+ 1 (+ 2 3)) into
 ;;   '(appl (appl (p +) (i 1)) (appl (appl (p +) (i 2)) (i 3)))
@@ -267,7 +279,7 @@
    [(symbol? a) (list 'r a)]
    [(number? a) (list 'i a)]
    [(pair? a) (case (car a)
-                ['λ (list 'λraw (cadr a) (compile (caddr a)))]
+                ['λ (compile-lambda a)]
                 ['T (compile (compile-type-def a))]
                 [else (compile-fold-appl a)])]))
 
@@ -291,7 +303,7 @@
 
 (display "---Test lambda---\n")
 (eval-force (compile
-             '(((λ a (λ b (+ a b))) 1) 2)
+             '((λ (a b) (+ a b)) 1 2)
              )
             '())
 ;; should get 3
@@ -300,8 +312,7 @@
 ;; Test delay
 (display "---Test delay---\n")
 (eval-force (compile
-             '(((λ a (λ b a))
-                1) s)
+             '((λ (a b) a) 1 s)
              ) empty-env)
 ;; this test fails if the unused `s` is evaluated.
 ;; only earger evaluation will make this test fail.
