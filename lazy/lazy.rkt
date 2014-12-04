@@ -234,24 +234,24 @@
             (compile-ctor Tname CTname (cdr CTargs)
                           (cons (car CTargs) stack)))))
 
-(define (ctor-pred ctor ctenv)
+(define (ctor-pred ctor)
   (make-proc
-   (λ (tval tvenv)
+   (λ (tval)
      (let ([ctorkw  (extract-keyword ctor)]
-           [tvalval (eval-force tval tvenv)])
+           [tvalval (resolve-closure tval)])
        (when (not (typed-val? tvalval)) (error "not a typed value"))
        (if (eq? (caddr tvalval) ctorkw)
            (make-int 1)
            (make-int 0))))))
 
-(define (val-func Rfunc funcenv)
+(define (val-func Rfunc)
   (make-proc
-   (λ (Rval valenv)
-     (let* ([tval (eval-force Rval)]
+   (λ (Rval)
+     (let* ([tval (resolve-closure Rval)]
             [valf (cadddr tval)]
             [func Rfunc])                ; (eval-force Rfunc)
        (when (not (typed-val? tval)) (error "not a typed value"))
-       (eval(make-appl func tval))))))
+       (make-closure empty-env (make-appl func tval))))))
 
 ;; A type def looks like this, which is eqv to
 ;;   '(T t ([c1 a b]    <=>    data t = c1 a b
@@ -368,7 +368,7 @@
 (define prog '(T L ((Nil a) (Cons hd tl))
                ((λ (lst len) (len lst))
                 (Cons 1 (Cons 2 (Cons 3 (Nil 999))))
-                (Y (λ (len xs) (if (ctor-p Nil xs)
+                (Y (λ (len xs) (if (ctorp Nil xs)
                                    0
                                    (+ 1 (len (fval (λ (hd tl) hd) xs)))))))))
 
