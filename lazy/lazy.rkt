@@ -11,13 +11,12 @@
      [(redex? expr) (if force? (reduce expr env) expr)]
      [(appl? expr)
       (let ([ecar (eval-force (cadr expr) env)])
-        (define eval-lambda-opt
-          (if force? eval-lambda-force eval-lambda))
+        (define (reduce-opt val) (if force? (reduce val env) val))
         (cond
          [(λ? ecar)
-          (eval-lambda-opt ecar (make-closure env (caddr expr)))]
+          (reduce-opt (eval-lambda ecar (make-closure env (caddr expr))))]
          [(proc? ecar)
-          (eval-proc ecar (make-closure env (caddr expr)) env)]
+          (reduce-opt (eval-proc ecar (make-closure env (caddr expr)) env))]
          [else (error "unknown expression")]))])))
 
 (define eval       (eval-preliminary #f))
@@ -28,7 +27,8 @@
                  [(ref?  expr) (follow-ref-force (cadr expr) env)]
                  [(λraw? expr) (make-lambda expr env)]
                  [(closure? expr) (resolve-closure expr)]
-                 [else (error "not redex!")])])
+                 [(normal? expr) expr]
+                 [else (error "neither redex nor normal!")])])
     (if (redex? result)
         (reduce result env)
         result)))
@@ -140,17 +140,7 @@
            [body   (λbody  lamb)]
            [env    (λenv   lamb)]
            [newenv (add-binding param arg env)])
-      (eval body newenv))))
-
-(define (eval-lambda-force lamb arg)
-  (let ([λparam cadr]
-        [λbody caddr]
-        [λenv cadddr])
-    (let* ([param  (λparam lamb)]
-           [body   (λbody  lamb)]
-           [env    (λenv   lamb)]
-           [newenv (add-binding param arg env)])
-      (eval-force body newenv))))
+      (make-closure newenv body))))
 
 
 ;;; Type constructors
@@ -381,13 +371,9 @@
 (define prog '(T L ((Nil a) (Cons hd tl))
                ((λ (lst len) (len lst))
                 (Cons 1 (Cons 2 (Cons 3 (Nil 999))))
-                (λ xs (if (ctorp Nil xs)
-                          1
-                          2)))))
-
-                ;; (Y (λ (len xs) (if (ctor-p Nil xs)
-                ;;                    0
-                ;;                    (+ 1 (len (fval (λ (hd tl) hd) xs)))))))))
+                (Y (λ (len xs) (if (ctor-p Nil xs)
+                                   0
+                                   (+ 1 (len (fval (λ (hd tl) hd) xs)))))))))
 
 (eval-force (compile prog)
             recur-env)
