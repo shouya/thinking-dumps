@@ -19,7 +19,7 @@
          [(λ? ecar)
           (eval-lambda-opt ecar (make-closure env (caddr expr)))]
          [(proc? ecar)
-          (eval-proc (cadr ecar) (make-closure env (caddr expr)) env)]
+          (eval-proc ecar (make-closure env (caddr expr)) env)]
          [else (error "unknown expression")]))])))
 
 (define eval       (eval-preliminary #f))
@@ -94,7 +94,7 @@
 
 
 (define (type-predicate typechar)
-  (λ (expr)  (eq? (car expr) typechar)))
+  (λ (expr) (eq? (car expr) typechar)))
 
 (define ref?     (type-predicate 'r))
 (define λ?       (type-predicate 'λ))
@@ -156,14 +156,19 @@
   (list 'V type ctor valλ))
 
 (define (cval-proc type tenv)
-  (λ (ctor ctenv)
-    (λ (valλ λenv)
-      (when (not (ref? type))  (error "invalid type"))
-      (when (not (ref? ctor))  (error "invalid ctor"))
-      (when (not (λraw? valλ)) (error "invalid val-λ"))
-      (construct-value (cadr type)
-                       (cadr ctor)
-                       valλ))))
+  (define Ttype (caddr type))
+  (make-proc
+   (λ (ctor ctenv)
+     (define Tctor (caddr ctor))
+     (make-proc
+      (λ (valλ λenv)
+        (define Tvalλ (caddr valλ))
+        (when (not (ref? Ttype))  (error "invalid type"))
+        (when (not (ref? Tctor))  (error "invalid ctor"))
+        (when (not (λraw? Tvalλ)) (error "invalid val-λ"))
+        (construct-value (cadr Ttype)
+                         (cadr Tctor)
+                         (make-lambda Tvalλ λenv)))))))
 
 
 ;;; Built-in functions
@@ -195,7 +200,8 @@
 
 
 (define (eval-proc foo args env)
-  (foo args env))
+  (when (not (proc? foo)) (error "not a proc"))
+  ((cadr foo) args env))
 
 (define (lookup-proc name)
   (maybe (findf (λ (proc) (eq? (car proc) name)) proc-map)
@@ -271,7 +277,7 @@
     [die   ,die]
     [trace ,trace]
     [if    ,if-proc]
-    [cval  ,construct-value]
+    [cval  ,cval-proc]
     ))
 
 
@@ -310,4 +316,13 @@
 ;; lazy language without proper graph reduction
 ;; optimization, it will print `999` once on earger
 ;; evaluation and lazy evaluation with graph reduction
-(compile '(T t ((c1 a b) (c2 a)) c1))
+
+
+;; Test type definition compilation
+(display "---Test definition---\n")
+; (compile (compile-type-def '(T t ((c1 a b) (c2 a)) c1)))
+(eval-force (compile '(T t ((c1 a b) (c2 a)) (c1 1 2)))
+            empty-env)
+;; This should output a structure typed 'V, which represents a typed value.
+;; The output could be long and messy, but it should indicates out the type
+;; and the constructor used for this value.
