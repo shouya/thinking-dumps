@@ -176,6 +176,14 @@
            [b (val (resolve-closure arg2))])
        (make-int (+ a b))))))
 
+(define (minus arg1)
+  (make-proc
+   (λ (arg2)
+     (let ([a (val (resolve-closure arg1))]
+           [b (val (resolve-closure arg2))])
+       (make-int (- a b))))))
+
+
 (define (die _)
   (error "you shouldn't see me here because i'm dead."))
 
@@ -244,7 +252,7 @@
            (make-int 1)
            (make-int 0))))))
 
-(define (val-func Rfunc)
+(define (fval-func Rfunc)
   (make-proc
    (λ (Rval)
      (let* ([tval (resolve-closure Rval)]
@@ -302,12 +310,13 @@
 
 (define proc-map
   `([+     ,plus]
+    [-     ,minus]
     [die   ,die]
     [trace ,trace]
     [if    ,if-proc]
     [cval  ,cval-proc]
     [ctorp ,ctor-pred]
-    [fval  ,val-func]
+    [fval  ,fval-func]
     ))
 
 
@@ -376,3 +385,26 @@
 (eval-force (compile prog)
             recur-env)
 ;; They were like my children that I can't adore more.
+
+
+(define sample-inflst
+  '(T L ((Nil a) (Cons hd tl))
+    ((λ (inflst take) (take 10 (inflst 2)))
+     (Y (λ (iter n) (Cons n (iter (+ n 1)))))
+     (Y (λ (f n xs) (if n
+                        (Cons (fval (λ (hd _) hd) xs)
+                              (f (- n 1) (fval (λ (_ tl) tl) xs)))
+                        (Nil 999)))))))
+(define prog-nth
+  `(Y (λ (f n xs)
+        (if n
+            (f (- n 1) (fval (λ (_ tl) tl) xs))
+            (fval (λ (hd _) hd) xs)))))
+
+
+
+(eval-force (compile `(,prog-nth 0 ,sample-inflst)) recur-env)
+(eval-force (compile `(,prog-nth 1 ,sample-inflst)) recur-env)
+(eval-force (compile `(,prog-nth 2 ,sample-inflst)) recur-env)
+(eval-force (compile `(,prog-nth 3 ,sample-inflst)) recur-env)
+(eval-force (compile `(,prog-nth 4 ,sample-inflst)) recur-env)
