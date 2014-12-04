@@ -55,9 +55,9 @@ Loli is a lisp dialect for research purpose, she so far implements
 other features are not planned yet.
 
 
-TL;DR: Read the source of Loli in `lazy.rkt` and the sample Loli programs in the
-bottom of the source file. Execute the source in drracket or CLI to
-see the result.
+TL;DR: Read the source of Loli in `lazy.rkt` and the sample Loli programs at the
+bottom of the source file. Execute the source in drracket or using
+racket CLI to see the result.
 
 ### Data types
 There are two built-in data types:
