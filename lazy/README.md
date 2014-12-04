@@ -70,11 +70,13 @@ directly by the users:
 * typed value, ie. a value constructed by a type construtor, (V)
 * procedure, ie. built-in functions, (p)
 
-### Syntax
+### Syntax & Details
 The syntax of loli is basicall s-expressions, expressed as a quoted
 list in Racket.
 
+
 **lambda definition**
+
 You may define a lambda that perform a simplest plus operation like this:
 
 ```racket
@@ -102,8 +104,15 @@ is just a syntatic sugar of writing
 
 Because of purity, zero argument lambda is not allowed.
 
+*compiler details:* all syntatic sugars, including multi-argument
+ lambda and multiple application, are expanded in the compiling
+ phase. a lambda definition will be expanded to a `λraw` typed
+ expression, which will become a real `λ` when it is being evaluated.
+
+
 
 **application**
+
 You can apply values on procedures, as well as lambdas,
 
 ```racket
@@ -122,4 +131,49 @@ is equivalent to:
 
 ```racket
 ((+ 1) 1)
+```
+
+
+**algebraic data type definition**
+
+For example you want to describe a list, you will use the following
+ADT definition in Haskell:
+
+```haskell
+data List a = Nil
+            | Cons a (List a)
+```
+
+Notice that when you use type constructors like `Cons`,
+it behaves just like a function. It takes curried arguments, and
+results in a value with `List` type.
+
+In Loli, constructors *are* lambdas, also they yield a value in a
+defined type. We would call such values as 'typed-values' (V).
+
+In Loli, types are dynamic. You don't need to specify a type variable
+when you are defining an ADT.
+
+Besides, because of the functionality, Loli does not provide a mutable
+environment, so you can't `define` a value, or a type, but you can
+rather `let` something.
+
+So let me `let` a simpliest `List` type in Loli:
+
+```racket
+(T List ([Cons car cdr]
+         [Nil a])
+  <expression>)
+```
+
+`Nil`, although not necessary, still requires an argument because it
+needs to be as a lambda. (remember? c-tors *are* lambdas)
+
+In fact, the compiler will transform this type definition into
+something like:
+
+```racket
+(let ([Cons (λ (car cdr) (cval 'List 'Cons (λ (f) (f car cdr))))]
+      [Nil  (λ (a)       (cval 'List 'Nil  (λ (f) (f a))))])
+  <expression>)
 ```
