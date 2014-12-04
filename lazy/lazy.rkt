@@ -224,10 +224,10 @@
 (define (compile-ctor Tname CTname CTargs stack)
   (if (null? CTargs)
       (list 'cval Tname CTname
-            (list 'λ 'cf
-                  (list 'cf stack)))
+            (list 'λ 'f (list* 'f stack)))
       (list 'λ (car CTargs)
-            (compile-ctor Tname CTname (cdr CTargs) (const (car CTargs) stack)))))
+            (compile-ctor Tname CTname (cdr CTargs)
+                          (cons (car CTargs) stack)))))
 
 
 
@@ -235,18 +235,21 @@
 ;;   '(T t ([c1 a b]    <=>    data t = c1 a b
 ;;          [c2 c])                   | c2 c
 ;;     expr)                  expr with this type def
+;;
+;; '(T t ((c1 a b)) a) -> '((λ c1 a) (λ a (λ b (cval t c1 (λ f (f b a))))))
+;;
 (define (compile-type-def xs)
   (when (not (eq? (car xs) 'T)) (error "not a type definition"))
   (let ([Tname (cadr xs)]
         [ctors (caddr xs)]
         [expr  (cadddr xs)])
-    (display ctors)
-    (foldl (λ (expr ctor)
+    (foldl (λ (ctor expr)
              (let ([CTname (car ctor)]
                    [CTargs (cdr ctor)])
                (list (list 'λ CTname expr)
                      (compile-ctor Tname CTname CTargs '()))))
-           expr ctors)))
+           expr
+           ctors)))
 
 
 ;; This function compiles '(+ 1 (+ 2 3)) into
@@ -259,7 +262,7 @@
    [(number? a) (list 'i a)]
    [(pair? a) (case (car a)
                 ['λ (list 'λraw (cadr a) (compile (caddr a)))]
-                ['T (compile-type-def a)]
+                ['T (compile (compile-type-def a))]
                 [else (compile-fold-appl a)])]))
 
 
@@ -307,6 +310,4 @@
 ;; lazy language without proper graph reduction
 ;; optimization, it will print `999` once on earger
 ;; evaluation and lazy evaluation with graph reduction
-
-
-(compile '(T t ((c1 a b)) a))
+(compile '(T t ((c1 a b) (c2 a)) c1))
