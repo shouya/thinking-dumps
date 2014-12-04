@@ -111,6 +111,8 @@
 
 (define (make-proc p)
   (list 'p p))
+(define (make-int v)
+  (list 'i v))
 
 
 ;;; Value manipulations
@@ -177,7 +179,7 @@
    (λ (arg2 env2)
      (let ([a (val (eval-force arg1 env1))]
            [b (val (eval-force arg2 env2))])
-       (list 'i (+ a b))))))
+       (make-int (+ a b))))))
 
 (define (die _)
   (error "you shouldn't see me here because i'm dead."))
