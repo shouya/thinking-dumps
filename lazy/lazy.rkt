@@ -229,7 +229,7 @@
 (define (compile-ctor Tname CTname CTargs stack)
   (if (null? CTargs)
       (list 'cval Tname CTname
-            (list 'λ 'f (list* 'f stack)))
+            (list 'λ 'f (list* 'f (reverse stack))))
       (list 'λ (car CTargs)
             (compile-ctor Tname CTname (cdr CTargs)
                           (cons (car CTargs) stack)))))
@@ -249,9 +249,9 @@
    (λ (Rval)
      (let* ([tval (resolve-closure Rval)]
             [valf (cadddr tval)]
-            [func Rfunc])                ; (eval-force Rfunc)
+            [func (resolve-closure Rfunc)])                ; (eval-force Rfunc)
        (when (not (typed-val? tval)) (error "not a typed value"))
-       (make-closure empty-env (make-appl func tval))))))
+       (make-closure empty-env (make-appl valf func))))))
 
 ;; A type def looks like this, which is eqv to
 ;;   '(T t ([c1 a b]    <=>    data t = c1 a b
@@ -365,12 +365,15 @@
 (define recur-env (add-binding 'Y y-combinator empty-env))
 
 ;; fix (\f xs -> if (xs == []) then 0 else 1 + f (tail xs)) [1,2,3]  =>  3
-(define prog '(T L ((Nil a) (Cons hd tl))
-               ((λ (lst len) (len lst))
-                (Cons 1 (Cons 2 (Cons 3 (Nil 999))))
-                (Y (λ (len xs) (if (ctorp Nil xs)
-                                   0
-                                   (+ 1 (len (fval (λ (hd tl) hd) xs)))))))))
+(define prog
+  '(T L ((Nil a) (Cons hd tl))
+    ((λ (lst len) (len lst))
+     (Cons 1 (Cons 2 (Cons 3 (Nil 999))))
+     (Y (λ (len xs) (if (ctorp Nil xs)
+                        0
+                        (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
+
+;;                        (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
 
 (eval-force (compile prog)
             recur-env)
