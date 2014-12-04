@@ -381,7 +381,7 @@ Below is an example defining a lambda that calculates a list's length:
 ```racket
 (Y (λ (len xs) (if (ctorp Nil xs)
                    0
-                   (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
+                   (+ 1 (len (fval (λ (hd tl) tl) xs))))))
 ```
 
 In haskell, it's like to use the `fix` combinator:
