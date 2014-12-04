@@ -202,19 +202,20 @@ take to construct such a type.
 
 The compiler will establish a scope with these constructors defined as
 lambdas. When the constructors are fed with sufficient arguments, it
-will call the built-in function `cval` to construct a typed-value, a
-typed value has the following properties, the type, the constructor
+will call the built-in function `cval` to construct a typed value. A
+typed value has the following properties: the type, the constructor
 used to construct this value, and a lambda with the constructor's
 arguments stored and can be recalled anytime.
 
-This lambda is an idea conceived by me, I don't know if there is a
-name of this concept. When you need to manipulate the constructor
+This lambda is an idea conceived by me alone, I don't know if there is
+a name for this concept. When you need to manipulate the constructor
 arguments' values, you pass a function with the same arity as the
-constructor to this lambda, and you will get each arguments
-accessible. I will make a small example on how to use it.
+that of the constructor to this lambda, then you will get each
+arguments bound with specifc values accessible. I will make a small
+example on how to use it.
 
-Suppose you have a list named `lst`, these expressions shows the way
-to access the values of it:
+Suppose you have a list named `lst`, these expressions shows the ways
+to access the values in it:
 
 ```racket
 (fval (λ (car _) car) lst)            ;; like car
@@ -224,37 +225,39 @@ to access the values of it:
       lst))
 ```
 
-Note the `fval` procedures takes its second argument, a typed-value,
-extract the lambda stores constructor argument values, and apply the first
-argument, a given lambda to it to acquire these values. Here putting a
-`_` in the place of a lambda arguments just means to ignore it.
+Note the `fval` procedure takes its second argument, a typed-value,
+extract the lambda stores constructor argument values. Then apply its
+first argument, a given lambda, to the storing lambda to acquire these
+values. Here putting a `_` in the place of a lambda arguments just
+means to ignore it.
 
 
 #### procedures, references, and keywords
 
-Writing a symbol in Loli is mostly the same as in other lisp
+Symbols in Loli are mostly the same as in other lisp faimily
 languages, but there are small differences.
 
-When you write symbols like `+`, `if`, or `trace`, it will compiles to
-`(p <#procedure xxx>)`. Because those are procedures already defined
-to be built in.
+When you write symbols like `+`, `if`, or `trace`, they will compile
+to `(p <#procedure xxx>)`, because those are procedures already
+defined to be built-in.
 
 Otherwise, these symbols will be compiled in a "reference" type, you
 can think of this type in the same way you think of a "variable". For
-example, `(` will compile to something like `'((p <#procedure +> (r
+example, `(+ a b)` will compile to something like `'((p <#procedure +> (r
 a) (r b))`.
 
 The term "keyword" may not be very proper but I don't know if there is
-a better one. It is to indicates those symbol-like tokens that are
-proceeded by Loli directly. This category includes:
+a better replacement. It is to indicates those symbol-like tokens that
+are proceeded by Loli directly. This category includes:
 
 * syntatic keywords, eg. `λ`, `T`
 * lambda parameters, eg. `a`, `b` in `(λ (a b) ...)`
 * some procedures' arguments, eg. `Cons` in `(ctorp Cons val)`
 * type name, eg. `List` in `(T List (...) ...)`
-* type constructors definitions, eg. `(Cons a b)` in `(T List ((Cons a b) ...) ...)`
+* type constructors definitions, eg. `Cons`, `a`, `b` in `(T List ((Cons a b) ...) ...)`
 
-A keyword do never require a binding, because they are used
+
+A keyword do never require a binding, because they are written
 directly. *So you don't need to quote anything in Loli.*
 
 
