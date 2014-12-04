@@ -361,7 +361,7 @@
 (display "---A very beautiful program---\n")
 (define y-combinator
   (compile
-   '(λ f (λ x f (x x)) (λ x f (x x)))))
+   '(λ f ((λ x (f (x x))) (λ x (f (x x)))))))
 (define recur-env (add-binding 'Y y-combinator empty-env))
 
 ;; fix (\f xs -> if (xs == []) then 0 else 1 + f (tail xs)) [1,2,3]  =>  3
