@@ -54,6 +54,11 @@ Loli is a lisp dialect for research purpose, she so far implements
 [algebraic data types](http://en.wikipedia.org/wiki/Algebraic_data_type),
 other features are not planned yet.
 
+
+TL;DR: Read the source of Loli in `lazy.rkt` and the sample Loli programs in the
+bottom of the source file. Execute the source in drracket or CLI to
+see the result.
+
 ### Data types
 There are two built-in data types:
 
@@ -75,7 +80,7 @@ The syntax of loli is basicall s-expressions, expressed as a quoted
 list in Racket.
 
 
-**lambda definition**
+#### lambda definition
 
 You may define a lambda that perform a simplest plus operation like this:
 
@@ -100,7 +105,7 @@ is just a syntatic sugar of writing
 
 ```racket
 (λ (a) (λ (b) (+ a b)))
-```.
+```
 
 Because of purity, zero argument lambda is not allowed.
 
@@ -110,8 +115,7 @@ Because of purity, zero argument lambda is not allowed.
  expression, which will become a real `λ` when it is being evaluated.
 
 
-
-**application**
+#### application
 
 You can apply values on procedures, as well as lambdas,
 
@@ -134,7 +138,7 @@ is equivalent to:
 ```
 
 
-**algebraic data type definition**
+#### algebraic data type definition
 
 For example you want to describe a list, you will use the following
 ADT definition in Haskell:
@@ -200,7 +204,7 @@ This lambda is an idea conceived by me, I don't know if there is a
 name of this concept. When you need to manipulate the constructor
 arguments' values, you pass a function with the same arity as the
 constructor to this lambda, and you will get each arguments
-accessible. I will make a small example on how to use it:
+accessible. I will make a small example on how to use it.
 
 Suppose you have a list named `lst`, these expressions shows the way
 to access the values of it:
@@ -213,7 +217,92 @@ to access the values of it:
       lst))
 ```
 
-Putting a `_` in the place of a lambda arguments means to ignore it.
+Note the `fval` procedures takes its second argument, a typed-value,
+extract the lambda stores constructor argument values, and apply the first
+argument, a given lambda to it to acquire these values. Here putting a
+`_` in the place of a lambda arguments just means to ignore it.
+
+
+#### procedures, references, and keywords
+
+Writing a symbol in Loli is mostly the same as in other lisp
+languages, but there are small differences.
+
+When you write symbols like `+`, `if`, or `trace`, it will compiles to
+`(p <#procedure xxx>)`. Because those are procedures already defined
+to be built in.
+
+Otherwise, these symbols will be compiled in a "reference" type, you
+can think of this type in the same way you think of a "variable". For
+example, `(` will compile to something like `'((p <#procedure +> (r
+a) (r b))`.
+
+The term "keyword" may not be very proper but I don't know if there is
+a better one. It is to indicates those symbol-like tokens that are
+proceeded by Loli directly. This category includes:
+
+* syntatic keywords, eg. `λ`, `T`
+* lambda parameters, eg. `a`, `b` in `(λ (a b) ...)`
+* some procedures' arguments, eg. `Cons` in `(ctorp Cons val)`
+* type name, eg. `List` in `(T List (...) ...)`
+* type constructors definitions, eg. `(Cons a b)` in `(T List ((Cons a b) ...) ...)`
+
+A keyword do never require a binding, because they are used
+directly. *So you don't need to quote anything in Loli.*
+
+
+### Built-in procedures
+
+* `+`: takes two arguments, in integers, plus them.
+* `-`: takes two arguments, in integers, `(- 3 2) => 1`.
+* `die`: takes an argument and ignore it, raise an error and terminate
+  the execution.
+* `trace`: takes two arguments, print the first and return the second,
+  does not interrupt the execution.
+* `if`: takes a condition and two branches, The condition will
+  evaluates to an integer, the value of `if` expression is its second
+  argument if the integer is not `0`, otherwise the value is its third
+  argument.
+* `cval`: create a typed-value, you should not use this directly.
+* `seq`: takes two arguments, force evaluates the first and return the
+  second, just as the same funcition in haskell.
+* `ctorp`: takes two arguments. the first argument is a constructor's
+  name (keyword), and test if the second argument's value is
+  constructed by this constructor.
+* `fval`: takes two arguments, the first is a lambda and the second is
+  a typed-value. it applies first argument to the
+  constructor-value-storing lambda of the typed-value.
+
+
+### Evaluation model
+
+Loli's uses lexical closures to implement lambdas. A lambda would
+store the binding of where it is created. When arguments are applied
+to a lambda, they will be bound on the lambda's parameters, based on
+the binding it has stored, then body will be executed with such
+binding.
+
+The term "environment" indicates a global binding in Loli. There are
+two pre-defined environment usable in the source, `empty-env` and
+`recur-env`. The first is completely empty and the second only has
+[Y combinator](http://en.wikipedia.org/wiki/Fixed-point_combinator#Y_combinator),
+named `Y`, pre-defined, so you can easily construct recursive programs.
+
+
+### Compile & Run Loli programs
+
+**The most complete implemenation of Loli is in `lazy.rkt`!*
+
+You need to compile the Loli programs using the `compile` function
+defined in the languages, for example:
+
+```racket
+(compile '(+ 1 2))
+```
+
+A compiled program is not completely non-readable. Actually the
+compiler is pretty simple; it only does type recognition for tokens
+and expand the syntatic sugars for lambdas, applications, and ADT defs.
 
 
 ### Tips
