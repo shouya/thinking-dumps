@@ -168,6 +168,13 @@
           (construct-value Ttypekw Tctorkw Tvalλ)))))))
 
 
+(define (seq a)
+  (make-proc
+   (λ (b)
+     (eval-force a)
+     b)))
+
+
 ;;; Built-in functions
 (define (plus arg1)
   (make-proc
@@ -315,6 +322,7 @@
     [trace ,trace]
     [if    ,if-proc]
     [cval  ,cval-proc]
+    [seq   ,seq]
     [ctorp ,ctor-pred]
     [fval  ,fval-func]
     ))
@@ -384,12 +392,11 @@
 
 (eval-force (compile prog)
             recur-env)
-;; They were like my children that I can't adore more.
-
+;; They were like my children that I couldn't adore more.
 
 (define sample-inflst
   '(T L ((Nil a) (Cons hd tl))
-    ((λ (inflst take) (take 10 (inflst 2)))
+    ((λ (inflst take) (take 10 (inflst 2)))   ;; iterating from 2, i.e. [2..]
      (Y (λ (iter n) (Cons n (iter (+ n 1)))))
      (Y (λ (f n xs) (if n
                         (Cons (fval (λ (hd _) hd) xs)
@@ -400,7 +407,6 @@
         (if n
             (f (- n 1) (fval (λ (_ tl) tl) xs))
             (fval (λ (hd _) hd) xs)))))
-
 
 
 (eval-force (compile `(,prog-nth 0 ,sample-inflst)) recur-env)
