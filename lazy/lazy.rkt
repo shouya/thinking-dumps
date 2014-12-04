@@ -16,7 +16,7 @@
          [(λ? ecar)
           (reduce-opt (eval-lambda ecar (make-closure env (caddr expr))))]
          [(proc? ecar)
-          (reduce-opt (eval-proc ecar (make-closure env (caddr expr)) env))]
+          (reduce-opt (eval-proc ecar (make-closure env (caddr expr))))]
          [else (error "unknown expression")]))])))
 
 (define eval       (eval-preliminary #f))
@@ -155,55 +155,52 @@
 (define (construct-value type ctor valλ)
   (list 'V type ctor valλ))
 
-(define (cval-proc type tenv)
+(define (cval-proc type)
   (define Ttype (caddr type))
   (make-proc
-   (λ (ctor ctenv)
+   (λ (ctor)
      (define Tctor (caddr ctor))
      (make-proc
-      (λ (valλ λenv)
-        (define Tvalλ (caddr valλ))
-        (when (not (ref? Ttype))  (error "invalid type"))
-        (when (not (ref? Tctor))  (error "invalid ctor"))
-        (when (not (λraw? Tvalλ)) (error "invalid val-λ"))
-        (construct-value (cadr Ttype)
-                         (cadr Tctor)
-                         (make-lambda Tvalλ λenv)))))))
+      (λ (valλ)
+        (let ([Ttypekw (extract-keyword Ttype)]
+              [Tctorkw (extract-keyword Tctor)]
+              [Tvalλ   (resolve-closure valλ)])
+          (construct-value Ttypekw Tctorkw Tvalλ)))))))
 
 
 ;;; Built-in functions
-(define (plus arg1 env1)
+(define (plus arg1)
   (make-proc
-   (λ (arg2 env2)
-     (let ([a (val (eval-force arg1 env1))]
-           [b (val (eval-force arg2 env2))])
+   (λ (arg2)
+     (let ([a (val (resolve-closure arg1))]
+           [b (val (resolve-closure arg2))])
        (make-int (+ a b))))))
 
 (define (die _)
   (error "you shouldn't see me here because i'm dead."))
 
-(define (trace arg1 env1)
+(define (trace arg1)
   (make-proc
-   (λ (arg2 env2)
-     (display (eval-force arg1 env1))
+   (λ (arg2)
+     (display (resolve-closure arg1))
      (newline)
-     (eval-force arg2 env2))))
+     arg2)))
 
 
-(define (if-proc arg1 env1)
+(define (if-proc arg1)
   (make-proc
-   (λ (arg2 env2)
+   (λ (arg2)
      (make-proc
-      (λ (arg3 env3)
-        (let ([condition (eval-force arg1 env1)])
+      (λ (arg3)
+        (let ([condition (resolve-closure arg1)])
           (when (not (int? condition)) (error "condition invalid"))
           (if (= (cadr condition) 0) arg3 arg2)))))))
 
 
 
-(define (eval-proc foo args env)
+(define (eval-proc foo args)
   (when (not (proc? foo)) (error "not a proc"))
-  ((cadr foo) args env))
+  ((cadr foo) args))
 
 (define (lookup-proc name)
   (maybe (findf (λ (proc) (eq? (car proc) name)) proc-map)
