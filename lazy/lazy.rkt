@@ -11,8 +11,6 @@
      [(redex? expr) (if force? (reduce expr env) expr)]
      [(appl? expr)
       (let ([ecar (eval-force (cadr expr) env)])
-        (define eval-func
-          (if force? eval-force eval))
         (define eval-lambda-opt
           (if force? eval-lambda-force eval-lambda))
         (cond
@@ -26,11 +24,15 @@
 (define eval-force (eval-preliminary #t))
 
 (define (reduce expr env)
-  (cond
-   [(ref?  expr) (follow-ref-force (cadr expr) env)]
-   [(λraw? expr) (make-lambda expr env)]
-   [(closure? expr) (resolve-closure expr)]
-   [else (error "not redex!")]))
+  (let ([result (cond
+                 [(ref?  expr) (follow-ref-force (cadr expr) env)]
+                 [(λraw? expr) (make-lambda expr env)]
+                 [(closure? expr) (resolve-closure expr)]
+                 [else (error "not redex!")])])
+    (if (redex? result)
+        (reduce result env)
+        result)))
+
 
 
 
@@ -75,7 +77,7 @@
   (define refval (follow-ref name env))
   (if (normal? refval)
       refval
-      (let ([resolved-val (resolve-closure refval)])
+      (let ([resolved-val (reduce refval env)])
         (setval name resolved-val env)
         resolved-val)))
 
@@ -112,6 +114,8 @@
   (list 'p p))
 (define (make-int v)
   (list 'i v))
+(define (make-appl f a)
+  (list 'appl f a))
 
 
 ;;; Value manipulations
@@ -199,12 +203,11 @@
 (define (if-proc arg1 env1)
   (make-proc
    (λ (arg2 env2)
-     (λ (arg3 env3)
-       (let ([condition (eval-force arg1 env1)])
-         (when (not (int? condition)) (error "condition invalid"))
-         (if (= (cdr condition) 0)
-             (eval-force arg3 env3)
-             (eval-force arg2 env2)))))))
+     (make-proc
+      (λ (arg3 env3)
+        (let ([condition (eval-force arg1 env1)])
+          (when (not (int? condition)) (error "condition invalid"))
+          (if (= (cadr condition) 0) arg3 arg2)))))))
 
 
 
@@ -248,13 +251,20 @@
   (make-proc
    (λ (tval tvenv)
      (let ([ctorkw  (extract-keyword ctor)]
-           [tvalval (eval-force tval)])
-       (when (not (typed-val? tval)) (error "not a typed value"))
+           [tvalval (eval-force tval tvenv)])
+       (when (not (typed-val? tvalval)) (error "not a typed value"))
        (if (eq? (caddr tvalval) ctorkw)
            (make-int 1)
            (make-int 0))))))
 
-
+(define (val-func Rfunc funcenv)
+  (make-proc
+   (λ (Rval valenv)
+     (let* ([tval (eval-force Rval)]
+            [valf (cadddr tval)]
+            [func Rfunc])                ; (eval-force Rfunc)
+       (when (not (typed-val? tval)) (error "not a typed value"))
+       (eval(make-appl func tval))))))
 
 ;; A type def looks like this, which is eqv to
 ;;   '(T t ([c1 a b]    <=>    data t = c1 a b
@@ -310,6 +320,7 @@
     [if    ,if-proc]
     [cval  ,cval-proc]
     [ctorp ,ctor-pred]
+    [fval  ,val-func]
     ))
 
 
@@ -370,8 +381,14 @@
 (define prog '(T L ((Nil a) (Cons hd tl))
                ((λ (lst len) (len lst))
                 (Cons 1 (Cons 2 (Cons 3 (Nil 999))))
-                (Y (λ (f xs) (if (ctor-p Nil xs)
-                                 0
-                                 (+ 1 (f (Cons-hl xs)))))))))
+                (λ xs (if (ctorp Nil xs)
+                          1
+                          2)))))
 
+                ;; (Y (λ (len xs) (if (ctor-p Nil xs)
+                ;;                    0
+                ;;                    (+ 1 (len (fval (λ (hd tl) hd) xs)))))))))
+
+(eval-force (compile prog)
+            recur-env)
 ;; They were like my children that I can't adore more.
