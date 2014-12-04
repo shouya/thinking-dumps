@@ -82,10 +82,7 @@
 
 
 ;;; Type predicates
-(define (normal? expr)
-  (memq (car expr)
-        '(i p λ)))    ; types of expr which are regarded normal
-(define (whnf? expr)  ; Weak Head Normal Form
+(define (normal? expr) ; types of expr which are regarded normal (precisely, WHNF)
   (memq (car expr)
         '(i p λ V)))
 (define (redex? expr)
@@ -96,13 +93,15 @@
 (define (type-predicate typechar)
   (λ (expr) (eq? (car expr) typechar)))
 
-(define ref?     (type-predicate 'r))
-(define λ?       (type-predicate 'λ))
-(define λraw?    (type-predicate 'λraw))
-(define proc?    (type-predicate 'p))
-(define closure? (type-predicate 'c))
-(define int?     (type-predicate 'i))
-(define appl?    (type-predicate 'appl))
+(define ref?       (type-predicate 'r))
+(define λ?         (type-predicate 'λ))
+(define λraw?      (type-predicate 'λraw))
+(define proc?      (type-predicate 'p))
+(define closure?   (type-predicate 'c))
+(define int?       (type-predicate 'i))
+(define appl?      (type-predicate 'appl))
+(define typed-val? (type-predicate 'V))
+
 
 
 ;;; Built-in procedure related functions
@@ -119,6 +118,11 @@
 (define val cadr)
 (define normal-val (compose cadr resolve-closure))
 
+(define (extract-keyword val)
+  (cond
+   [(ref? val)     (cadr val)]
+   [(closure? val) (cadr (caddr val))]
+   [else           (error "not a keyword")]))
 
 ;;; Lambda related functions
 (define (make-lambda expr env)
@@ -196,9 +200,12 @@
   (make-proc
    (λ (arg2 env2)
      (λ (arg3 env3)
-       (if (= (eval-force arg1 env1) 0)
-           (eval-force arg3 env3)
-           (eval-force arg2 env2))))))
+       (let ([condition (eval-force arg1 env1)])
+         (when (not (int? condition)) (error "condition invalid"))
+         (if (= (cdr condition) 0)
+             (eval-force arg3 env3)
+             (eval-force arg2 env2)))))))
+
 
 
 (define (eval-proc foo args env)
@@ -236,6 +243,16 @@
       (list 'λ (car CTargs)
             (compile-ctor Tname CTname (cdr CTargs)
                           (cons (car CTargs) stack)))))
+
+(define (ctor-pred ctor ctenv)
+  (make-proc
+   (λ (tval tvenv)
+     (let ([ctorkw  (extract-keyword ctor)]
+           [tvalval (eval-force tval)])
+       (when (not (typed-val? tval)) (error "not a typed value"))
+       (if (eq? (caddr tvalval) ctorkw)
+           (make-int 1)
+           (make-int 0))))))
 
 
 
@@ -292,6 +309,7 @@
     [trace ,trace]
     [if    ,if-proc]
     [cval  ,cval-proc]
+    [ctorp ,ctor-pred]
     ))
 
 
@@ -339,3 +357,21 @@
 ;; This should output a structure typed 'V, which represents a typed value.
 ;; The output could be long and messy, but it should indicates out the type
 ;; and the constructor used for this value.
+
+
+;; A trial on implementing
+(display "---A very beautiful program---\n")
+(define y-combinator
+  (compile
+   '(λ f (λ x f (x x)) (λ x f (x x)))))
+(define recur-env (add-binding 'Y y-combinator empty-env))
+
+;; fix (\f xs -> if (xs == []) then 0 else 1 + f (tail xs)) [1,2,3]  =>  3
+(define prog '(T L ((Nil a) (Cons hd tl))
+               ((λ (lst len) (len lst))
+                (Cons 1 (Cons 2 (Cons 3 (Nil 999))))
+                (Y (λ (f xs) (if (ctor-p Nil xs)
+                                 0
+                                 (+ 1 (f (Cons-hl xs)))))))))
+
+;; They were like my children that I can't adore more.
