@@ -76,7 +76,8 @@ directly by the users:
 * procedure, ie. built-in functions, (p)
 
 ### Syntax & Details
-The syntax of loli is basicall s-expressions, expressed as a quoted
+
+The syntax of loli is basically s-expression, expressed as a quoted
 list in Racket.
 
 
@@ -88,26 +89,29 @@ You may define a lambda that perform a simplest plus operation like this:
 (λ (a b) (+ a b))
 ```
 
-for one argument lambda, the paren is optional, ie. you can write
+for one argument lambda, the parenthesis are optional, ie. you can write
 code like this:
 
 ```racket
 (λ a (+ 1 a))
 ```
 
-Loli lambdas always curry, that is to say,
+Loli lambdas always curry, which is to say,
 
 ```racket
 (λ (a b) (+ a b))
 ```
 
-is just a syntatic sugar of writing
+is just a syntatic sugar to write
 
 ```racket
 (λ (a) (λ (b) (+ a b)))
 ```
 
-Because of purity, zero argument lambda is not allowed.
+
+Because of purity from lambda calculus, zero argument lambda is not
+supported.
+
 
 *compiler details:* all syntatic sugars, including multi-argument
  lambda and multiple application, are expanded in the compiling
@@ -117,31 +121,32 @@ Because of purity, zero argument lambda is not allowed.
 
 #### application
 
-You can apply values on procedures, as well as lambdas,
+You can apply values to procedures, as well as to lambdas,
 
 ```racket
 (+ 1 1)
 ((λ (a b) (+ a b)) 1 2)
 ```
 
-Because loli curries, applying multiple values is also just a syntatic
-sugar:
+Because loli use curry functions, applying multiple values is also
+just a syntatic sugar.
 
 ```racket
 (+ 1 1)
 ```
 
-is equivalent to:
+is equivalent to
 
 ```racket
 ((+ 1) 1)
 ```
 
 
+
 #### algebraic data type definition
 
-For example you want to describe a list, you will use the following
-ADT definition in Haskell:
+For example, if you want to describe a list, you may use the
+following ADT definition in Haskell:
 
 ```haskell
 data List a = Nil
@@ -150,17 +155,17 @@ data List a = Nil
 
 Notice that when you use type constructors like `Cons`,
 it behaves just like a function. It takes curried arguments, and
-results in a value with `List` type.
+results in a value with type `List`.
 
-In Loli, constructors *are* lambdas, also they yield a value in a
-defined type. We would call such values as 'typed-values' (V).
+In Loli, constructors *are* just lambdas, also they yield a value in
+the defined type. We would call such values as 'typed-values' (V).
 
-In Loli, types are dynamic. You don't need to specify a type variable
+In Loli, types are dynamic. So you don't need to specify a type variable
 when you are defining an ADT.
 
 Besides, because of the functionality, Loli does not provide a mutable
 environment, so you can't `define` a value, or a type, but you can
-rather `let` something.
+rather `let` them in a scope.
 
 So let me `let` a simpliest `List` type in Loli:
 
@@ -187,11 +192,13 @@ Confused? I shall explain in details.
 
 Type definition starts with the `T` keyword, and takes three
 arguments. The first indicates the name of this type, in this case,
-`List`. The second argument is a list of constructors, and third is
-the expression you want to execute within the environment with this
-type defined. Each constructor is described in form of a list, the
-first elements indicates the name, and the rest indicate the
-arguments it would take to construct such a type.
+`List`. The second argument is a list of constructors, and the third
+is the expression you want to evaluate within the environment with
+this type defined. Each constructor is described in form of a list,
+the first element in constructor definition indicates the name,
+eg. `Cons`, and the rest, `car cdr`, indicate the arguments it would
+take to construct such a type.
+
 
 The compiler will establish a scope with these constructors defined as
 lambdas. When the constructors are fed with sufficient arguments, it
