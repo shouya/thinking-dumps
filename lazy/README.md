@@ -288,34 +288,36 @@ directly. *So you don't need to quote anything in Loli.*
 
 ### Evaluation model
 
-Loli's uses lexical closures to implement lambdas. A lambda would
-store the binding of where it is created. When arguments are applied
-to a lambda, they will be bound on the lambda's parameters, based on
-the binding it has stored, then body will be executed with such
-binding.
+Loli uses lexical closures to implement lambdas. A lambda would
+store the binding where it is created. When arguments are applied
+to a lambda, they will be bound on the lambda's parameters, which is
+based on the binding it stored, then the body will be executed with
+this binding.
 
 The term "environment" indicates a global binding in Loli. There are
 two pre-defined environment usable in the source, `empty-env` and
-`recur-env`. The first is completely empty and the second only has
+`recur-env`. The first is completely empty and the second only has a
 [Y combinator](http://en.wikipedia.org/wiki/Fixed-point_combinator#Y_combinator),
-named `Y`, pre-defined, so you can easily construct recursive programs.
+named `Y`, pre-defined, with which you can easily construct recursive
+programs.
+
 
 
 ### Compile & Run Loli programs
 
-**The most complete implemenation of Loli is in `lazy.rkt`!*
+**The most complete implemenation of Loli is in `lazy.rkt`!**
 
 You need to compile the Loli programs using the `compile` function
-defined in the languages, for example:
+defined in the source, for example:
 
 ```racket
 (compile '(+ 1 2))
 ```
 
-A compiled program is not completely non-readable. Actually the
-compiler is pretty simple; it only does type recognition for tokens
-and expand the syntatic sugars for lambdas, applications, and ADT
-defs.
+Fortunately, compiled programs are not completely
+non-readable. Actually what the compiler does is pretty simple; it
+only recognize the types for the tokens and expand the syntatic sugars
+for lambdas, applications, and ADT defs.
 
 Then you need to evaluate the compiled program in an
 environment. Usually you will use `empty-env`, but you can also use
@@ -356,7 +358,7 @@ You can simulate `let` using lambdas,
   (+ a b c))
 ```
 
-in Scheme, can be written as
+above code snippet in Scheme can be re-written in Loli as
 
 ```racket
 ((λ (a b c) (+ a b c))
@@ -365,7 +367,6 @@ in Scheme, can be written as
  c-val)
 ```
 
-in Loli.
 
 #### missing recursion support
 
@@ -373,7 +374,7 @@ Loli does not support recursion directly, but you can have
 [fix-point combinators](http://en.wikipedia.org/wiki/Fixed-point_combinator)!
 
 With the environment `recur-env` you can use the Y combinator called
-`Y`, and use it to define recursive lambda or recursive data structures.
+`Y`, to define recursive lambda and recursive data structures.
 
 Below is an example defining a lambda that calculates a list's length:
 
@@ -383,7 +384,7 @@ Below is an example defining a lambda that calculates a list's length:
                    (+ 1 (len (fval (λ (hd tl) tl) xs)))))))))
 ```
 
-In haskell, it's like using the `fix` combinator:
+In haskell, it's like to use the `fix` combinator:
 
 ```haskell
 Y (\f xs -> if (xs == []) then 0 else 1 + f (tail xs))
@@ -415,10 +416,11 @@ element in a list:
 
 Basically, you can use the `let` simulation to define a bunch of
 functions and evaluate some expressions within this binding. But if
-you consider it unreadable, you can use the following method.
+you consider doing this way makes code unreadable, you can use the
+following method.
 
 Although Loli does not aim to support function definition, you can
-always do this in the Racket layer. Here is how to do it.
+always do this in the Racket layer. Here is how,
 
 You may define some variables to represent code snippets, values, or
 lambdas. I will take the code from above:
@@ -439,7 +441,7 @@ lambdas. I will take the code from above:
        expr)))
 ```
 
-You can compose your program easily using quasi-quotation in Racket.
+You can compose your program easily using [quasi-quotate and unquote](http://docs.racket-lang.org/reference/quasiquote.html) syntax in Racket.
 
 ```racket
 (eval-force `(,list-def (,prog-nth 3 (,inf-list 2))))
@@ -448,4 +450,5 @@ You can compose your program easily using quasi-quotation in Racket.
 The example above will produce `(i 5)`, as it's equivalent to the
 haskell expression `[2..] !! 3`.
 
-You're more powered than you have thought with Loli. Are you feeling cool now?
+You're actually more powered than you have thought with Loli. Are you
+feeling a little bit cooler now?
