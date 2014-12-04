@@ -161,13 +161,14 @@ rather `let` something.
 So let me `let` a simpliest `List` type in Loli:
 
 ```racket
-(T List ([Cons car cdr]
-         [Nil a])
+(T List ((Cons car cdr)
+         (Nil a))
   <expression>)
 ```
 
 `Nil`, although not necessary, still requires an argument because it
 needs to be as a lambda. (remember? c-tors *are* lambdas)
+*(this is actually a deficiency, I will fix it later)*
 
 In fact, the compiler will transform this type definition into
 something like:
@@ -176,4 +177,61 @@ something like:
 (let ([Cons (λ (car cdr) (cval 'List 'Cons (λ (f) (f car cdr))))]
       [Nil  (λ (a)       (cval 'List 'Nil  (λ (f) (f a))))])
   <expression>)
+```
+
+Confused? I shall explain in details.
+
+Type definition starts with the `T` keyword, and takes three
+arguments. The first indicates the name of this type, in this case,
+`List`. The second argument is a list of constructors, and third is
+the expression you want to execute within the environment with this
+type defined. Each constructor is described in form of a list, the
+first elements indicates the name, and the rest indicate the
+arguments it would take to construct such a type.
+
+The compiler will establish a scope with these constructors defined as
+lambdas. When the constructors are fed with sufficient arguments, it
+will call the built-in function `cval` to construct a typed-value, a
+typed value has the following properties, the type, the constructor
+used to construct this value, and a lambda with the constructor's
+arguments stored and can be recalled anytime.
+
+This lambda is an idea conceived by me, I don't know if there is a
+name of this concept. When you need to manipulate the constructor
+arguments' values, you pass a function with the same arity as the
+constructor to this lambda, and you will get each arguments
+accessible. I will make a small example on how to use it:
+
+Suppose you have a list named `lst`, these expressions shows the way
+to access the values of it:
+
+```racket
+(fval (λ (car _) car) lst)            ;; like car
+(fval (λ (_ cdr) cdr) lst)            ;; like cdr
+(fval (λ (_ cdr)                      ;; like cadr
+        (fval (λ (car _) car) cdr)
+      lst))
+```
+
+Putting a `_` in the place of a lambda arguments means to ignore it.
+
+
+### Tips
+
+You can simulate `let` using lambdas,
+
+```racket
+(let ([a a-val]
+      [b b-val]
+      [c c-val])
+  (+ a b c))
+```
+
+can be written as
+
+```racket
+((λ (a b c) (+ a b c))
+ a-val
+ b-val
+ c-val)
 ```
