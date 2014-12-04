@@ -44,12 +44,30 @@ Have fun being more and more **lazy**!
 ## Loli
 As I field to implement something using the lazy evalution theory, a
 new language was created. It was beautiful and elegant, and most
-important, it's adorable. I call she `loli`, suggested by
+important, it's adorable. I call she `loli`, as suggested by
 [@codeotakuchiyan](https://twitter.com/codeotakuchiyan).
 
 ![Loli's - Moegirl Wiki](http://static.mengniang.org/common/c/c1/Roukyubu.jpg)
 
-Loli is a lisp dialect that aims to be in research purpose, she so far implements
+Loli is a lisp dialect for research purpose, she so far implements
 [lazy evaluation](http://en.wikipedia.org/wiki/Lazy_evaluation) and
 [algebraic data types](http://en.wikipedia.org/wiki/Algebraic_data_type),
 other features are not planned yet.
+
+### Data types
+There are two built-in data types:
+
+* integer (i)
+* lambda (λ)
+* reference, aka. symbol (r)
+
+And there are other internal data types, which are not accessible
+directly by the users:
+
+* application (appl)
+* raw lambda, ie. lambda without lexical binding, (λraw)
+* closure, ie. an expression with binding, (c)
+* typed value, ie. a value constructed by a type construtor, (V)
+* procedure, ie. built-in functions, (p)
+
+### Syntax
