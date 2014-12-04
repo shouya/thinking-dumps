@@ -30,10 +30,8 @@ distracting for me to focus on the implementation itself.
 * [X] eager evaluation (`eager.rkt`)
 * [X] delayed evaluation on arguments (`delay.rkt`)
 * [X] delayed evaluation with graph reduction (`delay2.rkt`)
-* [ ] lazy evaluation with constructor type, capable for recursive
-      values (`lazy.rkt`)
-* [ ] non-strict lazy evaluation, just like what haskell does
-      (`nonstrict.rkt`)
+* [X] lazy evaluation with constructor type, capable for recursive
+      values and functions (`lazy.rkt`)
 
 
 Each of these files should be a complete interpreter of a customized minimal
@@ -41,5 +39,17 @@ lisp dialect which is ready to be tested.
 
 The testing examples are appended (and commented out) at the end of each files.
 
-
 Have fun being more and more **lazy**!
+
+## Loli
+As I field to implement something using the lazy evalution theory, a
+new language was created. It was beautiful and elegant, and most
+important, it's adorable. I call she `loli`, suggested by
+[@codeotakuchiyan](https://twitter.com/codeotakuchiyan).
+
+![Loli's - Moegirl Wiki](http://static.mengniang.org/common/c/c1/Roukyubu.jpg)
+
+Loli is a lisp dialect that aims to be in research purpose, she so far implements
+[lazy evaluation](http://en.wikipedia.org/wiki/Lazy_evaluation) and
+[algebraic data types](http://en.wikipedia.org/wiki/Algebraic_data_type),
+other features are not planned yet.
