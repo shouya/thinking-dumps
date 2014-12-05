@@ -222,6 +222,32 @@
          cadr
          (λ () (error "procedure not found"))))
 
+
+(define (ctor-pred ctor)
+  (make-proc
+   (λ (tval)
+     (let ([ctorkw  (extract-keyword ctor)]
+           [tvalval (resolve-closure tval)])
+       (when (not (typed-val? tvalval)) (error "not a typed value"))
+       (if (eq? (caddr tvalval) ctorkw)
+           (make-int 1)
+           (make-int 0))))))
+
+(define (fval-func Rfunc)
+  (make-proc
+   (λ (Rval)
+     (let* ([tval (resolve-closure Rval)]
+            [valf (cadddr tval)]
+            [func (resolve-closure Rfunc)])                ; (eval-force Rfunc)
+       (when (not (typed-val? tval)) (error "not a typed value"))
+       (make-closure empty-env (make-appl valf func))))))
+
+
+
+
+
+;;; Utilities
+
 (define (maybe result just nothing)
   (if result
       (just result)
@@ -244,29 +270,14 @@
 (define (compile-ctor Tname CTname CTargs stack)
   (if (null? CTargs)
       (list 'cval Tname CTname
-            (list 'λ 'f (list* 'f (reverse stack))))
+            (if (null? stack)
+                '()
+                (list 'λ 'f (list* 'f (reverse stack)))))
       (list 'λ (car CTargs)
             (compile-ctor Tname CTname (cdr CTargs)
                           (cons (car CTargs) stack)))))
 
-(define (ctor-pred ctor)
-  (make-proc
-   (λ (tval)
-     (let ([ctorkw  (extract-keyword ctor)]
-           [tvalval (resolve-closure tval)])
-       (when (not (typed-val? tvalval)) (error "not a typed value"))
-       (if (eq? (caddr tvalval) ctorkw)
-           (make-int 1)
-           (make-int 0))))))
 
-(define (fval-func Rfunc)
-  (make-proc
-   (λ (Rval)
-     (let* ([tval (resolve-closure Rval)]
-            [valf (cadddr tval)]
-            [func (resolve-closure Rfunc)])                ; (eval-force Rfunc)
-       (when (not (typed-val? tval)) (error "not a typed value"))
-       (make-closure empty-env (make-appl valf func))))))
 
 ;; A type def looks like this, which is eqv to
 ;;   '(T t ([c1 a b]    <=>    data t = c1 a b
@@ -395,13 +406,13 @@
 ;; They were like my children that I couldn't adore more.
 
 (define sample-inflst
-  '(T L ((Nil a) (Cons hd tl))
+  '(T L ((Nil) (Cons hd tl))
     ((λ (inflst take) (take 10 (inflst 2)))   ;; iterating from 2, i.e. [2..]
      (Y (λ (iter n) (Cons n (iter (+ n 1)))))
      (Y (λ (f n xs) (if n
                         (Cons (fval (λ (hd _) hd) xs)
                               (f (- n 1) (fval (λ (_ tl) tl) xs)))
-                        (Nil 999)))))))
+                        Nil))))))
 (define prog-nth
   `(Y (λ (f n xs)
         (if n
