@@ -254,7 +254,8 @@ are proceeded by Loli directly. This category includes:
 * lambda parameters, eg. `a`, `b` in `(λ (a b) ...)`
 * some procedures' arguments, eg. `Cons` in `(ctorp Cons val)`
 * type name, eg. `List` in `(T List (...) ...)`
-* type constructors definitions, eg. `Cons`, `a`, `b` in `(T List ((Cons a b) ...) ...)`
+* type constructor name, eg. `Cons`, in `(T List ((Cons a b) ...) ...)`
+* type constructor arguments, eg. `a`, `b` in `(T List ((Cons a b) ...) ...)`
 
 
 A keyword do never require a binding, because they are written
