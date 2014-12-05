@@ -171,20 +171,18 @@ So let me `let` a simpliest `List` type in Loli:
 
 ```racket
 (T List ((Cons car cdr)
-         (Nil a))
+         (Nil))
   <expression>)
 ```
 
-`Nil`, although not necessary, still requires an argument because it
-needs to be as a lambda. (remember? c-tors *are* lambdas)
-*(this is actually a deficiency, I will fix it later)*
+`Nil` requires no argument, so it refers directly to a typed-value.
 
 In fact, the compiler will transform this type definition into
 something like:
 
 ```racket
 (let ([Cons (λ (car cdr) (cval 'List 'Cons (λ (f) (f car cdr))))]
-      [Nil  (λ (a)       (cval 'List 'Nil  (λ (f) (f a))))])
+      [Nil               (cval 'List 'Nil  '())])
   <expression>)
 ```
 
@@ -199,7 +197,6 @@ the first element in constructor definition indicates the name,
 eg. `Cons`, and the rest, `car cdr`, indicate the arguments it would
 take to construct such a type.
 
-
 The compiler will establish a scope with these constructors defined as
 lambdas. When the constructors are fed with sufficient arguments, it
 will call the built-in function `cval` to construct a typed value. A
@@ -209,13 +206,15 @@ arguments stored and can be recalled anytime.
 
 This lambda is an idea conceived by me alone, I don't know if there is
 a name for this concept. When you need to manipulate the constructor
-arguments' values, you pass a function with the same arity as the
-that of the constructor to this lambda, then you will get each
-arguments bound with specifc values accessible. I will make a small
-example on how to use it.
+arguments' values, you pass a function with the same arity as the that
+of the constructor to this lambda, then you will get each arguments
+bound with specifc values accessible. Note that `Nil` does not have an
+argument so there is certainly no where to recall it. Therefore, it
+does not have a argument-value-storing-lambda.
 
-Suppose you have a list named `lst`, these expressions shows the ways
-to access the values in it:
+I will make a small example on how to use it. Suppose you have a list
+named `lst`, these expressions shows the ways to access the values in
+it:
 
 ```racket
 (fval (λ (car _) car) lst)            ;; like car
@@ -438,7 +437,7 @@ lambdas. I will take the code from above:
 
 (define list-def
   '(λ (expr)
-    (T L ((Nil a) (Cons hd tl))
+    (T L ((Nil) (Cons hd tl))
        expr)))
 ```
 
