@@ -36,3 +36,12 @@ data _∨_ (P Q : Set) : Set where
 ∨-elim : {A B C : Set} → (A → C) → (B → C) → (A ∨ B) → C
 ∨-elim ac bc (∨-intro₁ a) = ac a
 ∨-elim ac bc (∨-intro₂ b) = bc b
+
+
+∨-comm′ : {A B : Set} → (A ∨ B) → (B ∨ A)
+∨-comm′ (∨-intro₁ a) = ∨-intro₂ a
+∨-comm′ (∨-intro₂ b) = ∨-intro₁ b
+
+∨-comm : {A B : Set} → (A ∨ B) ⇔ (B ∨ A)
+∨-comm = ∧-intro ∨-comm′ ∨-comm′
+
