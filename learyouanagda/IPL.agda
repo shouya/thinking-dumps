@@ -45,3 +45,8 @@ data _∨_ (P Q : Set) : Set where
 ∨-comm : {A B : Set} → (A ∨ B) ⇔ (B ∨ A)
 ∨-comm = ∧-intro ∨-comm′ ∨-comm′
 
+
+data ⊥ : Set where
+
+¬ : Set → Set
+¬ A = A → ⊥
