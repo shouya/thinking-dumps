@@ -26,5 +26,13 @@ a ⇔ b = (a → b) ∧ (b → a)
 ∧-comm1′ : {P Q : Set} → (P ∧ Q) → (Q ∧ P)
 ∧-comm1′ (∧-intro p q) = ∧-intro q p
 
-∧-comm1 : {P Q : Set} → (P ∧ Q) ⇔ (Q ∧ P)
-∧-comm1 = ∧-intro ∧-comm1′ ∧-comm1′
+
+
+data _∨_ (P Q : Set) : Set where
+   ∨-intro₁ : P → P ∨ Q
+   ∨-intro₂ : Q → P ∨ Q
+
+
+∨-elim : {A B C : Set} → (A → C) → (B → C) → (A ∨ B) → C
+∨-elim ac bc (∨-intro₁ a) = ac a
+∨-elim ac bc (∨-intro₂ b) = bc b
