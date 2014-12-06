@@ -6,7 +6,6 @@ data ℕ : Set where
 
 _+_ : ℕ → ℕ → ℕ
 
-zero + zero  = zero
 zero + n     = n
 (suc n) + n′ = suc (n + n′)
 
@@ -19,3 +18,9 @@ data _even : ℕ → Set where
 -- To prove four is even
 proof₁ : suc (suc (suc (suc zero))) even
 proof₁ = STEP (suc (suc zero)) (STEP zero ZERO)
+
+proof₂′ : (A : Set) → A → A
+proof₂′ _ a = a
+
+proof₂ : ℕ → ℕ
+proof₂ = proof₂′ ℕ
