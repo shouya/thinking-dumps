@@ -14,3 +14,8 @@ zero + n     = n
 data _even : ℕ → Set where
   ZERO : zero even
   STEP : ∀ x → x even → (suc (suc x)) even
+
+
+-- To prove four is even
+proof₁ : suc (suc (suc (suc zero))) even
+proof₁ = STEP (suc (suc zero)) (STEP zero ZERO)
