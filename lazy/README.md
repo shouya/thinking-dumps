@@ -89,7 +89,7 @@ You may define a lambda that perform a simplest plus operation like this:
 (λ (a b) (+ a b))
 ```
 
-for one argument lambda, the parenthesis are optional, ie. you can write
+for one argument lambda, the parentheses are optional, ie. you can write
 code like this:
 
 ```racket
@@ -128,7 +128,7 @@ You can apply values to procedures, as well as to lambdas,
 ((λ (a b) (+ a b)) 1 2)
 ```
 
-Because loli use curry functions, applying multiple values is also
+Because Loli uses curry functions, applying multiple values is also
 just a syntatic sugar.
 
 ```racket
@@ -157,8 +157,10 @@ Notice that when you use type constructors like `Cons`,
 it behaves just like a function. It takes curried arguments, and
 results in a value with type `List`.
 
-In Loli, constructors *are* just lambdas, also they yield a value in
-the defined type. We would call such values as 'typed-values' (V).
+In Loli, constructors (with parameters) *are* just lambdas, also they
+yield a value in the defined type. We would call such values as
+'typed-values' (V).
+
 
 In Loli, types are dynamic. So you don't need to specify a type variable
 when you are defining an ADT.
