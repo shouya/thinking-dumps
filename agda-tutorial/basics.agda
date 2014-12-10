@@ -58,3 +58,21 @@ map f (x :: xs) = f x :: map f xs
 _++_ : {A : Set} -> List A -> List A -> List A
 []      ++ ys = ys
 x :: xs ++ ys = x :: (xs ++ ys)
+
+
+data Vec (A : Set) : ℕ -> Set where
+  nil  : Vec A O
+  cons : (n : ℕ) -> A -> Vec A n -> Vec A (S n)
+
+head : {A : Set} {n : ℕ} -> Vec A (S n) -> A
+head (cons n v vs) = v
+
+
+vmap : {A B : Set} (n : ℕ) -> (A -> B) -> Vec A n -> Vec B n
+vmap .O f nil = nil
+vmap .(S n) f (cons n x xs) = cons n (f x) (vmap n f xs)
+
+
+vmap′ : {A B : Set} (n : ℕ) -> (A -> B) -> Vec A n -> Vec B n
+vmap′ O f nil = nil
+vmap′ (S n) f (cons .n x xs) = cons n (f x) (vmap n f xs)
