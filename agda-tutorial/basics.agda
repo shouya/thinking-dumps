@@ -50,3 +50,11 @@ _∘_ f g a = f (g a)
 
 
 plus-two = S ∘ S
+
+map : {A B : Set} -> (A -> B) -> List A -> List B
+map f []        = []
+map f (x :: xs) = f x :: map f xs
+
+_++_ : {A : Set} -> List A -> List A -> List A
+[]      ++ ys = ys
+x :: xs ++ ys = x :: (xs ++ ys)
