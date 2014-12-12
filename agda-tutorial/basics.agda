@@ -76,3 +76,19 @@ vmap .(S n) f (cons n x xs) = cons n (f x) (vmap n f xs)
 vmap′ : {A B : Set} (n : ℕ) -> (A -> B) -> Vec A n -> Vec B n
 vmap′ O f nil = nil
 vmap′ (S n) f (cons .n x xs) = cons n (f x) (vmap n f xs)
+
+
+data Fin : ℕ -> Set where
+  fzero : {n : ℕ} -> Fin (S n)
+  fsuc  : {n : ℕ} -> Fin n -> Fin (S n)
+
+_!_ : {n : ℕ}{A : Set} -> Vec A n -> Fin n -> A
+nil ! ()
+cons n x a ! fzero = x
+cons n x a ! fsuc b = a ! b
+
+
+
+tabulate : {n : ℕ}{A : Set} -> (Fin n -> A) -> Vec A n
+tabulate {O} f = nil
+tabulate {S n} f = cons n (f fzero) (tabulate (f ∘ fsuc))
