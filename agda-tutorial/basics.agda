@@ -92,3 +92,46 @@ cons n x a ! fsuc b = a ! b
 tabulate : {n : ℕ}{A : Set} -> (Fin n -> A) -> Vec A n
 tabulate {O} f = nil
 tabulate {S n} f = cons n (f fzero) (tabulate (f ∘ fsuc))
+
+
+data   False : Set where
+record True  : Set where
+
+
+trivial : True
+trivial = _
+
+
+isTrue : Bool -> Set
+isTrue true  = True
+isTrue false = False
+
+
+_<_ : ℕ -> ℕ -> Bool
+_   < O   = false
+O   < S n = true
+S m < S n = m < n
+
+length : {A : Set} -> List A -> ℕ
+length [] = O
+length (x :: xs) = S (length xs)
+
+lookup : {A : Set}(xs : List A)(n : ℕ) -> isTrue (n < length xs) -> A
+lookup (x :: xs) O b = x
+lookup (x :: xs) (S n) b = lookup xs n b
+lookup [] a ()
+
+
+data _==_ {A : Set}(x : A) : A -> Set where
+  refl : x == x
+
+
+data _≤_ : ℕ -> ℕ -> Set where
+  ≤O : {m n : ℕ} -> m == n -> m ≤ n
+  ≤I : {m n : ℕ} -> m ≤  n -> m ≤ S n
+
+
+leq-trans : {l m n : ℕ} -> l ≤ m -> m ≤ n -> l ≤ n
+leq-trans (≤O refl) b = b
+leq-trans a (≤O refl) = a
+leq-trans (≤I a) (≤I b) = ≤I (leq-trans (≤I a) b)
