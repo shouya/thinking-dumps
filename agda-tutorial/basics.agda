@@ -134,3 +134,27 @@ data _≤_ : ℕ -> ℕ -> Set where
 leq-trans : {l m n : ℕ} -> l ≤ m -> m ≤ n -> l ≤ n
 leq-trans a (≤O refl) = a
 leq-trans a (≤I b)    = ≤I (leq-trans a b)
+
+
+min : ℕ -> ℕ -> ℕ
+min a b with a < b
+min a b | true  = a
+min a b | false = b
+
+
+filter : {A : Set} -> (A -> Bool) -> List A -> List A
+filter f [] = []
+filter f (x :: xs) with f x
+... | true  = x :: filter f xs
+... | false =      filter f xs
+
+
+data _≠_ : ℕ -> ℕ -> Set where
+  z≠s : {n : ℕ}   -> O   ≠ S n
+  s≠z : {n : ℕ}   -> S n ≠ O
+  s≠s : {m n : ℕ} -> n   ≠ m → S n ≠ S m
+
+
+data Equal? (n m : ℕ) : Set where
+  eq  : n == m -> Equal? n m
+  neq : n ≠  m -> Equal? n m
