@@ -132,6 +132,5 @@ data _≤_ : ℕ -> ℕ -> Set where
 
 
 leq-trans : {l m n : ℕ} -> l ≤ m -> m ≤ n -> l ≤ n
-leq-trans (≤O refl) b = b
 leq-trans a (≤O refl) = a
-leq-trans (≤I a) (≤I b) = ≤I (leq-trans (≤I a) b)
+leq-trans a (≤I b)    = ≤I (leq-trans a b)
