@@ -1,0 +1,5 @@
+tsp:
+  build: .
+  volumes:
+    - "out:/out"
+    - "/tmp/.X11-unix:/tmp/.X11-unix"
