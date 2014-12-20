@@ -54,7 +54,7 @@ paintEdges []  _ _  = blank
 paintEdges [_] _ _  = blank
 paintEdges ns xr yr = pictures $ map paintEdge ns
   where scalePoint = scaleTuple xr yr imgWidth imgHeight
-        paintEdge (p1, p2) = line $ [scalePoint p1, scalePoint p2]
+        paintEdge (p1, p2) = line [scalePoint p1, scalePoint p2]
 
 
 
