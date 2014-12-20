@@ -1,4 +1,6 @@
-module TSPGraph where
+module TSPGraph (
+  presentUI
+  ) where
 
 import Graphics.Gloss
 import TSPLib

@@ -7,6 +7,7 @@ import Data.List
 
 algNearestNeighbor :: TSPAlgorithm
 algNearestNeighbor [] = []
+algNearestNeighbor [a,b] = [(a,b)]
 algNearestNeighbor (n:ns) = result
   where minn = fst $
                minimumBy (compare `on` snd) $
