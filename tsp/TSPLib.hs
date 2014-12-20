@@ -1,6 +1,7 @@
 module TSPLib (
   Node,
   Edge,
+  TSPAlgorithm,
   distance,
   xRange,
   yRange,
@@ -28,6 +29,9 @@ xRange  :: [Node] -> (Int, Int)
 xRange = map fst >>> (foldl1' min &&& foldl1' max)
 yRange :: [Node] -> (Int, Int)
 yRange = map fst >>> (foldl1' min &&& foldl1' max)
+
+
+type TSPAlgorithm = [Node] -> [Edge]
 
 
 parseString :: String -> [Node]

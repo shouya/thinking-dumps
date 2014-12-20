@@ -13,7 +13,7 @@ The project includes the implementations of differenting algorithms
 solving the TSP. Here's a list of algorithms I planned to work on:
 
 * [ ] Brutal force algorithm
-* [ ] Nearest-neighbor algorithm
+* [X] Nearest-neighbor algorithm
 * [ ] Greedy algorithm
 * [ ] Insertion algorithm
 ** [ ] Cheapest
