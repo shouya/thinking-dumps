@@ -1,3 +1,5 @@
+module TSPGraph where
+
 import Graphics.Gloss
 import TSPLib
 import Data.Monoid
@@ -13,6 +15,10 @@ imgHeight = 600
 main :: IO ()
 main = do
   (nodes, edges) <- parseInput
+  presentUI nodes edges
+
+presentUI :: [Node] -> [Edge] -> IO ()
+presentUI nodes edges =
   let window = InWindow "TSP Visualize" (imgWidth, imgHeight) (10, 10)
       (halfW, halfH) = (fromIntegral (-imgWidth)/2, fromIntegral (-imgHeight)/2)
       translatedPic  = scale 0.9 (-0.9) $ translate halfW halfH pic
@@ -20,7 +26,6 @@ main = do
       pic = paintNodes nodes xrng yrng <>
             paintEdges edges xrng yrng
     in display window white translatedPic
-
 
 scaleVal :: (Fractional a) => (a, a) -> a -> a -> a
 scaleVal (xmin, xmax) scl x = scl * (x - xmin) / (xmax - xmin)
