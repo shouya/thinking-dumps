@@ -1,10 +1,13 @@
 module TSPLib (
   Node,
   Edge,
+  Path,
   TSPAlgorithm,
   distance,
   xRange,
   yRange,
+  pathLength,
+  pathToEdges,
   parseString,
   parseStdin,
   parseFile,
@@ -21,6 +24,7 @@ import Control.Arrow ((>>>), (&&&))
 -- node
 type Node = (Int, Int)
 type Edge = (Node, Node)
+type Path = [Node]
 
 distance :: Node -> Node -> Double
 distance (x1,y1) (x2,y2) = sqrt (fromIntegral $ (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
@@ -33,6 +37,12 @@ yRange = map fst >>> (foldl1' min &&& foldl1' max)
 
 type TSPAlgorithm = [Node] -> [Edge]
 
+
+pathLength :: Path -> Double
+pathLength xs = foldl1' (+) $ zipWith distance (init xs) (tail xs)
+
+pathToEdges :: Path -> [Edge]
+pathToEdges xs = zip (init xs) (tail xs)
 
 parseString :: String -> [Node]
 parseString =
