@@ -50,9 +50,12 @@ scaleTuple xrng yrng xmax ymax = scaleX *** scaleY
 paintNodes :: [Node] -> (Int,Int) -> (Int,Int) -> Picture
 paintNodes []  _ _  = blank
 paintNodes [_] _ _  = blank
-paintNodes ns xr yr = pictures $ map paintNode ns
+paintNodes ns xr yr = pictures $ zipWith paintNode [0..] ns
   where scalePoint = scaleTuple xr yr imgWidth imgHeight
-        paintNode node = uncurry translate (scalePoint node) $ circle 5
+        getcolor n = if n == 0 then red else black
+        paintNode n node = uncurry translate (scalePoint node) $
+                           color (getcolor n) $
+                           circle 5
 
 
 
@@ -61,7 +64,7 @@ paintEdges []  _ _  = blank
 paintEdges [_] _ _  = blank
 paintEdges ns xr yr = pictures $ map paintEdge ns
   where scalePoint = scaleTuple xr yr imgWidth imgHeight
-        paintEdge (p1, p2) = line [scalePoint p1, scalePoint p2]
+        paintEdge (p1, p2) = color blue $ line [scalePoint p1, scalePoint p2]
 
 
 
