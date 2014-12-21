@@ -12,11 +12,11 @@ import System.Environment
 
 
 defaultAlg :: String
-defaultAlg = "nearest_neighbor"
+defaultAlg = "NearestNeighbor"
 
 algorithms :: Map String TSPAlgorithm
 algorithms = M.fromList
-             [("nearest_neighbor", algNearestNeighbor)
+             [("NearestNeighbor", algNearestNeighbor)
              ]
 
 main :: IO ()
