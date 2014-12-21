@@ -28,7 +28,8 @@ main = do
         [x] -> fromMaybe (error $ show x ++ " algorithm not found") $
                M.lookup x algorithms
       edges = playAlg alg nodes
-    in present nodes edges
+    in do print $ sum $ map (uncurry distance) edges
+          present nodes edges
 
 
 playAlg :: TSPAlgorithm -> [Node] -> [Edge]
