@@ -50,13 +50,16 @@ edgeLength = uncurry distance
 pathToEdges :: Path -> [Edge]
 pathToEdges xs = zip (init xs) (tail xs)
 
-tracePath :: [Edge] -> Node -> Node
-tracePath [] n = n
-tracePath es n = if length edges /= 1 then n
-                 else let followingE = head edges
-                          nextN      = snd $ head edges
-                          restEdges  = es \\ [followingE, swap followingE]
-                      in tracePath restEdges nextN
+tracePath :: [Edge] -> Node -> Path
+tracePath [] n = [n]
+tracePath es n = case length edges of
+                  0 -> []
+                  1 -> let followingE = head edges
+                           nextN      = snd followingE
+                           restEdges  = es \\ [followingE, swap followingE]
+                       in n : tracePath restEdges nextN
+                  _ -> let err = (show es) ++ (show n) ++ (show edges)
+                       in error $ err ++ "more than one choice"
   where edges = filter ((==n) . fst) (es ++ map swap es)
 
 

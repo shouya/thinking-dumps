@@ -3,6 +3,7 @@ module Greedy where
 import TSPLib
 
 import Data.List
+import Data.Tuple
 import Data.Function
 
 import Debug.Trace
@@ -19,9 +20,8 @@ choose es chosen = if edgeValid minEdge
                    else choose restEdges chosen
   where minEdge     = minimumBy (compare `on` edgeLength) es
         restEdges   = delete minEdge es
-        edgeValid (n,m) = not (causeCycle n m) &&
-                          not (degree n > 2 || degree m > 2)
-        causeCycle n m  = trace ((show chosen) ++ (show n) ++ (show m)++(show (tracePath chosen n == m))) $ tracePath chosen n == m
+        edgeValid (n,m) = not (degree n >= 2 || degree m >= 2) &&
+                          not (causeCycle n m)
+        causeCycle n m  = m `elem` tracePath chosen n
         degree n        = length $
-                          filter ((n /=) . fst) chosen ++
-                          filter ((n /=) . snd) chosen
+                          filter ((n ==) . fst) (chosen ++ map swap chosen)
