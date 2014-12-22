@@ -7,7 +7,9 @@ module TSPLib (
   xRange,
   yRange,
   pathLength,
+  edgeLength,
   pathToEdges,
+  tracePath,
   parseString,
   parseStdin,
   parseFile,
@@ -20,6 +22,8 @@ import Control.Monad
 import Control.Applicative ((<*>), (<$>))
 import Control.Arrow ((>>>), (&&&))
 
+import Data.Maybe
+import Data.Tuple
 
 -- node
 type Node = (Int, Int)
@@ -41,8 +45,27 @@ type TSPAlgorithm = [Node] -> [Edge]
 pathLength :: Path -> Double
 pathLength xs = foldl1' (+) $ zipWith distance (init xs) (tail xs)
 
+edgeLength :: Edge -> Double
+edgeLength = uncurry distance
+
 pathToEdges :: Path -> [Edge]
 pathToEdges xs = zip (init xs) (tail xs)
+
+tracePath :: [Edge] -> Node -> Node
+tracePath [] n = n
+tracePath es n = maybe n (tracePath restEdges) node
+  where tracableEdges = filter ((==n) . fst) es ++
+                        map swap (filter ((==n) . snd) es)
+        edge          = if length tracableEdges == 1
+                        then Just $ head tracableEdges
+                        else Nothing
+        node          = case edge of
+                         Just (a,_) -> Just a
+                         Nothing    -> Nothing
+        restEdges     = case edge of
+                         Just e  -> delete e es
+                         Nothing -> []
+
 
 parseString :: String -> [Node]
 parseString =
