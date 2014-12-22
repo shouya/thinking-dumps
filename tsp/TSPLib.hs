@@ -30,9 +30,9 @@ distance :: Node -> Node -> Double
 distance (x1,y1) (x2,y2) = sqrt (fromIntegral $ (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
 
 xRange  :: [Node] -> (Int, Int)
-xRange = map fst >>> (foldl1' min &&& foldl1' max)
+xRange = (foldl1' min &&& foldl1' max) . map fst
 yRange :: [Node] -> (Int, Int)
-yRange = map fst >>> (foldl1' min &&& foldl1' max)
+yRange = (foldl1' min &&& foldl1' max) . map snd
 
 
 type TSPAlgorithm = [Node] -> [Edge]

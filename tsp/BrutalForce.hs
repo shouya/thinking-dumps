@@ -15,6 +15,10 @@ algBrutalForce ns = pathToEdges minPath
         allPathsFrom a = explore a (delete a ns)
         minPath = minimumBy (compare `on` pathLength) allPaths
 
+{-
+algBrutalForce' :: Set Node -> [Edge]
+algBrutalForce'
+-}
 
 explore :: Node -> [Node] -> [Path]
 explore n []      = [[n]]
