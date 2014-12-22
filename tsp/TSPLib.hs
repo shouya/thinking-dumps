@@ -22,7 +22,6 @@ import Control.Monad
 import Control.Applicative ((<*>), (<$>))
 import Control.Arrow ((>>>), (&&&))
 
-import Data.Maybe
 import Data.Tuple
 
 -- node
@@ -53,18 +52,12 @@ pathToEdges xs = zip (init xs) (tail xs)
 
 tracePath :: [Edge] -> Node -> Node
 tracePath [] n = n
-tracePath es n = maybe n (tracePath restEdges) node
-  where tracableEdges = filter ((==n) . fst) es ++
-                        map swap (filter ((==n) . snd) es)
-        edge          = if length tracableEdges == 1
-                        then Just $ head tracableEdges
-                        else Nothing
-        node          = case edge of
-                         Just (a,_) -> Just a
-                         Nothing    -> Nothing
-        restEdges     = case edge of
-                         Just e  -> delete e es
-                         Nothing -> []
+tracePath es n = if length edges /= 1 then n
+                 else let followingE = head edges
+                          nextN      = snd $ head edges
+                          restEdges  = es \\ [followingE, swap followingE]
+                      in tracePath restEdges nextN
+  where edges = filter ((==n) . fst) (es ++ map swap es)
 
 
 parseString :: String -> [Node]
