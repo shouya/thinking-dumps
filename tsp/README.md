@@ -101,3 +101,5 @@ implemented.
 ### References
 * [Wikipedia](http://en.wikipedia.org/wiki/Travelling_salesman_problem)
 * [The Traveling Salesman Problem: A Computational Study (Princeton Series in Applied Mathematics)](http://www.amazon.com/The-Traveling-Salesman-Problem-Computational/dp/0691129932)
+* [A Greedy Algorithm for TSP](http://lcm.csa.iisc.ernet.in/dsa/node186.html)
+* [TRAVELING SALESMAN PROBLEM Insertion Algorithms](http://www2.isye.gatech.edu/~mgoetsch/cali/VEHICLE/TSP/TSP009__.HTM)
