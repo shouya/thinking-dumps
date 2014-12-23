@@ -6,6 +6,7 @@ import TSPGraph
 import NearestNeighbor
 import BrutalForce
 import Greedy
+import NearestInsertion
 
 import Data.Maybe
 import Data.Map (Map)
@@ -18,9 +19,10 @@ defaultAlg = "NearestNeighbor"
 
 algorithms :: Map String TSPAlgorithm
 algorithms = M.fromList
-             [("BrutalForce",     algBrutalForce)
-             ,("NearestNeighbor", algNearestNeighbor)
-             ,("Greedy",          algGreedy)
+             [("BrutalForce",      algBrutalForce)
+             ,("NearestNeighbor",  algNearestNeighbor)
+             ,("Greedy",           algGreedy)
+             ,("NearestInsertion", algNearestInsertion)
              ]
 
 main :: IO ()

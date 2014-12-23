@@ -18,7 +18,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
 * [ ] Insertion algorithm
  * [ ] Cheapest
  * [ ] Farthest
- * [ ] Nearest
+ * [X] Nearest
  * [ ] Random
 * [ ] 2-Opt Algorithm
 * [ ] 3-Opt Algorithm
