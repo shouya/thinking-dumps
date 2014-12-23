@@ -14,7 +14,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
 
 * [X] Brutal force algorithm
 * [X] Nearest-neighbor algorithm
-* [ ] Greedy algorithm
+* [X] Greedy algorithm
 * [ ] Insertion algorithm
  * [ ] Cheapest
  * [ ] Farthest

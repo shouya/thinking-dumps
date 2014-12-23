@@ -53,13 +53,12 @@ pathToEdges xs = zip (init xs) (tail xs)
 tracePath :: [Edge] -> Node -> Path
 tracePath [] n = [n]
 tracePath es n = case length edges of
-                  0 -> []
+                  0 -> [n]
                   1 -> let followingE = head edges
                            nextN      = snd followingE
                            restEdges  = es \\ [followingE, swap followingE]
                        in n : tracePath restEdges nextN
-                  _ -> let err = (show es) ++ (show n) ++ (show edges)
-                       in error $ err ++ "more than one choice"
+                  _ -> error "more than one choice"
   where edges = filter ((==n) . fst) (es ++ map swap es)
 
 
