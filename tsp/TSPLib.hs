@@ -12,7 +12,9 @@ module TSPLib (
   tracePath,
   tracePath',
   replace,
-  closestEdgeTo,
+  compEdgeDist,
+  nearestEdgeTo,
+  furthestEdgeTo,
   parseString,
   parseStdin,
   parseFile,
@@ -83,9 +85,15 @@ replace x sub xs = newXs
         connect (a,b) = a ++ sub ++ b
         newXs         = maybe xs (connect . flip makeHole xs) index
 
-closestEdgeTo :: Node -> [Node] -> Edge
-closestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
 
+compEdgeDist :: Edge -> Edge -> Ordering
+compEdgeDist = compare `on` edgeLength
+
+nearestEdgeTo :: Node -> [Node] -> Edge
+nearestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
+
+furthestEdgeTo :: Node -> [Node] -> Edge
+furthestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
 
 parseString :: String -> [Node]
 parseString =

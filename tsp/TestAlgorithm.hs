@@ -7,6 +7,7 @@ import NearestNeighbor
 import BrutalForce
 import Greedy
 import NearestInsertion
+import FurthestInsertion
 
 import Data.Maybe
 import Data.Map (Map)
@@ -23,6 +24,7 @@ algorithms = M.fromList
              ,("NearestNeighbor",  algNearestNeighbor)
              ,("Greedy",           algGreedy)
              ,("NearestInsertion", algNearestInsertion)
+             ,("FurthestInsertion", algFurthestInsertion)
              ]
 
 main :: IO ()
