@@ -14,3 +14,10 @@ select subtour restNs = selectedNode
   where possibleEdges = [furthestEdgeTo stN restNs | stN <- subtour]
         selectedEdge  = maximumBy compEdgeDist possibleEdges
         selectedNode  = snd selectedEdge
+
+
+{-
+  where possibleEdges = [nearestEdgeTo stN restNs | stN <- subtour]
+        selectedEdge  = maximumBy compEdgeDist possibleEdges
+        selectedNode  = snd selectedEdge
+-}

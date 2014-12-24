@@ -93,7 +93,7 @@ nearestEdgeTo :: Node -> [Node] -> Edge
 nearestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
 
 furthestEdgeTo :: Node -> [Node] -> Edge
-furthestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
+furthestEdgeTo n ms = (n, maximumBy (compare `on` distance n) ms)
 
 parseString :: String -> [Node]
 parseString =
