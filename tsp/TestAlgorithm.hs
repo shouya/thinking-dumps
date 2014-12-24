@@ -8,6 +8,7 @@ import BrutalForce
 import Greedy
 import NearestInsertion
 import FurthestInsertion
+import ArbitraryInsertion
 
 import Data.Maybe
 import Data.Map (Map)
@@ -20,11 +21,12 @@ defaultAlg = "NearestNeighbor"
 
 algorithms :: Map String TSPAlgorithm
 algorithms = M.fromList
-             [("BrutalForce",      algBrutalForce)
-             ,("NearestNeighbor",  algNearestNeighbor)
-             ,("Greedy",           algGreedy)
-             ,("NearestInsertion", algNearestInsertion)
-             ,("FurthestInsertion", algFurthestInsertion)
+             [("BrutalForce",        algBrutalForce)
+             ,("NearestNeighbor",    algNearestNeighbor)
+             ,("Greedy",             algGreedy)
+             ,("NearestInsertion",   algNearestInsertion)
+             ,("FurthestInsertion",  algFurthestInsertion)
+             ,("ArbitraryInsertion", algArbitraryInsertion)
              ]
 
 main :: IO ()

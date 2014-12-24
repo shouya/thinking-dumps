@@ -19,7 +19,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
  * [ ] Cheapest
  * [X] Furthest
  * [X] Nearest
- * [ ] Random
+ * [X] Arbitrary
 * [ ] 2-Opt Algorithm
 * [ ] 3-Opt Algorithm
 
