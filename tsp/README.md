@@ -15,7 +15,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
 * [X] Brutal force algorithm
 * [X] Nearest-neighbor algorithm
 * [X] Greedy algorithm
-* [ ] Insertion algorithm
+* [X] Insertion algorithm
  * [ ] Cheapest
  * [ ] Farthest
  * [X] Nearest
@@ -103,3 +103,4 @@ implemented.
 * [The Traveling Salesman Problem: A Computational Study (Princeton Series in Applied Mathematics)](http://www.amazon.com/The-Traveling-Salesman-Problem-Computational/dp/0691129932)
 * [A Greedy Algorithm for TSP](http://lcm.csa.iisc.ernet.in/dsa/node186.html)
 * [TRAVELING SALESMAN PROBLEM Insertion Algorithms](http://www2.isye.gatech.edu/~mgoetsch/cali/VEHICLE/TSP/TSP009__.HTM)
+* [PDF: Slides with constructive heuristics for the TSP](http://paginas.fe.up.pt/~mac/ensino/docs/OR/HowToSolveIt/ConstructiveHeuristicsForTheTSP.pdf)

@@ -12,6 +12,7 @@ module TSPLib (
   tracePath,
   tracePath',
   replace,
+  closestEdgeTo,
   parseString,
   parseStdin,
   parseFile,
@@ -19,10 +20,9 @@ module TSPLib (
   ) where
 
 import Data.Functor
+import Data.Function
 import Data.List
-import Control.Monad
-import Control.Applicative ((<*>), (<$>))
-import Control.Arrow ((>>>), (&&&), (***), second)
+import Control.Arrow ((>>>), (&&&), second)
 
 import Data.Tuple
 
@@ -82,6 +82,10 @@ replace x sub xs = newXs
         makeHole i    =  second tail . splitAt i
         connect (a,b) = a ++ sub ++ b
         newXs         = maybe xs (connect . flip makeHole xs) index
+
+closestEdgeTo :: Node -> [Node] -> Edge
+closestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
+
 
 parseString :: String -> [Node]
 parseString =
