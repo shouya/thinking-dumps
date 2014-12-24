@@ -11,6 +11,7 @@ module TSPLib (
   pathToEdges,
   tracePath,
   tracePath',
+  replace,
   parseString,
   parseStdin,
   parseFile,
@@ -21,7 +22,7 @@ import Data.Functor
 import Data.List
 import Control.Monad
 import Control.Applicative ((<*>), (<$>))
-import Control.Arrow ((>>>), (&&&))
+import Control.Arrow ((>>>), (&&&), (***), second)
 
 import Data.Tuple
 
@@ -74,6 +75,13 @@ tracePath' es n = case length edges of
                         in n : tracePath restEdges nextN
   where edges = filter ((==n) . fst) (es ++ map swap es)
 
+
+replace :: (Eq a) => a -> [a] -> [a] -> [a]
+replace x sub xs = newXs
+  where index         = elemIndex x xs
+        makeHole i    =  second tail . splitAt i
+        connect (a,b) = a ++ sub ++ b
+        newXs         = maybe xs (connect . flip makeHole xs) index
 
 parseString :: String -> [Node]
 parseString =
