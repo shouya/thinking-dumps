@@ -17,6 +17,10 @@ module TSPLib (
   furthestEdgeTo,
   findEnds,
   wrapEnds,
+  wrapPathEnds,
+  tupleFromIntegral,
+  convexHull,
+  insertBetween,
   parseString,
   parseStdin,
   parseFile,
@@ -26,7 +30,7 @@ module TSPLib (
 import Data.Functor
 import Data.Function
 import Data.List
-import Control.Arrow ((>>>), (&&&), second)
+import Control.Arrow ((>>>), (&&&), (***), second)
 
 import Data.Tuple
 
@@ -102,10 +106,40 @@ findEnds es = (head &&& last) $ map head $ filter (odd . length) ns'
   where ns  = map fst es ++ map snd es
         ns' = group $ sort ns
 
-
 wrapEnds :: [Edge] -> [Edge]
 wrapEnds [] = []
 wrapEnds es = findEnds es : es
+
+wrapPathEnds :: Path -> Path
+wrapPathEnds []     = []
+wrapPathEnds (x:xs) = (x:xs) ++ [x]
+
+tupleFromIntegral :: (Num c, Num d, Integral a, Integral b) =>
+                     (a, b) -> (c, d)
+tupleFromIntegral = fromIntegral *** fromIntegral
+
+
+convexHull :: [Node] -> [Node]
+convexHull []  = []
+convexHull [x] = [x]
+convexHull ns  = lower ++ upper
+  where sorted = sort ns
+        lower  = chain sorted
+        upper  = chain (reverse sorted)
+        chain  = go []
+        go (a:b:rs) (x:xs) = if ccw b a x
+                             then go (b:rs)     (x:xs)
+                             else go (x:a:b:rs) xs
+        go rs       (x:xs) = go (x:rs) xs
+        go rs       []     = reverse $ tail rs
+        ccw (x1,y1) (x2,y2) (x3,y3) = (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1) <= 0
+
+insertBetween :: Path -> Node -> Node -> Node -> Path
+insertBetween []       _ _ _ = []
+insertBetween [a]      _ _ _ = [a]
+insertBetween (a:b:xs) p q n
+  | a == p && b == q = a : n : b : xs
+  | otherwise        = a : insertBetween (b:xs) p q n
 
 
 parseString :: String -> [Node]

@@ -10,6 +10,7 @@ import NearestInsertion
 import FurthestInsertion
 import ArbitraryInsertion
 import CheapestInsertion
+import ConvexHull
 
 import Data.Maybe
 import Data.Map (Map)
@@ -29,6 +30,7 @@ algorithms = M.fromList
              ,("FurthestInsertion" , algFurthestInsertion )
              ,("ArbitraryInsertion", algArbitraryInsertion)
              ,("CheapestInsertion" , algCheapestInsertion )
+             ,("ConvexHull"        , algConvexHull )
              ]
 
 main :: IO ()

@@ -32,9 +32,6 @@ presentUI nodes edges =
 scaleVal :: (Fractional a) => (a, a) -> a -> a -> a
 scaleVal (xmin, xmax) scl x = scl * (x - xmin) / (xmax - xmin)
 
-tupleFromIntegral :: (Num c, Num d, Integral a, Integral b) =>
-                     (a, b) -> (c, d)
-tupleFromIntegral = fromIntegral *** fromIntegral
 
 scaleVal' :: (Int, Int) -> Int -> Int -> Float
 scaleVal' rng scl = scaleVal fltrng fltscl . fromIntegral

@@ -22,6 +22,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
  * [X] Arbitrary
 * [ ] 2-Opt Algorithm
 * [ ] 3-Opt Algorithm
+* [X] Convex hull expansion algorithm
 
 All codes will be written in Haskell.
 
@@ -99,8 +100,10 @@ implemented.
 
 
 ### References
-* [Wikipedia](http://en.wikipedia.org/wiki/Travelling_salesman_problem)
+* [Wikipedia: TSP](http://en.wikipedia.org/wiki/Travelling_salesman_problem)
 * [The Traveling Salesman Problem: A Computational Study (Princeton Series in Applied Mathematics)](http://www.amazon.com/The-Traveling-Salesman-Problem-Computational/dp/0691129932)
 * [A Greedy Algorithm for TSP](http://lcm.csa.iisc.ernet.in/dsa/node186.html)
 * [TRAVELING SALESMAN PROBLEM Insertion Algorithms](http://www2.isye.gatech.edu/~mgoetsch/cali/VEHICLE/TSP/TSP009__.HTM)
 * [PDF: Slides with constructive heuristics for the TSP](http://paginas.fe.up.pt/~mac/ensino/docs/OR/HowToSolveIt/ConstructiveHeuristicsForTheTSP.pdf)
+* [Wikipedia: Convex hull](http://en.wikipedia.org/wiki/Convex_hull)
+* [Wikibooks: Monotone Chain](http://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain)
