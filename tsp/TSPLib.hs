@@ -15,6 +15,8 @@ module TSPLib (
   compEdgeDist,
   nearestEdgeTo,
   furthestEdgeTo,
+  findEnds,
+  wrapEnds,
   parseString,
   parseStdin,
   parseFile,
@@ -94,6 +96,17 @@ nearestEdgeTo n ms = (n, minimumBy (compare `on` distance n) ms)
 
 furthestEdgeTo :: Node -> [Node] -> Edge
 furthestEdgeTo n ms = (n, maximumBy (compare `on` distance n) ms)
+
+findEnds :: [Edge] -> (Node, Node)
+findEnds es = (head &&& last) $ map head $ filter (odd . length) ns'
+  where ns  = map fst es ++ map snd es
+        ns' = group $ sort ns
+
+
+wrapEnds :: [Edge] -> [Edge]
+wrapEnds [] = []
+wrapEnds es = findEnds es : es
+
 
 parseString :: String -> [Node]
 parseString =

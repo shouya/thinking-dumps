@@ -1,4 +1,4 @@
-module NearestNeighbor where
+module NearestNeighbor (algNearestNeighbor) where
 
 import TSPLib
 import Data.Function
@@ -6,12 +6,16 @@ import Data.List
 
 
 algNearestNeighbor :: TSPAlgorithm
-algNearestNeighbor [] = []
-algNearestNeighbor [a,b] = [(a,b)]
-algNearestNeighbor (n:ns) = result
+algNearestNeighbor = wrapEnds . recur
+
+
+recur :: TSPAlgorithm
+recur []    = []
+recur [a,b] = [(a,b)]
+recur (n:ns) = result
   where minn = fst $
                minimumBy (compare `on` snd) $
                zip ns $
                map (distance n) ns
         result = (n, minn) : rest_paths
-        rest_paths = algNearestNeighbor (minn : delete minn ns)
+        rest_paths = recur (minn : delete minn ns)

@@ -9,8 +9,8 @@ import Control.Monad
 
 algBrutalForce :: TSPAlgorithm
 algBrutalForce []     = []
-algBrutalForce [a,b]  = [(a,b)]
-algBrutalForce ns = pathToEdges minPath
+algBrutalForce [a,b]  = [(a,b), (b,a)]
+algBrutalForce ns = wrapEnds $ pathToEdges minPath
   where allPaths = join $ map allPathsFrom ns
         allPathsFrom a = explore a (delete a ns)
         minPath = minimumBy (compare `on` pathLength) allPaths

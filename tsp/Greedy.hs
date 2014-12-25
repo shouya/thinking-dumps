@@ -6,10 +6,9 @@ import Data.List
 import Data.Tuple
 import Data.Function
 
-import Debug.Trace
 
 algGreedy :: TSPAlgorithm
-algGreedy ns = choose allPairs []
+algGreedy ns = wrapEnds $ choose allPairs []
   where allPairs = concat $ zipWith (\n ms -> map ((,) n) ms) ns (inits ns)
 
 
