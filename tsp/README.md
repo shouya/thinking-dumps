@@ -95,8 +95,49 @@ specified algorithm and with `TSPGraph.hs`.
 
 #### Algorithms
 
-Other files in this projecting with suffix `.hs` are the algorithms
+Other files in this projecting with extension name `.hs` are the algorithms
 implemented.
+
+* NearestNeighbor
+* BrutalForce
+* Greedy
+* ConvexHull
+* NearestInsertion
+* FurthestInsertion
+* ArbitraryInsertion
+* CheapestInsertion
+
+#### Input Data sets
+
+Files with a name like `random-100.txt` located under the `data`
+directory. The number indicates its size (number of nodes).
+
+
+
+### Set up & Run
+
+I have written a Dockerfile that might help to build an image of this
+problem's run time dependencies.
+
+Besides, you can also try it yourself manually, here is how:
+
+1. regularly, `$ sudo apt-get install ghc cabal-install && cabal update`
+2. `$ cabal install gloss`
+3. `ghc -O3 --make TestAlgorithm.hs`
+
+Test the algorithms (with proper data set size)
+
+```
+$ ./TestAlgorithm BrutalForce < data/random-10.txt
+$ ./TestAlgorithm NearestNeighbor < data/random-5000.txt
+$ ./TestAlgorithm Greedy < data/random-150.txt
+$ ./TestAlgorithm CheapestInsertion < data/random-600.txt
+$ ./TestAlgorithm AribitraryInsertion < data/random-600.txt
+$ ./TestAlgorithm FurthestInsertion < data/random-600.txt
+$ ./TestAlgorithm NearestInsertion < data/random-600.txt
+$ ./TestAlgorithm ConvexHull < data/random-600.txt
+```
+
 
 
 ### References

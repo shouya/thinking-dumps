@@ -1,4 +1,4 @@
-module TestAlgorithm where
+module Main where
 
 import TSPLib
 import TSPGraph
