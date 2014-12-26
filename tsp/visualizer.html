@@ -1,0 +1,190 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>TSP Solution Visualizer</title>
+        <style>
+         #input {
+             width: 100%;
+             height: 100%;
+             border: 1px solid;
+             font-family: monospace;
+         }
+        </style>
+        <script>
+         "use strict";
+
+         var parseInput = function (input) {
+             var data     = input.trim().split("\n")
+             var lenNodes = parseInt(data[0].split(' ')[0]);
+             var lenEdges = parseInt(data[0].split(' ')[1]);
+
+             data.splice(0,1); // remove the first line
+
+             var nid = 0;
+             var nodes = data.splice(0, lenNodes).map(function (a) {
+                 var narr = a.split(' ');
+                 return new Object({
+                     id   : nid++,
+                     type : 'node',
+                     x    :  parseInt(narr[0]),
+                     y    :  parseInt(narr[1])
+                 });
+             });
+
+             var eid = 0;
+             var edges = data.map(function (a) {
+                 var earr = a.split(' ');
+                 return new Object({
+                     id   : eid++,
+                     type : 'edge',
+                     x1   :  parseInt(earr[0]),
+                     y1   :  parseInt(earr[1]),
+                     x2   :  parseInt(earr[2]),
+                     y2   :  parseInt(earr[3])
+                 });
+             });
+
+             return new Object({
+                 nodes : nodes,
+                 edges : edges
+             });
+         };
+
+         var dataRange = function (data) {
+             var nodes = data.nodes;
+             var xs    = nodes.map(function (n) { return n.x });
+             var ys    = nodes.map(function (n) { return n.y });
+             var cmp   = function (compareFunc) {
+                 return function (p,c,i,a) {
+                     if (compareFunc(p, c)) {
+                         return p;
+                     } else {
+                         return c;
+                     }
+                 };
+             }
+
+             var min = cmp(function (a,b) { return a < b; });
+             var max = cmp(function (a,b) { return a > b; });
+
+             return new Object({
+                 xmin: xs.reduce(min, xs[0]),
+                 xmax: xs.reduce(max, xs[0]),
+                 ymin: ys.reduce(min, ys[0]),
+                 ymax: ys.reduce(max, xs[0])
+             });
+         };
+
+         var canvasRange = new Object({
+             xmin: 0,
+             xmax: 600,
+             ymin: 0,
+             ymax: 600
+         });
+
+         var scalePoint = function (x, y, scale) {
+             var newX    = (x - scale.xmin) / (scale.xmax - scale.xmin);
+             var newY    = (y - scale.ymin) / (scale.ymax - scale.ymin);
+             var canvasW = canvasRange.xmax - canvasRange.xmin;
+             var canvasH = canvasRange.ymax - canvasRange.ymin;
+             var padding = function (val, fullsize) {
+                 return fullsize * 0.05 + val * fullsize * 0.9;
+             };
+
+             return new Object({
+                 x: padding(newX, canvasW),
+                 y: padding(newY, canvasH)
+             });
+         };
+
+         var setCanvas = function () {
+             var canvasDOM = document.getElementById('canvas');
+             canvas.width  = canvasRange.xmax - canvasRange.xmin;
+             canvas.height = canvasRange.ymax - canvasRange.ymin;
+         };
+
+         var paintNode = function (ctx, node, scale) {
+             var scaledPoint = scalePoint(node.x, node.y, scale);
+
+
+             ctx.beginPath();
+             ctx.arc(scaledPoint.x,
+                     scaledPoint.y,
+                     10,
+                     0,
+                     Math.PI*2,
+                     true);
+             ctx.closePath();
+             ctx.stroke();
+         };
+
+         var paintEdge = function (ctx, edge, scale) {
+             var scaledPoint1 = scalePoint(edge.x1, edge.y1, scale);
+             var scaledPoint2 = scalePoint(edge.x2, edge.y2, scale);
+
+             ctx.beginPath();
+             ctx.moveTo(scaledPoint1.x, scaledPoint1.y);
+             ctx.lineTo(scaledPoint2.x, scaledPoint2.y);
+             ctx.closePath();
+
+             ctx.stroke();
+         };
+
+         var paintData = function (ctx, data) {
+             var scale = dataRange(data);
+
+             data.nodes.forEach(function (n, i, a) {
+                 paintNode(ctx, n, scale);
+             });
+             data.edges.forEach(function (e, i, a) {
+                 paintEdge(ctx, e, scale)
+             });
+         };
+
+         var paintCanvas = function () {
+             var data = parseInput(document.getElementById('input').value);
+             if (!data) {
+                 return undefined;
+             }
+
+             var canvas = document.getElementById('canvas');
+             if (canvas.getContext) {
+                 var ctx = canvas.getContext('2d');
+
+                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                 paintData(ctx, data);
+             }
+         };
+
+        </script>
+    </head>
+    <body style="height: 100%">
+        <h2 style="text-align: center">TSP Solution Visualizer</h2>
+        <table>
+            <tr style="height: 100%">
+                <td style="width: 50%; height: 100%">
+                    <textarea id="input"></textarea>
+                </td>
+                <td style="width: 50%">
+                    <canvas id="canvas" width="600" height="600">
+
+                    </canvas>
+                </td>
+            </tr>
+        </table>
+        <hr />
+        <footer>
+            <p style="text-align: center">
+                copyright (c) shouya, 2014
+            </p>
+        </footer>
+
+        <script>
+         var input = document.getElementById('input');
+         input.addEventListener("change", paintCanvas);
+         input.addEventListener("keyup",  paintCanvas);
+
+         setCanvas();
+        </script>
+    </body>
+</html>
