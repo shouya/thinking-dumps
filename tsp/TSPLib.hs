@@ -21,6 +21,7 @@ module TSPLib (
   tupleFromIntegral,
   convexHull,
   insertBetween,
+  trigCartProd,
   parseString,
   parseStdin,
   parseFile,
@@ -141,6 +142,14 @@ insertBetween (a:b:xs) p q n
   | a == p && b == q = a : n : b : xs
   | otherwise        = a : insertBetween (b:xs) p q n
 
+
+combinations :: Int -> [a] -> [[a]]
+combinations 0 _  = [[]]
+combinations n xs = [ y:ys | y:xs' <- tails xs
+                           , ys <- combinations (n-1) xs']
+
+trigCartProd :: [a] -> [(a,a)]
+trigCartProd = map (head &&& last) . combinations 2
 
 parseString :: String -> [Node]
 parseString =
