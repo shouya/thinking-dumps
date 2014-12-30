@@ -23,6 +23,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
 * [ ] 2-Opt Algorithm
 * [ ] 3-Opt Algorithm
 * [X] Convex hull expansion algorithm
+* [X] Nearest Insertion algorithm
 
 All codes will be written in Haskell.
 

@@ -1,3 +1,6 @@
+{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module TSPLib (
   Node,
   Edge,
@@ -22,6 +25,20 @@ module TSPLib (
   convexHull,
   insertBetween,
   trigCartProd,
+  PathRing,
+  pathToRing,
+  ringToPath,
+  ringInsertBefore,
+  getRingNeighbors,
+  getNeighbors,
+  mergeRings,
+  mergePaths,
+  rotateRingTo,
+  reverseRing,
+  roundPath,
+  stripPath,
+  tupleToList,
+  deleteEdge,
   parseString,
   parseStdin,
   parseFile,
@@ -34,6 +51,8 @@ import Data.List
 import Control.Arrow ((>>>), (&&&), (***), second)
 
 import Data.Tuple
+
+import Debug.Trace
 
 -- node
 type Node = (Int, Int)
@@ -59,6 +78,7 @@ edgeLength :: Edge -> Double
 edgeLength = uncurry distance
 
 pathToEdges :: Path -> [Edge]
+pathToEdges [] = []
 pathToEdges xs = zip (init xs) (tail xs)
 
 tracePath :: [Edge] -> Node -> Path
@@ -81,7 +101,7 @@ tracePath' es n = case length edges of
                    _ -> let followingE = head edges
                             nextN      = snd followingE
                             restEdges  = es \\ [followingE, swap followingE]
-                        in n : tracePath restEdges nextN
+                        in n : tracePath' restEdges nextN
   where edges = filter ((==n) . fst) (es ++ map swap es)
 
 
@@ -139,8 +159,9 @@ insertBetween :: Path -> Node -> Node -> Node -> Path
 insertBetween []       _ _ _ = []
 insertBetween [a]      _ _ _ = [a]
 insertBetween (a:b:xs) p q n
-  | a == p && b == q = a : n : b : xs
-  | otherwise        = a : insertBetween (b:xs) p q n
+  | (a == p && b == q) ||
+    (a == q && b == p) =  a : n : b : xs
+  | otherwise          =  a : insertBetween (b:xs) p q n
 
 
 combinations :: Int -> [a] -> [[a]]
@@ -150,6 +171,80 @@ combinations n xs = [ y:ys | y:xs' <- tails xs
 
 trigCartProd :: [a] -> [(a,a)]
 trigCartProd = map (head &&& last) . combinations 2
+
+
+data PathRing = PathRing {
+  prLength :: Int,
+  prPath   :: Path
+  }
+
+pathToRing :: Path -> PathRing
+pathToRing p = PathRing { prLength = length p, prPath = cycle p }
+
+ringToPath :: PathRing -> Path
+ringToPath PathRing {..} = take prLength prPath
+
+getRingNeighbors :: PathRing -> Node -> (Node, Node)
+getRingNeighbors PathRing {..} n = foo prPath
+  where foo (a:b:c:ns) = if n == b then (a,c) else foo (b:c:ns)
+        foo _          = error "invalid input"
+
+getNeighbors :: Path -> Node -> (Node, Node)
+getNeighbors p n = foo $ concat $ replicate 2 p
+  where foo (a:b:c:xs) = if b == n then (a,c) else foo (b:c:xs)
+
+
+ringInsertBefore :: PathRing -> Node -> [Node] -> PathRing
+ringInsertBefore PathRing {..} n ns = PathRing { prLength = newPrLength
+                                               , prPath   = newPrPath
+                                               }
+  where newPrLength = prLength + length ns
+        newPrPath   = foo prPath
+        foo (a:as)  = if a == n
+                      then cycle $ ns ++ [a] ++ take (prLength - 1) as
+                      else foo as
+        foo _       = error "invalid input"
+
+reverseRing :: PathRing -> PathRing
+reverseRing = pathToRing . reverse . ringToPath
+
+rotateRingTo :: PathRing -> Node -> PathRing
+rotateRingTo PathRing {..} n = PathRing { prLength = prLength
+                                        , prPath   = dropWhile (/= n) prPath
+                                        }
+
+mergeRings :: PathRing -> PathRing -> (Node, Node) -> (Node, Node) -> PathRing
+mergeRings pr qr pe qe = newPr
+  where newPr     = ringInsertBefore pr (fst pe) (ringToPath rotatedQr)
+        rotatedQr = reverseRing $ rotateRingTo qr (snd qe)
+
+deleteEdge :: [Edge] -> Edge -> [Edge]
+deleteEdge [] _ = []
+deleteEdge ((a,b):xs) (c,d)
+  | a == c && b == d = xs
+  | a == d && b == c = xs
+  | otherwise        = (a,b) : deleteEdge xs (c,d)
+
+
+stripPath :: Path -> Path
+stripPath [] = []
+stripPath (x:xs) = if last xs == x then xs else x:xs
+
+mergePaths :: Path -> Path -> Edge -> Edge -> Path
+mergePaths p1 p2 e1 e2 = rsltP
+  where p1'   = deleteEdge (pathToEdges p1) e1
+        p2'   = deleteEdge (pathToEdges p2) e2
+        newEs = [(fst e1, fst e2), (snd e1, snd e2)]
+        rslt  = newEs ++ p1' ++ p2'
+        rsltP = stripPath $ tracePath' rslt (fst e1)
+
+
+roundPath :: Path -> Path
+roundPath []     = error "wrong path input"
+roundPath (x:xs) = (x:xs) ++ [x]
+
+tupleToList :: (a,a) -> [a]
+tupleToList (a,b) = [a,b]
 
 parseString :: String -> [Node]
 parseString =
