@@ -11,7 +11,7 @@ algBrutalForce :: TSPAlgorithm
 algBrutalForce []     = []
 algBrutalForce [a,b]  = [(a,b), (b,a)]
 algBrutalForce ns = wrapEnds $ pathToEdges minPath
-  where allPaths = join $ map allPathsFrom ns
+  where allPaths = allPathsFrom (head ns)
         allPathsFrom a = explore a (delete a ns)
         minPath = minimumBy (compare `on` pathLength) allPaths
 
