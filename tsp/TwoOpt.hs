@@ -1,3 +1,4 @@
+
 module TwoOpt (algTwoOpt) where
 
 import TSPLib
@@ -7,14 +8,13 @@ import Data.Tuple
 import NearestNeighbor (algNearestNeighbor)
 import FurthestInsertion (algFurthestInsertion)
 
-import Debug.Trace
-import Test.QuickCheck
 
 
 algTwoOpt :: TSPAlgorithm
-algTwoOpt ns = twoOpt prilimiary
-  where prilimiary = algFurthestInsertion ns
-        -- prilimiary = algNearestNeighbor ns
+algTwoOpt ns = result
+  where  prilimiary = algFurthestInsertion ns
+    -- prilimiary = algNearestNeighbor ns
+         result = twoOpt prilimiary
 
 type EdgePair = (Edge, Edge)
 
@@ -34,12 +34,12 @@ lengthShorter ((m,m'), (n,n')) = newDist < oldDist
         newDist = distance m n' + distance n m'
 
 stillConnected :: [Edge] -> EdgePair -> Bool
-stillConnected es ep = True -- trace (show (length origPath) ++ show (length optedPath)) True
+stillConnected es ep = length origPath == length optedPath
   where optedPath = tracePath' (opt es ep) (fst $ head es)
         origPath  = tracePath' es          (fst $ head es)
 
 
 opt :: [Edge] -> EdgePair -> [Edge]
-opt es (e1, e2) = trace (show (length newEs) ++ show (length es)) newEs
+opt es (e1, e2) = newEs
   where opted (m,m') (n,n') = [(m, n'), (n, m')]
         newEs = (es \\ [e1, e2, swap e1, swap e2]) ++ opted e1 e2

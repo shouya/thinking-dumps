@@ -39,6 +39,7 @@ module TSPLib (
   stripPath,
   tupleToList,
   deleteEdge,
+  traceEdges,
   parseString,
   parseStdin,
   parseFile,
@@ -246,6 +247,25 @@ roundPath (x:xs) = (x:xs) ++ [x]
 tupleToList :: (a,a) -> [a]
 tupleToList (a,b) = [a,b]
 
+dumpEdges :: [Edge] -> String
+dumpEdges es = intercalate "\n" (map showEdge es) ++ "\n"
+  where showEdge ((a,b), (c,d)) = show a ++ " " ++ show b ++ " " ++
+                                  show c ++ " " ++ show d
+
+dumpNodes :: [Node] -> String
+dumpNodes ns = intercalate "\n" (map showNode ns) ++ "\n"
+  where showNode (a,b) = show a ++ " " ++ show b
+
+extractNodes :: [Edge] -> [Node]
+extractNodes = concatMap tupleToList
+
+traceEdges :: [Edge] -> [Edge]
+traceEdges es = trace content es
+  where prefix  = show (length nodes) ++ " " ++ show (length es) ++ "\n"
+        suffix  = "\n"
+        content = prefix ++ dumpNodes nodes ++ dumpEdges es ++ suffix
+        nodes   = extractNodes es
+
 parseString :: String -> [Node]
 parseString =
   lines >>>
@@ -262,7 +282,6 @@ parseStdin = parseString <$> getContents
 
 parseFile :: FilePath -> IO [Node]
 parseFile path = parseString <$> readFile path
-
 
 outputForGraph :: [Node] -> [Edge] -> IO ()
 outputForGraph ns es = do
