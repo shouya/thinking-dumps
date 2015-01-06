@@ -21,7 +21,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
  * [X] Furthest
  * [X] Nearest
  * [X] Arbitrary
-* [ ] 2-Opt Algorithm
+* [X] 2-Opt Algorithm
 * [ ] 3-Opt Algorithm
 * [X] Convex hull expansion algorithm
 * [X] Nearest Insertion algorithm

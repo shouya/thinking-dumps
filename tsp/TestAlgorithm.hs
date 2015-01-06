@@ -12,6 +12,7 @@ import ArbitraryInsertion
 import CheapestInsertion
 import ConvexHull
 import NearestMerger
+import TwoOpt
 
 import Data.Maybe
 import Data.Map (Map)
@@ -24,15 +25,16 @@ defaultAlg = "NearestNeighbor"
 
 algorithms :: Map String TSPAlgorithm
 algorithms = M.fromList
-             [("BrutalForce"       , algBrutalForce       )
-             ,("NearestNeighbor"   , algNearestNeighbor   )
-             ,("Greedy"            , algGreedy            )
-             ,("NearestInsertion"  , algNearestInsertion  )
-             ,("FurthestInsertion" , algFurthestInsertion )
-             ,("ArbitraryInsertion", algArbitraryInsertion)
-             ,("CheapestInsertion" , algCheapestInsertion )
-             ,("ConvexHull"        , algConvexHull )
-             ,("NearestMerger"     , algNearestMerger )
+             [("BrutalForce"       , algBrutalForce        )
+             ,("NearestNeighbor"   , algNearestNeighbor    )
+             ,("Greedy"            , algGreedy             )
+             ,("NearestInsertion"  , algNearestInsertion   )
+             ,("FurthestInsertion" , algFurthestInsertion  )
+             ,("ArbitraryInsertion", algArbitraryInsertion )
+             ,("CheapestInsertion" , algCheapestInsertion  )
+             ,("ConvexHull"        , algConvexHull         )
+             ,("NearestMerger"     , algNearestMerger      )
+             ,("TwoOpt"            , algTwoOpt             )
              ]
 
 main :: IO ()
