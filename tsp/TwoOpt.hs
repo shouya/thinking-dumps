@@ -4,6 +4,8 @@ import TSPLib
 
 import Data.List
 import Data.Tuple
+import Data.Function
+
 import NearestNeighbor (algNearestNeighbor)
 import FurthestInsertion (algFurthestInsertion)
 
@@ -19,9 +21,10 @@ type EdgePair = (Edge, Edge)
 type TwoOptStrategy = EdgePair -> EdgePair
 
 data OptSolution = OptSolution
-                  { twoOptEdges    :: EdgePair
-                  , twoOptStrategy :: TwoOptStrategy
-                  }
+                   { origEdges  :: EdgePair
+                   , optedEdges :: EdgePair
+                   , deltaLen   :: Double
+                   }
 
 
 allStrategies :: [TwoOptStrategy]
@@ -31,34 +34,33 @@ allStrategies = [stgy1, stgy2]
 
 
 twoOpt :: [Edge] -> [Edge]
-twoOpt es = case eps of
-             []     -> es
-             (ep:_) -> twoOpt $ optSol es ep
-  where eps = [OptSolution edgePair stgy |
+twoOpt es = if null eps then es else optSol es bestEps
+  where bestEps = minimumBy (compare `on` deltaLen) eps
+        eps = [sol |
                edgePair <- trigCartProd es,
                stgy     <- allStrategies,
-               lengthShorter edgePair stgy,
-               stillConnected es edgePair stgy]
+               let optedEp = stgy edgePair
+                   origLen = edgePairDistance edgePair
+                   newLen  = edgePairDistance optedEp
+                   delta   = newLen - origLen
+                   sol     = OptSolution edgePair optedEp delta,
+               delta < 0, -- the total length is decreasing
+               stillConnected es sol]
 
-sumDistance :: EdgePair -> Double
-sumDistance (e1, e2) = edgeLength e1 + edgeLength e2
 
-lengthShorter :: EdgePair -> TwoOptStrategy -> Bool
-lengthShorter ep stgy = newDist < oldDist
-  where oldDist = sumDistance ep
-        newDist = sumDistance $ stgy ep
+edgePairDistance :: EdgePair -> Double
+edgePairDistance (e1, e2) = edgeLength e1 + edgeLength e2
 
-stillConnected :: [Edge] -> EdgePair -> TwoOptStrategy -> Bool
-stillConnected es ep stgy = length origPath == length optedPath
-  where optedPath = tracePath' (opt es ep stgy) (fst $ head es)
-        origPath  = tracePath' es               (fst $ head es)
-
+stillConnected :: [Edge] -> OptSolution -> Bool
+stillConnected es sol = length es == length optedPath
+  where optedPath = tracePath' (optSol es sol) optedNode
+        optedNode = fst $ fst $ origEdges sol
 
 optSol :: [Edge] -> OptSolution -> [Edge]
-optSol es sol = opt es (twoOptEdges sol) (twoOptStrategy sol)
+optSol es sol = opt es (origEdges sol) (optedEdges sol)
 
-opt :: [Edge] -> EdgePair -> TwoOptStrategy -> [Edge]
-opt es ep stgy = newEs
-  where opted = tupleToList $ stgy ep
+opt :: [Edge] -> EdgePair -> EdgePair -> [Edge]
+opt es ep optedEp = newEs
+  where opted = tupleToList optedEp
         newEs = (es \\ epEs ep) ++ opted
         epEs (e1,e2) = [e1, e2, swap e1, swap e2]
