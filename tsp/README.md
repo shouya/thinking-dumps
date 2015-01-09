@@ -22,7 +22,8 @@ solving the TSP. Here's a list of algorithms I planned to work on:
  * [X] Nearest
  * [X] Arbitrary
 * [X] 2-Opt Algorithm
-* [ ] 3-Opt Algorithm
+* [ ] ~~3-Opt Algorithm~~
+* [ ] N-Opt Algorithm (N=2,3,4,5,...)
 * [X] Convex hull expansion algorithm
 * [X] Nearest Insertion algorithm
 
@@ -108,6 +109,8 @@ implemented.
 * FurthestInsertion
 * ArbitraryInsertion
 * CheapestInsertion
+* NearestMerger
+* TwoOpt
 
 #### Input Data sets
 
@@ -138,8 +141,8 @@ $ ./TestAlgorithm AribitraryInsertion < data/random-600.txt
 $ ./TestAlgorithm FurthestInsertion < data/random-600.txt
 $ ./TestAlgorithm NearestInsertion < data/random-600.txt
 $ ./TestAlgorithm ConvexHull < data/random-600.txt
+$ ./TestAlgorithm TwoOpt < data/random-150.txt
 ```
-
 
 
 ### References
@@ -150,3 +153,5 @@ $ ./TestAlgorithm ConvexHull < data/random-600.txt
 * [PDF: Slides with constructive heuristics for the TSP](http://paginas.fe.up.pt/~mac/ensino/docs/OR/HowToSolveIt/ConstructiveHeuristicsForTheTSP.pdf)
 * [Wikipedia: Convex hull](http://en.wikipedia.org/wiki/Convex_hull)
 * [Wikibooks: Monotone Chain](http://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain)
+* [OEIS: A001147](http://oeis.org/A001147)
+* [Wikipedia: Symmetric group](http://en.wikipedia.org/wiki/Symmetric_group)
