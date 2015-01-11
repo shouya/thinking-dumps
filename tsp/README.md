@@ -21,13 +21,12 @@ solving the TSP. Here's a list of algorithms I planned to work on:
  * [X] Furthest
  * [X] Nearest
  * [X] Arbitrary
-* [X] 2-Opt Algorithm
-* [ ] ~~3-Opt Algorithm~~
-* [ ] N-Opt Algorithm (N=2,3,4,5,...)
+* [X] 2-Opt Algorithm*
+* [X] Any-Opt Algorithm (Any = 2,3,4,5,...)*
 * [X] Convex hull expansion algorithm
 * [X] Nearest Insertion algorithm
 
-All codes will be written in Haskell.
+*These X-opt algorithms are not efficiently implemented
 
 ### Components
 
