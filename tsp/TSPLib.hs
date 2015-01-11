@@ -273,7 +273,7 @@ traceEdges es = trace content es
   where prefix  = show (length nodes) ++ " " ++ show (length es) ++ "\n"
         suffix  = "\n"
         content = prefix ++ dumpNodes nodes ++ dumpEdges es ++ suffix
-        nodes   = extractNodes es
+        nodes   = nub $ extractNodes es
 
 parseString :: String -> [Node]
 parseString =

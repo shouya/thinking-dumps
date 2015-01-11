@@ -26,8 +26,9 @@
                  return new Object({
                      id   : nid++,
                      type : 'node',
-                     x    :  parseInt(narr[0]),
-                     y    :  parseInt(narr[1])
+                     x    : parseInt(narr[0]),
+                     y    : parseInt(narr[1]),
+                     styl : narr[2]
                  });
              });
 
@@ -37,10 +38,11 @@
                  return new Object({
                      id   : eid++,
                      type : 'edge',
-                     x1   :  parseInt(earr[0]),
-                     y1   :  parseInt(earr[1]),
-                     x2   :  parseInt(earr[2]),
-                     y2   :  parseInt(earr[3])
+                     x1   : parseInt(earr[0]),
+                     y1   : parseInt(earr[1]),
+                     x2   : parseInt(earr[2]),
+                     y2   : parseInt(earr[3]),
+                     styl : earr[4]
                  });
              });
 
@@ -115,6 +117,8 @@
                      Math.PI*2,
                      true);
              ctx.closePath();
+
+             ctx.strokeStyle = node.styl ? node.styl : 'black';
              ctx.stroke();
          };
 
@@ -127,6 +131,7 @@
              ctx.lineTo(scaledPoint2.x, scaledPoint2.y);
              ctx.closePath();
 
+             ctx.strokeStyle = edge.styl ? edge.styl : 'black';
              ctx.stroke();
          };
 

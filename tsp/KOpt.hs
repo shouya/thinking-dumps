@@ -11,8 +11,9 @@ import NearestNeighbor
 import Data.List
 import Data.Function
 import Data.Maybe
-
 import Data.Functor
+
+import Debug.Trace
 
 algKOpt :: TSPAlgorithm
 algKOpt ns = pathToEdges $ fromMaybe prilimiary final
@@ -52,6 +53,11 @@ tweakable (t1:t2:ts) =
 iterateM :: (Monad m) => (a -> m a) -> m a -> [m a]
 iterateM f ma = ma : iterateM f (ma >>= f)
 
+emptyListToNothing :: Maybe [a] -> Maybe [a]
+emptyListToNothing m = m >>= foo
+  where foo [] = Nothing
+        foo xs = return xs
+
 iterationStep :: Path -> Maybe Path
 iterationStep tour = result >>= notUnchanged
   where numNodes       = length tour
@@ -60,17 +66,16 @@ iterationStep tour = result >>= notUnchanged
         chosenTour     = listToMaybe tweakableTours
         incKOptTours   = iterateM swapStep chosenTour
         validKOptTours = sequence $ takeWhile isJust incKOptTours
-        result         = bestTour <$> validKOptTours
+        result         = bestTour . (tour:) <$> validKOptTours
         notUnchanged t = if t == tour then Nothing else return t
 
 swapStep :: Path -> Maybe Path
 swapStep tour = nextTour
   where (t1:t2:ts) = tour
-        t2Next     = head ts
         nextTour   = do
           (t4,t3) <- closestTo t2 ts
-          let tourEdges = pathToEdges tour
-              tmpEdges  = [(t1, t4), (t2, t3)] ++
-                          (tourEdges \\ [(t4, t3), (t2, t2Next)])
+          let tourEdges = traceEdges $ pathToEdges tour
+              tmpEdges  = traceEdges $ [(t1, t4), (t2, t3)] ++
+                          (tourEdges \\ [(t4, t3), (t1, t2)])
               tourPath  = tracePath' tmpEdges t1
             in return $ rearrangeTour tourPath t1 t4
