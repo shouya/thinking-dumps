@@ -23,6 +23,7 @@ solving the TSP. Here's a list of algorithms I planned to work on:
  * [X] Arbitrary
 * [X] 2-Opt Algorithm*
 * [X] Any-Opt Algorithm (Any = 2,3,4,5,...)*
+* [X] K-Opt Algorithm
 * [X] Convex hull expansion algorithm
 * [X] Nearest Insertion algorithm
 

@@ -14,6 +14,8 @@ module TSPLib (
   pathToEdges,
   tracePath,
   tracePath',
+  tracePath1,
+  tracePath1',
   replace,
   compEdgeDist,
   nearestEdgeTo,
@@ -94,6 +96,9 @@ tracePath es n = case length edges of
                   _ -> error "more than one choice"
   where edges = filter ((==n) . fst) (es ++ map swap es)
 
+tracePath1 :: [Edge] -> Path
+tracePath1 es = tracePath es (fst $ head es)
+
 
 -- this version of trace path follow
 tracePath' :: [Edge] -> Node -> Path
@@ -105,6 +110,9 @@ tracePath' es n = case length edges of
                             restEdges  = es \\ [followingE, swap followingE]
                         in n : tracePath' restEdges nextN
   where edges = filter ((==n) . fst) (es ++ map swap es)
+
+tracePath1' :: [Edge] -> Path
+tracePath1' es = tracePath' es (fst $ head es)
 
 
 replace :: (Eq a) => a -> [a] -> [a] -> [a]
