@@ -52,7 +52,7 @@ edgePairDistance :: EdgePair -> Double
 edgePairDistance (e1, e2) = edgeLength e1 + edgeLength e2
 
 stillConnected :: [Edge] -> OptSolution -> Bool
-stillConnected es sol = length es == length optedPath
+stillConnected es sol = length es + 1 == length optedPath
   where optedPath = tracePath' (optSol es sol) optedNode
         optedNode = fst $ fst $ origEdges sol
 

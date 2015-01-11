@@ -24,6 +24,7 @@ module TSPLib (
   tupleFromIntegral,
   convexHull,
   insertBetween,
+  combinations,
   trigCartProd,
   PathRing,
   pathToRing,

@@ -13,6 +13,7 @@ import CheapestInsertion
 import ConvexHull
 import NearestMerger
 import TwoOpt
+import AnyOpt
 
 import Data.Maybe
 import Data.Map (Map)
@@ -35,6 +36,7 @@ algorithms = M.fromList
              ,("ConvexHull"        , algConvexHull         )
              ,("NearestMerger"     , algNearestMerger      )
              ,("TwoOpt"            , algTwoOpt             )
+             ,("AnyOpt"            , algAnyOpt 2           )
              ]
 
 main :: IO ()
