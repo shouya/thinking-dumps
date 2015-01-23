@@ -1,3 +1,5 @@
+{-# LANGUAGE TupleSections #-}
+
 module KOpt (algKOpt) where
 
 -- unlike any-opt, this is a dynamic algorithm which employs great efficiency
@@ -27,13 +29,13 @@ bestTour :: [Path] -> Path
 bestTour = minimumBy (compare `on` pathLength)
 
 -- tour must NOT include n
-closestTo :: Node -> Path -> Maybe (Node, Node)
-closestTo n tour = if fst result == n
-                   then Nothing
-                   else Just result
-  where predPairs = zip (n:tour) (init tour)
-        dist      = distance n . snd
-        result    = minimumBy (compare `on` dist) predPairs
+closesrTo :: Node -> Node -> Path -> [Node] -> Maybe (Node, Node)
+closesrTo t1 t2 tour reservedNodes = result
+  where predPairs = zip tour (tail tour)
+        dist      = distance t2 . snd
+        t1t2Dist  = distance t1 t2
+        invalid x = dist x >= t1t2Dist || snd x `elem` reservedNodes
+        result    = listToMaybe $ dropWhile invalid predPairs
 
 rearrangeTour :: Path -> Node -> Node -> Path
 rearrangeTour tour@(t1:t2:_) t1' t2'
@@ -46,7 +48,7 @@ rotateRoundPath = wrapPathEnds . tail
 
 tweakable :: Path -> Bool
 tweakable (t1:t2:ts) =
-  case closestTo t2 ts of
+  case closesrTo t1 t2 ts [] of
    Nothing     -> False
    Just (t3,_) -> distance t2 t3 < distance t1 t2
 
@@ -63,19 +65,20 @@ iterationStep tour = result >>= notUnchanged
   where numNodes       = length tour
         rotatedPaths   = take numNodes $ iterate rotateRoundPath tour
         tweakableTours = dropWhile (not . tweakable) rotatedPaths
-        chosenTour     = listToMaybe tweakableTours
+        chosenTour     = (,[]) <$> listToMaybe tweakableTours
         incKOptTours   = iterateM swapStep chosenTour
         validKOptTours = sequence $ takeWhile isJust incKOptTours
-        result         = bestTour . (tour:) <$> validKOptTours
+        result         = bestTour . (tour:) . map fst <$> validKOptTours
         notUnchanged t = if t == tour then Nothing else return t
 
-swapStep :: Path -> Maybe Path
-swapStep tour = nextTour
+swapStep :: (Path, [Node]) -> Maybe (Path, [Node])
+swapStep (tour, reservedNodes) = nextTour
   where (t1:t2:ts) = tour
         nextTour   = do
-          (t4,t3) <- closestTo t2 ts
-          let tourEdges = traceEdges $ pathToEdges tour
-              tmpEdges  = traceEdges $ [(t1, t4), (t2, t3)] ++
+          (t4,t3) <- closesrTo t1 t2 ts reservedNodes
+          let tourEdges = pathToEdges tour
+              tmpEdges  = [(t1, t4), (t2, t3)] ++
                           (tourEdges \\ [(t4, t3), (t1, t2)])
               tourPath  = tracePath' tmpEdges t1
-            in return $ rearrangeTour tourPath t1 t4
+              keptNodes = t2 : reservedNodes
+            in return (rearrangeTour tourPath t1 t4, keptNodes)
