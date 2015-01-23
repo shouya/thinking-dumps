@@ -1,6 +1,11 @@
 ## Lazy
-
 Lazy evaluation principle in practice
+
+The programming language I invented in this practice, called Loli, is
+moved to a standalone repository. And the code in this subdirectory of
+thinking-dumps repo will not be updated in the future. Please check
+out [shouya/loli](https://github.com/shouya/loli) for the latest
+features of this language.
 
 ### Why
 
