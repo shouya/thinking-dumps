@@ -1,5 +1,7 @@
 Require Export A014imp.
 
+Require Import Coq.Bool.Bool.
+
 
 Definition aequiv (a1 a2 : aexp) : Prop :=
   forall (st:state),
@@ -160,4 +162,32 @@ Proof.
   specialize H with st.
   inversion H.
   apply E_IfFalse; try assumption.
+Qed.
+
+(* Exercise: 3 stars (swap_if_branches) *)
+Lemma bool_neg_equiv :
+  forall st b r, beval st b = r <-> beval st (BNot b) = negb r.
+Proof.
+  intros. split; intros.
+  destruct r; (simpl; rewrite H; reflexivity).
+  destruct r; inversion H; [apply negb_false_iff in H1 | apply negb_true_iff in H1]; assumption.
+Qed.
+
+Theorem swap_if_branches: forall b e1 e2,
+  cequiv
+    (IFB b THEN e1 ELSE e2 FI)
+    (IFB BNot b THEN e2 ELSE e1 FI).
+Proof.
+  unfold cequiv; intros.
+  split; intros.
+
+  Case "b ? e1 : e2 -> !b ? e2 : e1".
+  inversion H; subst.
+  apply E_IfFalse; try assumption. simpl. apply negb_false_iff; assumption.
+  apply E_IfTrue; try assumption. simpl. apply negb_true_iff. assumption.
+
+  Case "!b ? e2 : e1 -> b ? e1 : e2".
+  inversion H; subst. simpl in H5.
+  apply E_IfFalse; apply negb_true_iff in H5;  assumption.
+  apply E_IfTrue;  simpl in H5; apply negb_false_iff in H5; assumption.
 Qed.
