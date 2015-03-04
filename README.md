@@ -46,7 +46,7 @@ An untyped lambda reduction with haskell just for fun.
 
 Personal pratice on implementing lazy evaluation. The implementation
 of the small language was moved out to become a standalone
-project. See [nya](https://github.com/shouya/nya) for details.
+project. See [loli](https://github.com/shouya/loli) for details.
 
 ### learnyouanagda
 
