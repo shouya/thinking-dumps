@@ -25,7 +25,7 @@ Fixpoint aeval (e : aexp) : nat :=
     | AMult a b => (aeval a) * (aeval b)
   end.
 
-SearchAbout (bool).
+(* SearchAbout (bool). *)
 
 Fixpoint beval (e : bexp) : bool :=
   match e with
@@ -270,6 +270,9 @@ Proof.
     try (apply IHa1; reflexivity);
     try (apply IHa2; reflexivity).
 Qed.
+
+End aevalR_first_try.
+End AExp.
 
 
 (* To show how relational definitions are preferrable to computational definitions

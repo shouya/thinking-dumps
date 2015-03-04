@@ -22,7 +22,7 @@ foundations coq tutorial.
 - [X] ProofObjects:  Working with Explicit Evidence in Coq
 - [X] MoreInd:       More on Induction
 - [X] SfLib:         Software Foundations Library
-- [ ] Imp:           Simple Imperative Programs
+- [X] Imp:           Simple Imperative Programs
 - [ ] ImpParser:     Lexing and Parsing in Coq
 - [ ] ImpCEvalFun:   Evaluation Function for Imp
 - [ ] Extraction:    Extracting ML from Coq
