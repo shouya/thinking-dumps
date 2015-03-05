@@ -191,3 +191,100 @@ Proof.
   apply E_IfFalse; apply negb_true_iff in H5;  assumption.
   apply E_IfTrue;  simpl in H5; apply negb_false_iff in H5; assumption.
 Qed.
+
+
+Theorem WHILE_false : forall b c,
+     bequiv b BFalse ->
+     cequiv
+       (WHILE b DO c END)
+       SKIP.
+Proof.
+  unfold cequiv. intros. split; intros.
+
+  unfold bequiv in H. specialize H with st. simpl in H.
+  inversion H0; subst. apply E_Skip.
+  rewrite H in H3. inversion H3.
+
+  unfold bequiv in H. specialize H with st. simpl in H.
+  inversion H0; subst.
+  apply E_WhileEnd. assumption.
+Qed.
+
+Lemma WHILE_true_nonterm : forall b c st st',
+     bequiv b BTrue ->
+     ~( (WHILE b DO c END) / st || st' ).
+Proof.
+  intros b c st st' Hb.
+  intros H.
+  remember (WHILE b DO c END) as cw eqn:Heqcw.
+  ceval_cases (induction H) Case; inversion Heqcw; subst; clear Heqcw.
+  unfold bequiv in Hb. rewrite Hb in H. inversion H.
+  apply IHceval2. reflexivity.
+Qed.
+
+
+(* Exercise: 2 stars (WHILE_true) *)
+Theorem WHILE_true: forall b c,
+     bequiv b BTrue ->
+     cequiv
+       (WHILE b DO c END)
+       (WHILE BTrue DO SKIP END).
+Proof.
+  unfold bequiv. unfold cequiv.
+  intros. split; intros; simpl in H.
+
+  apply WHILE_true_nonterm with (c := c) (st := st) (st' := st') in H.
+  apply H in H0. inversion H0.
+
+  contradict H0. apply WHILE_true_nonterm. unfold bequiv. reflexivity.
+Qed.
+
+
+Theorem loop_unrolling: forall b c,
+  cequiv
+    (WHILE b DO c END)
+    (IFB b THEN (c;; WHILE b DO c END) ELSE SKIP FI).
+Proof.
+  unfold cequiv. intros. split; intros.
+
+  inversion H; subst.
+  apply E_IfFalse; try assumption. apply E_Skip.
+  apply E_IfTrue; try assumption. apply E_Seq with (st' := st'0); assumption.
+
+  inversion H; subst. inversion H6; subst; try assumption.
+  apply E_WhileLoop with (st' := st'0); try assumption.
+  inversion H6; subst. apply E_WhileEnd. assumption.
+Qed.
+
+
+(* Exercise: 2 stars, optional (seq_assoc) *)
+Theorem seq_assoc : forall c1 c2 c3,
+  cequiv ((c1;;c2);;c3) (c1;;(c2;;c3)).
+Proof.
+  unfold cequiv. intros.
+  split; intros.
+  inversion H; subst.
+  inversion H2; subst.
+  apply E_Seq with (st' := st'1); try assumption.
+  apply E_Seq with (st' := st'0); try assumption.
+
+  inversion H; subst.
+  inversion H5; subst.
+  apply E_Seq with (st' := st'1); try assumption.
+  apply E_Seq with (st' := st'0); try assumption.
+Qed.
+
+
+Theorem identity_assignment_first_try : forall (X:id),
+  cequiv (X ::= AId X) SKIP.
+Proof.
+   intros. split; intro H.
+     Case "->".
+       inversion H; subst. simpl.
+       replace (update st X (st X)) with st.
+       constructor.
+(* Stuck... *) Abort.
+
+(*
+Here we're stuck. The goal looks reasonable, but in fact it is not provable! If we look back at the set of lemmas we proved about update in the last chapter, we can see that lemma update_same almost does the job, but not quite: it says that the original and updated states agree at all values, but this is not the same thing as saying that they are = in Coq's sense!
+*)
