@@ -288,3 +288,39 @@ Proof.
 (*
 Here we're stuck. The goal looks reasonable, but in fact it is not provable! If we look back at the set of lemmas we proved about update in the last chapter, we can see that lemma update_same almost does the job, but not quite: it says that the original and updated states agree at all values, but this is not the same thing as saying that they are = in Coq's sense!
 *)
+
+
+Axiom functional_extensionality : forall {X Y: Type} {f g : X -> Y},
+                                    (forall (x: X), f x = g x) -> f = g.
+
+Theorem identity_assignment : forall (X:id),
+  cequiv
+    (X ::= AId X)
+    SKIP.
+Proof.
+  unfold cequiv. intros. split; intros.
+
+  inversion H; subst. simpl.
+  replace (update st X (st X)) with st.
+  constructor.
+  apply functional_extensionality. intro. rewrite update_same; reflexivity.
+
+  replace st' with (update st' X (st' X)).
+  inversion H; subst.
+  constructor. reflexivity.
+  apply functional_extensionality. intro. rewrite update_same; reflexivity.
+Qed.
+
+
+Theorem assign_aequiv : forall X e,
+  aequiv (AId X) e ->
+  cequiv SKIP (X ::= e).
+Proof.
+  unfold aequiv. unfold cequiv.
+  intros. split; intros.
+  replace st' with (update st' X (st' X)). inversion H0; subst. constructor.
+  symmetry. apply H. apply functional_extensionality. intros. rewrite update_same; reflexivity.
+
+  inversion H0; subst. replace (update st X (aeval st e)) with st. constructor.
+  apply functional_extensionality. intros. rewrite update_same. reflexivity. apply H.
+Qed.
