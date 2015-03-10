@@ -311,7 +311,7 @@ Proof.
   apply functional_extensionality. intro. rewrite update_same; reflexivity.
 Qed.
 
-
+(* Exercise: 2 stars (assign_aequiv) *)
 Theorem assign_aequiv : forall X e,
   aequiv (AId X) e ->
   cequiv SKIP (X ::= e).
@@ -323,4 +323,74 @@ Proof.
 
   inversion H0; subst. replace (update st X (aeval st e)) with st. constructor.
   apply functional_extensionality. intros. rewrite update_same. reflexivity. apply H.
+Qed.
+
+
+
+Lemma refl_aequiv : forall (a : aexp), aequiv a a.
+Proof.
+  unfold aequiv; intros.
+  reflexivity.
+Qed.
+
+Lemma sym_aequiv : forall (a1 a2 : aexp),
+  aequiv a1 a2 -> aequiv a2 a1.
+Proof.
+  unfold aequiv; intros. rewrite H. reflexivity.
+Qed.
+
+Lemma trans_aequiv : forall (a1 a2 a3 : aexp),
+  aequiv a1 a2 -> aequiv a2 a3 -> aequiv a1 a3.
+Proof.
+  unfold aequiv; intros.
+  rewrite H. rewrite H0.
+  reflexivity.
+Qed.
+
+Lemma refl_bequiv : forall (b : bexp), bequiv b b.
+Proof.
+  unfold bequiv. reflexivity.
+Qed.
+
+
+Lemma sym_bequiv : forall (b1 b2 : bexp),
+  bequiv b1 b2 -> bequiv b2 b1.
+Proof.
+  unfold bequiv. intros. rewrite H.
+  reflexivity.
+Qed.
+
+Lemma trans_bequiv : forall (b1 b2 b3 : bexp),
+  bequiv b1 b2 -> bequiv b2 b3 -> bequiv b1 b3.
+Proof.
+  unfold bequiv; intros.
+  rewrite H. rewrite H0. reflexivity.
+Qed.
+
+Lemma refl_cequiv : forall (c : com), cequiv c c.
+  unfold cequiv. split; intros; assumption.
+Qed.
+
+Lemma sym_cequiv : forall (c1 c2 : com),
+  cequiv c1 c2 -> cequiv c2 c1.
+Proof.
+  unfold cequiv. intros. split; intros;
+  apply H; assumption.
+Qed.
+
+Lemma iff_trans : forall (P1 P2 P3 : Prop),
+  (P1 <-> P2) -> (P2 <-> P3) -> (P1 <-> P3).
+Proof.
+  intros.
+  split.
+  intros. apply H0. apply H. assumption.
+  intros. apply H. apply H0. assumption.
+Qed.
+
+Lemma trans_cequiv : forall (c1 c2 c3 : com),
+  cequiv c1 c2 -> cequiv c2 c3 -> cequiv c1 c3.
+Proof.
+  unfold cequiv. intros. split; intros.
+  apply H0. apply H. assumption.
+  apply H. apply H0. assumption.
 Qed.
