@@ -394,3 +394,27 @@ Proof.
   apply H0. apply H. assumption.
   apply H. apply H0. assumption.
 Qed.
+
+Theorem CAss_congruence : forall i a1 a1',
+  aequiv a1 a1' ->
+  cequiv (CAss i a1) (CAss i a1').
+Proof.
+  unfold aequiv. unfold cequiv. intros.
+  split; intros.
+  inversion H0; subst. rewrite H. constructor. reflexivity.
+  inversion H0; subst. rewrite <- H. constructor. reflexivity.
+Qed.
+
+Theorem CWhile_congruence : forall b1 b1' c1 c1',
+  bequiv b1 b1' -> cequiv c1 c1' ->
+  cequiv (WHILE b1 DO c1 END) (WHILE b1' DO c1' END).
+Proof.
+  unfold bequiv, cequiv. intros.
+  split; intros.
+
+  (* remember (WHILE b1 DO c1 END) as cw eqn:Heqcw.
+  induction H1; inversion Heqcw; subst. *)
+  inversion H1; subst.
+  constructor. rewrite <- H. assumption.
+  rewrite H0 in H5.
+  inversion H1; subst. rewrite H9 in H4. inversion H4.
