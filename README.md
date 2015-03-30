@@ -74,3 +74,7 @@ My trials on implement various algorithms to solve
 ### wys48h
 
 [Write Yourself a Scheme for 48 hours](http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours)
+
+### essence
+
+* [The Essence of Functional Programming](http://www.eliza.ch/doc/wadler92essence_of_FP.pdf)
