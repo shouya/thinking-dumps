@@ -54,10 +54,26 @@
 
 ;; backward state
 (define (returnB x)
-  (λ (s) (cons x s)))
+  (λ (s) (cons (λ () x)
+               (λ () s))))
+
+;;   m >>= k  = BState $ \s'' -> let (a, s)  = runBState m s'
+;;                                   (b, s') = runBState (k a) s''
+;;                               in (b, s)
 
 (define (bindB m k)
-  (void))
+  (λ (s2)
+    (define (valgen st) (car (m st)))
+    (define (stgen  st) (cdr (m st)))
+
+    (match-define (cons b s1)
+                  ((k ((valgen '()))) s2)
+      )
+    (let ([new-state (calc-state m)]
+          [new-value (calc-value m)])
+      (cons new-state new-value))))
+
+(define bstate (monad returnB bindB))
 
 
 ;; commons
@@ -82,5 +98,11 @@
 
 
 ;; main
+
+;; for testing monad
+; (printf "~a\n" (sequence maybe (list (just 1) (just 2))))
+
+;; should output "abb"
 (printf "~a\n" (exec-states nstate program ""))
-(printf "~a\n" (sequence maybe (list (just 1) (just 2))))
+;; should output "bba"
+(printf "~a\n" (exec-states bstate program ""))
