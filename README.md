@@ -77,4 +77,8 @@ My trials on implement various algorithms to solve
 
 ### essence
 
-* [The Essence of Functional Programming](http://www.eliza.ch/doc/wadler92essence_of_FP.pdf)
+[The Essence of Functional Programming](http://www.eliza.ch/doc/wadler92essence_of_FP.pdf)
+
+### transformer
+
+[Monad Transformers: Step-By-Step](http://www.cs.virginia.edu/~wh5a/personal/Transformers.pdf)
