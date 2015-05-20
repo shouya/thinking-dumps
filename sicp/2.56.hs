@@ -2,7 +2,9 @@ import Text.Printf
 import Text.ParserCombinators.Parsec
 import Data.Functor
 import Control.Applicative ((*>), (<*))
-import Control.Monad
+import Control.Monad hiding (sequence)
+import Data.Traversable (sequence)
+import Prelude hiding (sequence)
 
 type Var = String
 
@@ -72,21 +74,26 @@ mkE a (I 1) = a
 mkE a b = Exp a b
 
 
-parseExp :: Parser Expr
-parseExp =     char '(' *> parseExp <* char ')'
-           <|> try (do { e1 <- parseExp; char '^'; e2 <- parseExp; return $ mkE e1 e2 })
-           <|> try (do { e1 <- parseExp; char '*'; e2 <- parseExp; return $ mkP e1 e2 })
-           <|> try (do { e1 <- parseExp; char '+'; e2 <- parseExp; return $ mkS e1 e2 })
-           <|> (I . read) <$> many1 digit
-           <|> (V         <$> many1 lower)
+myParser :: Parser Expr
+myParser    = sm  `chainl1` (char '+' >> return mkS)
+  where sm  = pro `chainl1` (char '*' >> return mkP)
+        pro = ter `chainl1` (char '^' >> return mkE)
+        ter =     char '(' *> myParser <* char ')'
+              <|> (I . read) <$> many1 digit
+              <|> (V         <$> many1 lower)
 
 parseExpr :: String -> Maybe Expr
-parseExpr s = case parse (parseExp <* eof) "" s of
-               Left x  -> Just (V (show x))
+parseExpr s = case parse (myParser <* eof) "" s of
+               Left x  -> Nothing
                Right a -> Just a
+
+showDer :: String -> Var -> IO ()
+showDer s v = do
+  sequence $ (print . flip derivative v) <$> parseExpr s
+  return ()
+
 
 main :: IO ()
 main = do
-  print $ parseExpr "a"
-  return $ (print . flip derivative "x") <$> parseExpr "2*x"
-  return ()
+  showDer "2*x+3" "x"
+  showDer "x^3-x^2-x" "x"
