@@ -1,10 +1,24 @@
+import Text.Printf
+import Text.ParserCombinators.Parsec
+import Data.Functor
+import Control.Applicative ((*>), (<*))
+import Control.Monad
+
 type Var = String
 
 data Expr = Sum Expr Expr
           | Prod Expr Expr
+          | Exp Expr Expr
           | I Integer
           | V Var
           deriving Eq
+
+
+plainLit :: Expr -> String
+plainLit a@(V _) = show a
+plainLit a@(I _) = show a
+plainLit exp = printf "(%s)" $ show exp
+
 
 instance Show Expr where
   show (I i)
@@ -17,6 +31,7 @@ instance Show Expr where
   show (Prod a s@(Sum _ _)) = show a ++ "*(" ++ show s ++ ")"
   show (Prod a b) = show a ++ "*" ++ show b
   show (Sum  a b) = show a ++ "+" ++ show b
+  show (Exp  a b) = printf "%s^%s" (plainLit a) (plainLit b)
 
 
 derivative :: Expr -> Var -> Expr
@@ -43,13 +58,35 @@ mkP a (I 1) = a
 mkP (I 0) _ = I 0
 mkP _ (I 0) = I 0
 mkP (I a) (I b) = I (a*b)
-mkP a b = Prod a b
+mkP a b
+  | a == b    = mkE a (I 2)
+  | otherwise = Prod a b
 
 
+mkE :: Expr -> Expr -> Expr
+mkE _ (I 0) = I 1
+mkE (I 0) _ = I 0
+mkE (I 1) _ = I 1
+mkE (I a) (I b) = I (a ^ b)
+mkE a (I 1) = a
+mkE a b = Exp a b
 
 
+parseExp :: Parser Expr
+parseExp =     char '(' *> parseExp <* char ')'
+           <|> try (do { e1 <- parseExp; char '^'; e2 <- parseExp; return $ mkE e1 e2 })
+           <|> try (do { e1 <- parseExp; char '*'; e2 <- parseExp; return $ mkP e1 e2 })
+           <|> try (do { e1 <- parseExp; char '+'; e2 <- parseExp; return $ mkS e1 e2 })
+           <|> (I . read) <$> many1 digit
+           <|> (V         <$> many1 lower)
+
+parseExpr :: String -> Maybe Expr
+parseExpr s = case parse (parseExp <* eof) "" s of
+               Left x  -> Just (V (show x))
+               Right a -> Just a
 
 main :: IO ()
 main = do
-  let expr = Prod (V "x") (V "x")
-    in print (derivative expr "x")
+  print $ parseExpr "a"
+  return $ (print . flip derivative "x") <$> parseExpr "2*x"
+  return ()
