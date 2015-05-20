@@ -21,6 +21,7 @@ queens size = queenCols size
         diagCheck x xs = and $ zipWith notConf (map (subtract x) xs) [1..]
         notConf n m   = n /= -m && n /= m
 
+main :: IO ()
 main = mapM_ printQueen (queens size)
   where size = 8
         printQueen q = do
