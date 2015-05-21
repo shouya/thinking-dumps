@@ -10,7 +10,7 @@ type Var = String
 
 data Expr = Sum Expr Expr
           | Prod Expr Expr
-          | Exp Expr Expr
+          | Exp Expr Integer
           | I Integer
           | V Var
           deriving Eq
@@ -19,7 +19,7 @@ data Expr = Sum Expr Expr
 plainLit :: Expr -> String
 plainLit a@(V _) = show a
 plainLit a@(I _) = show a
-plainLit exp = printf "(%s)" $ show exp
+plainLit e = printf "(%s)" $ show e
 
 
 instance Show Expr where
@@ -33,7 +33,7 @@ instance Show Expr where
   show (Prod a s@(Sum _ _)) = show a ++ "*(" ++ show s ++ ")"
   show (Prod a b) = show a ++ "*" ++ show b
   show (Sum  a b) = show a ++ "+" ++ show b
-  show (Exp  a b) = printf "%s^%s" (plainLit a) (plainLit b)
+  show (Exp  a b) = printf "%s^%d" (plainLit a) b
 
 
 derivative :: Expr -> Var -> Expr
@@ -43,6 +43,7 @@ derivative (Prod u v) x = mkS udv vdu
         vdu = mkP v $ derivative u x
 derivative (I _) _ = I 0
 derivative (V x') x = I $ if x == x' then 1 else 0 -- partial derivative
+derivative (Exp a b) x = mkP (mkP (I b) (mkE a (b - 1))) (derivative a x)
 
 
 mkS :: Expr -> Expr -> Expr
@@ -61,39 +62,40 @@ mkP (I 0) _ = I 0
 mkP _ (I 0) = I 0
 mkP (I a) (I b) = I (a*b)
 mkP a b
-  | a == b    = mkE a (I 2)
+  | a == b    = mkE a 2
   | otherwise = Prod a b
 
 
-mkE :: Expr -> Expr -> Expr
-mkE _ (I 0) = I 1
-mkE (I 0) _ = I 0
-mkE (I 1) _ = I 1
-mkE (I a) (I b) = I (a ^ b)
-mkE a (I 1) = a
+mkE :: Expr -> Integer -> Expr
+mkE _ 0 = I 1
+mkE a 1 = a
 mkE a b = Exp a b
 
 
 myParser :: Parser Expr
 myParser    = sm  `chainl1` (char '+' >> return mkS)
   where sm  = pro `chainl1` (char '*' >> return mkP)
-        pro = ter `chainl1` (char '^' >> return mkE)
+        pro = try ex <|> ter
+        ex  = liftM2 mkE (ter <* char '^') (read <$> many1 digit)
         ter =     char '(' *> myParser <* char ')'
               <|> (I . read) <$> many1 digit
               <|> (V         <$> many1 lower)
 
 parseExpr :: String -> Maybe Expr
 parseExpr s = case parse (myParser <* eof) "" s of
-               Left x  -> Nothing
+               Left  _ -> Nothing
                Right a -> Just a
 
 showDer :: String -> Var -> IO ()
 showDer s v = do
-  sequence $ (print . flip derivative v) <$> parseExpr s
-  return ()
+  printf "f(%s) := %s\tand\t" v s
+  printf "f'(%s) := " v
+  case flip derivative v <$> parseExpr s of
+   Nothing -> putStrLn "parsing failed"
+   Just x  -> print x
 
 
 main :: IO ()
 main = do
   showDer "2*x+3" "x"
-  showDer "x^3-x^2-x" "x"
+  showDer "x^3+x^2+x" "x"
