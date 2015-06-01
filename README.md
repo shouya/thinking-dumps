@@ -82,3 +82,12 @@ My trials on implement various algorithms to solve
 ### transformer
 
 [Monad Transformers: Step-By-Step](http://www.cs.virginia.edu/~wh5a/personal/Transformers.pdf)
+
+### falg
+
+[Understanding F-algebra](https://www.fpcomplete.com/user/bartosz/understanding-algebras)
+
+
+### bananas
+
+[Functional Programming with Bananas, Lenses, Envelops, and Barbed Wires](http://eprints.eemcs.utwente.nl/7281/01/db-utwente-40501F46.pdf)
