@@ -43,21 +43,21 @@ unHFx :: HFix f a -> f (HFix f) a
 unHFx (HFx a) = a
 
 
-class HFunctor (h :: (* -> *) -> * -> *) where
-  hfmap :: (forall a . f a -> g a) -> (forall a . h f a -> h f b)
-
 type f :~> g = (forall a . f a -> g a)
+
+class HFunctor (h :: (* -> *) -> * -> *) where
+  hfmap :: (f :~> g) -> (h f :~> h g)
 
 
 instance HFunctor ExprF where
-  hfmap h (Const i)  = Const i
+  hfmap h (Const i)  = Const  i
   hfmap h (Add a b)  = Add    (h a) (h b)
   hfmap h (Mult a b) = Mult   (h a) (h b)
   hfmap h (IsZero a) = IsZero (h a)
   hfmap h (If a b c) = If     (h a) (h b) (h c)
 
 
-hcata :: (h f a -> f a) -> HFix h a -> f a
+hcata :: (HFunctor h) => (h f :~> f) -> (HFix h :~> f)
 hcata alg = alg . hfmap (hcata alg) . unHFx
 
 newtype I x = I { unI :: x }
@@ -71,7 +71,7 @@ eval = unI . hcata alg
         alg (Add a b) = I $ unI a + unI b
         alg (Mult a b) = I $ unI a + unI b
         alg (IsZero a) = I $ unI a == 0
-        alg (If a b c) = if (unI a)
+        alg (If a b c) = if unI a
                          then b
                          else c
 
