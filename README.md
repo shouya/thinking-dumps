@@ -91,3 +91,8 @@ My trials on implement various algorithms to solve
 ### bananas
 
 [Functional Programming with Bananas, Lenses, Envelops, and Barbed Wires](http://eprints.eemcs.utwente.nl/7281/01/db-utwente-40501F46.pdf)
+
+### ct4csist
+
+My notes on Benjamin C. Pierce's Basic Category Theory for Computer
+Scientists
