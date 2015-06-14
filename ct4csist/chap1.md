@@ -18,8 +18,8 @@ The shape is like finite cateogry.
 
 #### 2. show arbitrary group can be considered a category
 
-Obj(C) := {X}
-Arr(C) := elements in G, mapping from X to X
+* Obj(C) := {X}
+* Arr(C) := elements in G, mapping from X to X
 
 id arrow: the identity element in G
 
