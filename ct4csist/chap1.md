@@ -131,10 +131,10 @@ then we can conclude `forall b, g b = h b` and therefore `g = h`.
 `f : A -> B and g : B -> C` are monic, we want to prove
 `g . f : A -> C` is also monic. Suppose `h, h' : K -> A`,
 
-* `   (g .  f) . h  == (g .  f) . h'`
-* `=>  g . (f  . h) ==  g . (f  . h')` (assoc of `.`)
-* `=>  g .       h  ==  g .       h'` (since `f` is monic)
-* `=>            h  ==            h'` (since `g` is monic)
+        (g .  f) . h  == (g .  f) . h'
+     =>  g . (f  . h) ==  g . (f  . h') (assoc of .)
+     =>  g .       h  ==  g .       h' (since f is monic)
+     =>            h  ==            h' (since g is monic)
 
 
 #### ex 3. trans of epic
@@ -142,7 +142,7 @@ then we can conclude `forall b, g b = h b` and therefore `g = h`.
 `f : A -> B and g : B -> C` are epic, we want to prove
 `g . f : A -> C` is also epic. Suppose `h, h' : C -> K`
 
-* `    h . (g  . f) ==  h' . (g  . f)`
-* `=> (h .  g) . f  == (h' .  g) . f` (assoc of `.`)
-* `=>  h       . f  ==  h' .       f` (since `g` is epic)
-* `=>  h            ==  h'          ` (since `f` is epic)
+         h . (g  . f) ==  h' . (g  . f)
+     => (h .  g) . f  == (h' .  g) . f (assoc of .)
+     =>  h       . f  ==  h' .       f (since g is epic)
+     =>  h            ==  h'           (since f is epic)
