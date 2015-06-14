@@ -186,3 +186,20 @@ cannot be two distinct functions.
 
 In similar way we can deduce that `(f^-1 . g^-1) . (g . f)` is
 `id`. Therefore `(f^-1 . g^-1)` is the inverse of `(g . f)`.
+
+
+#### ex6. find an arrow that is epic and monic but not iso
+
+We adopt the arrow `f` for **2** category. **2** is defined as below:
+
+* Obj(**2**): {A, B}
+* Arr(**2**):
+  - `f : A -> B`
+  - two ids: `id_A, id_B`
+
+`f` is epic because `h0 . f = h1 . f => h0 = h1` because there is only
+one morphism satisify positions of `h0` and `h1`: `id_B`. Similarly
+`f` is monic.
+
+But we don't have an inverse of `f` that `f^{-1} : B -> A`. Therefore
+`f` is not iso.
