@@ -73,12 +73,14 @@ ommited.
 
 ## 1.3 mono-, epi-, and iso-morphisms
 
+#### essential of mono and epi
+
 So the essential on mono and epi are cancelabilities.
 
 * Mono <=> left  cancellation: `f . g = f . h   ==>   g = h`
 * Epi  <=> right cancellation: `g . f = h . f   ==>   g = h`
 
-When it applies to **Set**, we could imagine:
+When it applies to **Set**, specially for **R**s, we could imagine:
 
 * mono: if we have `ln(g(x)) = ln(h(x))` and because `ln` never maps
   two distinct values to a same value (i.e. surjective), we could
@@ -95,3 +97,16 @@ When it applies to **Set**, we could imagine:
 * non-epi: if we have `g(x^2) = h(x^2)`, because `^2` is not onto,
   as for negative reals we can't say that `g(x)` will be still equal
   to `h(x)`. and therefore we cannot come at `g = h`.
+
+#### about iso
+
+the intuition of isomorphism is a `f` between two objs `A` and `B` is
+that `A` and `B` has equivalent SHAPE. It means we can transform from
+`A` to `B` and `B` to `A` back and forth, without losing any info.
+
+#### ex 1. prove epic <=> onto
+
+**epic -> onto**
+
+by contradiction, assume we have `f : A -> B` which is not onto. there
+exists `b0` such that `forall a, f a /= b0`. then we have `g, h : B -> C`.
