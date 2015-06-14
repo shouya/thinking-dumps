@@ -109,4 +109,40 @@ that `A` and `B` has equivalent SHAPE. It means we can transform from
 **epic -> onto**
 
 by contradiction, assume we have `f : A -> B` which is not onto. there
-exists `b0` such that `forall a, f a /= b0`. then we have `g, h : B -> C`.
+exists `b0` such that `forall a, f a /= b0`. then suppose there is `g, h : B -> C`.
+
+we can define a `g /= h` by the following spec:
+
+* `g(b) := b` (forall `b`)
+* `h(b) := if b == b0 then x0 else b`
+
+with this defn, `g . f === h . f` but `g /== h` because `g(b0) /= h(b0)`.
+
+
+**onto -> epic**
+
+suppose we have an onto function, `f : A -> B`. then we have `forall
+b, exists a, f a = b`. if also we have `g, h : B -> A` and
+`g . f = h . f`, which becomes `forall a. g(f(a)) = h(f(a))`.
+then we can conclude `forall b, g b = h b` and therefore `g = h`.
+
+#### ex 2. transivity of monic
+
+`f : A -> B and g : B -> C` are monic, we want to prove
+`g . f : A -> C` is also monic. Suppose `h, h' : K -> A`,
+
+* `   (g .  f) . h  == (g .  f) . h'`
+* `=>  g . (f  . h) ==  g . (f  . h')` (assoc of `.`)
+* `=>  g .       h  ==  g .       h'` (since `f` is monic)
+* `=>            h  ==            h'` (since `g` is monic)
+
+
+#### ex 3. trans of epic
+
+`f : A -> B and g : B -> C` are epic, we want to prove
+`g . f : A -> C` is also epic. Suppose `h, h' : C -> K`
+
+* `    h . (g  . f) ==  h' . (g  . f)`
+* `=> (h .  g) . f  == (h' .  g) . f` (assoc of `.`)
+* `=>  h       . f  ==  h' .       f` (since `g` is epic)
+* `=>  h            ==  h'          ` (since `f` is epic)
