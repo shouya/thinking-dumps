@@ -146,3 +146,43 @@ then we can conclude `forall b, g b = h b` and therefore `g = h`.
      => (h .  g) . f  == (h' .  g) . f (assoc of .)
      =>  h       . f  ==  h' .       f (since g is epic)
      =>  h            ==  h'           (since f is epic)
+
+#### ex 4. show `f^{-1}` is uniq
+
+we prove by contradiction. suppose `f : A -> B` is iso and there are two
+`f^{-1}` : `h0, h1 : B -> A` such that `h0 /= h1`.
+
+Since `h0, h1` are inverse of `f`, we have
+
+        h1 . f  . h0
+    => (h1 . f) . h0
+    =>  id      . h0
+    =>            h0
+
+
+       h1 .  f . h0
+    => h1 . (f . h0)
+    => h1 . id
+    => h1
+
+Therefore:
+
+    h1 . f . h0 = h0 = h1
+
+which contradicts the assumption `h0 /= h1`. therefore `f^{-1}`
+cannot be two distinct functions.
+
+
+#### ex 5. show f^-1 . g^-1 is the inverse of g . f
+
+* `f : A -> B, f^-1 : B -> A`
+* `g : B -> C. g^-1 : C -> B`
+
+           (g .  f) . (f^-1  . g^-1)
+        =>  g . (f  .  f^-1) . g^-1
+        =>  g . id           . g^-1
+        =>  g . g^-1
+        =>  id
+
+In similar way we can deduce that `(f^-1 . g^-1) . (g . f)` is
+`id`. Therefore `(f^-1 . g^-1)` is the inverse of `(g . f)`.
