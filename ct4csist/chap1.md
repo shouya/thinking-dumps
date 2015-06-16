@@ -3,7 +3,7 @@
 
 Exercises:
 
-#### 1. show how arbitrary set can be considered as a categroy
+#### 1. show how arbitrary set can be considered as a category
 
 Obj(S) := all elements in S
 
@@ -13,7 +13,7 @@ the rest of the elements until there is no element left. After all we
 assign identity morphisms for each elements. It's obvious
 to see that these morphisms follow the composition law.
 
-The shape is like finite cateogry.
+The shape is like finite category.
 
 
 #### 2. show arbitrary group can be considered a category
@@ -48,7 +48,7 @@ definition of the assoc law of the operator `(+)` of group.
     vv   vv
     c---->d
 
-3+2+1 morphims.
+3+2+1 morphisms.
 
 **5-cat:**
 
@@ -69,13 +69,13 @@ the identity arrow on an object n is a n-by-n identity matrix.
 
 #### 5. redraw arrows in FPL category
 
-ommited.
+omitted.
 
 ## 1.3 mono-, epi-, and iso-morphisms
 
 #### essential of mono and epi
 
-So the essential on mono and epi are cancelabilities.
+So the essential on mono and epi are cancel-abilities.
 
 * Mono <=> left  cancellation: `f . g = f . h   ==>   g = h`
 * Epi  <=> right cancellation: `g . f = h . f   ==>   g = h`
@@ -126,7 +126,7 @@ b, exists a, f a = b`. if also we have `g, h : B -> A` and
 `g . f = h . f`, which becomes `forall a. g(f(a)) = h(f(a))`.
 then we can conclude `forall b, g b = h b` and therefore `g = h`.
 
-#### ex 2. transivity of monic
+#### ex 2. transitivity of monic
 
 `f : A -> B and g : B -> C` are monic, we want to prove
 `g . f : A -> C` is also monic. Suppose `h, h' : K -> A`,
@@ -198,8 +198,45 @@ We adopt the arrow `f` for **2** category. **2** is defined as below:
   - two ids: `id_A, id_B`
 
 `f` is epic because `h0 . f = h1 . f => h0 = h1` because there is only
-one morphism satisify positions of `h0` and `h1`: `id_B`. Similarly
+one morphism satisfy positions of `h0` and `h1`: `id_B`. Similarly
 `f` is monic.
 
 But we don't have an inverse of `f` that `f^{-1} : B -> A`. Therefore
 `f` is not iso.
+
+
+## 1.4 initial and terminal obj
+
+#### why 1-elem sets and empty set
+
+First we to know what is meant by the category **Set**. It consists of objects of ALL sets, and the arrows are *total functions*. Total function is defined by:
+
+> if we have a mapping `f : A -> B` such that `forall a : A, exists b : B, such that f a = b`, then we say `f` is a total function.
+
+**Terminals**
+
+So we have an arrow, a total function, from set `A` to set `B`. Now we think of what if we have only one element in `B`. How many ways are there you can define this arrow `f`?
+
+Surely there is only one, the constant function: `f _ = b0`. In this way we define this object as a terminal.
+
+**Initials**
+
+What about initials? The same. Notice that we are having total functions as the morphisms, for `f : A -> B`, if we have `A` a set with 1-elements, we would have a number of `|B|` ways to define `f`. If the number of elements gets more in `A`, the situation become worse, as we would have `|B|^|A|` ways to define such morphisms. If we want the number of morphisms from `A` to any `B` to be exactly one, `|A|` must be zero, and therefore `A` must be `∅`.
+
+This mapping is called a [empty function](https://en.wikipedia.org/wiki/Empty_function). The way it is defined and valid, according to wikipedia, is to maintain the consistency of **Set** as a category such every objects in **Set** can have an identity morphism. The empty function is also defined valid in terms of cardinal arithmetic described above.
+
+
+#### intuition about init and term obj
+
+so a terminal is denoded as **1**.
+
+and an initial is denoted as **0**.
+
+indicated by the cardinality of the object.
+
+For poset `(A, <=)`, init is the greatest elem and term is the least elem.
+
+#### why there exists unique term obj (up to iso)?
+
+suppose we have any two term obj: `T` and `T'`. By defn, we have one and only one morph from `T` to `T'` since `T'` is a term. Similarly, we also have one and only one morph from `T'` to `T`. Therefore for ally `T` and `T'`, as far as they are both terminals, they must be isomorphic to each other.
+
