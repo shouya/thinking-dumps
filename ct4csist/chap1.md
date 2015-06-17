@@ -292,10 +292,42 @@ poset: `(ℤ, ≤)`
 * `Obj(𝒞) = {A,B,C,D}`
 * `Arr(𝒞) = {f : A → B, g : C → D}`
 
-**Example 3 from the catsters**: 
+**Example 3 from the catsters**:
 
 * `Obj(𝒞) = {A,B,C,D,...}`
 * `Arr(𝒞) = {f1 : A -> B, f2 : B -> C, f3 : C -> D, ...}`
 
-This example does not have a terminal, similar to the `(R^+)` poset I described above.
+This example does not have a terminal, similar to the `(ℤ^+)` poset I described above.
+
+
+## 1.5 Product
+
+#### clarified defn
+
+a product is an object. it is not really necessary to rely on a category with cartesian products.
+
+#### product on a poset
+
+here is an example of product on poset `({1,2,3,4,5}, ≤)`:
+
+![prod](https://cloud.githubusercontent.com/assets/526598/8203225/50875e02-14ae-11e5-8088-fbc9ebdf61ff.png)
+
+(other arrows are omitted)
+
+From the diagram, we might say the product of `4` and `5` to be `3`. But actually this is not true. If we consider the identity arrow:
+
+![prod](https://cloud.githubusercontent.com/assets/526598/8203237/5b417da0-14ae-11e5-8fb1-493c07683c8f.png)
+
+We can find that actually the object that satisfy the property is `4`!
+
+For category we could have a table:
+
+Object 1 | Object 2 | Product element
+---------|----------|----------------
+5 | 5 | 5
+4 | 5 | 4
+3 | 5 | 3
+3 | 3 | 3
+
+
 
