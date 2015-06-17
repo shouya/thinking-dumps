@@ -268,3 +268,34 @@ already proved above. omitted.
 * term: greatest obj
 * coterm: least obj
 
+#### ex 3. find cat with no init/term/both
+
+**No init:**
+
+poset: `({x | x ∈ ℤ ∩ (-∞, 0], <=)`
+
+**No term:**
+
+poset: `({x | x ∈ ℤ ∩ [0, ∞), <=)`
+
+**No both:**
+
+poset: `(ℤ, ≤)`
+
+**Example  1 from the catsters**:
+
+* `Obj(𝒞) = {A,B}`
+* `Arr(𝒞) = {f : A → B, g : A → B}`
+
+**Example 2 from the catsters**:
+
+* `Obj(𝒞) = {A,B,C,D}`
+* `Arr(𝒞) = {f : A → B, g : C → D}`
+
+**Example 3 from the catsters**: 
+
+* `Obj(𝒞) = {A,B,C,D,...}`
+* `Arr(𝒞) = {f1 : A -> B, f2 : B -> C, f3 : C -> D, ...}`
+
+This example does not have a terminal, similar to the `(R^+)` poset I described above.
+
