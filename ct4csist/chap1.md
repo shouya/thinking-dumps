@@ -1,11 +1,10 @@
 
 ## 1.1 Categories
 
-Exercises:
 
-#### 1. show how arbitrary set can be considered as a category
+#### ex 1. show how arbitrary set can be considered as a category
 
-Obj(S) := all elements in S
+* Obj(S) := all elements in S
 
 By axiom of choice, we can pick an arbitrary element from S and assign
 morphisms from it to other elements. The repeat the same process for
@@ -16,7 +15,7 @@ to see that these morphisms follow the composition law.
 The shape is like finite category.
 
 
-#### 2. show arbitrary group can be considered a category
+#### ex 2. show arbitrary group can be considered a category
 
 * Obj(C) := {X}
 * Arr(C) := elements in G, mapping from X to X
@@ -26,7 +25,7 @@ id arrow: the identity element in G
 It's not difficult to show that: `a . (b . c) = (a . b) . c` by the
 definition of the assoc law of the operator `(+)` of group.
 
-#### 3. shape of 3, 4, 5-category and their corresp to nat numbers
+#### ex 3. shape of 3, 4, 5-category and their corresp to nat numbers
 
 **3-cat:**
 
@@ -56,7 +55,7 @@ too complex to draw in ascii art. just omitted.
 
 there will be 4+3+2+1 morphisms.
 
-#### 4. complete the following spec of cat M.
+#### ex 4. complete the following spec of cat M.
 
 * Obj(M) := Nat numbers
 * M-arrow `f : m -> n` is an m-by-n matrix of real nums
@@ -67,7 +66,7 @@ matrix.
 
 the identity arrow on an object n is a n-by-n identity matrix.
 
-#### 5. redraw arrows in FPL category
+#### ex 5. redraw arrows in FPL category
 
 omitted.
 
@@ -188,7 +187,7 @@ In similar way we can deduce that `(f^-1 . g^-1) . (g . f)` is
 `id`. Therefore `(f^-1 . g^-1)` is the inverse of `(g . f)`.
 
 
-#### ex6. find an arrow that is epic and monic but not iso
+#### ex 6. find an arrow that is epic and monic but not iso
 
 We adopt the arrow `f` for **2** category. **2** is defined as below:
 
@@ -239,4 +238,33 @@ For poset `(A, <=)`, init is the greatest elem and term is the least elem.
 #### why there exists unique term obj (up to iso)?
 
 suppose we have any two term obj: `T` and `T'`. By defn, we have one and only one morph from `T` to `T'` since `T'` is a term. Similarly, we also have one and only one morph from `T'` to `T`. Therefore for ally `T` and `T'`, as far as they are both terminals, they must be isomorphic to each other.
+
+#### ex 1. prove terminals are uniq up to iso
+
+already proved above. omitted.
+
+#### ex 2. terms/coterms in **Set x Set**, **Set^{->}**, and a poset
+
+**Set x Set**:
+
+* obj: `{(a,b)|a ∈ Obj(A), b ∈ Obj(B)}`
+* arr: `{(f,g)|f ∈ Arr(A), b ∈ Arr(B)}`
+* term: one elem sets, ie. `{(a,b)|a ∈ Obj(A), b ∈ Obj(B), |A| = 1 ∧ |B| = 1}`
+* coterm: `∅`, because `{(∅ x a) | a ∈ Obj(A)}` = `∅`, same for right product.
+
+
+**Set^{->}**:
+
+* obj: total functions (arr in `Set`)
+* arr: total function homomorphisms (ie. preserve commutativity)
+* term: all total functions mapping from `A` to `B` where `|A| = |B| = 1`
+* coterm: `id_∅ : ∅ → ∅`
+
+
+**Poset (A, <=)**:
+
+* obj: elems in `A`
+* arr: `(a, b)` (`a -> b`) for all `a <= b`
+* term: greatest obj
+* coterm: least obj
 
