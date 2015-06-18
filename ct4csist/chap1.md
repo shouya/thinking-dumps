@@ -340,10 +340,30 @@ the product of set `A` and `B` over the **Set** category is `A × B`, the cartes
 
 whenever you have two a pair of morphisms (total functions) `f` and `g` that maps from a set `V` to `A` and `B`. ee can always construct a total function `h(v) := <f(v), g(v)>` such that maps from `v` to `A × B`. we can prove such factorization is unique.
 
+`π1 : A × B → A` and `π2 : A × B → B` are called the projection functions.
+
+
 **coproduct**
 
 similarly, the co-product of set `A` and `B` is, `A || B`, the disjoint union of `A` and `B`. (`A × {0} ∪ B × {1}`)
 
 whenever we have `p1 : A -> V` and `p2 : B -> V`, we can construct a total function `h : A || B -> V` by `h(Left(a)) = p1 a; h(Right(b)) = p2 b`. such morphism is unique.
+
+
+#### uniqueness of prod/coprod up to iso (also ex 1.5.2)
+
+**prod -> iso**
+
+theorem: any two products are iso
+
+proof: suppose we have two products of a set `P` and `P'`. By defn, there exists an uniq factorization from any other same-shape (reversed v-shaped) objects to `P` and also to `P'`. `P` and `P'` are both product so they have the same reversed v-shapes. Therefore there exists uniq `f : P -> P'` and `g : P' -> P` such that `g ∘ f = f ∘ g = id`. Hence `g = f^{-1} and f = g^{-1}`, `P` is iso to `P'`.
+
+**iso -> prod**
+
+theorem: whenever an object is iso to a product, it is also a product.
+
+proof: suppose we have a product `P` of object `A` and `B` and an isomorphic obj `K` to it, we have `f : P -> K` and `f^-1 : K -> P` such that `f . f^-1 = f^-1 . f = id`. We show `K` will also be a product of `A` and `B`.
+
+We can construct the projection arrows `π1 . f^-1 : K -> A` and `π2 . f^-1 : K -> B` therefore `K` would have the same reversed v-shape. By defn, for all `V` with the same shape we have unique factorization `h : V -> P`. We can construct a factorization `f . h : V -> K`, specially, we have factorization from `P`: `f : P -> K`. In this way we proved `K` is a product.
 
 
