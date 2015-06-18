@@ -366,4 +366,28 @@ proof: suppose we have a product `P` of object `A` and `B` and an isomorphic obj
 
 We can construct the projection arrows `π1 . f^-1 : K -> A` and `π2 . f^-1 : K -> B` therefore `K` would have the same reversed v-shape. By defn, for all `V` with the same shape we have unique factorization `h : V -> P`. We can construct a factorization `f . h : V -> K`, specially, we have factorization from `P`: `f : P -> K`. In this way we proved `K` is a product.
 
+**coprod**:
+
+(偷懶中～～) coprod is the dual of prod. the iso property holds for prod therefore the dual of iso, which is still iso, holds for coprod.
+
+
+#### ex 1. show `<f . h, g . h> = <f, g> . h`
+
+	  <f . h, g . h> x
+	= <(f . h) x, (g . h) x>
+	= <f (h x), g (h x)>
+	= <f, g> (h x)
+	= <f, g> . h
+
+#### ex 2. show `(f × h) . <g, k> = <f . g, h . k>`
+
+#### ex 3. show `(f × h) . (g × k) = <f . h, h . k>`
+
+#### ex 4. prod in poset cat
+
+#### ex 5. coprod in **Poset** cat
+
+#### ex 6. find a cat with no prod
+
+#### ex 7. to what does defn 1.5.5 reduce for `|I| = 0`
 
