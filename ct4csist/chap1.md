@@ -336,7 +336,7 @@ Object 1 | Object 2 | Product element
 
 **product**
 
-the product of set `A` and `B` over the **Set** category is `A × B`, the cartesian product set of `A` and `B`. (`{(a,b) | a ∈ A, b ∈ B}`)
+the product of set `A` and `B` over the **Set** category is `A × B`, the cartesian product set of `A` and `B`. (`{(a,b) | a ∈ A, b ∈ B}`)
 
 whenever you have two a pair of morphisms (total functions) `f` and `g` that maps from a set `V` to `A` and `B`. ee can always construct a total function `h(v) := <f(v), g(v)>` such that maps from `v` to `A × B`. we can prove such factorization is unique.
 
@@ -356,7 +356,7 @@ whenever we have `p1 : A -> V` and `p2 : B -> V`, we can construct a total funct
 
 theorem: any two products are iso
 
-proof: suppose we have two products of a set `P` and `P'`. By defn, there exists an uniq factorization from any other same-shape (reversed v-shaped) objects to `P` and also to `P'`. `P` and `P'` are both product so they have the same reversed v-shapes. Therefore there exists uniq `f : P -> P'` and `g : P' -> P` such that `g ∘ f = f ∘ g = id`. Hence `g = f^{-1} and f = g^{-1}`, `P` is iso to `P'`.
+proof: suppose we have two products of a set `P` and `P'`. By defn, there exists an uniq factorization from any other same-shape (reversed v-shaped) objects to `P` and also to `P'`. `P` and `P'` are both product so they have the same reversed v-shapes. Therefore there exists uniq `f : P -> P'` and `g : P' -> P` such that `g ∘ f = f ∘ g = id`. Hence `g = f^{-1} and f = g^{-1}`, `P` is iso to `P'`.
 
 **iso -> prod**
 
@@ -377,17 +377,52 @@ We can construct the projection arrows `π1 . f^-1 : K -> A` and `π2 . f^-1 : K
 	= <(f . h) x, (g . h) x>
 	= <f (h x), g (h x)>
 	= <f, g> (h x)
-	= <f, g> . h
+	= (<f, g> . h) x
 
 #### ex 2. show `(f × h) . <g, k> = <f . g, h . k>`
 
+	  ((f × h) . <g, k>) a
+	= (f x h) <g a, k a>
+	= <f (g a), h (k a)>
+	= <f . g, h . k> a
+
+
 #### ex 3. show `(f × h) . (g × k) = <f . h, h . k>`
 
-#### ex 4. prod in poset cat
+	  ((f x h) . (g x k) a)
+	= (f x h) <g a, k a>
+	= <f (g a), h (k a)>
+	= <f . g, h . k> a
 
-#### ex 5. coprod in **Poset** cat
+#### ex 4. prod in A poset cat
+
+<del>as described, on poset `(A, ≤)`, the product of `m` and `n` is `min m n`.</del>
+
+revision: this is not really true because poset does not require `forall x y, x <= y or y <= x`. the answer should be the greatest lower bound of `m` and `n`. Simply consider this post:
+
+![inclusion poset](https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Hasse_diagram_of_powerset_of_3.svg/500px-Hasse_diagram_of_powerset_of_3.svg.png)
+
+this is a poset of power set of `{x, y, z}` ordered by inclusion. The product of `{x}` and `{z}` is obviously `{x,z}` rather than any of `{x}` or `{z}`.
+
+#### ex 5. coprod in cat of posetS
+
+category of posets:
+
+* obj: posets, ie. (`{(X, ≤) forall set X}`)
+* arr: monotone total functions (total func that preserves `≤`)
+
+this question takes a little bit thinking on it and was interesting. here's how i conceive the answer:
+
+![coprod](https://cloud.githubusercontent.com/assets/526598/8224838/17d5084a-155b-11e5-811d-79f850cff1ae.png)
+
+suppose we have a copro `S` of `X` and `Y`, and `p : X -> S, q : Y -> S` are monotone func. Then we conceive two other monotone func `f : X -> V, g : Y -> V` that maps `X` and `Y` to `V`. To say `S` is the copro, we must show there are uniq monotone func from `S` to `V`. How can we choose `p` and `q` to get a `S` such that there exists an uniq morphism `h : S -> V`? simply we do the same as we do for **Set**. We choose `p x = (0, x)` and `q y = (1, y)` so we get `h (0, x) = f x; h (1, y) = g y`. The procedure works with **Set** should also work for **Pos**, but the point is, is `S` we defined here a poset and is `h` a monotone func?
+
+Simply we can't define `S` like that, but we need to find a way to connect two posets with order preserved. I don't know if there is such a way but it should exist and whenever the order is preserved, we can ensure to have `h` as a monotonic function from `S` to `V`.
+
 
 #### ex 6. find a cat with no prod
+
+the finite category **2**.
 
 #### ex 7. to what does defn 1.5.5 reduce for `|I| = 0`
 
