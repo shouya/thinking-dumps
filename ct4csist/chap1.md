@@ -329,5 +329,21 @@ Object 1 | Object 2 | Product element
 3 | 5 | 3
 3 | 3 | 3
 
+"The greatest lower bound"
+
+
+#### prod/coprod on Set
+
+**product**
+
+the product of set `A` and `B` over the **Set** category is `A × B`, the cartesian product set of `A` and `B`. (`{(a,b) | a ∈ A, b ∈ B}`)
+
+whenever you have two a pair of morphisms (total functions) `f` and `g` that maps from a set `V` to `A` and `B`. ee can always construct a total function `h(v) := <f(v), g(v)>` such that maps from `v` to `A × B`. we can prove such factorization is unique.
+
+**coproduct**
+
+similarly, the co-product of set `A` and `B` is, `A || B`, the disjoint union of `A` and `B`. (`A × {0} ∪ B × {1}`)
+
+whenever we have `p1 : A -> V` and `p2 : B -> V`, we can construct a total function `h : A || B -> V` by `h(Left(a)) = p1 a; h(Right(b)) = p2 b`. such morphism is unique.
 
 
