@@ -412,7 +412,7 @@ category of posets:
 * arr: monotone total functions (total func that preserves `≤`)
 
 this question takes a little bit thinking on it and was interesting. here's how i conceive the answer:
-
+  
 ![coprod](https://cloud.githubusercontent.com/assets/526598/8224838/17d5084a-155b-11e5-811d-79f850cff1ae.png)
 
 suppose we have a copro `S` of `X` and `Y`, and `p : X -> S, q : Y -> S` are monotone func. Then we conceive two other monotone func `f : X -> V, g : Y -> V` that maps `X` and `Y` to `V`. To say `S` is the copro, we must show there are uniq monotone func from `S` to `V`. How can we choose `p` and `q` to get a `S` such that there exists an uniq morphism `h : S -> V`? simply we do the same as we do for **Set**. We choose `p x = (0, x)` and `q y = (1, y)` so we get `h (0, x) = f x; h (1, y) = g y`. The procedure works with **Set** should also work for **Pos**, but the point is, is `S` we defined here a poset and is `h` a monotone func?
@@ -426,3 +426,6 @@ the finite category **2**.
 
 #### ex 7. to what does defn 1.5.5 reduce for `|I| = 0`
 
+It is an one-element set. `K^0 = 1` can't it be even more intuitive?
+
+And the coprod/sum of an empty element set is the initial. `0*K = 0`. Isn't it awesome?
