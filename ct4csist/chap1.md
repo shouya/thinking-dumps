@@ -429,3 +429,51 @@ the finite category **2**.
 It is an one-element set. `K^0 = 1` can't it be even more intuitive?
 
 And the coprod/sum of an empty element set is the initial. `0*K = 0`. Isn't it awesome?
+
+### 1.7 equalizers
+
+#### ex 1.7.2 universal construction of equalizer
+
+![universal construction of equalizer](https://cloud.githubusercontent.com/assets/526598/8248738/789989dc-1630-11e5-908d-73b133f19645.png)
+
+#### intuition
+
+as the name suggests, an equalizer maps a range of values to a range of values for which `f` and `g` are defined equal. It could usually be considered as a filter.
+
+#### equalizer on Set of `f` and `g`
+
+
+	X = {x | x ∈ A, f(x) = g(x)}
+
+the eqzr `e : X -> A` is the inclusion function maps each element `x ∈ X` to the same `x ∈ A`. That is, `e` acts as `id_X` while ignoring some `a ∈ A` for which `f a ≠ g a`.
+
+**Proof**: suppose we have another morphism with the same universal construction, `e' : X' -> A` of `f` and `g`. so we have `f (e' x') = g (e' x')`. We define `k` as follows:
+
+	k : X' -> X
+	k x' = e' x'
+
+Because `e' x'` always fall on a range of those 'valid' values of `A`, it was defined to be a subset of `X`. Therefore this mapping `k` exists and satisfy our requirement.
+
+#### ex 1. show only eqzr of cat poset are id arrs
+
+intuitively, let's first find a pair of arrs `f` and `g` from obj `A` to obj `B`. by defn, there is only uniq `f, g : A -> B` that exists. Therefore there is no need to 'filter' the input of `f` and `g` to make them equivalent on this domain, as there are born equal. No filtering, so it is the `id` arrow.
+
+(TODO: prove it)
+
+#### ex 2. show eqzr are monic
+
+monic: left cancel-ability
+
+we are to prove `e . p = e . q` implies `p = q`.
+
+let us suppose `e . p = e . q` and `p ≠ q`. that means, there are some object `v` for which. 
+
+
+we know that `f . e = g . e`, 
+We let find any pair of `f, g`. `f . (e . p) = f . (e . q)`
+
+	   f . (e . p) = f . (e . q)
+	=> (f . e) . p = (g . e) . q
+
+#### ex 3. show epic eqzr are isos
+
