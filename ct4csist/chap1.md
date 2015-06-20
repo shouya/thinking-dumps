@@ -464,16 +464,20 @@ intuitively, let's first find a pair of arrs `f` and `g` from obj `A` to obj `B`
 
 monic: left cancel-ability
 
-we are to prove `e . p = e . q` implies `p = q`.
+we are to prove for all `p, q : K -> X`, `e . p = e . q` implies `p = q`.
 
-let us suppose `e . p = e . q` and `p ≠ q`. that means, there are some object `v` for which. 
+(ref. http://math.stackexchange.com/q/81296/120022)
 
+we have `f . e = g . e`:
 
-we know that `f . e = g . e`, 
-We let find any pair of `f, g`. `f . (e . p) = f . (e . q)`
+	   (f . e) . p = (g . e) . p
+	=> f . (e . p) = g . (e . p)
 
-	   f . (e . p) = f . (e . q)
-	=> (f . e) . p = (g . e) . q
+That is, `e . p` is an universal construction to the equalizer `e`. Therefore we always have an unique morphism `h` from `K` to `X` (mediating arrow by defn of `e`), such that `e . h = e . p`. Since `K -> X` is uniq, we have `h = p = q`. Therefore `e` is monic.
 
 #### ex 3. show epic eqzr are isos
+
+this can be shown by intuition. an eqzr acts like a "filter" to restrict the input of `f` and `g`. when `e` becomes epic, `e . f = e . g => f = g`, the filter is no longer needed and `f` and `g` are always equal. hence passing through the filter no longer lose any info. this is how iso works.
+
+Proof: We show `id_A` is an equalizer of `f, g : A -> B` for `f = g`. Since `f = g`, `f . id_A = g . id_A`, `id_A` is a general construction. We suppose there exists another general construction `e' : X -> A`. we always have the mediating arrow `e' : X -> A` such that `id_A . e' = id_A . e`. And we know `id_A` is iso.
 
