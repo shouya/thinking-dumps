@@ -479,5 +479,25 @@ That is, `e . p` is an universal construction to the equalizer `e`. Therefore we
 
 this can be shown by intuition. an eqzr acts like a "filter" to restrict the input of `f` and `g`. when `e` becomes epic, `e . f = e . g => f = g`, the filter is no longer needed and `f` and `g` are always equal. hence passing through the filter no longer lose any info. this is how iso works.
 
-Proof: We show `id_A` is an equalizer of `f, g : A -> B` for `f = g`. Since `f = g`, `f . id_A = g . id_A`, `id_A` is a general construction. We suppose there exists another general construction `e' : X -> A`. we always have the mediating arrow `e' : X -> A` such that `id_A . e' = id_A . e`. And we know `id_A` is iso.
+(ref. http://math.stackexchange.com/a/510816/120022)
+
+Proof: We show `id_A` is an equalizer of `f, g : A -> B` for `f = g`. Since `f = g`, `f . id_A = g . id_A`, `id_A` is a general construction. We suppose there exists another general construction `e' : X -> A`. we always have the mediating arrow `e' : X -> A` such that `id_A . e' = id_A . e`. And we know `id_A` is an iso.
+
+
+## 1.8 Pullbacks
+
+#### general construction of pullbacks
+
+![pullback](https://cloud.githubusercontent.com/assets/526598/8267205/29fb75de-1724-11e5-93e9-86fdea4b1533.png)
+
+pullback is the `P` resulting from `f` and `g`.
+
+such that:
+
+![pullback](https://cloud.githubusercontent.com/assets/526598/8267211/76688628-1724-11e5-85ad-0b3d5ad8f504.png)
+
+it's like a product but:
+
+1. a pullback requires the pair of morphs `f : A -> C, g : B -> C`
+2. a pullback is defined on top of morphs `f` and `g` instead of objs `A` and `B`.
 
