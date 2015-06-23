@@ -356,7 +356,7 @@ whenever we have `p1 : A -> V` and `p2 : B -> V`, we can construct a total funct
 
 theorem: any two products are iso
 
-proof: suppose we have two products of a set `P` and `P'`. By defn, there exists an uniq factorization from any other same-shape (reversed v-shaped) objects to `P` and also to `P'`. `P` and `P'` are both product so they have the same reversed v-shapes. Therefore there exists uniq `f : P -> P'` and `g : P' -> P` such that `g ∘ f = f ∘ g = id`. Hence `g = f^{-1} and f = g^{-1}`, `P` is iso to `P'`.
+proof: suppose we have two products of a set `P` and `P'`. By defn, there exists a uniq factorization from any other same-shape (reversed v-shaped) objects to `P` and also to `P'`. `P` and `P'` are both product so they have the same reversed v-shapes. Therefore there exists uniq `f : P -> P'` and `g : P' -> P` such that `g ∘ f = f ∘ g = id`. Hence `g = f^{-1} and f = g^{-1}`, `P` is iso to `P'`.
 
 **iso -> prod**
 
@@ -415,7 +415,7 @@ this question takes a little bit thinking on it and was interesting. here's how 
   
 ![coprod](https://cloud.githubusercontent.com/assets/526598/8224838/17d5084a-155b-11e5-811d-79f850cff1ae.png)
 
-suppose we have a copro `S` of `X` and `Y`, and `p : X -> S, q : Y -> S` are monotone func. Then we conceive two other monotone func `f : X -> V, g : Y -> V` that maps `X` and `Y` to `V`. To say `S` is the copro, we must show there are uniq monotone func from `S` to `V`. How can we choose `p` and `q` to get a `S` such that there exists an uniq morphism `h : S -> V`? simply we do the same as we do for **Set**. We choose `p x = (0, x)` and `q y = (1, y)` so we get `h (0, x) = f x; h (1, y) = g y`. The procedure works with **Set** should also work for **Pos**, but the point is, is `S` we defined here a poset and is `h` a monotone func?
+suppose we have a copro `S` of `X` and `Y`, and `p : X -> S, q : Y -> S` are monotone func. Then we conceive two other monotone func `f : X -> V, g : Y -> V` that maps `X` and `Y` to `V`. To say `S` is the copro, we must show there are uniq monotone func from `S` to `V`. How can we choose `p` and `q` to get a `S` such that there exists a uniq morphism `h : S -> V`? simply we do the same as we do for **Set**. We choose `p x = (0, x)` and `q y = (1, y)` so we get `h (0, x) = f x; h (1, y) = g y`. The procedure works with **Set** should also work for **Pos**, but the point is, is `S` we defined here a poset and is `h` a monotone func?
 
 Simply we can't define `S` like that, but we need to find a way to connect two posets with order preserved. I don't know if there is such a way but it should exist and whenever the order is preserved, we can ensure to have `h` as a monotonic function from `S` to `V`.
 
@@ -473,7 +473,7 @@ we have `f . e = g . e`:
 	   (f . e) . p = (g . e) . p
 	=> f . (e . p) = g . (e . p)
 
-That is, `e . p` is an universal construction to the equalizer `e`. Therefore we always have an unique morphism `h` from `K` to `X` (mediating arrow by defn of `e`), such that `e . h = e . p`. Since `K -> X` is uniq, we have `h = p = q`. Therefore `e` is monic.
+That is, `e . p` is an universal construction to the equalizer `e`. Therefore we always have a unique morphism `h` from `K` to `X` (mediating arrow by defn of `e`), such that `e . h = e . p`. Since `K -> X` is uniq, we have `h = p = q`. Therefore `e` is monic.
 
 #### ex 3. show epic eqzr are isos
 
@@ -500,4 +500,28 @@ it's like a product but:
 
 1. a pullback requires the pair of morphs `f : A -> C, g : B -> C`
 2. a pullback is defined on top of morphs `f` and `g` instead of objs `A` and `B`.
+
+#### ex 1 (a) left & right are pullbacks -> outer is pullback
+
+I borrow the diagram from another source.
+
+![pasting of pullbacks](https://cloud.githubusercontent.com/assets/526598/8300231/6430ee0e-1950-11e5-8655-8d3da536fe32.png)
+
+Suppose for a `B` we have `h` and `k`. Here's a brief deduction.
+
+	g . h
+    α', ∵ (g . h), k, right square as a pullback
+    α'' exists and is uniq, ∵ α', h, left square as a pullback
+
+thus the outer square is a pullback.
+
+#### ex 1 (a) outer is pullback -> left & right are pullbacks
+
+I borrow the diagram from another source.
+
+![pasting of pullbacks](https://cloud.githubusercontent.com/assets/526598/8300231/6430ee0e-1950-11e5-8655-8d3da536fe32.png)
+
+As the outer square is a pullback, we know `α''` exists and is uniq. For any `α'` such that `a' . α' = g . h`, we have `f' . α' = k`, and therefore `α''` is uniq. Then the left square is a pullback.
+
+
 
