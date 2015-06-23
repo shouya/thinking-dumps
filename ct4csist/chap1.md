@@ -523,5 +523,10 @@ I borrow the diagram from another source.
 
 As the outer square is a pullback, we know `α''` exists and is uniq. For any `α'` such that `a' . α' = g . h`, we have `f' . α' = k`, and therefore `α''` is uniq. Then the left square is a pullback.
 
+#### show that the image of `f` in a pullback preserves monomorphic property
 
+![pullback](https://cloud.githubusercontent.com/assets/526598/8302610/c0421b72-1965-11e5-87ad-f87bba3f4681.png)
 
+We let `g1, g2 : X -> B'`. `f' . g1 = f' . g2` because `m` is monic. assume `n . g1 = n . g2`. by defn of pullback, there exists a uniq factorization `g1 = g2`. `n . g1 = n . g2 -> g1 = g2`.
+
+(ref: http://www.mathematik.tu-darmstadt.de/~streicher/CTCL.pdf)
