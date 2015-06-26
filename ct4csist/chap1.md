@@ -501,7 +501,7 @@ it's like a product but:
 1. a pullback requires the pair of morphs `f : A -> C, g : B -> C`
 2. a pullback is defined on top of morphs `f` and `g` instead of objs `A` and `B`.
 
-#### ex 1 (a) left & right are pullbacks -> outer is pullback
+#### ex 1. (a) left & right are pullbacks -> outer is pullback
 
 I borrow the diagram from another source.
 
@@ -515,7 +515,7 @@ Suppose for a `B` we have `h` and `k`. Here's a brief deduction.
 
 thus the outer square is a pullback.
 
-#### ex 1 (a) outer is pullback -> left & right are pullbacks
+#### ex 1. (b) outer is pullback -> left & right are pullbacks
 
 I borrow the diagram from another source.
 
@@ -523,10 +523,29 @@ I borrow the diagram from another source.
 
 As the outer square is a pullback, we know `α''` exists and is uniq. For any `α'` such that `a' . α' = g . h`, we have `f' . α' = k`, and therefore `α''` is uniq. Then the left square is a pullback.
 
-#### show that the image of `f` in a pullback preserves monomorphic property
+#### ex 2. show that the image of `f` in a pullback preserves monomorphic property
 
 ![pullback](https://cloud.githubusercontent.com/assets/526598/8302610/c0421b72-1965-11e5-87ad-f87bba3f4681.png)
 
 We let `g1, g2 : X -> B'`. `f' . g1 = f' . g2` because `m` is monic. assume `n . g1 = n . g2`. by defn of pullback, there exists a uniq factorization `g1 = g2`. `n . g1 = n . g2 -> g1 = g2`.
 
 (ref: http://www.mathematik.tu-darmstadt.de/~streicher/CTCL.pdf)
+
+
+#### ex 3. how to construct pullback from prods and eqzrs
+
+	   h           f . π1
+	K ---> A x B ==========> C
+	               g . π2
+
+	A x B --- π1 ---> A
+	A x B --- π2 ---> B
+	A --- f ---> C
+	B --- g ---> C
+	K --- h ---> A x B (mediating arrow from K to A x B)
+
+#### ex 4. what's pullout and what's the pullout on Set
+
+According to The Catsters Video, the pullout of `f : D -> A` and `g : D -> B` on Set is defined as **a disjoint union of `a` and `b` forall `a`, `b` that exists a `d`, `a = f d` and `b = g d`**.
+
+
