@@ -581,3 +581,19 @@ a limit is a cone that is most "special" among all other cones.
 
 From the diagram we can see that for all cones `v`, there exists a unique factorization from `v` to `u`, and that the bottom right triangle commutes for all `x` in the diagram, we say `u` is the universal cone, so called "limit".
 
+the formal defn for limit is ignored. here's a diagram that shows it clearly.
+
+![limit](https://cloud.githubusercontent.com/assets/526598/8381317/e9fd3e70-1bf8-11e5-8d5e-7504536330c8.png)
+
+
+#### category of cones
+
+it turns out the cones for a diagram `D` form a category.
+
+![limit](https://cloud.githubusercontent.com/assets/526598/8381317/e9fd3e70-1bf8-11e5-8d5e-7504536330c8.png)
+
+* obj: cones (`X`)
+* arr: the factorizations among cones (`k`)
+* id: identity on `X`
+
+a limit is a terminal object in this category and a colimit is the coterminal object. it follows that as terminal/coterm objects are uniq up to iso, so are limits.
