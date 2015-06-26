@@ -549,3 +549,35 @@ We let `g1, g2 : X -> B'`. `f' . g1 = f' . g2` because `m` is monic. assume `n .
 According to The Catsters Video, the pullout of `f : D -> A` and `g : D -> B` on Set is defined as **a disjoint union of `a` and `b` forall `a`, `b` that exists a `d`, `a = f d` and `b = g d`**.
 
 
+## Limits
+
+#### so what are limits?
+
+limit is a the universal constructions of the generalized properties like terminal, product, equalizer, and pullback.
+
+#### intuition of a cone
+
+so a cone to a diagram `D` is an object `X` from which there is a morphism from this object `X` to all the vertices of the diagram `D`, denoted by `D_i` and such that all triangles (`f_1 : X -> D_1, f_2 : X -> D_2, g : D_1 -> D_2`, for all existing `g : D1 -> D2`) commute.
+
+![cone](https://cloud.githubusercontent.com/assets/526598/8380898/7d7ba22a-1bf6-11e5-81ef-ea95843c1f12.png)
+
+in this screenshot of The Catster video, the blue `u` and the morphisms starting from `u` constructs a cone of the diagram `D` drawn in white chalk. the orange `v` and the orange arrows describes another cone to `D`.
+
+Formally, (from the book), let `C` be a category and `D` a diagram in `C`. A cone for `D` is a `C`-object `X` and arrows `f_i : X -> D_i` such that for each `g` in `D`, the diagram
+
+![cone](https://cloud.githubusercontent.com/assets/526598/8379658/7d35a6d2-1bef-11e5-8718-2668a39cd388.png)
+
+commutes.
+
+Notation for cone: `{ f_i : X -> D_i }`
+
+#### definition of a limit
+
+a limit is a universal cone.
+
+![limit](https://cloud.githubusercontent.com/assets/526598/8381181/0cfad3ac-1bf8-11e5-8185-c95985579708.png)
+
+a limit is a cone that is most "special" among all other cones.
+
+From the diagram we can see that for all cones `v`, there exists a unique factorization from `v` to `u`, and that the bottom right triangle commutes for all `x` in the diagram, we say `u` is the universal cone, so called "limit".
+
