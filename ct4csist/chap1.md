@@ -596,4 +596,30 @@ it turns out the cones for a diagram `D` form a category.
 * arr: the factorizations among cones (`k`)
 * id: identity on `X`
 
-a limit is a terminal object in this category and a colimit is the coterminal object. it follows that as terminal/coterm objects are uniq up to iso, so are limits.
+a limit is a terminal object in this category. it follows that as terminal objects are uniq up to iso, so are limits.
+
+#### example diagrams for limits
+
+**product**
+
+![product diagram](https://cloud.githubusercontent.com/assets/526598/8381455/b2771524-1bf9-11e5-95ee-757d8510c9b6.png)
+
+it becomes
+
+![product limit](https://cloud.githubusercontent.com/assets/526598/8381476/d2aa1a4e-1bf9-11e5-9ffd-5a9dfccaed27.png)
+
+**pullback**
+
+![pullback diagram](https://cloud.githubusercontent.com/assets/526598/8381485/effdb3d0-1bf9-11e5-9833-90e24ddaecaf.png)
+
+it becomes
+
+![pullback limit](https://cloud.githubusercontent.com/assets/526598/8381501/13a9fc80-1bfa-11e5-9065-d8f07ea7ad9b.png)
+
+`h` is implied by the commutativity of the diagram.
+
+
+#### cocone, colimit
+
+dually. `{ f_i : D_i -> X }` is a cocone.
+
