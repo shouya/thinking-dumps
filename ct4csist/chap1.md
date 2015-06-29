@@ -623,3 +623,24 @@ it becomes
 
 dually. `{ f_i : D_i -> X }` is a cocone.
 
+#### what is, formally, a cone
+
+let's talk about a cone of diagram in shape `D` with the top object `u`.
+
+shape `D` is a small/finite category. and the diagram is a functor `I` that maps from objs/arrs `D` to the category they belong to.
+
+`u` is represented by a functor that maps from objects in `D` to `u` itself, and maps arrows in `D` to `id_u`. (the constant functor `Δ_u`)
+
+So a cone is a natural transformation from `Δ_u` to `I`. The naturality square shows below:
+
+        α_x                η_x
+	x ------> Δ_u(x), or u ----> I(x)
+	|             |               |
+	| f           | id            | I(f)
+	v             v               v
+	y ------> Δ_u(y), or u ----> I(y)  
+	    α_y                η_y
+
+The left hand side was added for clarity about that `f : x -> y` isn't simply `id` as might suggested by the constant functor `Δ_u`.
+
+
