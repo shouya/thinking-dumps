@@ -643,4 +643,8 @@ So a cone is a natural transformation `η` from `Δ_u` to `I`. The naturality sq
 
 The left hand side was added for clarity about that `f : x -> y` isn't simply `id` as might suggested by the constant functor `Δ_u`.
 
+#### Skipped Sections: Limit Theorem and Exponentiation 
 
+I tried several time can still can't catch the idea of limit theorem and exponentiation. I decided to move on to the next chapter about functors.
+
+Hereby finishing chapter 1.
