@@ -631,7 +631,7 @@ shape `D` is a small/finite category. and the diagram is a functor `I` that maps
 
 `u` is represented by a functor that maps from objects in `D` to `u` itself, and maps arrows in `D` to `id_u`. (the constant functor `Δ_u`)
 
-So a cone is a natural transformation from `Δ_u` to `I`. The naturality square shows below:
+So a cone is a natural transformation `η` from `Δ_u` to `I`. The naturality square shows below:
 
         α_x                η_x
 	x ------> Δ_u(x), or u ----> I(x)
