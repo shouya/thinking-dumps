@@ -1,3 +1,4 @@
+# Chapter 1. Basic Constructions
 
 ## 1.1 Categories
 
@@ -412,7 +413,7 @@ category of posets:
 * arr: monotone total functions (total func that preserves `≤`)
 
 this question takes a little bit thinking on it and was interesting. here's how i conceive the answer:
-  
+
 ![coprod](https://cloud.githubusercontent.com/assets/526598/8224838/17d5084a-155b-11e5-811d-79f850cff1ae.png)
 
 suppose we have a copro `S` of `X` and `Y`, and `p : X -> S, q : Y -> S` are monotone func. Then we conceive two other monotone func `f : X -> V, g : Y -> V` that maps `X` and `Y` to `V`. To say `S` is the copro, we must show there are uniq monotone func from `S` to `V`. How can we choose `p` and `q` to get a `S` such that there exists a uniq morphism `h : S -> V`? simply we do the same as we do for **Set**. We choose `p x = (0, x)` and `q y = (1, y)` so we get `h (0, x) = f x; h (1, y) = g y`. The procedure works with **Set** should also work for **Pos**, but the point is, is `S` we defined here a poset and is `h` a monotone func?
@@ -643,7 +644,7 @@ So a cone is a natural transformation `η` from `Δ_u` to `I`. The naturality sq
 
 The left hand side was added for clarity about that `f : x -> y` isn't simply `id` as might suggested by the constant functor `Δ_u`.
 
-#### Skipped Sections: Limit Theorem and Exponentiation 
+#### Skipped Sections: Limit Theorem and Exponentiation
 
 I tried several time can still can't catch the idea of limit theorem and exponentiation. I decided to move on to the next chapter about functors.
 
