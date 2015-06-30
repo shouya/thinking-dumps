@@ -83,3 +83,46 @@ it's just a monoid homomorphism!
 fobj x = (x, x)
 fmap f (x, _) = (f x, f x)
 ```
+
+#### hom-functor
+
+    C(A, -)(B) := C(A,B)
+    C(A, f : B -> C)(g : A -> B) := f . g : A -> C, or C(A,C)
+    => C(A, f : B -> C) : C(A,B) -> C(A,C)
+
+```haskell
+fobj x = [arr, forall arr : a -> x] -- abbr to forall a -> x below
+fmap (f :: b -> c) = (forall a -> b) ~> (forall a -> c)
+```
+
+the set `C(A,B)` is called a hom-set.
+
+in haskell, this is the `instance Functor (a ->)`.
+
+
+#### ex 2.1.12 def contravariant version and bifunctor version hom-functors
+
+contravariant: `C(-, B)`: `contramap :: (a -> c) ~> ((c -> b) -> (a -> b))`
+
+```haskell
+instance Contravariant (-> b) where
+    contramap :: (a -> c) -> (f c -> f a)
+    contramap :: (a -> c) -> ((c -> b) -> (a -> b))
+    contramap f g = g . f
+```
+
+bifunctor `C(-,-)`:
+
+accroding to
+[easy](https://www.fpcomplete.com/school/to-infinity-and-beyond/pick-of-the-week/profunctors), A `Profunctor` is [just](http://james-iry.blogspot.jp/2009/05/brief-incomplete-and-mostly-wrong.html) a bifunctor that is contravariant in the first argument and covariant in the second. [What's the problem](http://www.quickmeme.com/meme/3r455v/)?
+
+```haskell
+class Profunctor p where
+    dimap :: (a -> b) -> (c -> d) -> p b c -> p a d
+
+instance Profunctor (->) where
+    dimap :: (a -> b) -> (c -> d) -> (b -> c) -> (a -> d)
+    dimap ab cd bc = ab >>> bc >>> cd
+```
+
+They are so easy.
