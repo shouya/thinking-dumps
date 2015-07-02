@@ -126,3 +126,19 @@ instance Profunctor (->) where
 ```
 
 They are so easy.
+
+## 2.2 *F*-Algebra
+
+#### Ω-algebra
+
+* a set Ω of operator symbols, equipped with a function
+* a function `ar : Ω -> ℕ` specifying their arities, and
+* a carrier set `|A|`, and
+* a collection of funtions `{a_ω}` ![omega](https://cloud.githubusercontent.com/assets/526598/8444214/61150658-1f5c-11e5-8558-de849f1094b2.png) or,![omega](https://cloud.githubusercontent.com/assets/526598/8449077/1df3791e-1f9c-11e5-8bad-799bc3ca613b.png),
+  where Σ stands for disjoint union.
+
+`{a_ω}` can be described as the image of `|A|` under a
+functor `F : Set -> Set`:
+
+    F(S) = Σ_{ω ∈ Ω}{S^{ar(ω)}}
+    F(g)(ω, (x₁, x₂, ..., x_{ar(ω)}) = (ω, (g(x₁), g(x₂), ..., g(x_{ar(ω)}))
