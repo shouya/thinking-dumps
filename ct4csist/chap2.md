@@ -141,4 +141,4 @@ They are so easy.
 functor `F : Set -> Set`:
 
     F(S) = Σ_{ω ∈ Ω}{S^{ar(ω)}}
-    F(g)(ω, (x₁, x₂, ..., x_{ar(ω)}) = (ω, (g(x₁), g(x₂), ..., g(x_{ar(ω)}))
+    F(g)(ω, (x₁, x₂, ..., x_{ar(ω)}) = (ω, (g(x₁), g(x₂), ..., g(x_{ar(ω)})))
