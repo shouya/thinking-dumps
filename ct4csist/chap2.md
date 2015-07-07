@@ -131,10 +131,24 @@ They are so easy.
 
 #### Ω-algebra
 
+A universal algebra is a three tuple: `(|A|, Ω, a_ω)`
+
+* `|A|` denotes `A` as a set
+* `Ω` is a set of operation symbols
+
+For a universal algebra, there is a function called `ar` that
+determines the arity of a symbol. `ar : Ω -> ℕ`.
+
+And what is `a_ω`? It is a mapping function `a_ω : |A|^{ar(ω)} → |A|`
+for all possible `ω`s. (![omega](https://cloud.githubusercontent.com/assets/526598/8444214/61150658-1f5c-11e5-8558-de849f1094b2.png))
+
+
+
+
 * a set Ω of operator symbols, equipped with a function
 * a function `ar : Ω -> ℕ` specifying their arities, and
 * a carrier set `|A|`, and
-* a collection of funtions `{a_ω}` ![omega](https://cloud.githubusercontent.com/assets/526598/8444214/61150658-1f5c-11e5-8558-de849f1094b2.png) or,![omega](https://cloud.githubusercontent.com/assets/526598/8449077/1df3791e-1f9c-11e5-8bad-799bc3ca613b.png),
+* a collection of funtions `{a_ω}` ) or,![omega](https://cloud.githubusercontent.com/assets/526598/8449077/1df3791e-1f9c-11e5-8bad-799bc3ca613b.png),
   where Σ stands for disjoint union.
 
 `{a_ω}` can be described as the image of `|A|` under a
