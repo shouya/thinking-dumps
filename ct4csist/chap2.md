@@ -142,17 +142,19 @@ determines the arity of a symbol. `ar : Ω -> ℕ`.
 And what is `a_ω`? It is a mapping function `a_ω : |A|^{ar(ω)} → |A|`
 for all possible `ω`s. (![omega](https://cloud.githubusercontent.com/assets/526598/8444214/61150658-1f5c-11e5-8558-de849f1094b2.png))
 
+#### Two ways to describe Ω-alg homomorphism
+
+* Ω-alg homomorphism is defined as a function `h : |A| -> |B|` where
+   for each `ω ∈ Ω` and `(x₁, x₂, ..., x_{ar(ω)}) ∈ |A|^ar{ω}`,
+
+```
+h(a_ω(x₁, x₂, ..., x_{ar(ω)})) = b_ω(h(x₁), h(x₂), ..., h(x_{ar(ω))}
+```
+
+* F-homomorphism from `(|A|, a)` to `(|B|, b)` is a function
+   `h : |A| -> |B|` such that the following diagram commutes:
+
+![f-homo](https://cloud.githubusercontent.com/assets/526598/8545106/2c93af8e-2479-11e5-82b0-d44788af63e5.png)
 
 
-
-* a set Ω of operator symbols, equipped with a function
-* a function `ar : Ω -> ℕ` specifying their arities, and
-* a carrier set `|A|`, and
-* a collection of funtions `{a_ω}` ) or,![omega](https://cloud.githubusercontent.com/assets/526598/8449077/1df3791e-1f9c-11e5-8bad-799bc3ca613b.png),
-  where Σ stands for disjoint union.
-
-`{a_ω}` can be described as the image of `|A|` under a
-functor `F : Set -> Set`:
-
-    F(S) = Σ_{ω ∈ Ω}{S^{ar(ω)}}
-    F(g)(ω, (x₁, x₂, ..., x_{ar(ω)}) = (ω, (g(x₁), g(x₂), ..., g(x_{ar(ω)})))
+#### ex 2.2.1 check above two defn are eqv
