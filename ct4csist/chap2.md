@@ -157,4 +157,56 @@ h(a_ω(x₁, x₂, ..., x_{ar(ω)})) = b_ω(h(x₁), h(x₂), ..., h(x_{ar(ω))}
 ![f-homo](https://cloud.githubusercontent.com/assets/526598/8545106/2c93af8e-2479-11e5-82b0-d44788af63e5.png)
 
 
+#### so what exactly is an algebra
+
+omega algebra is a univeral algebra, while not all algebras are necessary
+univeral ones.
+
+so for omega alg, first there is a set `|A|`, now we extend the set with a collection
+of operations that act on `|A|`, `a_ω : |A|^ar(ω) -> |A|`.
+
+omega algebra homomorphism is a homomorphism from an alg to another
+alg. it consists two parts, the morphism of underlying set and the
+morphism of operations. the change of set is easy, which is simply a
+function `f : |A| -> |B|`. while it takes a little bit think to
+understand how the morphism between operation set works.
+
+we use `~>` to denote morphism. so the morphism will have signature:
+
+    f : (|A|^ar(ω) -> |A|) ~> (|B|^ar(ω) -> |B|)
+
+why does omega keeps unchanged? because we are dealing with the
+univeral algebra (omega algebra). Ω is not a specific set but more of
+a symbolized representation of a univeral set with all
+possibilities. What is really important is the underlying set `|A|`
+and `|B|`. which is what should be considered carefully.
+
+#### what is f-alg
+
+f-alg first requires an algebra and then an underlying set of the
+algebra.
+
+my example. for a given algebra on set A where there are two operations:
+
+    • : A x A -> A
+    @ : A -> A
+    1 : A
+
+we have a functor `F : Set -> Set` that transforms the set `A` to another set that
+`F(A) :=`
+
+    {(•, (a₁, a₂)) | a₁,a₂ ∈ A} ∪
+    {(@, (a₁)) | a₁ ∈ A} ∪
+    {(1, ())}
+
+a functor, of course, have to transform functions. if we have function
+`h : forall a,b ∈ A, a -> b`, then `F(h)(F(A))` will be:
+
+    {(•, (h(a₁), h(a₂))) | a₁,a₂ ∈ A} ∪
+    {(@, (h(a₁)) | a₁ ∈ A} ∪
+    {(1, ())}
+
+notice that for function `h : a -> b` we have `F : (a -> b) -> f a -> f b`.
+
+
 #### ex 2.2.1 check above two defn are eqv
