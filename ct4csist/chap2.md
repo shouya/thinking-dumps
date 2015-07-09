@@ -206,7 +206,8 @@ a functor, of course, have to transform functions. if we have function
     {(@, (h(a₁)) | a₁ ∈ A} ∪
     {(1, ())}
 
-notice that for function `h : a -> b` we have `F : (a -> b) -> f a -> f b`.
+notice that for function `h : a -> b` we have `F : (a -> b) -> F a -> F b`.
 
+f-alg is just a morphism from the codom category of `F` of `A` to `A`, that is, `F(A) -> A`. which is then clear.
 
-#### ex 2.2.1 check above two defn are eqv
+#### ex 2.2.1 check above^2 two defn of homomorphisms are eqv
