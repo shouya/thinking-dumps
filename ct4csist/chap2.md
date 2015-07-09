@@ -239,4 +239,22 @@ so it's eqv to f-alg.
     = ∀ ω, (F(f).F(g))(ω, (k₁, ..., k_n))
 
 
-#### ex 2. show if f-alg `(A, a) is the init in cat f-alg then a is iso
+#### ex 2. show if f-alg `(A, a)` is the init in cat f-alg then `a` is iso
+
+given an initial alg struct `a : F(A) -> A`, define a homo function
+`h : A -> F(A)`, by initiality(why ?), the following square commutes:
+
+
+            F(h)
+    F(A) -----------> F(F(A))
+     |                 |
+     | a               | F(a)
+     |                 |
+     v       h         v
+     A -------------> F(A)
+
+here shows that `h . a = id_F(A)`, and by `F(a) . F(h) = id_F(A)`,
+we have `F(a . h) = F(id_A) => a . h = id_A`. therefore `a` is iso.
+
+
+from Lambek’s theorem, initial algebra of an endofunctor, ncatlab.org.
