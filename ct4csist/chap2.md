@@ -203,7 +203,7 @@ a functor, of course, have to transform functions. if we have function
 `h : forall a,b ∈ A, a -> b`, then `F(h)(F(A))` will be:
 
     {(•, (h(a₁), h(a₂))) | a₁,a₂ ∈ A} ∪
-    {(@, (h(a₁)) | a₁ ∈ A} ∪
+    {(@, (h(a₁))) | a₁ ∈ A} ∪
     {(1, ())}
 
 notice that for function `h : a -> b` we have `F : (a -> b) -> F a -> F b`.
@@ -211,3 +211,32 @@ notice that for function `h : a -> b` we have `F : (a -> b) -> F a -> F b`.
 f-alg is just a morphism from the codom category of `F` of `A` to `A`, that is, `F(A) -> A`. which is then clear.
 
 #### ex 2.2.1 check above^2 two defn of homomorphisms are eqv
+
+
+if we have a Ω-alg,
+`h(a_ω(x₁, ..., x_ar(ω))) = b_ω(h(x₁), ..., h(x_ar(ω)))`,
+
+which means `h . a_ω = b_ω . fmap h`, which is the same as the
+commutative diagram below:
+
+![f-homo](https://cloud.githubusercontent.com/assets/526598/8545106/2c93af8e-2479-11e5-82b0-d44788af63e5.png)
+
+so it's eqv to f-alg.
+
+#### ex 1. for cat `K` and ftor `F : K -> K` check id and comp of f-alg
+
+    for id := a -> a
+      ∀ ω, F(id)(ω, (k₁, ..., k_n))
+    = ∀ ω, (ω, (id(k₁), ..., id(k_n)))
+    = ∀ ω, (ω, (k₁, ..., k_n))`
+    = ∀ ω, id(F(K))
+
+    for f := b -> c, g := a -> b
+      ∀ ω, F(f.g)(ω, (k₁, ..., k_n))
+    = ∀ ω, (ω, ((f.g)(k₁), ..., (f.g)(k_n)))
+    = ∀ ω, (ω, (f(g(k₁)), ..., f(g(k_n))))
+    = ∀ ω, F(f)(ω, (g(k₁), ..., g(k_n)))
+    = ∀ ω, (F(f).F(g))(ω, (k₁, ..., k_n))
+
+
+#### ex 2. show if f-alg `(A, a) is the init in cat f-alg then a is iso
