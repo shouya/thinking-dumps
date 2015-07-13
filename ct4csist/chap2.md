@@ -258,3 +258,47 @@ we have `F(a . h) = F(id_A) => a . h = id_A`. therefore `a` is iso.
 
 
 from Lambek’s theorem, initial algebra of an endofunctor, ncatlab.org.
+
+
+## Natural Transformation
+
+#### What is a nat trans
+
+A nattrans from functor `F : C -> D` to functor `G : C -> D` is
+defined as as mapping `η : F -> G` such for all `x,y ∈ C`, the
+following square commutes:
+
+            η_x
+    F(x) --------> G(x)
+     |              |
+     |              |
+     |F(f)          |G(f)
+     |              |
+     v      η_y     v
+    F(y) --------> G(y)
+
+intuitively, it means `∀ x. η(F(x)) = G(x)` and `η` is homomorphic
+(shape preserving).
+
+#### Vertial Composition
+
+![vertical composition](https://cloud.githubusercontent.com/assets/526598/8644700/4c015908-290f-11e5-972b-bafd2df38ad3.png)
+
+![vert comp](https://cloud.githubusercontent.com/assets/526598/8644629/91767438-290e-11e5-9998-b4aacc491efd.png)
+
+commutes.
+
+#### Horizontal composition
+
+![horz comp](https://cloud.githubusercontent.com/assets/526598/8644634/9a14353a-290e-11e5-8a86-32622ee42442.png)
+
+the diagram looks like:
+
+![horz comp](https://cloud.githubusercontent.com/assets/526598/8644637/a3cd7488-290e-11e5-833b-cee32207fe31.png)
+
+it turns out to be the naturality square on `β`:
+
+![horz comp](https://cloud.githubusercontent.com/assets/526598/8644644/abecd05a-290e-11e5-9058-8abd5d5478c3.png)
+
+* ref 1. [catster's video course](https://www.youtube.com/watch?v=XnrqHd39Cl0)
+* ref 2. [fnats.pdf by andrzej tarlecki](http://www.mimuw.edu.pl/~tarlecki/teaching/ct/slides/fnats.pdf)
