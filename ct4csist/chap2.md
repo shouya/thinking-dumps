@@ -303,6 +303,26 @@ it turns out to be the naturality square on `β`:
 * ref 1. [catster's video course](https://www.youtube.com/watch?v=XnrqHd39Cl0)
 * ref 2. [fnats.pdf by andrzej tarlecki](http://www.mimuw.edu.pl/~tarlecki/teaching/ct/slides/fnats.pdf)
 
+#### Naturally isomorphic
+
+think of cat of functors in `[C;D]`, with nat trans's as arrows. an
+iso is called a nat iso. (nat trans)
+
+functor `A : C -> D` is said to be naturally isomorphic to functor
+`B : C -> D` iff there exists a natural isomorphism from `A` to `B`.
+
+#### Representable functor
+
+a representable functor is a functor of a special form from an
+arbitrary cat into cat of sets. [^2]
+
+a functor `F : C -> Set` is said to be represetable if it is nat isoic
+to `Hom(A,-)` for some `A ∈ C`.
+
+a representation of `F` is a pair `(A, Φ)` where `Φ : Hom(A,-) -> F`.
+
+[^2]: https://en.wikipedia.org/wiki/Representable_functor
+
 #### ex 1
 
 i didn't learn about exponential category so i skip this part.
@@ -337,6 +357,9 @@ suppose we have another nat trans `υ : S ~≻ T` exists iff
 `S(C) ≤ T(C)`. `∀ C ∈ 🐈, τ_C(S(C)) = υ_C(S(C))`. suppose we have a
 `D ∈ 🐕. st ∀ C ∈ 🐈. S(C) ≠ D`, there is no saying `S(C) ≤ T(C)` and
 both `τ,υ : S ~≻ T` does not exist. so in this case, `S` must be
-epimorphic, same for `T`. We conclude `τ_C · S = υ_C · S => τ_C = υ_C`.
+epimorphic, same for `T`.
+We conclude `τ_C · S = υ_C · S => τ_C = υ_C`.
 
 [^1]: https://en.wikipedia.org/wiki/Preorder
+
+#### ex 3. show `I_Set : Set -> Set` is rep'd by any singleton set
