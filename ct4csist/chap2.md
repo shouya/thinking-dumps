@@ -305,8 +305,8 @@ it turns out to be the naturality square on `β`:
 
 #### Naturally isomorphic
 
-think of cat of functors in `[C;D]`, with nat trans's as arrows. an
-iso is called a nat iso. (nat trans)
+a nat trans `τ : F -> G` whose components `τ_A` are iso is called nat
+iso from `F` to `G`.
 
 functor `A : C -> D` is said to be naturally isomorphic to functor
 `B : C -> D` iff there exists a natural isomorphism from `A` to `B`.
@@ -317,9 +317,10 @@ a representable functor is a functor of a special form from an
 arbitrary cat into cat of sets. [^2]
 
 a functor `F : C -> Set` is said to be represetable if it is nat isoic
-to `Hom(A,-)` for some `A ∈ C`.
+to `Hom(A,-)` for some `A ∈ C`, we say `F` is representable by `A`.
 
 a representation of `F` is a pair `(A, Φ)` where `Φ : Hom(A,-) -> F`.
+
 
 [^2]: https://en.wikipedia.org/wiki/Representable_functor
 
@@ -363,3 +364,41 @@ We conclude `τ_C · S = υ_C · S => τ_C = υ_C`.
 [^1]: https://en.wikipedia.org/wiki/Preorder
 
 #### ex 3. show `I_Set : Set -> Set` is rep'd by any singleton set
+
+
+`-> : const` and `<- : point`
+
+
+          → : λa.x
+    I(X) ----------> hom({A},X)
+     |    ← : f a     |
+     |                |
+     v                v
+    I(Y) ----------> hom({A},Y)
+
+
+#### ex 4. show forgetful f'tor `U : Mon -> Set` is rep'd by mon `(ℕ,+,0)`
+
+    U(X) -----------> hom((ℕ,+,0),X)
+     |                 |
+     |                 |
+     v                 v
+    U(Y) -----------> hom((ℕ,+,0),Y)
+
+`-> : const` and `<- : xxx`
+
+because there exists monoid homomorphism
+`forall M. xxx : (ℕ,+,0) -> (M,•,e)`.
+
+#### ex 5. extend cat FPL with lists and poly funcs on lists
+
+**functors:**
+
+* `List : FPL ~> List FPL`, `λx.[x]` and `fmap`
+* `Length : List FPL -> {Int} ⊂ FPL`, `len` and `fmap len`
+
+**nat trans:**
+
+* `∀ A ∈ X. Cons(A,-) : List X -> List X`
+
+etc.
