@@ -302,3 +302,41 @@ it turns out to be the naturality square on `β`:
 
 * ref 1. [catster's video course](https://www.youtube.com/watch?v=XnrqHd39Cl0)
 * ref 2. [fnats.pdf by andrzej tarlecki](http://www.mimuw.edu.pl/~tarlecki/teaching/ct/slides/fnats.pdf)
+
+#### ex 1
+
+i didn't learn about exponential category so i skip this part.
+
+#### ex 2 show there is a such uniq nat trans
+
+so first we want to know what is a preorder, as well as what it is as
+a category. according to wikipedia, a preorder set is a set with a
+reflexive and transitive binary relation. when defined as cat, the
+objects are elements of the set, and hom-sets have one or zero element
+(one for objs related, zero otherwise) [^1]
+
+look at the diagram below:
+
+             τ_x
+    S(x) -----------> T(x)
+     |                 |
+     |S(f)             |T(f)
+     |                 |
+     v       τ_y       v
+    S(y) -----------> T(y)
+
+
+existence:
+
+`τ` exists if and only if `S(C) ≤ T(C)` and it makes the diagram
+commutes. therefore `τ` is a nat trans.
+
+uniqueness:
+
+suppose we have another nat trans `υ : S ~≻ T` exists iff
+`S(C) ≤ T(C)`. `∀ C ∈ 🐈, τ_C(S(C)) = υ_C(S(C))`. suppose we have a
+`D ∈ 🐕. st ∀ C ∈ 🐈. S(C) ≠ D`, there is no saying `S(C) ≤ T(C)` and
+both `τ,υ : S ~≻ T` does not exist. so in this case, `S` must be
+epimorphic, same for `T`. We conclude `τ_C · S = υ_C · S => τ_C = υ_C`.
+
+[^1]: https://en.wikipedia.org/wiki/Preorder
