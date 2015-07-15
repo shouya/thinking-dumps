@@ -403,6 +403,85 @@ because there exists monoid homomorphism
 
 etc.
 
+## (The Catsters) Adjunctions
+
+#### intuitions
+
+
+for a pair of functors `F : C -> D` and `G : D -> C`
+
+
+            F
+    C <------------> D
+            G
+
+
+* isomorphism: `1_C = GF, FG = 1_D`
+* equivalence: `1_C ≅ GF, FG ≅ 1_D`
+* adjunction: `1_C ~≻ GF, FG ~≻ 1_C`
+
+#### defn of adj (1)
+
+left adjunction of a pair of functors `F : C -> D` and
+`G : C -> D`, denoted as `F ⊣ G`, is a pair of nat trans:
+
+    η : 1_C -> GF
+    ε : FG -> 1_D
+
+
+that satisfies
+
+       Fη          εF
+    F -----> FGF ------> F
+     \________________/
+             1_C
+
+
+       ηG          Gε
+    G -----> GFG ------> G
+     \________________/
+             1_D
+
+
+these two identities are called **triangle identities**.
+
+or we can use the diagrams `η`, and `ε`:
+
+        F
+    C -----> D                D ---+ 1_D
+     \       | G              |G    \
+      \1_C   v                v   F  v
+       +---> C                C ----> D
+
+they can be composed like this:
+
+    ◥◣ = 1
+
+    ◣
+    ◥  = 1
+
+
+#### defn of adj (2)
+
+left adj of functors `F : C -> D, G : D -> C` if
+`Hom_D(F x, y) ≅ Hom_C(x, G y)` for all `x ∈ C, y ∈ D`.
+
+
+#### eqv of defn (1) and (2)
+
+    Hom_D(F x, y) ≅ Hom_C(x, G y)
+
+for (2) we know `Hom_D(F x, y)` is iso to `Hom_C(x, G y)`.
+
+first we let `y = F x`, then lhs is `1_Fx`, and rhs is
+`x -> F.G x`, i.e. `F.G`.
+
+
+
+
+
+
+
 ## 2.3 Adjoint functors
 
 (some defn are from Abstract and Concrete Categries - the Joy of Cats)[^3]
