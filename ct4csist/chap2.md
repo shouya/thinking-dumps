@@ -402,3 +402,61 @@ because there exists monoid homomorphism
 * `∀ A ∈ X. Cons(A,-) : List X -> List X`
 
 etc.
+
+## 2.3 Adjoint functors
+
+(some defn are from Abstract and Concrete Categries - the Joy of Cats)[^3]
+
+[^3]: http://katmat.math.uni-bremen.de/acc/acc.pdf
+
+#### types of functors
+
+let `F : A -> B` be a functor.
+
+* `F` is called an **embedding** if `F` is injective on morphisms.
+
+* `F` is called **faithful** if for all pairs of `x,y ∈ A`
+
+    F : Hom_A(x,y) -> Hom_B(F(x), F(y))
+
+is injective. (same as embedding, in CWM)
+
+* `F` is called **fulll** if `F` is surjective on morphisms.
+
+
+#### concrete categeory
+
+A concrete category is a category that looks like a category of “sets
+with extra structure”, that is a category of structured sets. [^4]
+
+
+a concrete cat over `X` is a cat `A` equipped with a forgetful
+faithful functor `U : A -> X`. `X` is called the base of `(A,U)`.
+
+we take `X` as `Set` in most times.
+
+[^4]: http://ncatlab.org/nlab/show/concrete+category
+
+#### universal arrow
+
+in a concrete cat `A` over `Sets`.
+
+a univeral arrow over an `Set` is a structured arrow
+`u : Set -> |A|` with dom `Set` that has the following universal
+property: for each structured arrow `f : Set -> |a'|` there exists a
+uniq `A`-morphism `h : |a| -> |a'|` such the triangle commutes:
+
+         u
+    Set --> |a|
+       \     |
+        \f   | h
+         \   |
+          \  |
+           v v
+           |a'|
+
+
+#### adjoint functor
+
+A functor `G : A -> B` is adjoint if for every `b ∈ B` there exists a
+`G`-universal arrow with domain `b`.
