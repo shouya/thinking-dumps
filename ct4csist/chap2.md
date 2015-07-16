@@ -425,11 +425,11 @@ for a pair of functors `F : C -> D` and `G : D -> C`
 left adjunction of a pair of functors `F : C -> D` and
 `G : C -> D`, denoted as `F ⊣ G`, is a pair of nat trans:
 
-    η : 1_C -> GF
-    ε : FG -> 1_D
+    η : 1_C -> GF     (called unit)
+    ε : FG -> 1_D     (called counit)
 
 
-that satisfies
+that satisfies:
 
        Fη          εF
     F -----> FGF ------> F
@@ -463,8 +463,40 @@ they can be composed like this:
 
 #### defn of adj (2)
 
-left adj of functors `F : C -> D, G : D -> C` if
-`Hom_D(F x, y) ≅ Hom_C(x, G y)` for all `x ∈ C, y ∈ D`.
+left adj of functors `F : C -> D, G : D -> C` is given by a
+nat iso `α : Hom_D(F x, y) ≅ Hom_C(x, G y)` for all `x ∈ C, y ∈ D` (bifunctor).
+
+what are the functors that are naturally iso? (for both `x` and `y`)
+
+    C^op ~> Set
+    λx. D(F x, y)     (Hom_D(F -, y))
+
+    C^op ~> Set
+    λx. C(x, G y)     (Hom_C(-, G y))
+
+    D ~> Set
+    λy. D(F x, y)     (Hom_D(F x, -))
+
+    D ~> Set
+    λy. C(x, G y)     (Hom_C(x, G -))
+
+
+what does the nat squre look like for `f : x -> x'`,
+
+
+                     α_x'
+    Hom_D(F x', y) -----------> Hom_C(x', G y)
+        |                           |
+        |                           |
+        | k1                        | k2
+        |                           |
+        |                           |
+        v            α_x            v
+    Hom_D(F x, y) ------------> Hom_C(x, G y)
+
+
+    k1 : (x -> x') -> (F x' -> y) -> (F x -> y) => k1 f g := g (F f)
+    k2 : (x -> x') -> (x' -> G y) -> (x -> G y) => k2 f g := g f
 
 
 #### eqv of defn (1) and (2)
@@ -474,7 +506,13 @@ left adj of functors `F : C -> D, G : D -> C` if
 for (2) we know `Hom_D(F x, y)` is iso to `Hom_C(x, G y)`.
 
 first we let `y = F x`, then lhs is `1_Fx`, and rhs is
-`x -> F.G x`, i.e. `F.G`.
+`x -> F.G x`, i.e. `F.G`. so `Hom_D(F x, F x) ≅ Hom_C(x, G (F x))`.
+
+so it is a nat trans `1_D ~≻ GF` which is the unit `η`!
+
+We then let `x = G y`. so `Hom_D(F (G y), y) ≅ Hom_C(G y, G y)`,
+
+it turns out to be `FG ~≻ 1_C`, which is the counit `ε`!
 
 
 
