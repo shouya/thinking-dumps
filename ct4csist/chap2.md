@@ -407,7 +407,6 @@ etc.
 
 #### intuitions
 
-
 for a pair of functors `F : C -> D` and `G : D -> C`
 
 
@@ -444,21 +443,6 @@ that satisfies:
 
 
 these two identities are called **triangle identities**.
-
-or we can use the diagrams `η`, and `ε`:
-
-        F
-    C -----> D                D ---+ 1_D
-     \       | G              |G    \
-      \1_C   v                v   F  v
-       +---> C                C ----> D
-
-they can be composed like this:
-
-    ◥◣ = 1
-
-    ◣
-    ◥  = 1
 
 
 #### defn of adj (2)
@@ -515,9 +499,24 @@ We then let `x = G y`. so `Hom_D(F (G y), y) ≅ Hom_C(G y, G y)`,
 it turns out to be `FG ~≻ 1_C`, which is the counit `ε`!
 
 
+#### adj ftors gives rise to monad on C
 
+let `T` to be `GF : C -> C`.
 
+`η : 1 -> T` is the unit in monad.
 
+`μ : T² -> T` (`GεF : GFGF |-> GF`) is the multiplication in monad.
+
+st the following diagram commutes.
+
+        ηT      Tη                       μT
+      T---->T^2<----T            T^3 ----------> T^2
+       \     |     /              |               |
+        \    |μ   /               |               |
+         \   |   /                |Tμ             |μ
+          \  |  /                 |               |
+           v v v                  v      μ        v
+             T                   T^2 -----------> T
 
 
 ## 2.3 Adjoint functors
