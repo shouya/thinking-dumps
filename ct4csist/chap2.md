@@ -576,3 +576,21 @@ uniq `A`-morphism `h : |a| -> |a'|` such the triangle commutes:
 
 A functor `G : A -> B` is adjoint if for every `b ∈ B` there exists a
 `G`-universal arrow with domain `b`.
+
+#### Adjoint functor defined in ct4csist
+
+* a pair of cat: `C` and `D`
+* a pair of functors: `F : C -> D` and `G : D -> C`
+* a natural trans: `η : I_C ~≻ (G . F)` (unit)
+
+such that the following triangle commutes:
+
+      η_X
+    X --> G(F(X))
+     \      |
+      \     |
+      f\    |G(f^#)
+        \   |
+         \  |
+          v v
+          G(Y)
