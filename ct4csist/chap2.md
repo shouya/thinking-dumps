@@ -594,3 +594,12 @@ such that the following triangle commutes:
          \  |
           v v
           G(Y)
+
+#### examples of adj ftors
+
+`C` and `1`:
+
+* `"C": 1`, `"D": C`
+* `F: (1 : 1) ↦ (0 ：C)`, `G: ∀ c ∈ C. c ↦ 1` (`const 1`)
+* `η: I_1 ~≻ I_1, ι: (const 0) ~≻ I_C`
+* `C(0_C, Y) ≅ 1(1, 1)`
