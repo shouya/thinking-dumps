@@ -649,3 +649,12 @@ counit: FX ---(Fg*)----> FGY ----(εY)----> Y
 **`C -> B^A` ⊣ `C × A -> B`**:
 
 skipped since I didn't learn exponential.
+
+
+
+**`(ℤ, ≤)` and `(ℝ, ≤)`, `⌈x⌉` ⊣ `U`**
+
+* `C: (ℝ, ≤)`, `D: (ℤ, ≤)`
+* `F: ⌈x⌉`, `G: U: Int -> Real`
+* `η: a ≤ GFa ⇒ a ≤ a`, `ε: ∀b ∈ D, FGb ≤ b ⇒ ⌈b⌉ ≤ b`
+* `⌈a⌉ ≤ b ≅ a ≤ b.to_i`
