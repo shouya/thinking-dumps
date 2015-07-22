@@ -597,9 +597,18 @@ such that the following triangle commutes:
 
 #### examples of adj ftors
 
+> Hom_D(F x, y) ≅ Hom_C(x, G y)
+
 `C` and `1`:
 
 * `"C": 1`, `"D": C`
 * `F: (1 : 1) ↦ (0 ：C)`, `G: ∀ c ∈ C. c ↦ 1` (`const 1`)
-* `η: I_1 ~≻ I_1, ι: (const 0) ~≻ I_C`
+* `η: I_1 ~≻ I_1, ε: (const 0) ~≻ I_C`
 * `C(0_C, Y) ≅ 1(1, 1)`
+
+`Π : C x C -> C` and `Δ : C -> C x C`:
+
+* `"C": C`, `"D": <C, C>, or C x C`
+* `F: Δ`, `G: Π`
+* `η: X ↦ <X,X>`
+* `D(<X,X>, <X',X'>) ≅ C(X, (X',X'))`
