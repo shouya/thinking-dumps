@@ -652,9 +652,24 @@ skipped since I didn't learn exponential.
 
 
 
-**`(ℤ, ≤)` and `(ℝ, ≤)`, `⌈x⌉` ⊣ `U`**
+**`(ℤ, ≤)` and `(ℝ, ≤)`, `⌈x⌉` ⊣ `U`**:
 
 * `C: (ℝ, ≤)`, `D: (ℤ, ≤)`
 * `F: ⌈x⌉`, `G: U: Int -> Real`
 * `η: a ≤ GFa ⇒ a ≤ a`, `ε: ∀b ∈ D, FGb ≤ b ⇒ ⌈b⌉ ≤ b`
-* `⌈a⌉ ≤ b ≅ a ≤ b.to_i`
+* `(real)⌈a⌉ ≤ b ≅ a ≤ (int)b`
+
+
+**directed multigraph**:
+
+a multigraph is a graph which is permitted to have multiple edges.
+
+![a multigraph](https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Multi-pseudograph.svg/440px-Multi-pseudograph.svg.png)
+
+directed multigraph cat (**Graph**):
+
+* obj: multi-graphs
+* arr: graph homomor `(v : Vertex_G1 -> Vertex_G2, e : Edge_G1 -> Edge_G2)`
+
+two nodes `m,n` in `G` are _strongly connected_ if there's a path
+`m -> n` and `n -> m`.
