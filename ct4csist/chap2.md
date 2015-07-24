@@ -666,10 +666,40 @@ a multigraph is a graph which is permitted to have multiple edges.
 
 ![a multigraph](https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Multi-pseudograph.svg/440px-Multi-pseudograph.svg.png)
 
+*above figure is undirected*
+
 directed multigraph cat (**Graph**):
 
 * obj: multi-graphs
 * arr: graph homomor `(v : Vertex_G1 -> Vertex_G2, e : Edge_G1 -> Edge_G2)`
 
-two nodes `m,n` in `G` are _strongly connected_ if there's a path
-`m -> n` and `n -> m`.
+two nodes `m,n` in `G` are *strongly connected* if there are
+_paths_(not necessarily directly connected) `m -> n` and `n -> m`.
+
+subgraph `C ⊆ G` is strongly connected if every pair of nodes in `C`
+is strongly connected.
+
+a strong component of a graph is a maximal strongly connected
+subgraph.
+
+if we see a strong component in a graph as a node, we construct an
+acyclic graph. this morphism is a functor `F : Graph ~> AcyclicGraph`.
+
+an acyclic graph is also a graph by the inclusion functor
+`G : AcyclicGraph -> Graph`. So `F ⊣ G`.
+
+* `C: Graph`, `D: AcyclicGraph`
+* `F: <see above>`, `G: inclusion ftor`
+* `η: 1_Graph -> mergeStrongComponents`, `ε: 1_Acyc -> 1_Acyc`
+
+
+
+          η_g                        incl . f
+      g -------> mergeStrongComp g -------------> g'
+        \______________________________________>/
+                         f
+
+            ε_ag             F . g
+      ag' <------- ag' <------------------ ag
+         \<_______________________________/
+                      g
