@@ -693,7 +693,7 @@ an acyclic graph is also a graph by the inclusion functor
 * `η: 1_Graph -> mergeStrongComponents`, `ε: 1_Acyc -> 1_Acyc`
 
 
-
+```
           η_g                        incl . f
       g -------> mergeStrongComp g -------------> g'
         \______________________________________>/
@@ -703,7 +703,7 @@ an acyclic graph is also a graph by the inclusion functor
       ag' <------- ag' <------------------ ag
          \<_______________________________/
                       g
-
+```
 
 **minimal realization ⊣ behavior-of**:
 
