@@ -703,3 +703,43 @@ an acyclic graph is also a graph by the inclusion functor
       ag' <------- ag' <------------------ ag
          \<_______________________________/
                       g
+
+
+**minimal realization ⊣ behavior-of**:
+
+i'm not familiar with automata theory, so I skip this example.
+
+#### intuition about adjoint functors
+
+I've tried hard on understanding what adjunction really means. It
+seems to be one of the most though topics I've learned in cat
+theory. It really takes some time to think carefully about what
+it means to be a pair of adjoint functors.
+
+"adjoint" means "stick together". but how could two functor to be
+sticking on each other? The mostly widely used exmaple of a pair of
+adjoint functors is free-forgetful functor pair.
+
+so, a pair of functors. free turns a set into the initial object of
+cat `C`, and forgetful functor forgets the structure in `C` and
+produce a set.
+
+In my personal understanding, this is sort of "shape-preserving"
+functor pair. It does not mean `FG = 1`. but you will need to have
+`FG(FG)* = FG` and `(GF)* = 1`. So `FG` is like a monad once you get
+trapped (e.g. lose something), you will remain the same
+under the cycling interation. This is how left-adj differ from
+right-adj since it is always the case that `GF = 1` (i.e. you lose
+nothing). we know `F : C -> D` and `G : D -> C`, so we think of `G` as
+kind of "chopping the extra branches" from `D` and `F` as kind of "plain
+lifting" without losing any info.
+
+I think my understanding makes sense because it fits well to interpret
+the examples I read so far.
+
+Let's look into the example above about free-forgetful pair. So
+`U : C -> Set` is forgetful functor and `F : Set -> C` is the
+free. `C` is more "structural", so `F` is left adj to `U`. `UF` is
+assured to keep the same set while `FU` will takes an element in `C`
+to the corresponding free object in `C`. And for the free objects,
+`FU` remains the identity. Yah that's how it works!
