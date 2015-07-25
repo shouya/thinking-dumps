@@ -745,7 +745,7 @@ to the corresponding free object in `C`. And for the free objects,
 `FU` remains the identity. Yah that's how it works!
 
 
-#### ex 1 right adj of const ftor
+#### ex 1. right adj of const ftor
 
 the question asks to find the dual of example 2.4.4. that is to find
 the dual of "to-initial functor as the left adj of const funtor".
@@ -773,7 +773,7 @@ it matches the books:
 ![ref](https://cloud.githubusercontent.com/assets/526598/8885476/f93b8220-322d-11e5-8f81-b078f6d61fac.png)
 
 
-#### left adjunction to diagonal functor (Δ)
+#### ex 2. left adjunction to diagonal functor (Δ)
 
 * `F: (C,C) -> C`, `G,Δ: C -> (C,C)`
 
