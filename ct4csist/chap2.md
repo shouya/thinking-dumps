@@ -774,3 +774,36 @@ it matches the books:
 
 
 #### left adjunction to diagonal functor (Δ)
+
+* `F: (C,C) -> C`, `G,Δ: C -> (C,C)`
+
+so we have `(C,C)` is more "structural" than `C`. That is, `ΔFΔF = ΔF`
+and `FΔ = 1`. if we pick `F = fst = \(a,b) -> a`, and test its unit:
+
+```
+            η                  Δ(f)
+    (A,B) ------> (A,A) ------------------> (A',A')
+         \________________________________>/
+           (f : A -> A') × (g : B -> A')
+```
+
+
+and the counit:
+
+```
+           ε                  f
+    X' <---------- X' <------------- X
+     \<_____________________________/
+                  f
+```
+
+
+it's not difficult to prove the same works for
+`F = snd = \(a,b) -> b`. Therefore the answer will be the
+**co-product**!
+
+It turns out to be like:
+
+    (- + -) ⊣ Δ ⊣ (- × -)
+
+Very emoticonic. good.
