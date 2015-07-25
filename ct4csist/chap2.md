@@ -743,3 +743,34 @@ free. `C` is more "structural", so `F` is left adj to `U`. `UF` is
 assured to keep the same set while `FU` will takes an element in `C`
 to the corresponding free object in `C`. And for the free objects,
 `FU` remains the identity. Yah that's how it works!
+
+
+#### ex 1 right adj of const ftor
+
+the question asks to find the dual of example 2.4.4. that is to find
+the dual of "to-initial functor as the left adj of const funtor".
+
+so by first guess we should be able to arrive at the answer, that is
+the "to-terminal" functor, which maps `1` to the terminal object of
+`C`. so now we show how it works.
+
+we will focus on the counit construction of this adjunction:
+
+* `F`: const functor, `G`: ??? (find)
+* `C`: any cat, `D`: the `1`-cat
+* `η`: `1_C -> {?? ∈ C}` (find), `ε`: `{1} -> {1}` (id)
+
+So we consider the counit here, nat trans `FG ~≻ 1` is the counit if,
+given any `g: FX -> Y`, there is a unique arrow `F g#` from `FX` to
+`FGY`.
+
+For any `X ∈ C`, we always have a uniq object `GY` as the codom of
+`F g#`. therefore no matter what `Y` is, `GY` must be the terminal
+object in `C`. and therefore `G` must be the "to-terminal" functor.
+
+it matches the books:
+
+![ref](https://cloud.githubusercontent.com/assets/526598/8885476/f93b8220-322d-11e5-8f81-b078f6d61fac.png)
+
+
+#### left adjunction to diagonal functor (Δ)
