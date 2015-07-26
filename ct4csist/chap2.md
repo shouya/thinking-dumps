@@ -807,3 +807,58 @@ It turns out to be like:
     (- + -) ⊣ Δ ⊣ (- × -)
 
 Very emoticonic. good.
+
+
+#### ex 3. explain *unit* in the exponential ftor example
+
+expontial... skipped.
+
+#### ex 4. explain the floor function from Real to Int is right adj of incl
+
+it's about poset `Real = (ℝ, ≤)` and `Int = (ℕ, ≤)` as categories.
+I use `_i` for `Int` type values and `_r` for `Real`
+
+* `F: x ↦ ⌊x⌋ : Real -> Int`, `G: incl : Int -> Real`
+
+unit:
+
+```
+         η (2)             to_r . f (3)
+    x_r ---------> ⌊x⌋_r ---------------------> x'_r
+       \_____________________________________>/
+                      f (1)
+```
+
+it's poset, so we can rewrite the arrows into `≤` sign. The unit law
+can be stated as:
+
+```
+                    (1)        (2)          (3)
+∀ x ∈ ℝ, x' ∈ ℕ, x ≤ x' => ⌊x⌋ ≤ x => ⌊x⌋ ≤ x'
+```
+
+it's just crystal clear.
+
+
+#### defn of adj by unit can be der from co-u and nat iso
+
+* unit: `ηX : 1X -> GFX`
+* co-u: `εY : FGY -> 1Y`
+* nat iso: `Hom_D(F X, Y) ≅ Hom_C(X, G Y)`
+
+
+by co-u we have `FGY -> 1Y`.
+
+```
+
+```
+
+
+by nat iso we have `α,α⁻¹ : X ↔ F X` and `β,β⁻¹ : Y ↔ G Y`.
+
+```
+1X -> FX -> G(FX)
+```
+
+
+ref. "the unit and counit of an adjunction", _unapologetic mathematician_
