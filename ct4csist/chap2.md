@@ -839,26 +839,34 @@ can be stated as:
 
 it's just crystal clear.
 
+#### ex 5. unit from co-unit
 
-#### defn of adj by unit can be der from co-u and nat iso
+we are to derive the univeral property of unit from the univeral
+property of co-unit.
 
-* unit: `ηX : 1X -> GFX`
-* co-u: `εY : FGY -> 1Y`
-* nat iso: `Hom_D(F X, Y) ≅ Hom_C(X, G Y)`
+let `F ⊣ G` and nat trans `ε : FG -> 1` be the co-unit.
 
+by the univeral property we know, for all `f`
 
-by co-u we have `FGY -> 1Y`.
+    B <----- ε_B ------ FGB <----------- F g ------- FA
+     \<__________________ f _________________________/
 
-```
+`g : A -> GB` is uniq.
 
-```
+let `θ = D(FA, B) -> C(A, GB)`. `θf = ε_B . F g`.
 
+let `Ω = C(A, GB) -> D(FA, B)`. `ε . F . Ωg = f`.
 
-by nat iso we have `α,α⁻¹ : X ↔ F X` and `β,β⁻¹ : Y ↔ G Y`.
-
-```
-1X -> FX -> G(FX)
-```
+so we know `θ` is nat iso.
 
 
-ref. "the unit and counit of an adjunction", _unapologetic mathematician_
+then we simply derive the unit from the hom-set defn.
+
+ref. cat note by awodey
+
+#### ex 5. adj are uniq up to iso
+
+let `F -| G` and `F' -| G`
+
+from `D(FA, B) ≅ C(A, GB)` and `D(F'A, B) ≅ C(A,GB)` we know that
+`D(FA, B) ≅ D(F'A, B)`, therefore `FA ≅ F'A`.
