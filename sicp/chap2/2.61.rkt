@@ -1,3 +1,5 @@
+#lang racket
+
 (define (element-of-set? x set)
   (cond [(null? set) #f]
         [(= x (car set)) #t]
@@ -13,6 +15,14 @@
          (intersection (cdr set1) set2)]
         [else
          (intersection set1 (cdr set2))]))
+
+
+(define (adjoin-set x set)
+  (cond [(null? set) (list x)]
+        [(= x (car set)) set]
+        [(< x (car set)) (cons x set)]
+        [(> x (car set)) (cons (car set)
+                               (adjoin-set x (cdr set)))]))
 
 ;; this is the same as the merge step in a mergesort
 (define (union-set set1 set2)
