@@ -1,6 +1,7 @@
 #lang racket
 
 (require "huffman.rkt")
+(provide encode)
 
 (define (encode message tree)
   (if (null? message) '()
@@ -16,6 +17,8 @@
         [else (error "unknown symbol " sym)]))
 
 
+
+
 ;; sample data
 (define sample-tree
   (make-code-tree (make-leaf 'A 4)
@@ -23,4 +26,4 @@
                                   (make-code-tree (make-leaf 'C 1)
                                                   (make-leaf 'D 1)))))
 
-(println (encode '(A B C D) sample-tree))
+; (println (encode '(A B C D) sample-tree))

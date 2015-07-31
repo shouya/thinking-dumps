@@ -2,6 +2,8 @@
 
 (require "huffman.rkt")
 
+(provide generate-huffman-tree)
+
 (define (generate-huffman-tree pairs)
   (successive-merge (make-leaf-set pairs)))
 
@@ -16,4 +18,4 @@
 
 ;;; test
 (define leaf-pairs '([A 4] [B 2] [C 1] [D 1]))
-(println (show-tree (generate-huffman-tree leaf-pairs)))
+; (println (show-tree (generate-huffman-tree leaf-pairs)))
