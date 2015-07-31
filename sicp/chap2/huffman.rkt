@@ -65,3 +65,8 @@
 
 
 (define (in-set? x set) (memq x set))
+
+(define (show-tree tree)
+  (if (leaf? tree) (symbol-leaf tree)
+      (list (show-tree (left-branch tree))
+            (show-tree (right-branch tree)))))
