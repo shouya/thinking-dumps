@@ -7,6 +7,7 @@
 (define (type-tag datum)
   (if (number? datum) 'number
       (car datum)))
+
 (define (contents datum)
   (if (number? datum) datum
       (cdr datum)))
