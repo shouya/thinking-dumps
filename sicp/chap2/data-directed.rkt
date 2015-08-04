@@ -7,8 +7,6 @@
 (define proc-table (make-hash))
 (define coercion-table (make-hash))
 
-(define (type ) type)
-
 
 
 (define (put name types proc)
