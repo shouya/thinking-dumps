@@ -10,18 +10,19 @@
 
 
 (define (put name types proc)
-  (if (hash-ref proc-table name)
-      (hash-set! (hash-ref name) types proc)
-      (hash-set! name (hash types proc))))
+  (if (hash-has-key? proc-table name)
+      (hash-set! (hash-ref proc-table name) types proc)
+      (hash-set! proc-table name (hash types proc))))
+
 (define (get name types)
-  (if (hash-ref proc-table name)
+  (if (hash-has-key? proc-table name)
       (hash-ref (hash-ref name) types)
-      (error "no such procedure")))
+      '()))
 
 
 (define (put-coercion from to proc)
   (if (hash-ref coercion-table from)
-      (hash-set! (hash-ref from) to proc)
+      (hash-set! (hash-ref from to) proc)
       (hash-set! from (hash to proc))))
 (define (get-coercion from to)
   (if (hash-ref coercion-table from)

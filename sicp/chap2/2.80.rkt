@@ -1,3 +1,7 @@
+#lang racket
+
+(require "data-directed.rkt")
+(provide =zero?)
 
 ;; scheme number package
 
@@ -23,3 +27,6 @@
     (and (eqv? a 0) (eqv? b 0))))
 
 (put '=zero? '(complex) =zero?-complex-number)
+
+
+(define (=zero? x) (apply-generic '=zero? x))
