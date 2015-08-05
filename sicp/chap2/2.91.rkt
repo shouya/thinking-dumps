@@ -15,6 +15,7 @@
                                 (mul L2 (adjoin-term (make-term new-o new-c)
                                                      (the-empty-termlist))))]
                      [rest-of-result (div-terms rest-of-poly L2)])
-                (list (adjoin-term (make-term new-o new-c) (car rest-of-result))
+                (list (adjoin-term (make-term new-o new-c)
+                                   (car rest-of-result))
                       (cadr rest-of-result))
                 ))))))
