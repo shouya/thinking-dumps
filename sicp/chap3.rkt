@@ -82,3 +82,15 @@
           [y (random-in-range y1 y2)])
       (p x y)))
   (monte-carlo trials new-p))
+
+(define (estimated-pi radius trials)
+  (define (in-circle? x y)
+    (< (+ (expt x 2) (expt y 2))
+       (expt radius 2)))
+
+  (define ratio (estimate-integral in-circle?
+                                   (- radius) radius
+                                   (- radius) radius
+                                   trials))
+  ;; ratio = (pi * r^2) / (4 * r^2), pi = ratio * 4
+  (exact->inexact (* ratio 4)))
