@@ -18,6 +18,7 @@
 
 
 ;; ex 3.3 account with password
+#;
 (define (make-account balance password)
   (define (withdraw amount)
     (if (>= balance amount)
@@ -33,3 +34,28 @@
         (cond [(eq? op 'withdraw) withdraw]
               [(eq? op 'deposit)  deposit])
         (error "wrong password!"))))
+
+
+;; ex 3.4
+(define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (set! balance (- balance amount))
+        (error "insufficient balance")))
+  (define (deposit amount)
+    (set! balance (+ balance amount)))
+  (define mistake-count 0)
+
+  (define (password-correct? pwd) (eq? pwd password))
+
+  (λ (password op)
+    (if (password-correct? password)
+        (begin
+          (set! mistake-count 0)
+          (cond [(eq? op 'withdraw) withdraw]
+                [(eq? op 'deposit)  deposit]))
+        (begin
+          (set! mistake-count (+ mistake-count 1))
+          (if (> mistake-count 7)
+              (error "☎︎110") ; or call-the-cops
+              (error "wrong password!"))))))
