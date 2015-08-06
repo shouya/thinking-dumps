@@ -15,3 +15,21 @@
                  (eq? 'how-many-calls? (car xs)))
             call-count
             (apply func xs))))
+
+
+;; ex 3.3 account with password
+(define (make-account balance password)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (set! balance (- balance amount))
+        (error "insufficient balance")))
+  (define (deposit amount)
+    (set! balance (+ balance amount)))
+
+  (define (password-correct? pwd) (eq? pwd password))
+
+  (λ (password op)
+    (if (password-correct? password)
+        (cond [(eq? op 'withdraw) withdraw]
+              [(eq? op 'deposit)  deposit])
+        (error "wrong password!"))))
