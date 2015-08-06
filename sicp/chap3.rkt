@@ -94,3 +94,18 @@
                                    trials))
   ;; ratio = (pi * r^2) / (4 * r^2), pi = ratio * 4
   (exact->inexact (* ratio 4)))
+
+
+;; ex 3.6
+(define (make-rand seed)
+  (define (rand op)
+    (define (reset new-seed)
+      (set! seed new-seed))
+    (define (generate)
+      ;; from microsoft random algorithm
+      (set! seed (remainder (+ (* 214013 seed) 2531011) (expt 2 31)))
+      seed)
+
+    (cond [(eq? op 'reset) reset]
+          [(eq? op 'generate) (generate)]))
+  rand)
