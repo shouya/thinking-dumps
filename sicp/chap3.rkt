@@ -119,3 +119,16 @@
         (acc password operation)
         (error "wrong password!")))
   operate)
+
+;; ex 3.8 detect eval
+(define (define-detector)
+  (define val '())
+  (define (func v)
+    (if (null? val)
+        (begin (set! val v) v)
+        v))
+  func)
+(define f (define-detector))
+
+;; f remember the first arg it was called with
+;; and ignores those in all other calls
