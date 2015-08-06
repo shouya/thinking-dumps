@@ -96,7 +96,7 @@
   (exact->inexact (* ratio 4)))
 
 
-;; ex 3.6
+;; ex 3.6 random with reset func
 (define (make-rand seed)
   (define (rand op)
     (define (reset new-seed)
@@ -109,3 +109,13 @@
     (cond [(eq? op 'reset) reset]
           [(eq? op 'generate) (generate)]))
   rand)
+
+
+;; ex 3.7 make joint account
+(define (make-joint-account acc password specific-password)
+  (define (password-correct? pwd) (eq? pwd specific-password))
+  (define (operate pwd operation)
+    (if (password-correct? pwd)
+        (acc password operation)
+        (error "wrong password!")))
+  operate)
