@@ -238,3 +238,9 @@
 ;;
 ;; v: '(a)
 ;; w: '(d c b a)
+
+
+;; ex 3.15 describe the effect of set-wow! on z1 and z2
+;;
+;; z1: (cons '(wow b) '(wow b))
+;; z2: (cons '(wow b) '(a b))
