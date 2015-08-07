@@ -299,7 +299,7 @@
   (aux x '()))
 
 
-;; ex 3.18 detect infinite list with O(1) space
+;; ex 3.19 detect infinite list with O(1) space
 
 (define (detect-O1 x)
   (define (aux x y)
@@ -311,3 +311,27 @@
             'yes
             (aux (cdr x) (cdr (cdr y))))))
   (aux x x))
+
+
+;; ex 3.20 illustrate this set-car!
+"
+  +---+---+
+  | o | o | z
+  +-|-+-|-+
+    |   |
+    v   v
+  +---+---+
+  | 1 | 2 | x
+  +---+---+
+
+becomes:
+
+  +---+---+
+  | o | o | z
+  +-|-+-|-+
+    |   |
+    v   v
+  +----+---+
+  | 17 | 2 | x
+  +----+---+
+"
