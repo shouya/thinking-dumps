@@ -287,7 +287,7 @@
   (aux x '()))
 
 
-;; ex 3.18 detect infinte list
+;; ex 3.18 detect infinite list
 
 (define (detect x)
   (define (aux x visited)
@@ -297,3 +297,17 @@
             'yes
             (aux (mcdr x) (cons x visited)))))
   (aux x '()))
+
+
+;; ex 3.18 detect infinite list with O(1) space
+
+(define (detect-O1 x)
+  (define (aux x y)
+    (if (or (not (mpair? x))
+            (not (mpair? y))
+            (not (mpair? (mcdr y))))
+        'no
+        (if (eq? x y)
+            'yes
+            (aux (cdr x) (cdr (cdr y))))))
+  (aux x x))
