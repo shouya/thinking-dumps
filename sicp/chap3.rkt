@@ -176,3 +176,27 @@
 ;;
 ;; the only difference is that the latter one adds a new layer
 ;; in the lookup stack, but it doesn't really matter.
+
+
+
+;; ex 3.11 show env model for make-account
+
+;; so I can use strings instead of comments with italic font
+;; to draw the diagram
+(define (comment x) (values))
+
+(comment "
+   +---------------------------------------+
+   | <global env>               acc        |
+   +-----------------------------+---------+
+        ^                        |
+        |                        |
+   +----------------+            |
+   | balance        | (make-acc) |
+   +----------------+            |
+      ^         ^                | (dispatching)
+      |         |                |
+   +-------------------+         |
+   | withdraw, deposit |<--------+
+   +-------------------+
+")
