@@ -163,3 +163,16 @@
 ;;   (fact-iter (120 * 6) (6 + 1) 6)
 ;;   (fact-iter 720 7 6)
 ;;   720
+
+
+;; ex 3.10 show expansion for the two defns of make-withdraw
+
+;;    (let ((balance initial-amount)) ...)
+;; => ((λ (balance) ...) initial-amount)
+;;
+;; which is just the same as using balance directly in
+;;
+;;    (define (make-withdraw balance) ...)
+;;
+;; the only difference is that the latter one adds a new layer
+;; in the lookup stack, but it doesn't really matter.
