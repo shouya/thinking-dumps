@@ -200,3 +200,38 @@
    | withdraw, deposit |<--------+
    +-------------------+
 ")
+
+
+
+;;;;;;;; CHAPTER 3.3 MODELING WITH MUTABLE DATA ;;;;;;;
+
+;; ex 3.12 trace the behavior of append vs append!
+
+(define (last-pair x)
+  (if (null? (cdr x))
+      x
+      (last-pair (cdr x))))
+(define (append! x y)
+  (set-mcdr! (last-pair x) y)
+  x)
+
+#;
+(define (append x y)
+  (if (null? x)
+      y
+      (cons (car x) (append (cdr x) y))))
+
+#|
+(define x (list 'a 'b))
+(define y (list 'c 'd))
+(define z (append x y))
+z
+=> (a b c d)
+(cdr x)
+=> (b)
+(define w (append! x y))
+w
+=> (a b c d)
+(cdr x)
+=> (b c d)
+|#
