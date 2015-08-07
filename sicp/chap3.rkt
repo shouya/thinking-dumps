@@ -271,3 +271,17 @@
          [y (mcons x x)])
     (set-mcar! tail tail)
     y))
+
+;; ex 3.17 implement a correct count-pairs
+;;
+
+(define (count-pairs-1 x)
+  (define (aux x visited)
+    (if (not (mpair? x))
+        0
+        (if (memq x visited)
+            0
+            (+ 1
+               (aux (mcdr x) (cons (mcar x) (cons x visited)))
+               (aux (mcar x) (cons x visited))))))
+  (aux x '()))
