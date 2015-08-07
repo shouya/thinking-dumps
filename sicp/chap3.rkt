@@ -285,3 +285,15 @@
                (aux (mcdr x) (cons (mcar x) (cons x visited)))
                (aux (mcar x) (cons x visited))))))
   (aux x '()))
+
+
+;; ex 3.18 detect infinte list
+
+(define (detect x)
+  (define (aux x visited)
+    (if (not (mpair? x))
+        'no
+        (if (memq x visited)
+            'yes
+            (aux (mcdr x) (cons x visited)))))
+  (aux x '()))
