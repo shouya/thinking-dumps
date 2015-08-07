@@ -205,6 +205,9 @@
 
 ;;;;;;;; CHAPTER 3.3 MODELING WITH MUTABLE DATA ;;;;;;;
 
+(require compatibility/mlist)
+(require racket/mpair)
+
 ;; ex 3.12 trace the behavior of append vs append!
 
 ;; (define x (list 'a 'b))
@@ -314,7 +317,8 @@
 
 
 ;; ex 3.20 illustrate this set-car!
-"
+(comment
+ "
   +---+---+
   | o | o | z
   +-|-+-|-+
@@ -334,4 +338,46 @@ becomes:
   +----+---+
   | 17 | 2 | x
   +----+---+
-"
+")
+
+
+;; queue:
+
+(define (front-queue queue)
+  (if (empty-queue? queue)
+      (error "FRONT called with an empty queue" queue)
+      (mcar (front-ptr queue))))
+(define (make-queue) (mcons '() '()))
+
+(define (empty-queue? queue) (null? (front-ptr queue)))
+
+(define (front-ptr queue) (mcar queue))
+(define (rear-ptr queue) (mcdr queue))
+(define (set-front-ptr! queue item) (set-mcar! queue item))
+(define (set-rear-ptr! queue item) (set-mcdr! queue item))
+
+
+
+(define (delete-queue! queue)
+  (cond ((empty-queue? queue)
+         (error "DELETE! called with an empty queue" queue))
+        (else
+         (set-front-ptr! queue (mcdr (front-ptr queue)))
+         queue)))
+
+(define (insert-queue! queue item)
+  (let ((new-pair (mcons item '())))
+    (cond ((empty-queue? queue)
+           (set-front-ptr! queue new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue)
+          (else
+           (set-mcdr! (rear-ptr queue) new-pair)
+           (set-rear-ptr! queue new-pair)
+           queue))))
+
+
+;; ex 3.21 correctly print an queue
+
+(define (print-queue queue)
+  (print (reverse (mlist->list (mcar queue)))))
