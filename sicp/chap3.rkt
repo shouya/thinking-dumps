@@ -244,3 +244,30 @@
 ;;
 ;; z1: (cons '(wow b) '(wow b))
 ;; z2: (cons '(wow b) '(a b))
+
+
+;; ex 3.16 trick count-pairs to return wrong results
+(define (count-pairs x)
+  (if (not (mpair? x))
+      0
+      (+ (count-pairs (mcar x))
+         (count-pairs (mcdr x))
+         1)))
+
+(define ret-3 (mcons 1 (mcons 2 (mcons 3 '()))))
+(define ret-4
+  (let* ([tail (mcons 3 '())]
+         [x (mcons tail tail)]
+         [y (mcons 1 x)])
+    y))
+(define ret-7
+  (let* ([tail (mcons 3 '())]
+         [x (mcons tail tail)]
+         [y (mcons x x)])
+    y))
+(define ret-inf
+  (let* ([tail (mcons 3 '())]
+         [x (mcons tail tail)]
+         [y (mcons x x)])
+    (set-mcar! tail tail)
+    y))
