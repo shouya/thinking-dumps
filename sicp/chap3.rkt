@@ -231,3 +231,10 @@
 ;; ^               |
 ;; +---------------+
 ;;
+
+;; ex 3.14 describe the function of mystery
+
+;; it reverses a list, destructively
+;;
+;; v: '(a)
+;; w: '(d c b a)
