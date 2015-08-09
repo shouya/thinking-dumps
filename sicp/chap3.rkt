@@ -381,3 +381,36 @@ becomes:
 
 (define (print-queue queue)
   (print (reverse (mlist->list (mcar queue)))))
+
+
+;; ex 3.22
+(define (make-queue-proc)
+  (let ([front-ptr '()]
+        [rear-ptr '()])
+    (define (enqueue e)
+      (let ([cns (mcons e '())])
+        (if (null? front-ptr)
+            (begin
+              (set! front-ptr cns)
+              (set! rear-ptr cns))
+            (begin
+              (set-mcdr! rear-ptr cns)
+              (set! rear-ptr cns))
+            )))
+    (define (dequeue)
+      (if (null? front-ptr)
+          (error "empty queue")
+          (let ([elm (mcar front-ptr)])
+            (set! front-ptr (mcdr front-ptr))
+            elm)
+          ))
+    (define (show)
+      (println (mlist->list front-ptr)))
+
+    (define (dispatch m)
+      (cond [(eq? 'enq  m) enqueue]
+            [(eq? 'deq  m) dequeue]
+            [(eq? 'show m) show]
+            ))
+
+    dispatch))
