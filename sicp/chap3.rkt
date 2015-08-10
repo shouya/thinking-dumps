@@ -483,3 +483,49 @@ becomes:
           [else (error "unknown method")]))
 
   dispatch)
+
+
+;; 3.24 implement table in a closure
+
+(define (make-table same-key?)
+  (define table (mlist 'table))
+
+  (define (inspect) table)
+
+  (define (assoc k lst)
+    (if (null? lst)
+        #f
+        (if (same-key? k (mcar (mcar lst)))
+            (mcar lst)
+            (assoc k (mcdr lst)))))
+
+  (define (lookup k1 k2)
+    (define row (assoc k1 (mcdr table)))
+    (if (not row)
+        (error "k1 not found")
+        '())
+
+    (define col (assoc k2 (mcdr row)))
+    (if (not col)
+        (error "k2 not found")
+        '())
+    (mcdr col))
+
+  (define (add! key val lst)
+    (set-mcdr! lst (mcons (mcons key val) (mcdr lst))))
+
+  (define (insert! k1 k2 val)
+    (define subtable (assoc k1 (mcdr table)))
+    (if subtable
+        (let ([record (assoc k2 (mcdr subtable))])
+          (if record
+              (set-mcdr! record val)
+              (add! k2 val subtable)))
+        (add! k1 (mlist (mcons k2 val)) table)))
+
+  (define (dispatch m . as)
+    (apply (cond [(eq? m 'insert!) insert!]
+                 [(eq? m 'lookup ) lookup]
+                 [(eq? m 'inspect) inspect]
+                 ) as))
+  dispatch)
