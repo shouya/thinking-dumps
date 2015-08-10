@@ -383,7 +383,8 @@ becomes:
   (print (reverse (mlist->list (mcar queue)))))
 
 
-;; ex 3.22
+;; ex 3.22 implement queue in the dispatcher way
+
 (define (make-queue-proc)
   (let ([front-ptr '()]
         [rear-ptr '()])
@@ -414,3 +415,71 @@ becomes:
             ))
 
     dispatch))
+
+
+;; ex 3.23 implmenent deque
+
+(define (make-deque)
+  (define front-ptr '())
+  (define rear-ptr '())
+
+  (define (push e)
+    (define new-node (mcons e (mcons '() front-ptr)))
+    (if (null? front-ptr)
+        (begin
+          (set! front-ptr new-node)
+          (set! rear-ptr  new-node))
+        (begin
+          (set-mcar! (mcdr front-ptr) new-node)
+          (set! front-ptr new-node)))
+    'ok)
+  (define (pop)
+    (if (null? front-ptr)
+        (error "null front-ptr")
+        (let ([e (mcar front-ptr)])
+          (set! front-ptr (mcdr (mcdr front-ptr)))
+          (if (null? front-ptr)
+              (set! rear-ptr '())
+              (set-mcar! (mcdr front-ptr) '()))
+          e)))
+
+  (define (unshift e)
+    (define new-node (mcons e (mcons rear-ptr '())))
+    (println rear-ptr)
+    (if (null? rear-ptr)
+        (begin
+          (set! front-ptr new-node)
+          (set! rear-ptr new-node))
+        (begin
+          (set-mcdr! (mcdr rear-ptr) new-node)
+          (set! rear-ptr new-node)))
+    'ok)
+
+  (define (shift)
+    (if (null? rear-ptr)
+        (error "rear ptr is null")
+        (let ([e (mcar rear-ptr)])
+          (set! rear-ptr (mcar (mcdr rear-ptr)))
+          (if (null? rear-ptr)
+              (set! front-ptr '())
+              (set-mcdr! (mcdr rear-ptr) '()))
+          e
+          )))
+
+  (define (show)
+    (define (show-iter node xs)
+      (if (null? node)
+          xs
+          (show-iter (mcdr (mcdr node))
+                     (cons (mcar node) xs))))
+    (show-iter front-ptr '()))
+
+  (define (dispatch m . args)
+    (cond [(eq? 'push    m) (apply push args)]
+          [(eq? 'pop     m) (pop)]
+          [(eq? 'unshift m) (apply unshift args)]
+          [(eq? 'shift   m) (shift)]
+          [(eq? 'show    m) (show)]
+          [else (error "unknown method")]))
+
+  dispatch)
