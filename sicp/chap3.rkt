@@ -598,3 +598,16 @@ becomes:
                  [(eq? m 'print  ) print-table])
            as))
   dispatch)
+
+
+;; ex 3.26 describe table implemented using binary tree
+;;
+;; for binary tree has key-value pairs, now the values could
+;; be either a plain value or a binary tree, referred with
+;; the root node.
+;;
+;; here's is an short description of a tree node:
+
+#;
+(define (make-node key value left-branch right-branch)
+  (list key value left-branch right-branch))
