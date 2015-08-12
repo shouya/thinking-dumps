@@ -537,6 +537,19 @@ becomes:
   (define table (mlist 'table))
 
   (define (inspect) table)
+  (define (print-table)
+    (define (helper table level)
+      (display (make-string (* 2 level) #\space))
+      (display "- ")
+      (display (mcar table))
+      (if (mpair? (mcdr table))
+          (begin
+            (displayln "")
+            (mmap (λ (x) (helper x (+ level 1))) (mcdr table)))
+          (begin
+            (displayln (~a " : " (mcdr table))))))
+    (helper table 0)
+    (inspect))
 
   (define (assoc k lst)
     (if (null? lst)
@@ -547,36 +560,41 @@ becomes:
 
   (define (lookup keys)
     (define (iter keys table)
-      ((if (null? keys)
-           (mcdr table)
-           (let ([result (assoc (car keys) (mcdr table))])
-             (if (not result)
-                 (error "not found")
-                 (iter (cdr keys) result))))))
+      (if (null? keys)
+          (mcdr table)
+          (let ([result (assoc (car keys) (mcdr table))])
+            (if (not result)
+                (error "not found")
+                (iter (cdr keys) result)))))
     (iter keys table))
 
+  (define (sub keys val)
+    (cond [(null? keys) val]
+          [(null? (cdr keys)) (mcons (car keys) val)]
+          [else (mlist (car keys) (sub (cdr keys) val))]))
   (define (add! keys val table)
-    (define (sub keys)
-      (if (null? keys)
-          val
-          (mcons (car keys) (sub (cdr keys)))))
-    (set-mcdr! table (cons (sub keys) (mcdr table))))
+    (set-mcdr! table (mcons (sub keys val) (mcdr table))))
 
   (define (insert! keys val)
-    (println keys val table)
+    ;; (displayln (~a keys val table))
     (define (iter keys table)
       (if (null? keys)
           (set-mcdr! table val)
           (let ([subtable (assoc (car keys) (mcdr table))])
-            (if subtable
-                (iter (cdr keys) subtable)
-                (add! keys val subtable)))))
+            (cond [(and subtable (mpair? (mcdr subtable))) ; a key-table pair
+                   (iter (cdr keys) subtable)]
+                  [subtable                                ; a key-val pair
+                   (set-mcdr! subtable
+                              (mlist (sub (cdr keys) val)))]
+                  [else (add! keys val table)]
+                  ))))
     (iter keys table))
 
 
   (define (dispatch m . as)
     (apply (cond [(eq? m 'insert!) insert!]
                  [(eq? m 'lookup ) lookup]
-                 [(eq? m 'inspect) inspect])
+                 [(eq? m 'inspect) inspect]
+                 [(eq? m 'print  ) print-table])
            as))
   dispatch)
