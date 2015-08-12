@@ -529,3 +529,54 @@ becomes:
                  [(eq? m 'inspect) inspect]
                  ) as))
   dispatch)
+
+
+;; ex 3.25 generalize table to have various number of keys
+
+(define (make-generalized-table same-key?)
+  (define table (mlist 'table))
+
+  (define (inspect) table)
+
+  (define (assoc k lst)
+    (if (null? lst)
+        #f
+        (if (same-key? k (mcar (mcar lst)))
+            (mcar lst)
+            (assoc k (mcdr lst)))))
+
+  (define (lookup keys)
+    (define (iter keys table)
+      ((if (null? keys)
+           (mcdr table)
+           (let ([result (assoc (car keys) (mcdr table))])
+             (if (not result)
+                 (error "not found")
+                 (iter (cdr keys) result))))))
+    (iter keys table))
+
+  (define (add! keys val table)
+    (define (sub keys)
+      (if (null? keys)
+          val
+          (mcons (car keys) (sub (cdr keys)))))
+    (set-mcdr! table (cons (sub keys) (mcdr table))))
+
+  (define (insert! keys val)
+    (println keys val table)
+    (define (iter keys table)
+      (if (null? keys)
+          (set-mcdr! table val)
+          (let ([subtable (assoc (car keys) (mcdr table))])
+            (if subtable
+                (iter (cdr keys) subtable)
+                (add! keys val subtable)))))
+    (iter keys table))
+
+
+  (define (dispatch m . as)
+    (apply (cond [(eq? m 'insert!) insert!]
+                 [(eq? m 'lookup ) lookup]
+                 [(eq? m 'inspect) inspect])
+           as))
+  dispatch)
