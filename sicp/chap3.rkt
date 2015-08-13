@@ -673,7 +673,7 @@ becomes:
     (let ([new-val
            (logical-and (get-signal a1) (get-signal a2))])
       (after-delay and-gate-delay
-                   (lambda () (set-signal! output new-value)))))
+                   (lambda () (set-signal! output new-val)))))
   (add-action! a1 and-action-procedure)
   (add-action! a2 and-action-procedure)
   'ok)
@@ -688,13 +688,12 @@ becomes:
 
 
 ;; ex 3.28 define or-gate
-
 (define (or-gate a1 a2 out)
   (define (and-action-procedure)
     (let ([new-val
            (logical-or (get-signal a1) (get-signal a2))])
       (after-delay or-gate-delay
-                   (lambda () (set-signal! output new-value)))))
+                   (lambda () (set-signal! output new-val)))))
   (add-action! a1 and-action-procedure)
   (add-action! a2 and-action-procedure)
   'ok)
@@ -706,3 +705,15 @@ becomes:
     [(0 0) 0]
     [(0 1) 1]
     [(_ _) (error "invalid signal" s)]))
+
+
+;; ex 3.29 define or-gate using and-gate and inverter
+(define (or-gate-2 a1 a2 out)
+  (let ([na1 (make-wire)]
+        [na2 (make-wire)]
+        [aout (make-wire)])
+    (inverter a1 na1)
+    (inverter a2 na2)
+    (and-gate na1 na2 aout)
+    (inverter aout out)
+    'ok))
