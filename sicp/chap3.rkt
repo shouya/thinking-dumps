@@ -608,6 +608,49 @@ becomes:
 ;;
 ;; here's is an short description of a tree node:
 
-#;
-(define (make-node key value left-branch right-branch)
-  (list key value left-branch right-branch))
+(define (make-table-tree-node key value left-branch right-branch)
+  (mlist key value left-branch right-branch))
+
+
+;; ex 3.27 explain why memo-fib is in O(n)
+
+;; regular:
+;;   fib 4
+;; = fib 3 + fib 2
+;; = (fib 2 + fib 1) + fib 2
+;; = ((fib 1 + fib 0) + fib 1) + fib 2
+;; = ((1 + fib 0) + fib 1) + fib 2
+;; = ((1 + 0) + fib 1) + fib 2
+;; = (1 + fib 1) + fib 2
+;; = (1 + 1) + fib 2
+;; = 2 + fib 2
+;; = 2 + (fib 1 + fib 0)
+;; = 2 + (1 + 0)
+;; = 2 + 1
+;; = 3
+
+;; memoized:
+;;   fib 4
+;; = fib 3 + fib 2
+;; = (fib 2 + fib 1) + fib 2
+;; = ((fib 1 + fib 0) + fib 1) + fib 2
+;; = ((1*<1> + 0*<0>) + fib 1) + fib 2
+;; = (1*<2> + 1$<1>) + fib 2
+;; = 2*<3> + fib 2
+;; = 2 + 1$<2>
+;; = 3*<4>
+;;
+;; notation:
+;;  - n*<k>: saving result of `fib k`, which is `n`
+;;  - n$<k>: reading the memoized result of `fib k`, which is `n`
+
+;; from the above demonstration we can clearly see that,
+;; fib recursion expands to a tree and which grows in O(2^n),
+;; with memoization, the branches calculating already calculated
+;; results will be eliminated, resulting a linear growth of time
+;; complexity in proportion to the time complexity of writing/looking-up
+;; the table.
+
+;; (memoize fib) will work because in `fib` it calls `fib` to
+;; recurse, which will still call the original function back.
+;; however, there will be no efficiency improvement.
