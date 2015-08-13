@@ -717,3 +717,15 @@ becomes:
     (and-gate na1 na2 aout)
     (inverter aout out)
     'ok))
+
+;; ex 3.30 implement ripple-carry-adder
+(define (ripple-carry-adder as bs c-in ss c-out)
+  (if (and (null? as) (null? bs) (null? ss))
+      (connect-wire c-in c-out)
+      (let ([a (car as)] [ass (cdr as)]
+            [b (car bs)] [bss (cdr bs)]
+            [s (car ss)] [sss (cdr ss)]
+            [prev-c-out (make-wire)])
+        (full-adder a b prev-c-out s c-out)
+        (ripple-carry-adder ass bss c-in sss prev-c-out)))
+  'ok)
