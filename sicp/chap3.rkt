@@ -903,3 +903,11 @@ becomes:
       (let ((first-seg (first-segment agenda)))
         (set-current-time! agenda (segment-time first-seg))
         (front-queue (segment-queue first-seg)))))
+
+
+;; ex 3.31 why accept-action-procedure! is necessary
+
+;; this is because we must manage to have consistent output
+;; for the wire components. e.g. we will not have wires a, b
+;; connected via a inverter while (signal a) = (signal b) = 0.
+;;
