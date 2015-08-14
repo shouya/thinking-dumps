@@ -911,3 +911,25 @@ becomes:
 ;; for the wire components. e.g. we will not have wires a, b
 ;; connected via a inverter while (signal a) = (signal b) = 0.
 ;;
+
+
+;; ex 3.32 why fifo ordering matters in agenda
+;;
+;; tracing an and-gate whose inputs change from 0,1 to 1,0
+;; i.e. 0,1 -> 1,0
+
+;; an and-gate install an action on its two inputs and sets
+;; the output. let's try follow the signal changing:
+;;   0,1 -> 1,1
+;; then the first input's trigger is fired and delayed to set
+;; the output to be 1 & 1 = 1, then the input changes:
+;;   1,1 -> 1,0
+;; after the same delay, the output will be now changed to be
+;; 1 & 0 = 0.
+;;
+;; now suppose it's the time the delay was over, and the segment
+;; is recalled and invoked. if the segment procedures are executed
+;; in a fifo order, the output will be set to 1 and then 0, which is
+;; the correct result. contrarily, if it takes filo order, the result
+;; would become incorrect.
+;;
