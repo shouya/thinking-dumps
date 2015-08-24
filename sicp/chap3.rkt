@@ -1105,3 +1105,18 @@ becomes:
 ;;   (set-value! avg 5 'user)
 ;;   )
 
+
+;; ex 3.34 explain why (multiplier a a b) contains a flaw
+;;
+;; this function works normally if we are setting value to `a`,
+;; in that case, two multiplicants will be set to `a` it will run
+;; to the first cond and the value of `b` will be set to `a*a`
+;; correctly.
+;;
+;; However, if we begin with setting the value of `b`, it would be
+;; unable to detect what `a` would be because at that time only
+;; one connector is given a specific value, `a` won't be able to be
+;; caculated.
+
+
+;;
