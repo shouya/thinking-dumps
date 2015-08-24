@@ -970,7 +970,7 @@ becomes:
 
   me)
 
-(define (inform-about-value-constraint)
+(define (inform-about-value constraint)
   (constraint 'i-have-a-value))
 (define (inform-about-no-value constraint)
   (constraint 'i-lost-my-value))
@@ -1012,7 +1012,8 @@ becomes:
 
 (define (probe-constraint name connector)
   (define (print-probe val)
-    (print (~a "Probe: " name " = " value)))
+    (display (~a "Probe: " name " = " val))
+    (newline))
   (define (process-new-value)
     (print-probe (get-value connector)))
   (define (process-forget-value)
@@ -1054,14 +1055,13 @@ becomes:
       'done)
 
     (define (me req)
-      (cond [(eq? req 'has-value? ) (if informant #t #f)]
-            [(eq? req 'value      ) value]
-            [(eq? req 'set-value! ) set-my-value]
-            [(eq? req 'forget     ) forget-my-value]
-            [(eq? req 'connect    ) connect]
+      (cond [(eq? req 'has-value?) (if informant #t #f)]
+            [(eq? req 'value     ) value]
+            [(eq? req 'set-value!) set-my-value]
+            [(eq? req 'forget    ) forget-my-value]
+            [(eq? req 'connect   ) connect]
             [else (error "unknown operation -- connector" req)]))
-    me
-    ))
+    me))
 
 (define (for-each-except exc proc list)
   (define (loop items)
@@ -1074,6 +1074,34 @@ becomes:
 
 (define (has-value? connector)               (connector 'has-value?))
 (define (get-value connector)                (connector 'value))
-(define (set-value? connector newv inf)     ((connector 'set-value!) newv inf))
+(define (set-value! connector newv inf)     ((connector 'set-value!) newv inf))
 (define (forget-value! connector retractor) ((connector 'forget) retractor))
 (define (connect connector new-constr)      ((connector 'connect) new-constr))
+
+;; ex 3.33 make an averager
+
+(define (averager a b c avg)
+  (define a+b    (make-connector))
+  (define a+b+c  (make-connector))
+  (define const3 (make-connector))
+
+  (constant 3 const3)
+  (adder a b a+b)
+  (adder a+b c a+b+c)
+  (multiplier avg const3 a+b+c)
+  'ok)
+
+
+;; (let ([a (make-connector)]
+;;       [b (make-connector)]
+;;       [c (make-connector)]
+;;       [avg (make-connector)])
+;;   (averager a b c avg)
+;;   (probe-constraint 'avg avg)
+;;   (probe-constraint 'a a)
+
+;;   (set-value! b 2 'user)
+;;   (set-value! c 3 'user)
+;;   (set-value! avg 5 'user)
+;;   )
+
