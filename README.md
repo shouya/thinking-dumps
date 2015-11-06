@@ -96,3 +96,9 @@ My trials on implement various algorithms to solve
 
 My notes on Benjamin C. Pierce's Basic Category Theory for Computer
 Scientists
+
+### turi-notes
+
+My notes for "Category Theory Lecture Notes" by Daniele Turi.
+
+http://www.dcs.ed.ac.uk/home/dt/CT/
