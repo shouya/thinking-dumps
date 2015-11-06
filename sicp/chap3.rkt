@@ -1140,3 +1140,10 @@ becomes:
   (connect a me)
   (connect b me)
   me)
+
+
+;; ex 3.36 trace the evaluation
+;;
+;;    (set-value! a 10 'user)
+;; => ((a 'set-value!) 10 'user)
+;; =>
