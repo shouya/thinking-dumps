@@ -1,0 +1,44 @@
+\section{Universal property}
+
+\subsection{Natural numbers in set theory and category theory}
+
+\textbf{A1} is the regular Peano's definition of natural numbers. There is
+nothing new.
+
+\textbf{A2} is more interesting to investigate. It defines natural
+number set ($N$) to be the ``initial'' object of the category of all
+natural-number-like sets ($X$). The essential part of a univeral
+property is the unique arrow, or
+\emph{factorization}. In our case, it is the $f : X \to N$. Here is an
+example of an $X$ in \textbf{A2}.
+
+\begin{example}
+  $(-1) \in X \rTo^g X$ where
+  $g := a \rMapsto a-1$. With this case
+  $f := a \rMapsto -(a+1)$.
+\end{example}
+
+This is straightfoward, just a demonstration of what is it about.
+
+
+\begin{quotation}
+  The \emph{Recursion Theorem}
+  \footnote{\url{https://en.wikipedia.org/wiki/Recursion#The_recursion_theorem}}
+  guarantees recursively defined functions exists. Given a set $X$, an
+  element of $e\in X$ and a function $g : X \to X$, the theorem states
+  there is a unique function $f : N \to X$, such that
+  \begin{align}
+    f(0) &= e \\
+    f(n+1) &= g(f(n))
+  \end{align}
+\end{quotation}
+
+This is essentially defines a factorization from $N$ to $X$.
+
+So then the proof of \textbf{A1} and \textbf{A2} are isomorphic.
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "master.tex"
+%%% End:
