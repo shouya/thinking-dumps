@@ -1,0 +1,154 @@
+\documentclass{report}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+
+\usepackage{xspace}
+\usepackage{enumitem}
+
+
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[chapter]
+\newtheorem{example}{Example}[definition]
+\newtheorem{property}{Property}[chapter]
+
+\newcommand{\defn}[1]{\textbf{#1}\label{#1}}
+\newcommand{\set}[1]{\ensuremath\{#1\}}
+
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\aka}{\textit{a.k.a.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
+
+\newcommand{\RA}{\ensuremath\Rightarrow}
+
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\RR}{\mathbb{R}}
+
+\newcommand{\A}{$A$\xspace}
+\newcommand{\B}{$B$\xspace}
+\newcommand{\X}{$X$\xspace}
+\renewcommand{\a}{$a$\xspace}
+\renewcommand{\b}{$b$\xspace}
+\newcommand{\x}{$x$\xspace}
+
+\newcommand{\ex}{\ensuremath\exists}
+
+\begin{document}
+
+\title{Notes for James R. Munkres' Topology (2E)}
+\author{Shou}
+\date{\today}
+
+\maketitle
+\tableofcontents
+
+\setcounter{chapter}{-1}
+\begin{chapter}{Structure and reading plans}
+Ch 1-8 is the part I, mainly for common topology. The part II includes
+ch 9-14, that depends on ch 1-4, is about algebraic topology.
+
+My plan is to read through ch 1-4 very quickly, within a weekend, and
+then I will start reading ch 9+ simultaneously with W.S.Massey's
+Agelbraic topology: An induction.
+
+Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
+\end{chapter}
+
+\begin{chapter}{Set theory and logic}
+  \begin{definition}{\defn{Order relation}}
+    rel $C$ on set $A$ is called \emph{order relation} if
+    \begin{enumerate}
+    \item comparability, \ie
+      $\forall x,y\in A, x\not=y\RA x C y\lor y C x$
+    \item non-refl, \ie $\forall x, \neg(x C x)$
+    \item trans, \ie $\forall x C y\land y C z, x C z$
+    \end{enumerate}
+    (\aka linear order)
+  \end{definition}
+
+  \begin{definition}{\defn{Open interval}}
+    if $X$ is a set and $<$ is an order rel, and if $a<b$ we use
+    notation $(a,b)$ to denote $\set{x\in X\mid a<x<b}$, called
+    \emph{open interval}.
+
+    If $(a,b) = \emptyset$, then $a$ is called \emph{immediate
+      precessor} of $b$ and $b$ called \emph{immediate successor} of
+    $a$.
+  \end{definition}
+  \begin{remark}
+    It makes more sense on $X$ is a discrete set. Since if
+    $(a,b)$ is an open interval in $\RR$, $(a,b) = \emptyset
+    \RA a = b$ which makes no sense on $a$ as an immediate precessor
+    of $b$.
+  \end{remark}
+
+  \begin{definition}{\defn{Order Type}}
+    if $A$ and $B$ are two sets with $<_A$ and $<_B$. We say that \A
+    and \B have same \emph{order type} if $\ex f : A \to B$ that
+    preserves order, \ie $$a_1 <_A b_1 \RA f(a_1) <_B f(b_1)$$
+  \end{definition}
+  \begin{remark}
+    It's just a generalization of monotone function.
+  \end{remark}
+
+  \begin{definition}{\defn{Dictionary order relation}}
+    if \A,\B are two sets with $(<_A,<_B)$, defn an order for
+    $A\times B$ by defining $$a_1\times b_1 < a_2\times b_2$$
+    if $a_1<_A a_2$, or if $a_1=a_2\;\land\;b_1<_B b_2$.
+  \end{definition}
+
+  \begin{definition}{\defn{LUB property}/\defn{GLB property}}
+    For $A$ and $<_A$, we say \A has \emph{LUB property} if
+    $$\forall A_0\subset A,A\not=\emptyset\land\ex \text{upper bound for }
+    A_0 \RA \ex \text{lub$\{A_0\}$}\in A$$
+  \end{definition}
+  \begin{example}
+    $A=(-1,1)$. \eg $X=\set{1-\frac{1}{n}\mid n\in\ZZ^+}$ does not have an
+    upper bound, thus vacuously true. $\set{-\frac{1}{n}\mid
+      n\in\ZZ^+}$ has upper bound of any number in $[0,1)\subset A$, and
+    $\operatorname{lub}(X)=0\in (-1,1)$.
+  \end{example}
+  \begin{example}
+    Counterexample. $A=(-1,0)\cup(0,1)$. $\set{-\frac{1}{n}\mid n\in\ZZ^+}$ has
+    upper bound of any $(0,1)\subset A$, while
+    $\operatorname{lub}(X)=0\not\in A$.
+  \end{example}
+  \begin{remark}
+    The completeness property of $\RR$ as an axiom derives this property.
+  \end{remark}
+
+  \begin{property}{$\RR$ field}
+
+    \textbf{Algebraic properties}
+    \begin{enumerate}
+    \item assoc: $(x+y)+z=x+(y+z); (xy)z=x(yz)$
+    \item comm: $x+y=y+x; xy=yx$
+    \item id: $\ex!0, x+0=x$; $\ex!1,x\not=0\RA x1=x$
+    \item inv: $\forall x,\ex!y,x+y=0$; $\forall x\not=0,\ex!y,xy=1$
+    \item distr: $x(y+z)=xy+xz$
+    \end{enumerate}
+
+    \textbf{Mixed algebraic and order property}
+    \begin{enumerate}[resume]
+    \item $x>y\RA x+z>y+z$; $x>y\land z>0\RA xz>yz$
+    \end{enumerate}
+
+    \textbf{Order properties}
+    \begin{enumerate}[resume]
+    \item $<$ has LUB property
+    \item $\forall x<y,\ex z, x<z\land z<y$
+    \end{enumerate}
+  \end{property}
+
+  1-6 make $\RR$ a field. 1-6 + 7 make $\RR$ an ordered field. 7-8
+  makes $\RR$, called by topologists, a \defn{linear continuum}.
+\end{chapter}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
