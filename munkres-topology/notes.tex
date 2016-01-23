@@ -5,14 +5,16 @@
 \makeindex[columns=2,title=Alphabetical Index]
 
 \usepackage{amsmath}
-\usepackage{amsthm}
 \usepackage{amssymb}
 
 \usepackage{hyperref}
+\newcommand*{\link}[1]{\href{#1}{(\underline{link})}%
+  \footnote{\url{#1}}}
 
 \usepackage{xspace}
 \usepackage{enumitem}
 
+\usepackage{amsthm}
 \newtheorem*{remark}{Remark}
 
 \theoremstyle{definition}
@@ -43,13 +45,10 @@
 \newcommand{\ex}{\ensuremath\exists}
 
 
-
 \begin{document}
-\newcommand*{\link}[1]{\href{#1}{(\underline{link})}%
-  \footnote{\url{#1}}}
 
 
-\title{Notes for James R. Munkres' Topology (2E)}
+\title{Notes on James R. Munkres' Topology (2E)}
 \author{Shou}
 \date{\today}
 
@@ -63,7 +62,7 @@ ch 9-14, that depends on ch 1-4, is about algebraic topology.
 
 My plan is to read through ch 1-4 very quickly, within a weekend, and
 then I will start reading ch 9+ simultaneously with W.S.Massey's
-Agelbraic topology: An induction.
+Algebraic topology: An induction.
 
 Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
 \end{chapter}
@@ -72,13 +71,19 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
   \begin{definition}{\defn{Order relation}}
     rel $C$ on set $A$ is called \emph{order relation} if
     \begin{enumerate}
-    \item comparability, \ie
+    \item comparability, \aka totality for all non-eq elements, \ie
       $\forall x,y\in A, x\not=y\RA x C y\lor y C x$
     \item non-refl, \ie $\forall x, \neg(x C x)$
     \item trans, \ie $\forall x C y\land y C z, x C z$
     \end{enumerate}
-    (\aka linear order)
+    (\aka \defn{Linear order}, \defn{Simple order})
   \end{definition}
+  \begin{remark}
+    This relation is not the same as Linear order on Wikipedia
+    \link{https://en.wikipedia.org/wiki/Total_order}. This order is
+    actually the strict version of the Total order on wikipedia, \ie
+    has non-refl property.
+  \end{remark}
 
   \begin{definition}{\defn{Open interval}}
     if $X$ is a set and $<$ is an order rel, and if $a<b$ we use
@@ -96,7 +101,7 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     of $b$.
   \end{remark}
 
-  \begin{definition}{\defn{Order Type}}
+  \begin{definition}{\defn{Order type}}
     if $A$ and $B$ are two sets with $<_A$ and $<_B$. We say that \A
     and \B have same \emph{order type} if $\ex f : A \to B$ that
     preserves order, \ie $$a_1 <_A b_1 \RA f(a_1) <_B f(b_1)$$
@@ -155,7 +160,7 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
   \end{property}
 
   1-6 make $\RR$ a field. 1-6 + 7 make $\RR$ an ordered field. 7-8
-  makes $\RR$, called by topologists, a \defn{linear continuum}.
+  makes $\RR$, called by topologists, a \defn{Linear continuum}.
 
   \begin{theorem}{Well ordering property}
     $\ZZ^+$ has \emph{Well-ordering property}. \ie Every nonempty
@@ -299,6 +304,80 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     The set $C$ can be thought of as having been obtained by choosing
     one element from each of the sets in $\mathcal{A}$.
   \end{definition}
+
+  \begin{theorem}\defn{Well-ordering theorem}
+    Every set is well-orderable. (assuming axiom of choice)
+  \end{theorem}
+  \begin{remark}
+    This theorem is rather against intuition. As I checked briefly on
+    wikipedia and proofwiki, the proof
+    \link{https://proofwiki.org/wiki/Well-Ordering_Theorem} is done
+    using the axiom of choice and the Princple of Transfinite
+    Induction. I can't comprehend the proof since I have no related
+    knowledge about transfinite induction schema. The result is also
+    known as \defn{Zermelo's
+      Theorem}\link{https://proofwiki.org/wiki/Zermelo\%27s_Theorem_(Set_Theory)},
+    which is usually worded: Every set of cardinals is well-ordered
+    with respect to $\leq$. This is weird to me since doesn't it imply
+    that cardinals are equivalent to ordinals?
+  \end{remark}
+
+  \begin{definition}\defn{Strict partial order}
+    A set $A$, a relation $\prec\;\subset A \times A$ is a \emph{strict
+      partial order} if for all elements $a,b,c\in A$,
+    \begin{enumerate}
+    \item Non-refl: $\neg(x \prec x)$
+    \item Trans: $x\prec y\land y\prec z \RA x\prec z$
+    \end{enumerate}
+  \end{definition}
+  \begin{remark}
+    Compare to (non-strict) partial order, strict partial order does
+    not have reflexivity property ($x\leq x$).
+  \end{remark}
+  \begin{remark}
+    Compare to a simply order relation, this order relation does not
+    require totality (or comparability).
+  \end{remark}
+
+  \begin{theorem}\defn{The maxium principle}
+    A set $A$, a strict partial order $\prec$ on $A$. There exists a
+    maxiaml simply ordered subset B.
+
+    Said differently, there exists a subset $B$ of $A$ such that $B$
+    is simply ordered by $\prec$ and such that no subset of $A$ that
+    properly contains $B$ is simply ordered by $\prec$.
+  \end{theorem}
+  \begin{remark}
+    Think in this way. Draw a acyclic directed graph for $A$: for
+    for an element in $A$ draw a vertex, for each pair of vertices,
+    draw an edge from $a$ to $b$ iff $a\prec b$ is minimal, \ie
+    $\neg\ex c: a\prec c\prec b$. Then we can say
+    $a\prec b$ if $a$ is connected to $b$ by the transitivity
+    property. This thereom actually says that there exists a maximal
+    path in the graph.
+  \end{remark}
+
+  \begin{definition}\defn{Upper bound} and \defn{Maximal element}
+    Let $A$ be set and $\prec$ be strict partial order on
+    $A$. $B\subset A$. An \emph{upper bound} on $B$ is $c\in A$ such
+    that $\forall b\in B:b=c\lor b\prec c$. A \emph{maximal element}
+    of $A$ is an element $m\in A$ such that $\neg\ex a,m\prec a$.
+  \end{definition}
+  \begin{remark}
+    When we talk about upper bounds of $A$, we are under implication
+    of a subset $A$ of a ordered set.
+  \end{remark}
+
+  \begin{theorem}\defn{Zorn's Lemma}
+    Let $A$ be strictly partially ordered set. If every simply ordered
+    subset of $A$ has an upper bound in $A$, then $A$ has a maximal
+    element.
+  \end{theorem}
+  \begin{remark}
+    This is a consequence of the maximum principle. It's easy to
+    verify the maximum element is the upper bound of the maximal
+    simply ordered subset.
+  \end{remark}
 \end{chapter}
 
 \printindex
