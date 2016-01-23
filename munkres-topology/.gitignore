@@ -3,3 +3,8 @@
 *.toc
 *.el
 _*.tex
+*.idx
+*.ind
+*.out
+*.ilg
+Command*

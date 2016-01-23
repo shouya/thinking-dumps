@@ -1,20 +1,27 @@
 \documentclass{report}
 
+\usepackage[utf8]{inputenc}
+\usepackage{imakeidx}
+\makeindex[columns=2,title=Alphabetical Index]
+
 \usepackage{amsmath}
 \usepackage{amsthm}
 \usepackage{amssymb}
 
+\usepackage{hyperref}
+
 \usepackage{xspace}
 \usepackage{enumitem}
 
-
 \newtheorem*{remark}{Remark}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}[chapter]
-\newtheorem{example}{Example}[definition]
-\newtheorem{property}{Property}[chapter]
 
-\newcommand{\defn}[1]{\textbf{#1}\label{#1}}
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{property}[theorem]{Property}
+
+\newcommand{\defn}[1]{\textbf{#1}\label{#1}\index{#1}}
 \newcommand{\set}[1]{\ensuremath\{#1\}}
 
 \newcommand{\ie}{\textit{i.e.}\xspace}
@@ -35,7 +42,12 @@
 
 \newcommand{\ex}{\ensuremath\exists}
 
+
+
 \begin{document}
+\newcommand*{\link}[1]{\href{#1}{(\underline{link})}%
+  \footnote{\url{#1}}}
+
 
 \title{Notes for James R. Munkres' Topology (2E)}
 \author{Shou}
@@ -144,7 +156,152 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
 
   1-6 make $\RR$ a field. 1-6 + 7 make $\RR$ an ordered field. 7-8
   makes $\RR$, called by topologists, a \defn{linear continuum}.
+
+  \begin{theorem}{Well ordering property}
+    $\ZZ^+$ has \emph{Well-ordering property}. \ie Every nonempty
+    subset of $\ZZ^+$ has a smallest element.
+  \end{theorem}
+  \begin{proof}
+    We first prove that for each $n\in\ZZ^+$, the following statement
+    holds: Every nonempty subset of $\set{1,\ldots,n}$ has a smallest
+    element.
+
+    Let $A$ be the set of all postive integers $n$ for which this
+    theorem holds. Then \A contains 1, since if $n=1$, the only
+    possible subset is $\set{1}$ itself. Then suppose \A contains $n$,
+    we show that it contains $n+1$. So let $C$ be a nonempty subset of
+    the set $\set{1,\ldots,n+1}$. If $C$ consists of the single
+    element $n+1$, then that element is the smallest element of
+    $C$. Otherwise, consider the set $C\cap\set{1,\ldots,n}$, which is
+    nonempty. Because $n\in A$, this set has a smallest element, which
+    will automaticallly be the smallest element of $C$ also. Thus $A$
+    is inductive, so we conclude that $A=\ZZ^+$; hence the statement
+    is true for all $n\in\ZZ^+$.
+
+    Now we prove the theorem. Suppose that $D$ is a nonempty subset of
+    $\ZZ^+$. Choose an element $n$ of $D$. Then the set $A=D\cap[n]$
+    is nonempty, so that $A$ has a smallest element $k$. The element
+    $k$ is automatically the smallest element of $D$ as well.
+  \end{proof}
+  \begin{remark}
+    I don't really understand the second part of this proof. By
+    {\textup{https://proofwiki.org}}, Principle of Mathematical
+    Induction, Well-Ordering Principle, and Principle of Complete
+    Induction are logically equivalent.
+    \link{https://proofwiki.org/wiki/Equivalence_of_Well-Ordering_Principle_and_Induction\#Final_assembly}
+  \end{remark}
+
+  \begin{definition}{\defn{Cartesian product}}
+    Let $\set{A_1,\ldots,A_m}$ be a faimily of sets indexed with the
+    set $\set{1.\ldots,m}$. Let $X=A_1\cup\dots\cup A_m$. We define
+    \emph{cartesian product} of this indexed family, denoted by
+    $$\prod_{i=1}^mA_i\;\;\text{or}\;\;A_1\times \dots \times A_m,$$
+    to be the set of all $m$-tuples $(x_1,\ldots,x_m)$ of elements of
+    $X$ such that $x_i\in A_i$ for each $i$.
+  \end{definition}
+  \begin{remark}
+    Indexing function $f:J\to\mathcal{A}$ is surjective but not
+    necessarily injective.
+  \end{remark}
+
+  \begin{definition}{\textbf{$\omega$-tuple}}
+    An \emph{$\omega$-tuple} of elements of set $X$ to be a function
+    $$x:\ZZ^+\to X,$$
+    \aka \emph{sequence}, or a \emph{infinite sequence}.
+  \end{definition}
+
+  \begin{theorem}
+    $\set{0,1}^\omega$ is uncountable. (let $X=\set{0,1}$ in the proof.)
+  \end{theorem}
+  \begin{proof}
+    We show that given any function $g:\ZZ^+\to X^\omega$, $g$ is not
+    surjective. Four this purpose, let us denote $g(n)$ as
+    $(x_{n1},x_{n2},\ldots,x_{nn},\ldots,x_{n\omega})$, where each $x_{ij}$ is
+    eather 0 or 1. Then we define any element $y=(y1,\ldots,y_\omega)$
+    of $X^\omega$ by letting
+    \begin{equation*}
+      y_n=
+      \begin{cases}
+        0 & \text{if $x_{nn}$ = 1}, \\
+        1 & \text{if $x_{nn}$ = 0}.
+      \end{cases}
+    \end{equation*}
+    $y$ will differ $g(n)$ for all $n$ by a digit. Therefore
+    $y\not\in \operatorname{Im}(g)$.
+  \end{proof}
+  \begin{remark}
+    Note this proof is similar to the proof of uncountableness of
+    $[0,1)$ using the vast digit array.
+  \end{remark}
+  \begin{remark}
+    $\set{0,1}^\omega
+    \simeq [0,1)$ by $f(a_1,a_2,\ldots)=\sum_{i=1}^\infty{a_i
+      2^{-i}}$. (\ie binary decimals). Then we can use the conclusion
+    of the uncountableness of $[0,1)$ to prove this directly.
+  \end{remark}
+  \begin{remark}
+    Think of picking a subset of $\ZZ^+$, for each $i\in\ZZ^+$ present in
+    the subset, set $a_i=1$, otherwise $a_i=0$. Thus
+    $\set{0,1}^\omega$ is just isomorphic to the power set
+    $2^{\ZZ^+}$. By cantor's theorem, there is not surjection
+    $f : \ZZ^+\to 2^{\ZZ^+}$.
+  \end{remark}
+
+  \begin{theorem}
+    There is not surjective map $g:A\to 2^A$ for all set $A$. Proof:~\link{https://proofwiki.org/wiki/Cantor's_Theorem}
+  \end{theorem}
+
+
+  \begin{theorem}{\defn{Principle of recursive definition}}
+    Let $A$ be a set; let $a_0$ be an element of $A$. Suppose $\rho$
+    is a function that assigns, to each function $f$ mapping a
+    nonempty section of the positive integers into $A$, an element of
+    $A$. Then there exists a unique function
+    $$h : \ZZ^+ \to A$$
+    such that
+    \begin{align*}
+      h(1) &= a_0, \\
+      h(i) &= \rho(h|\set{1,\ldots,i-1})\;\;\text{for $i>1$}
+    \end{align*}
+    The formula is called a \emph{recursion formula} for $h$.
+  \end{theorem}
+  \begin{remark}
+    I'm not very clear about this definition. I think the point of
+    this definition is to indicate that there is a UNIQUE function
+    satisified a recursive definition.
+  \end{remark}
+
+  \begin{theorem}
+    The following statements about set $A$ are equivalent:
+    \begin{enumerate}
+    \item There exists an \emph{injective}, not necessarily surjective
+      (of course), function $f : \ZZ^+ \to A$.
+    \item There exists a bijection of $A$ to a propert subset of $A$.
+    \item $A$ is infinite.
+    \end{enumerate}
+  \end{theorem}
+  \begin{example}\mbox{}
+    \begin{enumerate}
+    \item $f : \ZZ^+\hookrightarrow\RR$.
+    \item $f : \RR \to (-1,1)$ by $f(0)=0, f(a)=\frac{1}{a}$.
+    \item $\RR$ is infinite.
+    \end{enumerate}
+  \end{example}
+
+  \begin{definition}{\defn{Axiom of choice}}
+    Given a collection $\mathcal{A}$ of disjoint nonempty sets (\ie
+    $\forall x,y\in\mathcal{A}, x\cap y=\emptyset$), there
+    exists a set $C$ consisting of exactly one element from each
+    element of $\mathcal{A}$; that is, $C\subset\bigcup\mathcal{A}$ and for
+    each $A\in\mathcal{A}$, the set $C\cap A$ contains a single
+    element.
+
+    The set $C$ can be thought of as having been obtained by choosing
+    one element from each of the sets in $\mathcal{A}$.
+  \end{definition}
 \end{chapter}
+
+\printindex
 
 \end{document}
 
