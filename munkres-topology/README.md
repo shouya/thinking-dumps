@@ -7,6 +7,6 @@ authoritative source of knowledge about Topology.
 
 The book:
 
-*
-[amazon](http://www.amazon.com/Topology-2nd-Edition-James-Munkres/dp/0131816292)
+* [amazon](http://www.amazon.com/Topology-2nd-Edition-James-Munkres/dp/0131816292)
+
 * [pdf](http://www.maths.ed.ac.uk/~aar/papers/munkres2.pdf)
