@@ -562,8 +562,37 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
   \begin{remark}
     So my understanding of a basis of a topology is like the generator
     of the topology that satisfy the existence of intersection. So
-    first of all we have to note that $\B\subset\T$ is always true.
+    first of all we have to note that $\B\subset\T$.
+
+    Using the process from the book, we can verify it. Take $J$ to be
+    an indexed family of $\B$.
+
+    It's easy to show that $\bigcup_{\alpha\in J} B_\alpha$ is in $\T$
+    if $\forall \alpha\in J : B_\alpha\in\T$.
+
+    It's easier to to show that $\bigcap_{\alpha\in J} B_\alpha$ is in
+    $\T$ if $\forall \alpha\in J: B_\alpha\in\T$ since it's specified
+    in the criteria for $\B$ to be a basis. (Actually basis does more
+    than finite intersection. We can prove using induction that the
+    intersection of any countable number of basis is in $\T$.
+
+    Also, $\emptyset\in\T$ will be vacuously true no matter what $\B$
+    we pick.
   \end{remark}
+  \begin{theorem}
+    A more visual-able theorem. $\T$ is the all unions of elements in
+    $\bigcup_{B\in\B} B$.
+  \end{theorem}
+  \begin{proof}
+    Given $B=\bigcup_{\alpha\in K} B_\alpha$, since $B_\alpha\in\T$
+    and for any $x,y\in\T$, $x\cup y\in\T$. Thus $B\in\T$. Conversely,
+    given $U\in\T$, choose for each $x\in U$, $\ex B_x\in\B$ and
+    $U=\union_{x\in U} B_x$. Therefore $U$ is some union of elements
+    in $\B$.
+  \end{proof}
+
+
+
 \end{chapter}
 
 \printindex
