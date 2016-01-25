@@ -1,8 +1,13 @@
 \documentclass{report}
 
 \usepackage[utf8]{inputenc}
+
 \usepackage{imakeidx}
 \makeindex[columns=2,title=Alphabetical Index]
+
+\usepackage{tikz}
+\usetikzlibrary{fit,shapes}
+\tikzstyle{point}=[draw,fill=black,circle,inner sep=0pt,minimum size=2pt]
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -12,6 +17,7 @@
   \footnote{\url{#1}}}
 
 \usepackage{xspace}
+\usepackage{float}
 \usepackage{enumitem}
 
 \usepackage{amsthm}
@@ -35,12 +41,6 @@
 \newcommand{\ZZ}{\mathbb{Z}}
 \newcommand{\RR}{\mathbb{R}}
 
-\newcommand{\A}{$A$\xspace}
-\newcommand{\B}{$B$\xspace}
-\newcommand{\X}{$X$\xspace}
-\renewcommand{\a}{$a$\xspace}
-\renewcommand{\b}{$b$\xspace}
-\newcommand{\x}{$x$\xspace}
 
 \newcommand{\ex}{\ensuremath\exists}
 
@@ -102,8 +102,8 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
   \end{remark}
 
   \begin{definition}{\defn{Order type}}
-    if $A$ and $B$ are two sets with $<_A$ and $<_B$. We say that \A
-    and \B have same \emph{order type} if $\ex f : A \to B$ that
+    if $A$ and $B$ are two sets with $<_A$ and $<_B$. We say that $A$
+    and $B$ have same \emph{order type} if $\ex f : A \to B$ that
     preserves order, \ie $$a_1 <_A b_1 \RA f(a_1) <_B f(b_1)$$
   \end{definition}
   \begin{remark}
@@ -111,13 +111,13 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
   \end{remark}
 
   \begin{definition}{\defn{Dictionary order relation}}
-    if \A,\B are two sets with $(<_A,<_B)$, defn an order for
+    if $A$,$B$ are two sets with $(<_A,<_B)$, defn an order for
     $A\times B$ by defining $$a_1\times b_1 < a_2\times b_2$$
     if $a_1<_A a_2$, or if $a_1=a_2\;\land\;b_1<_B b_2$.
   \end{definition}
 
   \begin{definition}{\defn{LUB property}/\defn{GLB property}}
-    For $A$ and $<_A$, we say \A has \emph{LUB property} if
+    For $A$ and $<_A$, we say $A$ has \emph{LUB property} if
     $$\forall A_0\subset A,A\not=\emptyset\land\ex \text{upper bound for }
     A_0 \RA \ex \text{lub$\{A_0\}$}\in A$$
   \end{definition}
@@ -172,8 +172,8 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     element.
 
     Let $A$ be the set of all postive integers $n$ for which this
-    theorem holds. Then \A contains 1, since if $n=1$, the only
-    possible subset is $\set{1}$ itself. Then suppose \A contains $n$,
+    theorem holds. Then $A$ contains 1, since if $n=1$, the only
+    possible subset is $\set{1}$ itself. Then suppose $A$ contains $n$,
     we show that it contains $n+1$. So let $C$ be a nonempty subset of
     the set $\set{1,\ldots,n+1}$. If $C$ consists of the single
     element $n+1$, then that element is the smallest element of
@@ -383,7 +383,7 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
 \begin{chapter}{Topological spaces and continuous functions}
   \begin{definition}\defn{Topology}
     A \emph{topology} on a set $X$ is a collection $\mathcal{T}$ of
-    subsets of $X$ having the following properties:
+    subsets of $X$ (\ie $\mathcal{T}\subset 2^X$) having the following properties:
     \begin{enumerate}
     \item $\emptyset \in \mathcal{T}$ and $X\in\mathcal{T}$,
     \item The union of the elements of any subcollection of $\mathcal{T}$ is in
@@ -392,6 +392,178 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
       subcollection of $\mathcal{T}$ is in $\mathcal{T}$.
     \end{enumerate}
   \end{definition}
+  \begin{remark}
+    After investigation, I consider there is no special meaning for a
+    collection differing from a
+    set. (ref. \link{http://math.stackexchange.com/a/173002},
+    \link{https://proofwiki.org/wiki/Definition:Topology/Definition_1})
+  \end{remark}
+
+  \begin{definition}\defn{Topological space}
+    A \emph{topological space} is an ordered pair $(X,\mathcal{T})$
+    consisting of a set $X$ and a topology $\mathcal{T}$ of
+    $X$. Often we omit specfic mention of $\mathcal{T}$ if no
+    confusion will arise.
+  \end{definition}
+
+  \begin{definition}\defn{Open set}
+    If $X$ is a topological space, we say that $U\subset X$ is
+    an \emph{open set} of $X$ if $U \in \mathcal{T}$. Using this
+    terminology, one can say a topological space is a set $X$ together
+    with a set of open sets. Thus the defintion of an open set is the
+    same as topology: $\emptyset$ and $X$ both open, arbitrary
+    unions and finite intersections of open sets are open.
+  \end{definition}
+
+  \begin{definition}
+    If $\mathcal{T}=2^A$, then $X$ is called a \defn{Discrete
+      topology}; \\
+    If $\mathcal{T}=\set{\emptyset, X}$, then $X$ is called a
+    \defn{Trivial topology}, or \defn{Indiscrete topology}.
+  \end{definition}
+  \def\T{\mathcal{T}}
+  \begin{definition}\defn{Finite complement topology}
+    Let $X$ be a set, $\mathcal{T}_f$ be the collection of all subsets
+    $U$ of $X$ such that $X-U$ either is finite or is all of $X$. Then
+    $\mathcal{T}_f$ is a topology on $X$, called the \emph{finite
+      complement topology}. Both $X$ and $\emptyset$ are in
+    $\mathcal{T}_f$ since $X-X$ is finite and $X-\emptyset$ is all of
+    $X$.
+
+    Now we show $\mathcal{T}_f$ is a topology. If $\set{U_a}$ is an
+    indexed family of nonempty elements of $\T_f$, to show $\bigcup U_a$
+    is in $\T_f$, we compute
+    $$X-\bigcup U_a = \bigcap(X-U_a)$$
+    Which is finite since $X-U_a$ is finite for all $U_i\in\T_f$. To show
+    $\bigcap U_i\in\T_f$, we compute
+    $$x-\bigcap_{i=1}^n U_i=\bigcup_{i=1}^n(X-U_i)$$
+    Note by definition of topology we only need to check finite
+    intersection. Then the finite number of unions of finite sets is
+    finite thus finite $\bigcup U_i\in\T_f$.
+  \end{definition}
+
+  \begin{definition}\defn{Finer}, \defn{Strictly
+      finer}, \defn{Coarser}, \defn{Strictly coarser}, and
+    \defn{Comparable}
+    \begin{table}[H]
+      \centering
+      \begin{tabular}{l|l|l}
+        & set term & topology term \\\hline
+        $\T'\supset \T$ & superset & finer, larger, stronger \\
+        $\T'\supsetneq \T$ & proper superset(?) & strictly finer  \\
+        $\T'\subset \T$ & subset & coarser, larger, weaker   \\
+        $\T'\subsetneq \T$ & proper subset & strictly coarser \\
+        $\T'\subset \T$ or $\T\subset T'$ & - & comparable
+      \end{tabular}
+    \end{table}
+  \end{definition}
+  \begin{remark}
+    This is a bit not straightforward at the first sight. Remember
+    that the essential of topology is its structure. The more open sets
+    we have in a topology, the more fine it is.
+  \end{remark}
+
+  \def\B{\mathcal{B}}
+  \begin{definition}\defn{Basis}
+    A \emph{basis} for a topology $\B\subset 2^X$ (called basis
+    elements) such that
+    \begin{enumerate}
+    \item $\forall x\in X : \exists B\in\B : x\in B$
+    \item $\forall x\in B_1 \cap B_2 \RA \ex B_3 \in \B: x\in B_3 \land
+      B_3\subset B_1\cap B_2$
+    \end{enumerate}
+
+    If $\B$ is a basis, we define \emph{topology $\T$ generated by
+      $\B$} to be: we say $U\subset X$ is open set (\ie $U\in\T$), if
+    $\forall x\in U: \exists B\in\B: x\in B \land B\subset U$.
+  \end{definition}
+  \begin{remark}
+    The concept of a basis of a topology is rather abstract. I think
+    of it in this way. Since we are dealing with intersection in the
+    definition of basis, we want to think from top to bottom, in other
+    words, from larger sets, to their intersections.
+  \end{remark}
+  \begin{example}
+    Think of this example. In the beginning we have $X=\set{a,b,c}$
+    and ${\B=\set{B_1,B_2}}$ where $B_1=\set{a,b}$ and
+    $B_2=\set{b,c}$.
+
+    \begin{figure}[H]
+      \centering
+      \tikz{
+        \node (a) [point,label={[name=la] a}] {};
+        \node (b) [point,right of=a,label={[name=lb] b}] {};
+        \node (c) [point,right of=b,label={[name=lc] c}] {};
+        \node (B1) [ellipse,fit=(a)(la)(b),draw,label=below:$B_1$] {};
+        \node (B2) [ellipse,fit=(b)(lc)(c),draw,label=below:$B_2$] {};
+      }
+    \end{figure}
+
+    In this way $\forall x\in X :\ex B\in \B: x\in B$. Now we try to
+    satisfy the second condition and we will find that
+    $b\in B_1\cap B_2$ is not in any basis element who is a subset of
+    $B_1\cap B_2$. Now we add it as follows:
+
+    \begin{figure}[H]
+      \centering
+      \tikz{
+        \node (a) [point,label={[name=la] a}] {};
+        \node (b) [point,right of=a,label={[name=lb] b}] {};
+        \node (c) [point,right of=b,label={[name=lc] c}] {};
+        \node (B1) [ellipse,fit=(a)(la)(b),draw,label=below:$B_1$] {};
+        \node (B2) [ellipse,fit=(b)(lc)(c),draw,label=below:$B_2$] {};
+        \node (B3) [ellipse,fit=(b)(lb),draw=blue,label={[yshift=-7pt,blue] below:$B_3$}] {};
+      }
+    \end{figure}
+
+    Now with $\B=\set{B_1,B_2,B_3}$ all above two criterion are
+    satisified. Therefore $\B$ is a basis for the topology $\T$:
+
+    \begin{figure}[H]
+      \centering
+      \tikz{
+        \node (a) [point] {};
+        \node (b) [point,right of=a] {};
+        \node (c) [point,right of=b] {};
+        \node (b0) [fit=(b),circle,draw] {};
+        \node (ab) [fit=(a)(b0),ellipse,draw,inner sep=0] {};
+        \node (bc) [fit=(c)(b0),ellipse,draw,inner sep=0] {};
+        \node (abc) [fit=(ab)(bc),ellipse,draw,inner sep=0] {};
+      }
+    \end{figure}
+  \end{example}
+
+  \begin{example}
+    Continuing above example. We now verify that $\T$ is generated by
+    $\B$ by checking all open sets $U\in\T$ with the rule specified.
+    Actually \\
+    ${\T=\set{\emptyset, \set{a,b}, \set{b,c}, \set{b},
+        \set{a,b,c}}}$. I will only show how $\set{a,b}\in\T$ and how
+    $\set{b}\in\T$ and how $\set{a,c}\not\in\T$.
+
+    \begin{enumerate}
+    \item $U=\set{a,b}\in\T$: For $a\in U$, take $B=\set{a,b}$, then
+      $B\subset U$; the same works for $b$. Therefore $U$ is an open
+      set.
+    \item $U=\set{b}\in\T$: For $b\in U$, take $B=\set{b}$, then
+      $B\subset U$. Therefore $\set{b}$ is an open set. Note that we
+      cannot take $B=\set{a,b}$, since $\set{a,b}\not\subset \set{b}$.
+    \item $U=\set{a,c}\not\in\T$: For $a\in U$, we cannot find a
+      $B\in\B$ that contains $a$ and is a subset of $\set{a,c}$. Since
+      the only possible subsets of $\set{a,c}$ are $\set{\emptyset,
+        \set{a}, \set{c}, \set{a,c}}$ and neither is a basis
+      element. Therefore $\set{a,c}$ is not an open set.
+    \end{enumerate}
+  \end{example}
+  \begin{remark}
+    Let $\B$ be set of all one-point subsets of $X$, then it is a
+    basis for the discrete topology on $X$.
+  \end{remark}
+  \begin{remark}
+    So my understanding of a basis of a topology is like the generator
+    of the topology that satisfy the existence of intersection. So
+    first of all we have to note that $\B\subset\T$ is always true.
+  \end{remark}
 \end{chapter}
 
 \printindex
