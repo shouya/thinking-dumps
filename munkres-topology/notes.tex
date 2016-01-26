@@ -587,11 +587,44 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     Given $B=\bigcup_{\alpha\in K} B_\alpha$, since $B_\alpha\in\T$
     and for any $x,y\in\T$, $x\cup y\in\T$. Thus $B\in\T$. Conversely,
     given $U\in\T$, choose for each $x\in U$, $\ex B_x\in\B$ and
-    $U=\union_{x\in U} B_x$. Therefore $U$ is some union of elements
+    $U=\bigcup_{x\in U} B_x$. Therefore $U$ is some union of elements
     in $\B$.
   \end{proof}
 
+  \begin{definition}\defn{Order topology}
+    Assuming we knowing about all open/closed/half-open interval
+    concepts, \emph{over a, possibly not continuous, set}.
 
+    Let $X$ be a set with linear order relation with $<$. Assume
+    $|X|>1$. Let $\B$ be defined as a set of all subsets of $X$ of the
+    following types:
+    \begin{enumerate}
+    \item All valid $(a,b)$
+    \item For $a_0$ to be the minimal element, $[a_0,b)$ (if any)
+    \item For $b_0$ to be the maximal element, $(a,b_0]$ (if any)
+    \end{enumerate}
+
+    Then $B$ is a basis for a topology on $X$, called \emph{order
+      topology}.
+  \end{definition}
+  \begin{example}
+    $\RR$, $\RR\times\RR$ in dict order, $\ZZ^+$
+  \end{example}
+  \begin{definition}\defn{Ray}, \defn{Open ray}, \defn{Closed ray}
+    \begin{align*}
+      (a,+\infty)&=\set{x\mid x>a} \\
+      (-\infty,a)&=\set{x\mid x<a} \\
+      [a,+\infty)&=\set{x\mid x\geq a} \\
+      (-\infty,a]&=\set{x\mid x\leq a}
+    \end{align*}
+  \end{definition}
+
+  \begin{definition}\defn{Product topology}
+    Product topology on topology spaces $X$ and $Y$, denoted as
+    $X\times Y$ is the topology with the basis $\B$ who elements are
+    in form of $U\times V$ where $U\in\T_X, V\in\T_Y$. (Obviously and
+    omitted by book the underlying set is just $X\times Y$)
+  \end{definition}
 
 \end{chapter}
 
