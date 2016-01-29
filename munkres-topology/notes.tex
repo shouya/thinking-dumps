@@ -624,10 +624,17 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
 
     \begin{figure}[H]
       \centering
-      \begin{tikz}
+      \begin{tikzpicture}
         \node (x) [point,label={[name=xl] below:x}] {};
-        \node [right of=x,fit=(x)(xl),circle,draw] {a};
-      \end{tikz}
+        \node (B) [fit=(x)(xl),circle,draw,label={[name=Bl] right:B}] {};
+        \node (Bp) [fit=(B)(Bl),rectangle,draw,label=below:B'] {};
+
+        \node (x2) [point,right of=Bp,xshift=60pt,label={[name=x2l]
+          below:x}] {};
+        \node (B2) [fit=(x2)(x2l),rectangle,draw,label={[name=B2l]
+          right:B}] {};
+        \node (B2p) [fit=(B2)(B2l),circle,draw,label=below:B'] {};
+      \end{tikzpicture}
     \end{figure}
   \end{example}
 
