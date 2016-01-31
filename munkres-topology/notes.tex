@@ -25,6 +25,7 @@
 
 \theoremstyle{definition}
 \newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{definition}[theorem]{Definition}
 \newtheorem{example}[theorem]{Example}
 \newtheorem{property}[theorem]{Property}
@@ -661,12 +662,33 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
 
   \begin{definition}\defn{Subbasis}
     A subbasis $S$ for a topology on X is a set of subsets of $X$
-    whose union equals to X. (Isn't it always true for a basis?)
+    whose union equals to X.
   \end{definition}
   \begin{remark}
-    A subbasis is not as it's name might suggests: a subset of a basis
-    $B$ that is still a basis.
+    Unlike a subset/subgroup/subspace, a subbasis is not as its name
+    suggests to be a sbuset of some other basis. Subbasis and basis
+    are two different way to generate a topology. A basis includes all
+    intersection of two basis elements, while a subbasis doesn't have
+    to. So to generate a topology using a basis, we take all
+    union. While to generate a topology using a subbasis, we take all
+    unions and intersection of subbasis elements. (ref. {Eric Auld on
+      Math
+      Stack-Exchange\link{https://math.stackexchange.com/a/449577/120022}},
+    and Wikipedia\link{https://en.wikipedia.org/wiki/Subbase}.
   \end{remark}
+  \begin{example}\mbox{}\\
+    $\T=\set{\emptyset, \set{0}, \set{0,1}, \set{0,2}, \set{0,1,2}}$
+    \\
+    $\B=\set{\set{0},\set{0,1},\set{0,2}}$ \\
+    $\mathcal{S}=\set{\set{0,1},\set{0,2}}$
+  \end{example}
+  \begin{example}
+    For standard topology on $\RR$, $\T$ is all open intervals (and
+    their unions) on $\RR$. Then, \\
+    $\B=\set{(a,b)\mid a,b\in\RR,\,a\leq b}$, and \\
+    $\mathcal{S}=\set{(-\infty,a)\mid
+      a\in\RR}\cup\set{(b,\infty)\mid b\in \RR}$
+  \end{example}
 
   \begin{definition}\defn{Order topology}
     Assuming we knowing about all open/closed/half-open interval
