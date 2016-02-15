@@ -11,6 +11,8 @@
 
 \usepackage{amsmath}
 \usepackage{amssymb}
+\let\oldemptyset\emptyset
+\let\emptyset\varnothing
 
 \usepackage{hyperref}
 \newcommand*{\link}[1]{\href{#1}{(\underline{link})}%
@@ -27,8 +29,9 @@
 \newtheorem{theorem}{Theorem}[chapter]
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
+\newtheorem{example}{Example}[theorem]
 \newtheorem{property}[theorem]{Property}
+\newtheorem{corollary}[theorem]{Corollary}
 
 \newcommand{\defn}[1]{\textbf{#1}\label{#1}\index{#1}}
 \newcommand{\set}[1]{\ensuremath\{#1\}}
@@ -42,6 +45,14 @@
 \newcommand{\ZZ}{\mathbb{Z}}
 \newcommand{\RR}{\mathbb{R}}
 
+\newcommand{\intersect}{\cap}
+\newcommand{\union}{\cup}
+\newcommand{\Intersect}{\bigcap}
+\newcommand{\Union}{\bigcup}
+
+\newcommand{\Int}{\operatorname{Int}}
+\newcommand{\interior}[1]{#1^\circ}
+\newcommand{\closure}[1]{\bar{#1}}
 
 \newcommand{\ex}{\ensuremath\exists}
 
@@ -741,6 +752,216 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     Projection functions are \emph{onto}.
   \end{definition}
 
+  \begin{definition}\defn{Subspace} and \defn{Subspace topology}
+    For $X$ be topological space and $\T$ be topology on $X$. If
+    $Y\subset X$, then define
+    $$\T_Y=\set{Y\intersect U\mid U\in\T}$$ \emph{subspace topology}
+    of $\T$. $\T_Y$ is a topology.
+  \end{definition}
+  \begin{remark}
+    Does $Y$ have to an open set in $X$ (or $\T$)? No.
+    \begin{itemize}
+    \item remember $X$ does not have any structure, it is $\T$ who
+      gives the structure to $X$;
+    \item it is not necessary for $Y\in\T$, as I will prove $\T_Y$ is
+      a topology anyway below.
+    \end{itemize}
+  \end{remark}
+  \begin{proof}
+    $\emptyset=Y\intersect\emptyset\in\T_Y$, $Y=Y\intersect X\in\T_Y$,
+    for $U_1,U_2\in\T_Y$,
+    $U_1\intersect U_2=V_1\intersect Y\intersect V_2\intersect
+    Y=(V_1\intersect V_2)\intersect Y\in \T_Y$ where $V_1,V_2\in\T$,
+    for $U_1,U_2\in\T_Y$, $U_1\union U_2=(V_1\intersect Y)\union
+    (V_2\intersect Y)=(V_1\union V_2)\intersect Y\in\T_Y$.
+
+    This proof is not correct. A topology requires arbitrary union \ie
+    $\Union_{\alpha\in J}$ and finite intersection
+    $U_1\intersect\dots\intersect U_n$. But the same rule applies.
+  \end{proof}
+  \begin{theorem}
+    Let $\B$ be basis for a topology of $X$, then
+    $\B_Y=\set{B\intersect Y\mid B\in\B}$
+    is a basis for the subspace topology on $Y$.
+  \end{theorem}
+  \begin{theorem}
+    If $Y$ is subspace of $X$. If $U\in\T_Y$, and $Y\in\T$, then
+    $U\in\T$.
+  \end{theorem}
+  This is just what I concerned about above. Pretty straightforward
+  result.
+  \begin{theorem}
+    $A\subset X$ and $B\subset Y$, then $A\times B$ is the same
+    topology $A\times B$ that inherits as subspace of $X\times Y$.
+  \end{theorem}
+  \begin{definition}\defn{Convex}
+    Given an ordered set $X$, $Y\subset X$. Say $Y$ is \emph{convex in
+    } $X$ if for any $a<_Yb$, $(a,b)\in X\RA (a,b)\in Y$.
+  \end{definition}
+  \begin{example} Here are some examples of $Y$ convex in $X$.
+    \begin{itemize}
+    \item $X=\RR$, $Y=[0,1]$
+    \item $X=\RR$, $Y=(0,1)$
+    \item $X=[0,2]\union[3,5]$, $Y=[1,2]\union[3,4]$
+    \item $X=[0,2]\union[3,5]$, $Y=[4,5]$
+    \end{itemize}
+    Here are some counterexamples:
+    \begin{itemize}
+    \item $X=\RR$, $Y=[0,1)\union(1,2]$
+    \item $X=\RR$, $Y=[0,1]\union[2,3]$
+    \item $X=[0,2]\union[3,5]$, $Y=[1,2]\union[4,5]$
+    \end{itemize}
+  \end{example}
+  \begin{theorem}
+    Let $X$ be ordered set in order topology; let $Y\subset X$ be
+    convex in $X$. Then the order topology on $Y$ is the same as the
+    topology $Y$ inherits as a subspace of $X$.
+  \end{theorem}
+  \begin{definition}\defn{Closed set}
+    A subset $A$ of a topological space $X$ is said to be
+    \emph{closed} if the set $X-A$ is open.
+  \end{definition}
+  \begin{remark}
+    A subset $A\in X$ is closed DOES NOT mean itself is not open. It
+    means its complement is open. An example: trivial topology on
+    $\set{a,b}$ includes $\set{\emptyset, \set{a,b}}$. Then $\set{a}$
+    is neither closed or open. In the discrete topology, every point
+    is both closed and open.
+  \end{remark}
+  \begin{theorem} Let $X$ be a topological space, the following
+    conditions hold:
+    \begin{enumerate}
+    \item $\emptyset$ and $X$ are closed.
+    \item Arbitrary intersections of closed sets are closed.
+    \item Finite unions of closed sets are closed.
+    \end{enumerate}
+  \end{theorem}
+  \begin{theorem}
+    Let $Y$ be subspace of $X$. Then a set $A$ is closed in $Y$ iff it
+    squals the intersection of a closed set of $X$ in $Y$.
+  \end{theorem}
+
+  \begin{definition}\defn{Closure} and \defn{interior} of a Set
+    Given $A\subset X$, the \emph{interior} of $A$ is definted as the union
+    of all open sets contained in $A$, and the \emph{closure} of $A$
+    is defined as the intersection of all closed sets containing $A$.
+
+    Interior of $A$ is denoted as $\Int a$, and closure of $A$ is
+    denoted as $\bar{A}$. I will use $\interior{A}$ and $\closure{A}$
+    to denote these two in this note.
+  \end{definition}
+  \begin{remark}
+    $\interior{A}\subset A\subset \closure{A}$
+  \end{remark}
+  \begin{remark}
+    If $A$ is open, $A=\interior{A}$; if $A$ is closed,
+    $A=\closure{A}$.
+  \end{remark}
+  \begin{theorem}
+    Let $Y$ be a subspace of $X$. Let $A$ be a subset of $Y$. Let
+    $\closure{A}$ be closure of $A$ in $X$. Then the closure of $A$ in
+    $Y$ equals $\closure{A}\intersect Y$.
+  \end{theorem}
+  \begin{remark}
+    When we talk about $Y$ subspace of $X$ and $A\subset Y$. We
+    reserve notation $\closure{A}$ to denote the closure of $A$ in
+    $X$.
+  \end{remark}
+  \begin{definition}\defn{Intersects}
+    $A$ intersects $B$ iff $A\intersect B\not=\emptyset$.
+  \end{definition}
+  \begin{theorem} Let $A$ be a subset of topology space $X$.
+    \begin{enumerate}
+    \item Then $x\in\closure{A}$ iff every open set $U$ containing $x$
+      intersects $A$.
+    \item Suppose topology of $X$ is given by a basis $\B$, then $x\in
+      A$ iff $\forall B\in\B:x\in B\RA B\intersect A\not=\emptyset$.
+    \end{enumerate}
+  \end{theorem}
+  \begin{definition}\defn{Neighborhood}
+    We shorten the statement ``$U$ is an open set containing $x$'' to
+    the phrase ``$U$ is a neighborhood of $x$''.
+  \end{definition}
+  \begin{definition}\defn{Limit point}
+    If $A$ a subset of the topological space $X$ and if $x$ is a point
+    of $X$, we say that $x$ is a \emph{limit point} (\aka
+    ``\emph{cluster point}'') of $A$ if every neighborhood of $x$
+    intersects $A$ in some point other than $x$ itself.
+  \end{definition}
+  \begin{example}
+    Consider standard topology on $\RR$. If $A=(0,1]$, then $0$ is a
+    limit point. So is $\frac{1}{2}$. Any $x\in[0,1]$ is a limit
+    point, but no other points.
+  \end{example}
+  \begin{example}
+    On $\RR$, if $B=\set{1/n\mid n\in\ZZ^+}$, then $0$ is the only
+    limit point of $B$.
+  \end{example}
+  \begin{theorem}
+    Let $A$ be a subset of topological space $X$. Let $A'$ be the set
+    of all limit points of $A$. Then
+    $\closure{A}=A\union A'$
+  \end{theorem}
+  \begin{corollary}
+    A subset of a topoloical space is closed iff it contains all its
+    limit points.
+  \end{corollary}
+  \begin{definition}\defn{Converge}
+    The convergency property of $x\in\RR$ is generalized in topology
+    as:
+    One say that a sequence $x_1,x_2,\ldots$ of points of the spacec
+    $X$ converges to the point $x$ of $X$ if that corresponding to
+    each neighborhood $U$ of $x$, there is a positive integer $N$ such
+    that $x_n\in U$ for all $n\geq N$.
+  \end{definition}
+  \begin{definition}\defn{Hausdorff space}
+    A topological space $X$ is called a \emph{Hausdorff space} if for
+    each pair $x_1$, $x_2$ of distinct points of $X$, there exist
+    neighborhoods $U_1$, and $U_2$ of $x_1$ and $x_2$, respectively,
+    that are disjoint.
+  \end{definition}
+  \begin{theorem}
+    Every finite point set in a Hausdorff space $X$ is closed.
+  \end{theorem}
+  \begin{proof}
+    We show any one point set $\set{x_0}$ is closed. If $x$ is a point
+    in $X$ different from $x_0$, then $x$ and $x_0$ have disjoint
+    neighborhoods $U$ and $V$, repsectively. Since $U$ does not
+    intersect $\set{x_0}$, the oint $x$ cannot belong to the closure
+    of the set $\set{x_0}$. Therefore the closure of the set
+    $\set{x_0}$ is itself. Therefore it is closed.
+  \end{proof}
+  \begin{remark}
+    This condition that finite point sets is closed is actually weaker
+    than the Hausdorff condition. \eg $\RR$ in the finite complemenet
+    topology is not a Hausdorff space but every finite point set is
+    closed. This condition is named as \defn{T$_1$ axiom}.
+  \end{remark}
+  \begin{theorem}
+    Let $X$ be a space satisfying $T_1$ axiom; let $A$ be subset of
+    $X$. Then the point $x$ is a limit point of $A$ iff every
+    neighborhood of $x$ contains infinitely many points of $A$.
+  \end{theorem}
+  \begin{theorem}
+    $X$ Hausdorff space, a sequence of points in $X$ converges to at
+    most one point of $X$. \defn{Limit} is called for that point
+    of the sequence.
+  \end{theorem}
+  \begin{theorem}
+    Simply ordered set is a Hausdorff space in order topology.
+    Product of two Hausdorff space is a Hausdorff space.
+    A subspace of a Hausdorff space is a Hausdorff space.
+  \end{theorem}
+  \begin{definition}\defn{Continuous function}
+    Let $X$ and $Y$ be topological spaces. A function $f:X\to Y$ is
+    said continuous if for every open subset $V$ of $Y$, the set
+    $f^{-1}(V)$ is open subset of $X$.
+  \end{definition}
+  \begin{remark}
+    Remember in the defintion, it does not say $f$ maps all open sets
+    in $X$ to open sets in $Y$. It says $f^{-1}$ maps all open sets in
+    $Y$ to open sets in $X$.
+  \end{remark}
 \end{chapter}
 
 \printindex
