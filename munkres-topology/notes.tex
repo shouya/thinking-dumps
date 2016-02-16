@@ -34,7 +34,7 @@
 \newtheorem{corollary}[theorem]{Corollary}
 
 \newcommand{\defn}[1]{\textbf{#1}\label{#1}\index{#1}}
-\newcommand{\set}[1]{\ensuremath\{#1\}}
+\newcommand{\set}[1]{\ensuremath\left\{#1\right\}}
 
 \newcommand{\ie}{\textit{i.e.}\xspace}
 \newcommand{\aka}{\textit{a.k.a.}\xspace}
@@ -52,10 +52,10 @@
 
 \newcommand{\Int}{\operatorname{Int}}
 \newcommand{\interior}[1]{#1^\circ}
-\newcommand{\closure}[1]{\bar{#1}}
+\newcommand{\closure}[1]{\overline{#1}}
 
 \newcommand{\ex}{\ensuremath\exists}
-
+\newcommand{\ep}{\epsilon}
 
 \begin{document}
 
@@ -962,6 +962,247 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     in $X$ to open sets in $Y$. It says $f^{-1}$ maps all open sets in
     $Y$ to open sets in $X$.
   \end{remark}
+  \begin{theorem}
+    To show a function is continuous, one only need to show it's
+    inverse image for each subbasis element is open.
+  \end{theorem}
+  \begin{remark}
+    I've proven this with Prof. Erickson on his class. The final
+    result come out to be the inversed image will become the basis.
+    This shows one usefulness of subbasis.
+  \end{remark}
+  \begin{example}
+    Analysis analogy: let's study real function $f : \RR \to \RR$.
+
+    In analysis, we define continuity of $f$ via the $\epsilon-\delta$
+    definition. Our definition will imply the $\epsilon-\delta$
+    definition as follows.
+
+    Definition for continuity for real valued function: \\
+    $\forall x_0\in \operatorname{Dom}(f):\forall \epsilon>0:\exists \delta: \forall
+    x\in(x_0-\delta,x_0+\delta):
+    f(x)\in(f(x_0)-\epsilon,f(x_0)+\epsilon)$
+
+    \begin{table}[H]
+      \centering
+      \begin{tabular}[H]{ll}
+        analysis language & topology language \\
+        \hline
+        $\RR$ & $\RR$ with standard topology \\
+        $f : X \to Y$ ($X,Y: \text{Set}$)
+                 & $f : X \to Y$ ($X,Y: \text{Topological space}$) \\
+        open interval & open set \\
+        $\delta-$neighborhood of $x_0$
+                 & open set in $X$ containing $x_0$ \\
+        $\epsilon-$neighborhood of $f(x_0)$
+                 & open set in $Y$ containing $f(x_0)$
+      \end{tabular}
+    \end{table}
+
+    Restatement of above definition for continuity in Topology language: \\
+    $\forall x_0\in X:\forall U_Y\in\T_Y:\exists U_X\in\T_X\land
+    x_0\in U_X:\forall x\in U_X:f(x_0)\in U_Y$ \\
+    Then we will discover that we can actually go more general: \\
+    $\forall U_Y\in\T_Y:\exists U_X\in\T_X :\forall x\in U_X:f(x)\in
+    U_Y$ \\
+    And even more general: \\
+    $\forall U_Y\in\T_Y:\exists U_X\in\T_X:f(U_X)=U_Y$ \\
+    Then it comes to be continuity function definition in topology: \\
+    $\forall U_Y\in\T_Y:f^{-1}(U_Y)\in\T_X$
+  \end{example}
+  \begin{theorem}
+    Let $X$ and $Y$ be topological spaces; let $f:X\to Y$. Then the
+    following are equivalent:
+    \begin{enumerate}
+    \item $f$ is cont.
+    \item For every $A\subset X$,
+      $f(\closure{A})\subset\closure{f(A)}$
+    \item For every closed set $B\subset Y$, $f^{-1}(B)$ is closed in
+      $X$.
+    \item For each $x\in X$ and each neighborhood $V$ of $f(x)$, there
+      is a neighborhood $U$ of $x$ such that $f(U)\subset V$.
+    \end{enumerate}
+  \end{theorem}
+  \begin{definition}\defn{Homeomorphism}
+    Let $f:X\to Y$ be bijection. If both $f$ and $f^{-1}$ are
+    continuous, then $f$ is called a \emph{homeomorphism}.
+  \end{definition}
+  \begin{remark}
+    One point to be noticed. This definition requires $f$ and $f^{-1}$
+    both be continuous. You may ask, if $f$ is bijective and $f$ is
+    continuous, doesn't it follows automatically that $f^{-1}$ is
+    continuous? Of course not. Here's a counter-example.
+
+    Take $f : \RR \to \RR$ with $f(x)=x$, the first is the discrete
+    topology on $\RR$ and the second is the standard topology
+    $\RR$. Then $f$ is obviously bijective, and $f$ is open since
+    $f^{-1}(U)$ is always open, so $f$ is continuous. But the converse
+    isn't true.
+  \end{remark}
+  \begin{definition}
+    An alternative definition for homeomorphism is a bijective
+    function such that $f(U)$ is open iff $U$ is open.
+  \end{definition}
+  \begin{definition}\defn{Imbedding}, \defn{Embedding}
+    An injective continuous map is called an \emph{imbedding} (\aka
+    \emph{embedding}.
+  \end{definition}
+  \begin{definition}\defn{Unit circle}, \defn{S$^1$}
+    $S^{1}=\set{x\times y\mid x^2+y^2=1}$
+  \end{definition}
+  \begin{theorem}Constructing continuous map
+    \begin{enumerate}
+    \item Constant map.
+    \item Inclusion map.
+    \item Composition of continuous map.
+    \item Restricting domain. $f:X\to Y$ is cont $\RA$ $f|A:A\to Y$
+      where $A\subset X$.
+    \item Restricting the range.
+    \item Local formulation of continuity. If $X$ can be written as
+      union of open sets $U_\alpha$, and $f|U_\alpha$ is cont. Then
+      $f:X\to Y$ is cont.
+    \end{enumerate}
+  \end{theorem}
+  \begin{theorem} (\textbf{The }\defn{Pasting Lemma}).
+    Let $X= A\union B$ where $A$ and $B$ are closed in $X$. Let
+    $f:A\to Y$ and $g:B\to Y$ cont. If $f(x)=g(x)$ for every $x\in
+    A\intersect B$. Then $f$ and $g$ combine to give a cont func
+    $h:X\to Y$.
+  \end{theorem}
+  \begin{theorem} (\defn{Maps into products})
+    Let $f:A\to X\times Y$
+    given by $f(a) = (f_1(a), f_2(a))$ then $f$ is cont iff
+    $f_1:A\to X$ and $f_2:A\to Y$ are cont. The maps $f_1$ and $f_2$
+    are called the \defn{Coordinate functions} of $f$. (sort of like
+    projection map).
+  \end{theorem}
+  \begin{definition}\defn{Box topology}
+    For $\prod{X_i}$, either finite or infinite, if we take the
+    cartesian product of the basis/open sets, correspondingly, we get
+    a basis for the new topology. This is called the box
+    topology. (Just as what we defined above for product topology)
+  \end{definition}
+
+  \begin{definition}\defn{Metric}
+    A metric on a set $X$ is a function $d:X\times X\to\RR$ having the
+    following properties:
+    \begin{enumerate}
+    \item $d(x,y)\geq 0$ for all $x,y\in X$; equal only when $x=y$
+    \item $d(x,y)=d(y,x)$ for all $x,y$
+    \item $d(x,y)+d(y,z)\geq d(x,z)$ for all $x,y,z$ (\defn{Triangle inequality})
+    \end{enumerate}
+  \end{definition}
+  \begin{definition}\defn{Epsilon ball}
+    $B_d(x,\epsilon)=\set{y\mid d(x,y)<\epsilon}$
+  \end{definition}
+  \begin{definition}\defn{Metric topology}
+    If $d$ is a metrix on $X$. The collection of all $\epsilon$-balls
+    $B_d(x,\epsilon)$ for all $x\in X$ and all $\epsilon>0$ as basis
+    of a topology on $X$. This topology is called the metric topology
+    inducted by $d$.
+  \end{definition}
+  \begin{example}
+    $\RR$ under standard topolgoy is a metric topology induced by
+    the metric ``absolute value of difference function''.
+  \end{example}
+  \begin{example}
+    The discrete topology for a set $X$ is given by the metric
+    topology induced by $d$ defined as:
+    $$\begin{cases}d(x,y)=1 & \text{if }x\not=y \\ d(x,y)=0 &
+      \text{if }x=y\end{cases}$$
+  \end{example}
+  \begin{definition}\defn{Metrizable}, \defn{Metric space}
+    trivial.
+  \end{definition}
+  \begin{definition}\defn{Bounded}, \defn{Diameter}
+    Bounded if $d(a_1,a_2)\leq M$. \\
+    $\operatorname{diam} A = \sup\set{d(a_1,a_2)\mid a_1,a_2\in A}$
+    called diameter.
+  \end{definition}
+  \begin{definition}\defn{Standard bounded metric}
+    Let $X$ be a metric space with metric $d$. Define
+    $\overline{d}:X\times X\to\RR$ by the equation.
+    $$\overline{d}(x,y)=\operatorname{min}\set{d(x,y),1}$$ then
+    $\bar{d}$ is a metric that induces the same topology as $d$.
+  \end{definition}
+  \begin{definition}\defn{Norm}, \defn{Euclidean metric}, \defn{Square metric}
+    trivial for norm. trivial for euclidean metric. \\
+    square metric
+    $\rho$ is defined by $\rho(x,y)=\max\set{|x_1-y_1|,\ldots,|x_n-y_n|}$
+  \end{definition}
+  \begin{theorem}
+    Let $d$ and $d'$ be two metrics on the set $X$; let $\T$ and $\T'$
+    be the topology they induce, respectively. Then $\T'$ is finer
+    than $\T$ iff for each $x$ in $X$ and each $\ep >0$, there is a
+    $\delta>0$ such that $B_{d'}(x,\delta)\subset B_d(x,\ep)$.
+  \end{theorem}
+  \begin{remark}
+    This result is obvious since finer basis determines finer topology.
+  \end{remark}
+  \begin{theorem}
+    The topologies on $\RR^n$ induced by the euclidean metric $d$ and
+    the square metric $\rho$ are the same as the product topology on
+    $\RR^n$.
+  \end{theorem}
+  \begin{definition}\defn{Uniform metric}, \defn{Uniform topology}
+    Given an index set $J$ and given points
+    $\mathbf{x}=(x_\alpha)_{\alpha\in J}$ and
+    $\mathbf{y}=(y_\alpha)_{\alpha\in J}$ of $\RR^J$, let us define a
+    metric $\bar{\rho}$ on $\RR^J$ by the equation
+    $$\bar\rho(\mathbf{x},\mathbf{y})=\sup\set{\bar{d}(x_\alpha,y_\alpha)\mid
+      \alpha\in J}$$
+
+    This is called the \emph{uniform metric} on $\RR^J$ and the
+    topology it induces is called the \emph{uniform topology}.
+  \end{definition}
+  \begin{theorem}
+    The uniform topology on $\RR^J$ is finer than the product topology
+    and coarser than the box topology; these topologies are all
+    different if $J$ is infinite.
+  \end{theorem}
+  \begin{theorem}
+    Let $\bar{d}(a,b)=\min\set{|a-b|,1}$ be the standard bounded
+    metric on $\RR$. If $x$ and $y$ are two points of $\RR^\omega$,
+    define
+    $$D(\mathbf{x},\mathbf{y})=\sup\set{\frac{\bar{d}(x_i,y_i)}{i}}$$
+    to be a metric on $\RR^\omega$. Then the topology induced by $D$
+    is the product topology.
+  \end{theorem}
+  \begin{remark}
+    needs more explanation on these two.
+  \end{remark}
+  \begin{theorem}
+    Let $f:X\to Y$; let $X$ and $Y$ be metrizable with metrics $d_X$
+    and $d_Y$, respectively. Then continuity of $f$ is equivalent to
+    the requirement that given $x\in X$ and given $\ep>0$, there
+    exists $\delta>0$ such that
+    $$d_X(x,y)<\delta\RRA d_Y(f(x),f(y))<\ep$$
+  \end{theorem}
+  \begin{theorem}\defn{The sequence lemma}
+    Let $X$ be topological space, let $A\subset X$. If there is a
+    sequence of points of $A$ converging to $x$, then $x\in \bar{A}$;
+    the converse holds if $X$ is metrizable.
+  \end{theorem}
+  \begin{theorem} Let $f:X\to Y$. If the function $f$ is continuous,
+    then for every convergent sequence $x_n\to x$ in $X$, the sequence
+    $f(x_n)$ converges to $f(x)$. The converse holds if $X$ is
+    metrizable.
+  \end{theorem}
+  \begin{theorem}
+    If $X$ is topological space and $f,g:X\to \RR$ are cont. Then
+    $f+g,f-g,fg$ are cont and $f/g$ are cont for $g\not=0$.
+  \end{theorem}
+  \begin{definition}\defn{Converge uniformly}
+    Let $f_n:X\to Y$ be a sequence of functions from the set $X$ to
+    the metric space $Y$. Let $d$ be the metric for $Y$. We say that
+    the sequence $(f_n)$ \emph{converges uniformly} to the function
+    $f:X\to Y$ if given $\ep>0$, there exists an integer $N$ such that
+    $$d(f_n(x),f(x))<\ep$$ for all $n>N$ and all $x$ in $X$.
+  \end{definition}
+  \begin{theorem}\defn{Uniform limit theorem} Let $f_n:X\to Y$ be a
+    sequence of functions from topological space $X$ to metric space
+    $Y$. If $(f_n)$ converges uniformly to $f$ then $f$ is continuous.
+  \end{theorem}
 \end{chapter}
 
 \printindex
