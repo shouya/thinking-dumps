@@ -56,6 +56,7 @@
 
 \newcommand{\ex}{\ensuremath\exists}
 \newcommand{\ep}{\epsilon}
+\newcommand{\inv}{\ensuremath^{-1}}
 
 \begin{document}
 
@@ -1176,7 +1177,7 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     and $d_Y$, respectively. Then continuity of $f$ is equivalent to
     the requirement that given $x\in X$ and given $\ep>0$, there
     exists $\delta>0$ such that
-    $$d_X(x,y)<\delta\RRA d_Y(f(x),f(y))<\ep$$
+    $$d_X(x,y)<\delta\RA d_Y(f(x),f(y))<\ep$$
   \end{theorem}
   \begin{theorem}\defn{The sequence lemma}
     Let $X$ be topological space, let $A\subset X$. If there is a
@@ -1202,6 +1203,101 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
   \begin{theorem}\defn{Uniform limit theorem} Let $f_n:X\to Y$ be a
     sequence of functions from topological space $X$ to metric space
     $Y$. If $(f_n)$ converges uniformly to $f$ then $f$ is continuous.
+  \end{theorem}
+  \begin{definition}\defn{Quotient map}
+    Let $X$ and $Y$ be topological spaces; let $p:X\to Y$ be a
+    surjective map. The map $p$ is said to be a quotient map if a
+    subset $U$ of $Y$ is open iff $p^{-1}(U)$ is open in $X$.
+  \end{definition}
+  \begin{remark}
+    It sounds like definition for continuity. The difference is in
+    continuity we specify the inverse mapping from open sets to open
+    sets. In this one, we have to inversely map open sets to open
+    sets, also non-open set to non-open set. This condition is
+    sometimes called \defn{Strong continuity}.
+
+    Equivalently we can define quotient maps as $A\subset Y$ closed
+    iff $p^{-1}(A)$ closed in $X$. It follows that for all
+    $B\subset Y$:
+
+    $$f^{-1}(Y-B)=X-f^{-1}(B)$$
+  \end{remark}
+  \begin{definition}\defn{Saturated} A set $C\subset X$ is saturated (with
+    respect to the surjective map $p:X\to Y$) if $C$ contains every
+    set $p^{-1}({y})$ that $C$ intersects. (symbolically, $C$ is
+    saturated if $p\inv({y})$
+
+    A saturated set is just a set $C\subset X$ that is an intersection
+    of open sets of
+    $X$. \link{https://en.wikipedia.org/wiki/Saturated_set}
+  \end{definition}
+  \begin{remark}
+    The definition on the book is not that clear to me. Wikipedia
+    explains it in an intuitive way (The second line in above
+    definition).
+  \end{remark}
+  \begin{remark}
+    To really understand what a saturated set is, we have to do it
+    under a quotient map $q : X \to p(X)$. A quotient map $p$ define
+    an equiv relation on $X$. Say $A\in p(X)$ consists of points
+    $\set{a,b}\in X$, then $\set{a,b}$ is a saturated set whereas
+    $\set{a}$ or $\set{b}$ isn't. Every saturated set $A$ can be
+    expressed as $q^{-1}q(A)$.
+    \link{http://math.stackexchange.com/a/1173764/120022}
+  \end{remark}
+  \begin{definition}\defn{Open map}, \defn{Closed map}
+    An open map is a map that maps open sets to open sets.
+    An closed map is a map that maps closed sets to closed sets.
+  \end{definition}
+  \begin{remark}
+    Continuous map requires $f^{-1}(U)$ open if $U$ open. Open map
+    requires $f(U)$ open if $U$ open.
+  \end{remark}
+  \begin{example}
+    Let $X=Y=\set{a,b}, \T_X=\T_Y=\set{\emptyset, \set{a}, \set{a,b}}$
+    \begin{enumerate}
+    \item Open map not closed: $f~x = a$
+    \item Closed map not open: $f~x = b$
+    \end{enumerate}
+    Above two maps are neither continuous
+  \end{example}
+  \begin{definition}\defn{Quotient map}
+    A quotient map is a continuous surjective map that is either open
+    or closed or both.
+  \end{definition}
+  \begin{definition}\defn{Quotient topology}
+    Let $p : X \to A$ be a quotient map from topological space $X$ to
+    set $A$. Then $A$ is called a quotient topology.
+  \end{definition}
+  \begin{definition}\defn{Quotient space}
+    Let $X$ be a topological space, and let $X^*$ be a partition of
+    $X$ into disjoint subsets whose union is $X$. Let $p : X\to X^*$
+    be the surjective map carries each point of $X$ to the
+    corresponding partition in $X^*$ that contains it. $X^*$ is
+    called a \emph{quotient space} of $X$.
+  \end{definition}
+  \begin{remark}
+    Quotient space give rise to a quotient topology by identifying
+    points into equivalence relations. Notice that usually only very
+    few distinct points of $X$ will be put into a common partition and
+    the rest points in $X$ will usually belong to a partition with
+    itself only. $X^*$ is also called \defn{Identification space} or a
+    \defn{Decompostion space} of $X$.
+  \end{remark}
+  \begin{theorem}
+    Let $p:X\to Y$ be quotient map; Let $A\subset X$ be saturated with
+    respect to $p$; then let $q: A\to p(A)$ be the map obtained by
+    restricting $p$.
+    \begin{enumerate}
+    \item If $A$ is either open or closed in $X$, then $q$ is a
+      quotient map.
+    \item If $p$ is either an open map or a closed map, then $q$ is a
+      quotient map.
+    \end{enumerate}
+  \end{theorem}
+  \begin{theorem}
+    Composition of quotient maps is quotient map. Can be shown by
+    $p^{-1}(q^{-1}(U)) = (q\circ p)^{-1}(U)$.
   \end{theorem}
 \end{chapter}
 
