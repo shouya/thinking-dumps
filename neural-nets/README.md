@@ -1,4 +1,4 @@
-I really interested on how neural network works. Here's an
+I'm really interested on how neural network works. Here's an
 introductory guide I follow to implement a basic neural netowrks.
 
 See:
