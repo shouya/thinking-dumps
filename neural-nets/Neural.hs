@@ -11,6 +11,8 @@ data Network = Network
 
 
 createNetwork :: [Int] -> IO Network
-createNetwork lyrs =
+createNetwork lyrs = do
+
   Network { layers = lyrs
-          , biases = (tail lyrs)}
+          , biases = (tail lyrs)
+          }
