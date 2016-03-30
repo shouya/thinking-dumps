@@ -4,3 +4,9 @@ introductory guide I follow to implement a basic neural netowrks.
 See:
 [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com)
 by [Michael Nielson](http://michaelnielsen.org).
+
+
+External libaries in use:
+
+- `normaldistribution`
+- `hmatrix`
