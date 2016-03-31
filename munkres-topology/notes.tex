@@ -41,9 +41,12 @@
 \newcommand{\eg}{\textit{e.g.}\xspace}
 
 \newcommand{\RA}{\ensuremath\Rightarrow}
+\newcommand{\LA}{\ensuremath\Leftarrow}
 
 \newcommand{\ZZ}{\mathbb{Z}}
 \newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\QQ}{\mathbb{Q}}
 
 \newcommand{\intersect}{\cap}
 \newcommand{\union}{\cup}
@@ -68,16 +71,18 @@
 \maketitle
 \tableofcontents
 
+\def\T{\mathcal{T}}
+
 \setcounter{chapter}{-1}
 \begin{chapter}{Structure and reading plans}
-Ch 1-8 is the part I, mainly for common topology. The part II includes
-ch 9-14, that depends on ch 1-4, is about algebraic topology.
+  Ch 1-8 is the part I, mainly for common topology. The part II includes
+  ch 9-14, that depends on ch 1-4, is about algebraic topology.
 
-My plan is to read through ch 1-4 very quickly, within a weekend, and
-then I will start reading ch 9+ simultaneously with W.S.Massey's
-Algebraic topology: An induction.
+  My plan is to read through ch 1-4 very quickly, within a weekend, and
+  then I will start reading ch 9+ simultaneously with W.S.Massey's
+  Algebraic topology: An induction.
 
-Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
+  Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
 \end{chapter}
 
 \begin{chapter}{Set theory and logic}
@@ -434,7 +439,6 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     If $\mathcal{T}=\set{\emptyset, X}$, then $X$ is called a
     \defn{Trivial topology}, or \defn{Indiscrete topology}.
   \end{definition}
-  \def\T{\mathcal{T}}
   \begin{definition}\defn{Finite complement topology}
     Let $X$ be a set, $\mathcal{T}_f$ be the collection of all subsets
     $U$ of $X$ such that $X-U$ either is finite or is all of $X$. Then
@@ -689,7 +693,7 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     and Wikipedia\link{https://en.wikipedia.org/wiki/Subbase}.
   \end{remark}
   \begin{example}ref. \link{http://math.stackexchange.com/a/449593/120022
-     }\\
+    }\\
     $\T=\set{\emptyset, \set{0}, \set{0,1}, \set{0,2}, \set{0,1,2}}$
     \\
     $\B=\set{\set{0},\set{0,1},\set{0,2}}$ \\
@@ -991,12 +995,12 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
         \hline
         $\RR$ & $\RR$ with standard topology \\
         $f : X \to Y$ ($X,Y: \text{Set}$)
-                 & $f : X \to Y$ ($X,Y: \text{Topological space}$) \\
+                          & $f : X \to Y$ ($X,Y: \text{Topological space}$) \\
         open interval & open set \\
         $\delta-$neighborhood of $x_0$
-                 & open set in $X$ containing $x_0$ \\
+                          & open set in $X$ containing $x_0$ \\
         $\epsilon-$neighborhood of $f(x_0)$
-                 & open set in $Y$ containing $f(x_0)$
+                          & open set in $Y$ containing $f(x_0)$
       \end{tabular}
     \end{table}
 
@@ -1300,6 +1304,111 @@ Finally I wish I could finish all ch 1-8 and also some parts after ch 9.
     $p^{-1}(q^{-1}(U)) = (q\circ p)^{-1}(U)$.
   \end{theorem}
 \end{chapter}
+
+\begin{chapter}{Connectedness and Compactness}
+  \begin{remark}
+    Connectedness and compactness gives a generalization of IVT, MVT
+    and UCT(Uniform continuity theorem). IVT depends on the property
+    of connectedness on the space. MVT and UCT depends on compactness.
+  \end{remark}
+  \begin{definition}\defn{Separation}
+    A separation of $X$ is a pair $U,V$ of \underline{disjoint},
+    \underline{nonempty}, \underline{open} subsets of $X$ whose union
+    is $X$.
+  \end{definition}
+  \begin{definition}\defn{Connected}
+    A space is connected if there is no separation.
+  \end{definition}
+  \begin{definition}
+    Another definition: A space is connected iff the only subsets that
+    are both open and closed are $X$ and $\emptyset$.
+  \end{definition}
+  \begin{proof}
+    (\RA) If there is a separtion $U,V$, $U,V\in\T$, then $U=X-V$,
+    $V=X-U$ are both open and closed. (\LA) If there is a clopen set
+    $U$, $U\not=X, U\not=\emptyset$. Then $X-U$ and $U$ form a
+    separation of $X$.
+  \end{proof}
+
+  \begin{theorem}
+    If $Y$ subspace $X$, a separation of $Y$ is a pair of disjoint
+    nonempty sets $A$ and $B$ whose union is $Y$. Neither of which
+    contains a limit point of the other. The space $Y$ is connected if
+    there exists no separtion of $Y$.
+  \end{theorem}
+  \begin{example}
+    \begin{enumerate}
+    \item A two point set in the indiscrete topology (contains only
+      $\emptyset$ and $X$) is connected since there is no separtion.
+    \item $[-1,1] - \set{0}$ is disconnected. (limit point of both: $0$)
+    \item $\QQ$ is disconnected. Any one point set and its
+      complement are clopen.
+    \item $\set{x\times 0}\union \set{x \times 1/x\mid x>0}$ is
+      disconnected.
+    \end{enumerate}
+  \end{example}
+
+  \begin{theorem}
+    If $C$ and $D$ separates $X$, and if $Y$ is a connected subspace
+    of $X$, then $Y$ lies entirely in $C$ or $D$.
+  \end{theorem}
+
+  \begin{theorem}
+    The union of a collection of connected subspaces of $X$ that have
+    a point in common is connected.
+  \end{theorem}
+
+  \begin{theorem}
+    Let $A$ be connected subspace of $X$. If $A\subset B\subset
+    \closure{A}$, then $B$ is connected.
+
+    Said differently, if $B$ is formed by adjoining a connected
+    subspace $A$ and all its limit points, then $B$ is connected.
+  \end{theorem}
+
+  \begin{theorem}
+    Continuous map preserves connectedness. (Very important result for
+    this chapter)
+  \end{theorem}
+  \begin{theorem}
+    Finite cartesian product of connected space is connected.
+  \end{theorem}
+
+  \begin{definition}\defn{Linear continuum}
+    A simply ordered set $L$, with $|L|>1$ is a linear continuum if
+    all following hold:
+    \begin{itemize}
+    \item $L$ has the LUB property (completeness?)
+    \item For every $x<y$, exists some $z$ st $x<z<y$
+    \end{itemize}
+  \end{definition}
+
+  \begin{theorem}
+    If $L$ is a linear continuum in the order topology, then $L$ is
+    connected. So are the intervals and rays in $L$.
+  \end{theorem}
+
+  \begin{theorem}\defn{Intermediate value theorem},\defn{IVT}
+    If $f: X \to Y$ is a coontinuous map, where $X$ is connected space
+    and $Y$ is an ordered set in the order topology. If $a$ and $b$
+    are two points of $X$, and $r$ is a point in $Y$ lies between
+    $f(a)$ and $f(b)$, then there exists some point $c$ of $X$ such
+    that $f(c)=r$.
+  \end{theorem}
+  \begin{remark}
+    Note that $X$ is not necessily defined to be an ordered set. We
+    have no guarantee so far for where that $c$ will be on $X$.
+
+    Example: Take $X=\CC$, $Y=\RR$,
+    $f(t)=\set{(\sin(t), \cos(t), t) \mid 0 < t < 2\pi}$, the spiral
+    line.
+  \end{remark}
+
+  \begin{remark}
+
+  \end{remark}
+\end{chapter}
+
 
 \printindex
 
