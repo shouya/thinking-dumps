@@ -12,12 +12,14 @@
     [(? symbol?)  `(,k ,p)]
 
     [(list 'if condition if-part else-part)
-     (let ([condition-cps (compile-cps condition k)])
-       `(,condition-cps
-         (λ (b)
-           (if b
-               ,(compile-cps if-part k)
-               ,(compile-cps else-part k)))))]
+     (let ([bool-var (gensym 'b)]
+           [if-part-cps (compile-cps if-part k)]
+           [else-part-cps (compile-cps else-part k)])
+       (compile-cps condition
+                    `(λ (,bool-var)
+                       (if ,bool-var
+                           ,if-part-cps
+                           ,else-part-cps))))]
 
     [(list 'begin expressions ...)
      (let* ([expr-symbols (map (λ (_) (gensym 'e)) expressions)]
@@ -78,7 +80,7 @@
 
 (print
  (compile-cps
-  '(begin 1 2)
+  '(if 1 2 3)
   'k)
  )
 
