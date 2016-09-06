@@ -2,104 +2,66 @@
 
 (require racket/match)
 
-;; defining the tinyL
-(define (compile p)
-  (match p
-    [(? integer?) (cons 'int p)]
-    [(list 'if condition if-part else-part)
-     (cons 'if (map compile (list condition if-part else-part)))]
-    [(list op1 '+ op2)
-     (cons '+ (map compile (list op1 op2)))]
-    [(list op1 '< op2)
-     (cons '< (map compile (list op1 op2)))]
-  ))
-
+(define (increment-symbol k)
+  (string->symbol (string-append (symbol->string k) "1")))
 
 ;; compile cps directly
-(define (compile-cps p)
+(define (compile-cps p k)
   (match p
-    [(? integer?) (λ (k) (k p))]
-    [(? symbol?)
-     (
-      ;; TODO
-      )]
+    [(? integer?) `(,k ,p)]
+    [(? symbol?)  `(,k ,p)]
 
     [(list 'if condition if-part else-part)
-     (λ (k)
-      ((compile-cps condition)
-       (λ (bool)
-         (if bool
-             ((compile-cps if-part)   k)
-             ((compile-cps else-part) k)))))]
+     (let ([condition-cps (compile-cps condition k)])
+       `(,condition-cps
+         (λ (b)
+           (if b
+               ,(compile-cps if-part k)
+               ,(compile-cps else-part k)))))]
 
-    [(list a '< b)
-     (λ (k)
-       ((compile-cps a)
-        (λ (a-value)
-          ((compile-cps b)
-           (λ (b-value)
-             (k (< a-value b-value)))))))]
-
-    [(list a '+ b)
-     (λ (k)
-       ((compile-cps a)
-        (λ (a-value)
-          ((compile-cps b)
-           (λ (b-value)
-             (k (+ a-value b-value)))))))]
-
-    [(list 'begin expressions ..1)
-     (let ([hd (car expressions)]
-           [tl (cdr expressions)])
-       (λ (k)
-         ((compile-cps hd)
-          (λ (val)
-            (if (null? tl)
-                (k val)
-                ((compile-cps (cons 'begin tl)) k))
-            ))))]
+    [(list 'begin expressions ...)
+     (let* ([expr-symbols (map (λ (_) (gensym 'e)) expressions)]
+            [last-symbol (last expr-symbols)]
+            [procedure (λ (data accum)
+                         (let ([expr (car data)]
+                               [name (cdr data)])
+                           (compile-cps
+                            expr
+                            `(λ (,name) ,accum))))]
+            [data-list (zip expressions expr-symbols)])
+       (foldr procedure `(,k ,last-symbol) data-list))]
 
     [(list 'λ (list parameters ...) body)
-     (λ (k)
-       (let ([body-cps (compile-cps body)])
-         (k (λ (arguments k-lambda)
-              (body-cps (zip parameters arguments) k-lambda)
-              ))))
-     ]
+     (let* ([new-k (gensym 'k)]
+            [body-cps (compile-cps body new-k)])
+       `(,k (λ (,@parameters ,new-k)
+              body-cps)))]
 
-    [(list 'print arg)
-     (λ (k)
-       ((compile-cps arg)
-        (λ (val) (print val))))]
+    [(list (? symbol? operator) operands ...)
+     (let ([operand-symbols (map (λ (_) (gensym 'a)) operands)])
+       (compile-cps `(begin ,operands)
+                    `(,operator ,@operand-symbols)))]
 
-    ;; call-by-value
-    ;; arg list evaluated from left to right (because of `foldl`)
+
     [(list operator operands ...)
-     (λ (k) ((compile-cps operator)
-             (λ (operator-cps)
-               (let* ([operands-cps (map compile-cps operands)]
-                      [folding (λ (cps carry) (cps (λ (v) (cons v carry))))]
-                      [initial (λ (v) (cons v '()))]
-                      [operand-list
-                       (reverse (foldl folding initial operands-cps))])
-                 (k (apply-lambda operator-cps operand-list))))))]
+     (let* ([operator-symbol (gensym 'f)]
+            [operand-symbols (map (λ (_) (gensym 'a)) operands)]
+            [application-expression `(,operator-symbol ,@operand-symbols)])
+       (compile-cps operator
+                    `(λ (,operator-symbol)
+                       ,(compile-cps `(begin ,@operands)
+                                     application-expression))))]
 
     ))
 
 
-(define (apply-lambda lambda-cps operand-list)
-  (let* ([parameters (lamb-parameters lambda-cps)]
-         [body       (lamb-body lambda-cps)]
-         [argument-map (zip (parameters lambda-cps) operand-list)])
-    (λ (k) (body argument-map k))))
 
-(define (zip list1 list2)
-  (if (or (null? list1) (null? list2))
-      '()
-      (cons (cons (car list1) (car list2))
-            (zip (cdr list1) (cdr list2)))))
-
-
+(define (zip l1 l2)
+  (match* (l1 l2)
+    [(`(,x ,xs ...) `(,y ,ys ...))
+     (cons (cons x y)
+           (zip xs ys))]
+    [(_ _) '()]))
 
 
 (define example-program-1
@@ -114,6 +76,14 @@
                (print (+ x 2))))
     12))
 
-((compile-cps
-  '(if (1 < 2) (begin 3 4) 5)
-  ) print)
+(print
+ (compile-cps
+  '(begin 1 2)
+  'k)
+ )
+
+;; (print
+;;  (compile-cps
+;;   '(if (1 < 2) (begin 3 4) 5)
+;;   'k)
+;;  )
