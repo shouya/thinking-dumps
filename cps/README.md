@@ -24,7 +24,7 @@ A CPS compiler for a tiny language.
 
 This language follows the call-by-value semantics. i.e. In a lambda application process, arguments are evaluated before being passed to lambdas.
 
-Lambda arguments are evaluated from right to left.
+Lambda arguments are evaluated from left to right.
 
 ## Available functions
 

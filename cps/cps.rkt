@@ -19,6 +19,10 @@
 (define (compile-cps p)
   (match p
     [(? integer?) (λ (k) (k p))]
+    [(? symbol?)
+     (
+      ;; TODO
+      )]
 
     [(list 'if condition if-part else-part)
      (λ (k)
@@ -56,8 +60,11 @@
             ))))]
 
     [(list 'λ (list parameters ...) body)
-     1
-     ;; TODO
+     (λ (k)
+       (let ([body-cps (compile-cps body)])
+         (k (λ (arguments k-lambda)
+              (body-cps (zip parameters arguments) k-lambda)
+              ))))
      ]
 
     [(list 'print arg)
@@ -66,21 +73,34 @@
         (λ (val) (print val))))]
 
     ;; call-by-value
-    ;; arg list evaluated from right to left (because of `foldl`)
+    ;; arg list evaluated from left to right (because of `foldl`)
     [(list operator operands ...)
      (λ (k) ((compile-cps operator)
              (λ (operator-cps)
                (let* ([operands-cps (map compile-cps operands)]
                       [folding (λ (cps carry) (cps (λ (v) (cons v carry))))]
                       [initial (λ (v) (cons v '()))]
-                      [operand-list (foldl folding initial operands-cps)])
-                 (apply-operands operator-cps operands-cps)))))]
+                      [operand-list
+                       (reverse (foldl folding initial operands-cps))])
+                 (k (apply-lambda operator-cps operand-list))))))]
 
     ))
 
-(define (apply-operands operator-cps operands-cps)
-  ;; TODO
-  '())
+
+(define (apply-lambda lambda-cps operand-list)
+  (let* ([parameters (lamb-parameters lambda-cps)]
+         [body       (lamb-body lambda-cps)]
+         [argument-map (zip (parameters lambda-cps) operand-list)])
+    (λ (k) (body argument-map k))))
+
+(define (zip list1 list2)
+  (if (or (null? list1) (null? list2))
+      '()
+      (cons (cons (car list1) (car list2))
+            (zip (cdr list1) (cdr list2)))))
+
+
+
 
 (define example-program-1
   '(+ 2 1))
