@@ -1,15 +1,16 @@
 #lang racket
 
 (require racket/match)
+(require racket/pretty)
 
-(define (increment-symbol k)
-  (string->symbol (string-append (symbol->string k) "1")))
+(define (atom? x)
+  (or (integer? x) (symbol? x)))
+
 
 ;; compile cps directly
 (define (compile-cps p k)
   (match p
-    [(? integer?) `(,k ,p)]
-    [(? symbol?)  `(,k ,p)]
+    [(? atom?) `(,k ,p)]
 
     [`(if ,condition ,if-part ,else-part)
      (let ([bool-var (gensym 'b)]
@@ -26,7 +27,7 @@
             [last-symbol (last expr-symbols)]
             [procedure (λ (data accum)
                          (let ([expr (car data)]
-                               [name (cdr data)])
+                               [name (cadr data)])
                            (compile-cps
                             expr
                             `(λ (,name) ,accum))))]
@@ -46,11 +47,11 @@
             [last-symbol (last operand-symbols)]
             [procedure (λ (data accum)
                          (let ([expr (car data)]
-                               [name (cdr data)])
+                               [name (cadr data)])
                            (compile-cps expr
                                         `(λ (,name) ,accum))))]
             [operator-cps-name (string->symbol
-                                (format "~a-k" operator))]
+                                (format "~a&" operator))]
             [data-list (zip operands operand-symbols)]
             [base-expr-cps `(,operator-cps-name ,@operand-symbols ,k)]
             )
@@ -74,10 +75,30 @@
     ))
 
 
+(define (optimize p)
+  (match p
+    [val #:when (atom? val)
+         val]
+
+    [`((λ (,params ...) ,body) ,args ...)
+     (optimize `(let (,@(zip params (map optimize args)))
+                  ,(optimize body)))]
+
+    [`(let (,a ...) (let (,b ...) ,body))
+     (optimize `(let (,@a ,@b) ,body))]
+
+    [`(λ (,params ...) ,body)
+     `(λ (,@params) ,(optimize body))]
+
+    [`(,f ,x ...)
+     `(,(optimize f) ,@(map optimize x))]
+
+    ))
+
 (define (zip l1 l2)
   (match* (l1 l2)
     [(`(,x ,xs ...) `(,y ,ys ...))
-     (cons (cons x y)
+     (cons (list x y)
            (zip xs ys))]
     [(_ _) '()]))
 
@@ -97,18 +118,21 @@
 (define env
   '(
     [k (λ (x) x)]
-    [print-k (λ (x k) (k (println x)))]
-    [+-k (λ (x y k) (k (+ x y)))]
+    [print& (λ (x k) (k (println x)))]
+    [+& (λ (x y k) (k (+ x y)))]
     ))
 
-(let* ([program '((λ (x) x) 2)]
+(let* ([program '(+ 2 (+ 3 4))]
        [program-cps (compile-cps program 'k)]
-       [eval-expr `(let ,env
-                     ,program-cps)])
+       [eval-expr `(let ,env ,program-cps)])
   (printf "Program\n\t~a\n" program)
-  (printf "Compiled Program\n\t~a\n" program-cps)
+  (printf "Compiled Program\n~a\n"
+          (pretty-format program-cps 40))
+  (printf "Optimized Program\n~a\n"
+          (pretty-format (optimize program-cps) 40))
   (printf "Evaluated Result\n\t")
-  (printf "~a\n" (eval eval-expr)))
+  (printf "~a\n" (eval eval-expr))
+  )
 
 
 ;; (print
