@@ -11,7 +11,7 @@
     [(? integer?) `(,k ,p)]
     [(? symbol?)  `(,k ,p)]
 
-    [(list 'if condition if-part else-part)
+    [`(if ,condition ,if-part ,else-part)
      (let ([bool-var (gensym 'b)]
            [if-part-cps (compile-cps if-part k)]
            [else-part-cps (compile-cps else-part k)])
@@ -21,7 +21,7 @@
                            ,if-part-cps
                            ,else-part-cps))))]
 
-    [(list 'begin expressions ...)
+    [`(begin ,expressions ...)
      (let* ([expr-symbols (map (λ (_) (gensym 'e)) expressions)]
             [last-symbol (last expr-symbols)]
             [procedure (λ (data accum)
@@ -33,29 +33,45 @@
             [data-list (zip expressions expr-symbols)])
        (foldr procedure `(,k ,last-symbol) data-list))]
 
-    [(list 'λ (list parameters ...) body)
-     (let* ([new-k (gensym 'k)]
-            [body-cps (compile-cps body new-k)])
-       `(,k (λ (,@parameters ,new-k)
-              body-cps)))]
+    [`(λ (,parameters ...) ,body)
+     (let* ([lambda-k (gensym 'k)]
+            [body-cps (compile-cps body lambda-k)])
+       `(,k (λ (,@parameters ,lambda-k)
+              ,body-cps)))]
 
-    [(list (? symbol? operator) operands ...)
-     (let ([operand-symbols (map (λ (_) (gensym 'a)) operands)])
-       (compile-cps `(begin ,operands)
-                    `(,operator ,@operand-symbols)))]
+    [`(,operator ,operands ...)
+     #:when (symbol? operator)
+
+     (let* ([operand-symbols (map (λ (_) (gensym 'a)) operands)]
+            [last-symbol (last operand-symbols)]
+            [procedure (λ (data accum)
+                         (let ([expr (car data)]
+                               [name (cdr data)])
+                           (compile-cps expr
+                                        `(λ (,name) ,accum))))]
+            [operator-cps-name (string->symbol
+                                (format "~a-k" operator))]
+            [data-list (zip operands operand-symbols)]
+            [base-expr-cps `(,operator-cps-name ,@operand-symbols ,k)]
+            )
+       (foldr procedure base-expr-cps data-list))]
 
 
-    [(list operator operands ...)
-     (let* ([operator-symbol (gensym 'f)]
-            [operand-symbols (map (λ (_) (gensym 'a)) operands)]
-            [application-expression `(,operator-symbol ,@operand-symbols)])
-       (compile-cps operator
-                    `(λ (,operator-symbol)
-                       ,(compile-cps `(begin ,@operands)
-                                     application-expression))))]
+    [`(,operator ,operands ...)
+     (let* ([operand-symbols (map (λ (_) (gensym 'a)) operands)]
+            [last-symbol (last operand-symbols)]
+            [procedure (λ (data accum)
+                         (let ([expr (car data)]
+                               [name (cdr data)])
+                           (compile-cps expr
+                                        `(λ (,name) ,accum))))]
+            [operator-name (gensym 'f)]
+            [data-list (zip operands operand-symbols)]
+            [base-expr-cps `(,operator-name ,@operand-symbols ,k)]
+            [operands-cps (foldr procedure base-expr-cps data-list)])
+       (compile-cps operator `(λ (,operator-name) ,operands-cps)))]
 
     ))
-
 
 
 (define (zip l1 l2)
@@ -78,11 +94,22 @@
                (print (+ x 2))))
     12))
 
-(print
- (compile-cps
-  '(if 1 2 3)
-  'k)
- )
+(define env
+  '(
+    [k (λ (x) x)]
+    [print-k (λ (x k) (k (println x)))]
+    [+-k (λ (x y k) (k (+ x y)))]
+    ))
+
+(let* ([program '((λ (x) x) 2)]
+       [program-cps (compile-cps program 'k)]
+       [eval-expr `(let ,env
+                     ,program-cps)])
+  (printf "Program\n\t~a\n" program)
+  (printf "Compiled Program\n\t~a\n" program-cps)
+  (printf "Evaluated Result\n\t")
+  (printf "~a\n" (eval eval-expr)))
+
 
 ;; (print
 ;;  (compile-cps
