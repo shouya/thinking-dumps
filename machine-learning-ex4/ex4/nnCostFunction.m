@@ -90,10 +90,6 @@ for i = 1:m
   D2 = D2 + d3' * a2(i,:);
 end
 
-Theta1_grad = 1/m * D1 + lambda / m * [zeros(size(Theta1,1), 1) Theta1(:, 2:end)];
-Theta2_grad = 1/m * D2 + lambda / m * [zeros(size(Theta2,1), 1) Theta2(:, 2:end)];
-
-
 % Part 3: Implement regularization with the cost function and gradients.
 %
 %         Hint: You can implement this around the code for
@@ -101,8 +97,12 @@ Theta2_grad = 1/m * D2 + lambda / m * [zeros(size(Theta2,1), 1) Theta2(:, 2:end)
 %               the regularization separately and then add them to Theta1_grad
 %               and Theta2_grad from Part 2.
 %
-
 % =========================================================================
+
+Theta1_grad = 1/m * D1 + lambda / m * [zeros(size(Theta1,1), 1) Theta1(:, 2:end)];
+Theta2_grad = 1/m * D2 + lambda / m * [zeros(size(Theta2,1), 1) Theta2(:, 2:end)];
+
+
 
 % Unroll gradients
 grad = [Theta1_grad(:) ; Theta2_grad(:)];
