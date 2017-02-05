@@ -60,15 +60,13 @@ object VerticalBoxBlur {
    */
   def parBlur(src: Img, dst: Img, numTasks: Int, radius: Int): Unit = {
     val stripWidth = Math.max(src.width / numTasks, 1)
-    val strips = Range(0, src.height) by stripWidth
+    val strips = Range(0, src.width) by stripWidth
     val tasks = strips.map(x => {
       task {
         blur(src, dst, x, clamp(x+stripWidth, 0, src.width), radius)
       }
     })
 
-    println(s"before: ${Thread.activeCount()}")
     tasks.foreach(_.join())
-    println(s"after: ${Thread.activeCount()}")
   }
 }

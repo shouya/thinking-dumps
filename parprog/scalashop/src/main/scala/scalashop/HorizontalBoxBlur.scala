@@ -67,9 +67,7 @@ object HorizontalBoxBlur {
       }
     })
 
-    println(s"before: ${Thread.activeCount()}")
     tasks.foreach(_.join())
-    println(s"after: ${Thread.activeCount()}")
   }
 
 }
