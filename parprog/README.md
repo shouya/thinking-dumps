@@ -1,0 +1,1 @@
+My homework solution for the MOOC [Parallel Programming](https://www.coursera.org/course/parprog1) on Coursera provided by École Polytechnique Fédérale de Lausanne taught by Prof. Viktor Kuncak and Dr. Aleksandar Prokopec.
