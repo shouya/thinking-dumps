@@ -60,12 +60,12 @@ class KMeans {
   }
 
   def update(classified: GenMap[Point, GenSeq[Point]], oldMeans: GenSeq[Point]): GenSeq[Point] = {
-    oldMeans.map(pt => findAverage(pt, classified(pt)))
+    oldMeans.map(mean => findAverage(mean, classified(mean)))
   }
 
   def converged(eta: Double)(oldMeans: GenSeq[Point], newMeans: GenSeq[Point]): Boolean = {
     oldMeans.zip(newMeans)
-      .map { case (a,b) => a.squareDistance(b) < eta }
+      .map { case (a,b) => a.squareDistance(b) <= eta }
       .forall(identity)
   }
 
@@ -75,7 +75,7 @@ class KMeans {
     if (!converged(eta)(means, newMeans))
       kMeans(points, newMeans, eta)
     else
-      means
+      newMeans
   }
 }
 

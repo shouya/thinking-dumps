@@ -34,6 +34,25 @@ class KMeansSuite extends FunSuite {
     checkClassify(points, means, expected)
   }
 
+  test("'kMeans' should work") {
+    val points = Vector(
+      new Point(0, 0, 1),
+      new Point(0, 0, -1),
+      new Point(0, 1, 0),
+      new Point(0, 10, 0)
+    )
+    val oldMeans = Vector(
+      new Point(0, -1, 0),
+      new Point(0, 2, 0)
+    )
+    val newMeans = kMeans(points, oldMeans, 12.25)
+    val expected = Vector(
+      new Point(0.0, 0.0, 0.0),
+      new Point(0.0, 5.5, 0.0)
+    )
+    assert(newMeans == expected)
+  }
+
   test("'classify' should work for 'points' == GenSeq((1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0)) and 'means' == GenSeq((0, 0, 0))") {
     val p1 = new Point(1, 1, 0)
     val p2 = new Point(1, -1, 0)
