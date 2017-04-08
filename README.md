@@ -9,17 +9,25 @@ So I name this repo "Thinking dumps".
 Please feel free to use the codes or share your thinking with me.
 
 
-### agda-tutorial
+### [agda-tutorial](agda-tutorial)
 
 [Dependently Typed Programming in Agda](http://www.cse.chalmers.se/~ulfn/papers/afp08/tutorial.pdf)
 
-### [alg_adts](alg_adts)
+### [alg-adts](alg-adts)
 
 [The Algebra of Algebraic Data Types](https://chris-taylor.github.io/blog/2013/02/10/the-algebra-of-algebraic-data-types/)
 
-### automata
+### [automata](automata)
 
 [Automata - Coursera](https://class.coursera.org/automata-003)
+
+### [bananas](bananas)
+
+[Functional Programming with Bananas, Lenses, Envelops, and Barbed Wires](http://eprints.eemcs.utwente.nl/7281/01/db-utwente-40501F46.pdf)
+
+### [cps](cps)
+
+An implementation of a continuation passing style compiler from a custom lisp language into racket.
 
 ### [cryptocurrency](cryptocurrency)
 
@@ -29,91 +37,97 @@ Please feel free to use the codes or share your thinking with me.
 
 [ConvNet for Visual Recognition](https://cs231n.github.io/)
 
-### discrete-optimization
+### [ct4csist](ct4csist)
+
+My notes on Benjamin C. Pierce's [Basic Category Theory for Computer
+Scientists](https://www.amazon.com/Category-Computer-Scientists-Foundations-Computing/dp/0262660717).
+
+### [discrete-optimization](discrete-optimization)
 
 [Discrete Optimization - Coursera](https://www.coursera.org/course/optimization)
 
-### graph
+### [essense](essense)
+
+Some trials while reading [The essense of functional programming](https://page.mi.fu-berlin.de/scravy/realworldhaskell/materialien/the-essence-of-functional-programming.pdf) by Philip Wadler
+
+### [falg](falg)
+
+[Understanding F-algebra](https://www.fpcomplete.com/user/bartosz/understanding-algebras)
+
+### [fixing-gadts](fixing-gadts)
+
+http://www.timphilipwilliams.com/posts/2013-01-16-fixing-gadts.html
+
+### [graph](graph)
 
 Personal practice on Graph Algorithms
 
 (`Bloxorz.hs` implements DFS algorithms to find a solution of the
 [bloxorz game](http://www.coolmath-games.com/0-bloxorz/index.html))
 
-### imp
+### [imp](imp)
 
 My trial on formalize all theorems in B. Russell's
 [Introduction to Mathematical Philosophy](http://people.umass.edu/klement/imp/imp.html)
 with Coq.
 
-### lambda_red
+### [lambda-red](lambda-red)
 
 An untyped lambda reduction with haskell just for fun.
 
-### lazy
+### [lazy](lazy)
 
 Personal pratice on implementing lazy evaluation. The implementation
 of the small language was moved out to become a standalone
 project. See [loli](https://github.com/shouya/loli) for details.
 
-### learnyouanagda
+### [learnyouanagda](learnyouanagda)
 
 [learn you an agda and achieve enlightenment](http://learnyouanagda.liamoc.net/)
 
-### progfun
+### [munkres-topology](munkres-topology)
+
+My learning note on Jame R. Munkres's Topology.
+
+### [neural-networks](neural-networks)
+
+My solutions for [Neural Networks for Machine Learning - Coursera](https://www.coursera.org/learn/neural-networks)
+
+### [parprog](parprog)
+
+My solutions for [Parallel programming - Coursera](https://www.coursera.org/learn/parprog1).
+
+### [progfun](progfun)
 
 [Functional Programming Principles in Scala - Coursera](https://class.coursera.org/progfun-005/class)
 
-### sicp
+### [sicp](sicp)
 
 My solutions to SICP exercises. See
 [my reading notes](https://shouya.github.com/page/sicp-notes/) about
 SICP on my blog.
 
-### software-foundations
+### [software-foundations](software-foundations)
 
 [Software Foundations](http://www.cis.upenn.edu/~bcpierce/sf/current/)
 
-### tsp
+### [transformer](transformer)
+
+[Monad Transformers: Step-By-Step](http://www.cs.virginia.edu/~wh5a/personal/Transformers.pdf)
+
+### [tsp](tsp)
 
 My trials on implement various algorithms to solve
 [Travelling Salesman Problem](http://en.wikipedia.org/wiki/Travelling_salesman_problem).
 
-### wys48h
-
-[Write Yourself a Scheme for 48 hours](http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours)
-
-### essence
-
-[The Essence of Functional Programming](http://www.eliza.ch/doc/wadler92essence_of_FP.pdf)
-
-### transformer
-
-[Monad Transformers: Step-By-Step](http://www.cs.virginia.edu/~wh5a/personal/Transformers.pdf)
-
-### falg
-
-[Understanding F-algebra](https://www.fpcomplete.com/user/bartosz/understanding-algebras)
-
-
-### bananas
-
-[Functional Programming with Bananas, Lenses, Envelops, and Barbed Wires](http://eprints.eemcs.utwente.nl/7281/01/db-utwente-40501F46.pdf)
-
-### ct4csist
-
-My notes on Benjamin C. Pierce's Basic Category Theory for Computer
-Scientists
-
-### turi-notes
+### [turi-notes](turi-notes)
 
 My notes for "Category Theory Lecture Notes" by Daniele Turi.
 
 http://www.dcs.ed.ac.uk/home/dt/CT/
 
-### cps
+### [wys48h](wys48h)
 
-An implementation of a continuation passing style compiler from a custom lisp language into racket.
-
+[Write Yourself a Scheme for 48 hours](http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours)
 
 
