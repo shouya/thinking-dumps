@@ -7,3 +7,4 @@ public class Candidate {
 		this.sender = sender;
 	}
 }
+
