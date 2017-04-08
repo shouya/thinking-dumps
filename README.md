@@ -13,13 +13,21 @@ Please feel free to use the codes or share your thinking with me.
 
 [Dependently Typed Programming in Agda](http://www.cse.chalmers.se/~ulfn/papers/afp08/tutorial.pdf)
 
-### alg_adts
+### [alg_adts](alg_adts)
 
 [The Algebra of Algebraic Data Types](https://chris-taylor.github.io/blog/2013/02/10/the-algebra-of-algebraic-data-types/)
 
 ### automata
 
 [Automata - Coursera](https://class.coursera.org/automata-003)
+
+### [cryptocurrency](cryptocurrency)
+
+[Bitcoin and Cryptocurrency Technologies - Coursera](https://www.coursera.org/learn/cryptocurrency)
+
+### [cs231n](cs231n)
+
+[ConvNet for Visual Recognition](https://cs231n.github.io/)
 
 ### discrete-optimization
 
