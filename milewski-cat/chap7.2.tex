@@ -1,0 +1,169 @@
+\setcounter{section}{7}
+\setcounter{subsection}{1}
+\subsection{Monoidal Categories, Functoriality of ADTs, Profunctors}
+
+\subsubsection{Monoidal Categories}
+
+We start out by seeing how we can generalize monoid in a category. We know
+pretty well how monoid based on set theory, we got a unit $\mathbf{1} \in \Set$,
+a binary function $f : \Set \times \Set \to \Set$, few rules and so on.
+
+In monoid categories, we need to think about what it means to multiply two
+object. This gives rise to product category. The monoidal unit in this category
+is the unit object, the singleton set in $\Set$, or the terminal object to be
+more general.
+
+Here's a how we the terminal object is a good candidate for the unit. This is to
+say, in a product category, $(a, ()) \iso a$.
+
+\begin{center}
+  \begin{tikzcd}[sep=large]
+    & b
+    \ar[bend right=15]{ldd}[left]{p}
+    \dar[dashed]{p}
+    \ar[bend left=15,dashed]{rdd}{\mathrm{unit}_b} & \\
+    & a \ar{ld}{\id_a} \ar[dashed]{rd}[swap]{\mathrm{unit}_a} & \\
+    a & & ()
+  \end{tikzcd}
+\end{center}
+
+As we can see, the projections $\pi_1 = \id$ and $\pi_2 = \mathrm{unit}$. Given
+any $\cd{b \rar{p} \& a}$, we have $\mathrm{unit}_b$ which maps $b$ to $()$, we
+always have a unique factorization $\cd{b \ar[dashed]{r}{p} \& a}$. This means
+the projections just worked and we indeed have $(a, ()) \iso a$.
+
+So in a monoidal category (at least product category), monoid unit is the
+terminal object. This also apply to other categories. Say the coproduct
+category. In this case the terminal object is the empty set (initial object of
+the coproduct category). And they both are specialized bifunctor category. All
+these things as product, coproduct, any bifunctors are called \emph{tensor product}
+(denoted $C \otimes C \to C$).
+
+\subsubsection{Functoriality of ADTs}
+
+Dr. Milewski has mentioned that ADTs has functoriality by their nature many
+times in his lecture.
+
+From the previous section, we see how these monoidal categories are related to
+their corresponding bifunctors. We see, product types are functorial, sum
+types are functorial, what about other types, \code{Bool}, \code{Int}?
+
+So we still have some types that do not depend on type variables, how can we
+make them instance of \code{Functor}? So here's the place for the constant
+functor trick.
+
+\begin{lstlisting}
+data Const c a = Const c
+
+instance Functor (Const c) where
+  fmap :: (a -> b) -> Const c a -> Const c b
+  fmap f (Const c) = Const c
+\end{lstlisting}
+
+In category theory, constant functor $\Delta_c$ maps every object in a category
+to the object $c$ and every morphisms to $\id_c$. Taking it to the Haskell world
+where every thing is in $\Hask$, the constant functor is used to map everything
+into the given value. Think of functors working as containers, then the constant
+functor is like an empty container. It eats up all information and collapse into
+something that does not contain any inforamtion.
+
+Another trivial functor is the identity functor:
+
+\begin{lstlisting}
+data Identity a = Identity a
+
+instance Functor Identity a where
+  fmap :: (a -> b) -> Identity a -> Identity a
+  fmap f (Identity a) = Identity (f a)
+\end{lstlisting}
+
+This functor maps everything back to itself. So this functor is like a container
+with one thing in it. So this is how we convert any ADTs into our standard
+notion.
+
+\begin{lstlisting}
+data Maybe a = Nothing | Just a
+-- sum types can be decomposed into Either
+data Maybe a = Either Nothing (Just a)
+-- any constant type can be represented using Const functor
+-- and Just is just an Identity functor
+data Maybe a = Either (Const () a) (Identity a)
+\end{lstlisting}
+
+Now we have a \code{Const ()} functor and an \code{Identity} functor; and the
+\code{Either} is just a bifunctor. Thus overall \code{Maybe} is a bifunctor.
+Since we have the same parameter \code{a} for \code{Const ()} and
+\code{Identity}, we can add a diagonal functor before the bifunctor of the
+\code{Either}/\code{Maybe}, reducing it into a regular endofunctor.
+
+\hfill
+\begin{remark}
+  A \emph{diagonal functor} maps $C \to C \times C$ by replicating everything
+  including objects and morphisms $a \mapsto (a, a)$.
+\end{remark}
+
+\subsubsection{Profunctors}
+
+Other than product (\code{()})and sum types (\code{Either}). Another type
+constructor that takes two types is the function type ($\to$). We can write
+\code{(}$\to$\code{)}~\code{a b} to represent \code{a -> b}. The question is, is
+$\to$ a bifunctor?
+
+We already knew that \code{(-> c)} is a functor, called the \emph{Reader
+  functor}.
+
+\begin{lstlisting}
+instance Functor (-> c) where
+  fmap :: (a -> b) -> (c -> a) -> (c -> b)
+  fmap f g = f  .  g
+\end{lstlisting}
+
+What about we fix on the returning type and see if that's a functor. The
+\code{fmap} would have type \code{fmap :: (a -> b) -> (a -> c) -> (b -> c)}.
+If we name $f: a\to b$ and $g: a \to c$, we have this diagram: \cd{a \rar{f}
+  \dar{g} \& b \ar[red]{ld}{} \\ c \& }. We need to find the red arrow and
+obviously it cannot be constructed using $f$ and $g$, so it is not a functor.
+
+Or is it? Why not saying it a functor mapping from the opposite category? This
+kind of functors is called a \emph{contravariant functor}. Using the container
+analogy, a contravariant functor is like a container that store negative things:
+instead of containing something we need to give it something.
+
+\hfill
+\begin{remark}
+  The \emph{opposite category} $C^{op}$ of category $C$ is a category where for
+  every objects in $C$ there is an object in $C^{op}$ and for every morphisms $f
+  : a\to b$ in $C$ there is a morphism $f^{op} : b \to a$ in $C^{op}$.
+\end{remark}
+
+\begin{lstlisting}
+class Contravariant f where
+  contramap :: (b -> a) -> f a -> f b
+
+data Co c a = Co (a -> c)
+
+instance Contravariant (Co c) where
+--contramap ::  (b -> a) -> (a -> c) -> (b -> c)
+  contramap :: (b -> a) -> (Co c a) -> (Co c b)
+  contramap f (Co g) = Co (f  .   g)
+\end{lstlisting}
+
+So a profunctor is just a bifunctor that is contravariant in the first argument
+and covariant in the second. What's the problem?
+\footnote{\url{https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/profunctors\#profunctors}}
+
+\begin{lstlisting}
+class Profunctor p where
+  dimap :: (a' -> a) -> (b -> b') -> p a b -> p a' b'
+  dimap f g h = (fst $ lmap f h, snd $ rmap g h)
+
+  lmap :: (a' -> a) -> p a b -> p a' b
+  lmap = (`dimap` id)
+  rmap :: (b -> b') -> p a b -> p a b'
+  rmap = (id `dimap`)
+\end{lstlisting}
+
+To function type, let's see how it is implemented. $f : a' \to a$, $g : b \to
+b'$, and $h : a \to b$. So the diagram is just \cd{a' \rar{f} \ar[red,bend
+  right=90]{rrr}{} \& a \rar{h} \& b \rar{g} \& b'}. Bravo, finally we have this
+approachable red arrow.
