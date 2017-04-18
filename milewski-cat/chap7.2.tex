@@ -155,7 +155,7 @@ and covariant in the second. What's the problem?
 \begin{lstlisting}
 class Profunctor p where
   dimap :: (a' -> a) -> (b -> b') -> p a b -> p a' b'
-  dimap f g h = (fst $ lmap f h, snd $ rmap g h)
+  dimap f g h = lmap f (rmap g h)
 
   lmap :: (a' -> a) -> p a b -> p a' b
   lmap = (`dimap` id)
