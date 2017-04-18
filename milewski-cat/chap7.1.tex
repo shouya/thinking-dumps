@@ -1,0 +1,101 @@
+\setcounter{section}{7}
+\setcounter{subsection}{0}
+\subsection{Bifunctors}
+
+We start by studying if ADTs form are functors. Product type in haskell is
+actually a type constructor of two argument. \ie. \code{(a,b)} can be written as
+\code{(,) a b}.
+
+It's not hard to see that \code{(,) a}, \ie. fix on one parameter \code{a}, is a
+functor from \code{b} to \code{(a, b)}.
+
+\begin{center}
+\begin{tikzcd}[math mode=false, sep=huge]
+  \code{(e,x)} \rar{\code{fmap f}} & \code{(e,y)} \\
+  \code{x} \uar{\code{(e,)}} \rar{\code{f}} & \code{y} \uar{\code{(e,)}}
+\end{tikzcd}
+\end{center}
+
+Now think, why don't we make a functor type that has two arguments, so we can
+make \code{(,)} a functor on both arguments. In math, we could try to define
+a category that formalize product of two categories instead of inventing a
+something new, like a new kind of functor, for that purpose.
+But what will this category look like? Well it's basically just product of the
+hom sets. For categories $C$ and $D$, we define $C \times D$ as follows:
+
+\begin{itemize}
+\item For each pair of objects $c\in C$ and $d\in D$, there is an object $(c,d)
+  \in C\times D$;
+\item For each pair of arrows $f=c\mapsto c'$ in $C$ and $g
+  = d\mapsto d'$ in $D$, there is an arrow $(f, g)=(c,d)\mapsto (c',d')$ in $C\times D$;
+\item Composition: $(f', g') \circ (f, g) = (f'\circ f, g'\circ g)$;
+\item Identity: $\id_{(a,b)}=(\id_a, \id_b)$.
+\end{itemize}
+
+So the functor that takes two arguments is just a functor $C\times
+D \to E$. This kind of functors is called a bifunctor.
+
+In Haskell, bifunctor is defined as:
+
+\begin{lstlisting}
+class Bifunctor b where
+  bimap :: (a -> a') -> (b -> b') -> f a b -> f a' b'
+\end{lstlisting}
+
+And this is how \code{(,)} (product) and \code{Either} (sum) implemented as bifunctors:
+
+\begin{lstlisting}
+instance Bifunctor (,) where
+  bimap f g (a,b) = (f a, g b)
+
+instance Bifunctor Either where
+  bimap f g (Left a)  = Left (f a)
+  bimap f g (Right a) = Right (g a)
+\end{lstlisting}
+
+In a cartesian category $C$, in which there are products for every pair of
+objects, then this ``product'' is a bifunctor $C\times C \to C$. This also
+applies to ``co-product'' categories. Here's how it works:
+
+\begin{center}
+\begin{tikzcd}[sep=huge]
+  & a \times b \ar{ld}[below]{\pi_1} \ar{rd}[below]{\pi_2} & \\
+  a \ar{dd}{f} & & b \ar{dd}{g} \\
+  & a' \times b' \ar{ld}{\pi_1'} \ar{rd}[below]{\pi_2'} & \\
+  a' & & b'
+\end{tikzcd}
+\end{center}
+
+So we have this diagram. For each $a, b \in C$, by definition, we have its
+product $a\times b$ which projects ($\pi_1, \pi_2$) to $a$ and $b$. And for the
+morphisms, we have \cd{a \rar{f} \& a'} and \cd{b \rar{g} \& b'}. In order for
+the product ($\times : C\times C \to C$), to be a bifunctor, we need to show it
+is possible to lift the pair $f, g$ into something that
+\cd[normal]{a\times b \rar{f\times g} \& a' \times b'}. \ie there exists a
+morphism from $a\times b$ to $a'\times b'$ on the diagram above.
+
+\begin{center}
+\begin{tikzcd}[sep=huge]
+  & a \times b
+  \ar{ld}[below]{\pi_1} \ar[red]{lddd}[left]{\pi_1\circ f}
+  \ar{rd}[below]{\pi_2} \ar[red]{rddd}[right]{\pi_2\circ g}
+  \ar[dashed]{dd}[below]{f\times g}
+  & \\
+  a \ar{dd}{f} & & b \ar{dd}{g} \\
+  & a' \times b' \ar{ld}{\pi_1'} \ar{rd}[below]{\pi_2'} & \\
+  a' & & b'
+\end{tikzcd}
+\end{center}
+
+Here's how we show that. Since we have $\pi_1$ and $f$, they will compose into
+$\pi_1 \circ f$, same for $\pi_2$ and $g$. By definition of the univeral
+construction of products, we can see
+that $a'\times b'$ is the product on $a'$ and $b'$. Therefore, there must exist a unique
+factorialization from any pair $a\times b$ to $a'\times b'$ (shown as the dashed arrow).
+This morphism is what we are looking for and therefore we have shown the
+existence of $\times$ bifunctor.
+
+In haskell, this is not an issue. As the implementation above, we just apply $f$
+to $a$ and $g$ to $b$, then we will form $(f~a, g~b)$. But this is not enough
+general for Math, we need to think out of just the $\Hask$ category. So the
+above diagram shows how it work generally in any category.

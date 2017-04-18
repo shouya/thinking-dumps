@@ -1,0 +1,28 @@
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[subsection]
+\newtheorem*{remark}{Remark}
+\theoremstyle{definition}
+
+% Text shortcut
+\newcommand{\eg}{\textit{e.g}}
+\newcommand{\ie}{\textit{i.e}}
+\newcommand{\id}{\mathrm{id}}
+
+% Inline env shortcut
+\newcommand{\code}[1]{\lstinline{#1}}
+
+% param #1: sep (optional, default=small)
+%           possible values: tiny/small/scriptsize/normal/large/huge
+% param #2: content, use `\&' instead of `&' for columning
+\DeclareDocumentCommand \cd { O{small} m } {%
+  \begin{tikzcd}[cramped,sep=#1,ampersand replacement=\&]%
+    #2 %
+  \end{tikzcd}}
+
+% Math symbols
+\newcommand{\iso}{\cong}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\Set}{\mathbb{Set}}
+\newcommand{\Hask}{\mathrm{Hask}}
+\newcommand{\ladj}{\dashv}
+\newcommand{\radj}{\vdash}

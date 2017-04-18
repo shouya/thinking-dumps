@@ -1,0 +1,116 @@
+\setcounter{section}{6}
+\setcounter{subsection}{0}
+\subsection{Functors}
+
+Universal contruction is about to pick the ``best'' embodiment of an idea. \eg.
+there is a lot of product in the universe, so we pick the ``best'' one, the one
+that every product gets factorized into. Thus comes the ``universal''
+construction.
+
+Functors are just mapping between categories.
+
+Why so important? We look for structures/patterns in categories and try to
+emphasize/extract the pattern from them. Functor is used to find these patterns
+and map them into a category when we can recognize these patterns.
+
+``Category is the definition of structure''. In orther words, ``to recognize a
+certain structure in a category'' is the same as defining the pattern as a
+category. Being able to recognize a category inside another category is just
+doing pattern recognition.
+
+The mappings we are interested in are those which preserve structures. A
+function is a mapping from set to set, which does not have a structure. A single
+set represented in a category is just a category of bunches of objects and with
+no arrows except the identities. No structure. (Discrete category)
+\\
+
+\begin{definition}{Functor}
+  $F$ is a map between categories that preserves the structure.
+  \ie. it maps arrow to arrow.
+  For categories $C$, $D$, a functor is that for every
+  $f \in C(a, b)$, $F$ maps it into $F~f \in D(F~a, F~b)$ that preserves the
+  structure.
+
+\[
+\begin{tikzcd}[sep=huge]
+  a \rar{F_a} \dar[red]{f} & F~a \dar[red]{F~f} \\
+  b \rar{F_b} & F~b
+\end{tikzcd}
+\]
+
+  Since a hom-set is a set, a functor just defines this ``huge'' function.
+
+  Preserving the structure means for $g \circ f \in C$, $F (g \circ f) = (F g)
+  \circ (F f) \in D$.
+
+  Naturally one have to also make sure
+  $\forall a \in C, F(id_a) = id_{F a} \in D$.
+\end{definition}
+
+\subsubsection{Functor properties}
+
+\begin{definition}{faithful/full}
+Functors that don't collapse structure is called ``faithful''. A faithful
+functor is injective on \emph{hom-sets}. Correspondingly, A functor is ``full'' when it
+is surjective. Functors that are ``full'' or ``faithful'' are only about
+injective/surjective on the arrows, not about objects. Functor could map two
+distinct objects
+$a, b\in C$ into some $c \in D$, as long as the arrows between $a$ and $b$
+doesn't map to the same arrow in $D$, this functor could still be faithful.
+\end{definition}
+
+\newcommand{\singletoncat}{%
+\begin{tikzcd}[cramped]
+  \cdot \ar[loop]{r}{id}
+\end{tikzcd}%
+}
+
+\subsubsection{Interesting functors}
+
+\begin{definition}{Selecting functor}
+The possible functor mapping from category 1 (singleton category) to
+another category $C$ is unique (up to iso), that is, to map $\id \in \mathrm{Arr}(1)$ arrow
+to the $\id$ arrow on some
+object in $D$. This process is like ``selecting'' an element in $D$.
+\end{definition}
+\hfill
+\begin{definition}{Constant functor}
+Another important functor mapping from $C$ to $D$ is called constant functor, which maps
+all arrows in $C$ into the $\id$ arrow of an object $c \in D$. Constant functor
+on object $c$ is denoted as $\Delta_c$.
+\end{definition}
+\hfill
+\begin{definition}{Endofunctor}
+  An endofunctor is a functor that maps from $C$ to itself, $F: C \to C$. Haskell
+  functors are all endofunctors mapping from and to the $\Hask$ category.
+  Haskell functors consists of two parts:
+  \begin{enumerate}
+  \item Mapping between types (types are objects in $\Hask$), \ie. Type constructors.
+  \item Mapping between functions, \ie. \verb+fmap+.
+  \end{enumerate}
+\end{definition}
+\hfill
+\begin{remark}
+  Take this example,
+  \begin{lstlisting}
+fmap :: (a -> b) -> (Maybe a -> Maybe b)
+fmap f Nothing = Nothing *'\label{nothing}'*
+fmap f (Just x) = Just (f x)
+  \end{lstlisting}
+
+  To haskell, which uses parametrically polymorphism, line \ref{nothing}
+  is the only possible implementation for \lstinline{fmap f Nothing}. However,
+  it's not true to math. For languages which doesn't use parametrically
+  polymorphism, it might be possible to return other values. \eg. Return
+  \lstinline{Just 0} for if type \lstinline{a} is \lstinline{Int}. Haskell is
+  imposing a stronger condition to be a functor.
+
+  \newcommand{\Maybe}{\lstinline{Maybe}}
+  Let's check if \Maybe~really is a functor. Questions to ask:
+  \begin{enumerate}
+  \item Does \lstinline{fmap} preserves identity?
+  \item Does \lstinline{fmap} preserves composition?
+  \end{enumerate}
+
+  Surely it does.
+\end{remark}

@@ -1,0 +1,95 @@
+\documentclass{article}
+
+\title{My Notes \\
+  on the Category Theory Lecture\\
+  by Dr. Bartosz Milewski \\
+  on YouTube\footnote{https://www.youtube.com/user/DrBartosz/videos}}
+\author{Shou Ya}
+\date{\today}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+% navigation contents for pdf reader
+\usepackage{hyperref}
+\hypersetup{pdftex,colorlinks=true,allcolors=blue}
+\usepackage{hypcap}
+
+\usepackage{tikz}
+\usetikzlibrary{cd}
+
+% to define more complicated macros
+\usepackage{xparse}
+
+\usepackage[parfill]{parskip}
+\usepackage{url}
+
+\usepackage{calc}
+
+% source code hightlighting
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily}
+\lstset{
+  frame=none,
+  xleftmargin=2pt,
+  stepnumber=1,
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\ttfamily\tiny\color[gray]{0.3},
+  numberblanklines=false,
+  belowcaptionskip=\bigskipamount,
+  captionpos=b,
+  escapeinside={*'}{'*},
+  language=haskell,
+  tabsize=2,
+  emphstyle={\bf},
+  frame=lines,
+  commentstyle=\it,
+  stringstyle=\mdseries\rmfamily,
+  showspaces=false,
+  keywordstyle=\bfseries\rmfamily,
+  columns=flexible,
+  basicstyle=\small\ttfamily,
+  showstringspaces=false,
+  morecomment=[l]\%,
+  literate=
+  {\\}{{$\lambda$}}1
+  {++}{{$+\!\!\!+$}}1
+  {::}{{$:\!\!\!:$}}1
+  {\\\\}{{\char`\\\char`\\}}1
+  {->}{{$\rightarrow{}$}}2
+  {>=}{{$\geq$}}2
+  {<-}{{$\leftarrow{}$}}2
+  {<=}{{$\leq$}}2
+  {=>}{{$\Rightarrow$}}2
+  {\ .\ }{{$\circ$}}2
+  {(.)}{{($\circ$)}}2
+  {<<}{{$\ll$}}2
+  {>>}{{$\gg$}}2
+  {>>=}{{$>\!\!>\!\!=$}}2
+  {<<<}{{$\lll$}}2
+  {>>>}{{$\ggg$}}2
+  {undefined}{{$\bot$}}2
+  {`elem`}{{$\in$}}1
+  {forall}{{$\forall$}}1
+}
+
+\newtheorem{example}{Example}[subsection]
+
+\input{macro}
+
+\begin{document}
+
+\maketitle
+\newpage
+\tableofcontents
+
+\include{chap6.1}
+\include{chap7.1}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
