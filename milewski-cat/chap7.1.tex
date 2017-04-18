@@ -77,8 +77,8 @@ morphism from $a\times b$ to $a'\times b'$ on the diagram above.
 \begin{center}
 \begin{tikzcd}[sep=huge]
   & a \times b
-  \ar{ld}[below]{\pi_1} \ar[red]{lddd}[left]{\pi_1\circ f}
-  \ar{rd}[below]{\pi_2} \ar[red]{rddd}[right]{\pi_2\circ g}
+  \ar{ld}[below]{\pi_1} \ar[red]{lddd}[left]{f \circ \pi_1}
+  \ar{rd}[below]{\pi_2} \ar[red]{rddd}[right]{g \circ \pi_2}
   \ar[dashed]{dd}[below]{f\times g}
   & \\
   a \ar{dd}{f} & & b \ar{dd}{g} \\
@@ -88,7 +88,7 @@ morphism from $a\times b$ to $a'\times b'$ on the diagram above.
 \end{center}
 
 Here's how we show that. Since we have $\pi_1$ and $f$, they will compose into
-$\pi_1 \circ f$, same for $\pi_2$ and $g$. By definition of the univeral
+$f \circ \pi_1$, same for $\pi_2$ and $g$. By definition of the univeral
 construction of products, we can see
 that $a'\times b'$ is the product on $a'$ and $b'$. Therefore, there must exist a unique
 factorialization from any pair $a\times b$ to $a'\times b'$ (shown as the dashed arrow).
