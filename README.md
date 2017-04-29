@@ -101,6 +101,10 @@ My solutions for [Parallel programming - Coursera](https://www.coursera.org/lear
 
 [Functional Programming Principles in Scala - Coursera](https://class.coursera.org/progfun-005/class)
 
+### [progfun2](progfun2)
+
+[Functional Programming Design in Scala - Coursera](https://www.coursera.org/learn/progfun2)
+
 ### [sicp](sicp)
 
 My solutions to SICP exercises. See
