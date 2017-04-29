@@ -1,0 +1,9 @@
+*.zip
+*.class
+target/
+lib_managed/
+*.prefs
+project/
+build/
+.classpath
+.project
