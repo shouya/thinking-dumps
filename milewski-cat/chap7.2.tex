@@ -154,9 +154,11 @@ and covariant in the second. What's the problem?
 
 \begin{lstlisting}
 class Profunctor p where
+-- define dimap
   dimap :: (a' -> a) -> (b -> b') -> p a b -> p a' b'
   dimap f g h = lmap f (rmap g h)
 
+-- or both lmap and rmap
   lmap :: (a' -> a) -> p a b -> p a' b
   lmap = (`dimap` id)
   rmap :: (b -> b') -> p a b -> p a b'
