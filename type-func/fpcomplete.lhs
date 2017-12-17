@@ -1,5 +1,4 @@
--- compile with
--- @pandoc -fhaddock+lhs fpcomplete.lhs >! fpcomplete.html@
+Compile with @pandoc -fhaddock+lhs fpcomplete.lhs -o fpcomplete.pdf
 
 > {-# LANGUAGE DataKinds #-}
 > {-# LANGUAGE TypeFamilies #-}
@@ -151,4 +150,4 @@ Then we can use 'Min' to implement a more general version of 'zipWith':
 > zipWith' f xs          Nil         = Nil
 > zipWith' f (Cons x xs) (Cons y ys) = Cons (f x y) (zipWith' f xs ys)
 
-# Singleton patterns
+= Singleton patterns
