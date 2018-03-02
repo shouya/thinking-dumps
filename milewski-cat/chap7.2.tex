@@ -1,3 +1,5 @@
+% -*- TeX-master: "master.tex" -*-
+
 \setcounter{section}{7}
 \setcounter{subsection}{1}
 \subsection{Monoidal Categories, Functoriality of ADTs, Profunctors}
@@ -39,6 +41,9 @@ the coproduct category). And they both are specialized bifunctor category. All
 these things as product, coproduct, any bifunctors are called \emph{tensor product}
 (denoted $C \otimes C \to C$).
 
+What we really need is to have a bifuntor, and a unit for the bifunctor. Then we
+can get a monoidal category, assuming monoidal properties hold.
+
 \subsubsection{Functoriality of ADTs}
 
 Dr. Milewski has mentioned that ADTs has functoriality by their nature many
@@ -49,8 +54,8 @@ their corresponding bifunctors. We see, product types are functorial, sum
 types are functorial, what about other types, \code{Bool}, \code{Int}?
 
 So we still have some types that do not depend on type variables, how can we
-make them instance of \code{Functor}? So here's the place for the constant
-functor trick.
+make them instance of \code{Functor}? We can say they dependent on type indeed,
+but in a \emph{trivial} way. So here's the place for the constant functor trick.
 
 \begin{lstlisting}
 data Const c a = Const c
@@ -72,7 +77,7 @@ Another trivial functor is the identity functor:
 \begin{lstlisting}
 data Identity a = Identity a
 
-instance Functor Identity a where
+instance Functor (Identity a) where
   fmap :: (a -> b) -> Identity a -> Identity a
   fmap f (Identity a) = Identity (f a)
 \end{lstlisting}
@@ -90,11 +95,16 @@ data Maybe a = Either Nothing (Just a)
 data Maybe a = Either (Const () a) (Identity a)
 \end{lstlisting}
 
-Now we have a \code{Const ()} functor and an \code{Identity} functor; and the
+Now we have a \code{Const ()} functor and an \code{Identity} functor; and
 \code{Either} is just a bifunctor. Thus overall \code{Maybe} is a bifunctor.
 Since we have the same parameter \code{a} for \code{Const ()} and
 \code{Identity}, we can add a diagonal functor before the bifunctor of the
 \code{Either}/\code{Maybe}, reducing it into a regular endofunctor.
+
+This process of functorizing any ADT type can be automated, and it's built-in to
+Haskell as an extension: \code{DeriveFunctor}. Could there be more than one
+\code{fmap} defined for an ADT functor? No, Because of parametricity of
+polymorphism in Haskell, the canonical one is the only possible one!
 
 \hfill
 \begin{remark}
@@ -140,12 +150,12 @@ instead of containing something we need to give it something.
 class Contravariant f where
   contramap :: (b -> a) -> f a -> f b
 
-data Co c a = Co (a -> c)
+data Op c a = Op (a -> c)
 
 instance Contravariant (Co c) where
+  contramap :: (b -> a) -> (Op c a) -> (Op c b)
 --contramap ::  (b -> a) -> (a -> c) -> (b -> c)
-  contramap :: (b -> a) -> (Co c a) -> (Co c b)
-  contramap f (Co g) = Co (f  .   g)
+  contramap f (Op g) = Op (f  .   g)
 \end{lstlisting}
 
 So a profunctor is just a bifunctor that is contravariant in the first argument
@@ -169,3 +179,7 @@ To function type, let's see how it is implemented. $f : a' \to a$, $g : b \to
 b'$, and $h : a \to b$. So the diagram is just \cd{a' \rar{f} \ar[red,bend
   right=90]{rrr}{} \& a \rar{h} \& b \rar{g} \& b'}. Bravo, finally we have this
 approachable red arrow.
+
+The functions \code{lmap} and \code{rmap} correspond to \code{contramap} and
+\code{fmap}, which is a implication of the fact that a profunctor is a bifunctor
+over a contravariant functor and a covariant functor.

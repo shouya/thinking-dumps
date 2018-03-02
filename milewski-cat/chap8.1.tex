@@ -1,0 +1,149 @@
+% -*- TeX-master: "master.tex" -*-
+
+\setcounter{section}{8}
+\setcounter{subsection}{1}
+\subsection{Function objects, Exponentials}
+
+\subsubsection{Function objects}
+
+Functions are separated from types so far: we learned in Hask that types are
+objects and functions are morphisms. For category $\Set$, objects are all the
+sets, and functions are mapping between the objects. Functions from object $a$
+to object $b$ forms a set, called hom-set, denoted as $\Hom(a,b)$. And because
+$\Set$ contains all sets, this morphisms representing hom-set $\Hom(a,b)$ is also
+an object in $\Set$.
+
+In an arbitrary category, we don't have the hom-sets as internal objects; but we
+can view them as external things being in other categories. What we want is
+something we can represent these hom-sets inside the category. It is indeed
+possible to define these objects in many categories, although not in arbitrary
+category. Just like we define product and coproduct, the same way we can apply
+to define this function object. We can use univeral construction to define
+function object.
+
+\begin{remark} The 3 steps towards universal construction:
+\begin{enumerate}
+\item Define a pattern.
+\item Define ranking between matches.
+\item Find the best one.
+\end{enumerate}
+\end{remark}
+
+It's clear to see that the pattern will involve three objects, the function $z$,
+the argument type $a$ and the return type $b$. In a category, we can't directly
+say $z$ takes argument $a$ returns $b$, so we think how can we work on this. For
+example, in category $\Set$, we can say take $z$ and $a$ to form a pair $(z,a)$
+such that $(z,a) \iso b$. This pairing in $\Set$ represent a cartesian product
+of $z$ and $a$. This perfectly captures the idea of function application, and
+this pattern can be generalize to any category.
+
+This pattern implies that in order to define this construction in a category,
+the category must contain products. This makes more sense when later we discuss
+function objects as exponentials.
+
+The pattern, drawn in communitive diagram, looks like:
+
+\begin{center}
+  \begin{tikzcd}[sep=large]
+  z \rar[dash,dashed] & z\times a \rar[swap]{g} & b  \\
+  & a \uar[dash, dashed] &
+  \end{tikzcd}
+\end{center}
+
+Note that the morphism $g$ is called a \emph{eval} morphism. Next we need to
+define a ranking to select the best function $z$ from $a$ to $b$.
+
+\newcommand{\arb}{\ensuremath{}(a\Rightarrow{}b)}
+
+With the pattern above, we say $\arb$ is the function object from $a$ to $b$ if
+for other patterns defined on $z$ and $a$, we have a unique morphism $h:
+\cd{z\rar[dashed] \& \arb}$, that means we have to be able to factorize
+$g:\cd{z\times a\rar\& b}$ into $\textrm{eval}$ arrow and a unique arrow
+$\cd{z\times a\rar[dashed] \&\arb\times a}$. $\textrm{eval}$ arrow is given by
+the pattern, so we need to find the other arrow. By previously learned
+functoriality of ADTs, we know that product is a bifunctor, thus it not only
+maps objects, it also maps morphisms. By which we can say the unique arrow we
+are looking for is $h\times \id_a$. The whole construct can be shown as the
+diagram below:
+
+\begin{center}
+  \begin{tikzcd}[sep=large]
+    z  \dar[dashed]{h} &
+    z\times a \ar{d}[dashed]{h\times \id_a} \ar[rd, start anchor={east}, bend left=30, "g"] & \\
+
+    (a\Rightarrow b)  &
+    (a\Rightarrow b)\times a \ar[r,swap,start anchor={east},"\textrm{eval}"] & b  \\
+
+    & a  &
+  \end{tikzcd}
+  \\
+  (arrows representing $\pi$ maps in products are omitted for clarity)
+\end{center}
+
+
+In short, the function object $\arb$ only exists if for every possible $z$ and
+$g$ in that pattern, there is a unique $h$ from $z$ to $\arb$ such that:
+
+\[
+  g = \textrm{eval} \circ (h \times \id)
+\]
+
+In most languages, functions with two arguments are basically functions with one
+argument which is a pair. Think of $g$ as such a function, that takes $z$ and
+$a$ as arguments. Our definition of function objects implies given $z$ and $g$
+we actually have a unique arrow $h$, that takes a $z$ and returns a function
+object $\arb$.
+
+This captures the idea of partially applying function is
+equivalent to the applying function with its arguments given in a pair; the idea
+can be generalized to functions with multiple arguments. This gives rise to the
+concept of currying.
+
+\begin{lstlisting}
+h :: z -> (a -> b)
+g :: (z, a) -> b
+
+curry :: ((a,b)->c) -> (a->b->c)
+curry f = \lambdaa->(\lambdab->f (a,b))
+
+uncurry :: (a->b->c) -> ((a,b)->c)
+uncurry f = \lambda(a,b)->(f a) b
+\end{lstlisting}
+
+
+\subsubsection{Exponential}
+
+Function objects in category theory are actually called exponential. A function
+object $\arb$ will be called $b^a$. This makes sense if you think of the
+cardinality of function types. In Haskell, $\Bool \to \Int$ is basically $(\Int,
+\Int)$, or $\Int \times \Int$ in category notation, or simpler $\Int^2$.
+Remember we learned the correspondence between nature numbers and Hask types:
+$1$ corresponds to unit $()$, $2$ corresponds to $\Bool$, etc. Then $\Int^2$ is
+basically $\Int^\Bool$.
+
+The idea shows the connection between products and exponentials (\ie.
+functions). A special kind of categories called \textbf{Cartesian Closed
+  Category} (CCC) is useful in programming. Cartesian means there is a product
+for every pair of objects. Closed means the products are \emph{inside} the
+category, which means it has all the exponentials objects as well. Also, it must
+have the terminal object. Why? Terminal object is like the $0$-th power of any
+objects. Sometimes we also want co-products in the category, this kind of
+categories is called Bi-Cartesian Closed Categories (BCCC), which also has the
+initial object.
+
+With products and co-products both being monoidal, we can combine them together
+to form a semi-ring, and do algebra on them. Now we add exponential to the
+system. With exponentials we can do more algebra, for example, $a^0~=~1$.
+
+We can interpret $a^0 = 1$ as $\Void \to a \sim ()$, \ie. a function from void
+type to $a$ is equivalent to the unit type. We need to show the function on the
+left hand side exists and is unique. Turns out there is this function, called
+\textbf{absurd}.
+
+What about $1^a=1$? It is a function takes $a$ and returns unit $()$; we say it
+is equivalent to just $()$. There is only one such function indeed, called
+$\texttt{const}~()$.
+
+Let's try another one, $a^1=a$, This is saying a function from $()$ to $a$ is
+equivalent to $a$. These functions are just the selecting functions; there are
+as many as the number of elements in $a$.
