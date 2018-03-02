@@ -1,0 +1,7 @@
+[package]
+name = "dither"
+version = "0.1.0"
+authors = ["Shou Ya <shouya@users.noreply.github.com>"]
+
+[dependencies]
+image = "*"
