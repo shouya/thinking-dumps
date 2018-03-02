@@ -8,7 +8,7 @@ Compile with @pandoc -fhaddock+lhs fpcomplete.lhs -o fpcomplete.pdf
 > {-# LANGUAGE ExistentialQuantification #-}
 > {-# LANGUAGE StandaloneDeriving #-}
 
-= Type functions
+= Type level nature number
 
 With @DataKinds@ language extension, the following defines a data kind named @Nat@
 and two type constructor @Z :: Nat@ and @S :: Nat -> 'Nat@
@@ -151,3 +151,9 @@ Then we can use 'Min' to implement a more general version of 'zipWith':
 > zipWith' f (Cons x xs) (Cons y ys) = Cons (f x y) (zipWith' f xs ys)
 
 = Singleton patterns
+
+Let's write the 'replicate'' function:
+
+@
+replicate :: n -> a -> Vec n a
+@
