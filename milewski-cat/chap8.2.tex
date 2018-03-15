@@ -1,0 +1,133 @@
+% -*- TeX-master: "master.tex" -*-
+
+\setcounter{section}{8}
+\setcounter{subsection}{1}
+\subsection{Type algebra, Curry-Howard-Lambek isomorphism}
+
+\subsubsection{Type algebra}
+
+We have learned the correspondence between some categorical structures and
+algebra.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{ll}
+\hline
+Algebra      & Categorical Structure         \\ \hline
+$a + b$      & Coproduct                     \\
+$a \times b$ & Product                       \\
+$a^b$        & Exponential (Function Object) \\ \hline
+\end{tabular}
+\caption{Categorical representation of algebra operations}
+\end{figure}
+
+Now we figure out how to do algebra in the category of types. Look at this
+algebra expression,
+
+\[
+  a^{b+c} = a^b \times a^c
+\]
+
+This is essentially saying that \code{Either b c -> a} is equivalent to a pair
+of functions \code{(b -> a, c -> a)}. We can do case analysis: Either type gives
+one of its params, if given parameter is \code{b}, it should call function
+\code{b -> a}; if given \code{c}, it should call \code{c -> a}. It works. It's
+easy to show the other way around from \code{(b -> a, c -> a)} to \code{Either b
+  c -> a}.
+
+Let's see the next one,
+
+\[
+  (a^b)^c = a^{b\times c}
+\]
+
+It should be easy to recognize this pattern is exactly what currying does, that
+is, \code{c -> (b -> a)} is equivalent to \code{(b, c) -> a}.
+
+Next one,
+
+\[
+  (a\times b)^c = a^c\times b^c
+\]
+
+This is saying \code{c->(a,b)} is equivalent to \code{(c -> a, c -> b)}, which
+makes sense since given a function that takes a \code{c} and spit out \code{a}
+and \code{b} is the same as given two function, both take a \code{c}, one spit
+out \code{a} and another one spit out \code{b}.
+
+All above algebra holds in Haskell and other BCCC languages.
+
+
+\subsubsection{Curry-Howard-Lambek isomorphism}
+
+We started to realize that the algebra we learned in high school seems to apply
+to a broader and a broader range of things. Starting from numbers, then to variables,
+then to functions, then to types and categories. All these things are so similar
+and the similarity extends further.
+
+The other thing fall out from this is that the same structures here we see in
+types and categories appear in logics as well. This is the famous
+\textbf{Curry-Howard isomorphism}, or \textbf{Proposition as Types}. So all
+these we talked about in type theory and categories today actually have
+one-to-one correspondence in logic.
+
+The isomorphism between type theory and logic starts with identifying what it
+means to be a proposition. A proposition is a statement that can either be true
+or false. In type theory, a type can be either inhabited or not. The truth of a
+proposition corresponds to that the type has elements, that is, they are
+inhabited.
+
+Most of the types we learned are inhabited, while there are some that are not,
+so they corresponds to false propositions. A classic example we know is the
+\code{Void} type, which has no members.
+
+Another thing we have in logic is proof. If we want to prove a proposition we
+can construct an element of the corresponding type. In logic there are two basic
+propositions true and false, true is always true, and false is always false. The
+corresponding things in type is: \code{Void} type corresponds to false,
+\code{Unit} type corresponds to true.
+
+Then we have conjunction ($\land$). The conjunction of $a$ and $b$ ($a\land b$)
+is corresponds to the pair \code{(a,b)} in type theory. We can only form the
+pair type if only we have both an element from $a$ and an element from $b$.
+
+Disjunction ($\lor$) works similarly, in the way that $a \lor b$ corresponds to
+\code{Either a b}. If we have either an element of $a$ or an element of $b$, we
+can construct a \code{Either a b}.
+
+Implication ($\Rightarrow$) corresponds to the function type. $a \Rightarrow b$
+corresponds to the function type \code{a -> b}. The function type \code{a -> b}
+is essentially meaning, give me an element of \code{a}, I'll give you an element
+of \code{b}. In other words, if I have the function then I can produce \code{b}
+from \code{a}. The same is true for implication. In logic, if we have
+$(a\Rightarrow b) \land a$ we can conclude $b$. Likewise, if we have an
+inhibited pair \code{(a -> b, b)}, we can derive an element of \code{b}.
+
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{lll}
+\hline
+Category        & Logic            & Type              \\\hline
+terminal object & true             & \code{()}         \\
+initial object  & false            & \code{Void}       \\
+product         & $a\land b$       & \code{(a,b)}      \\
+coproduct       & $a\lor b$        & \code{Either a b} \\
+exponetial      & $a\Rightarrow b$ & \code{a -> b}     \\
+\hline
+\end{tabular}
+\caption{Table showing the correspondance}
+\end{figure}
+
+Curry-Howard proposed the correpondence between logic and type theory, and
+Lambek contributed the correspondence between them and category theory.
+
+A cartesian closed category is a model for logic and also a model for type
+theory, where all these three things are the same. Some mathematicians may
+discover some idea in logic, and then computer scientist can pick it up and find
+it can be some type. Some modern concepts are discovered and found applicable in
+different fields in this way. An example is Linear Logic, which computer
+scientists translated into programming languages using Curry-Howard
+Correspondence, called Linear Type. In a linear type system each object is used
+exactly once. This system makes up the basis of Rust's ownership and C++'s
+\code{unique_ptr}.
