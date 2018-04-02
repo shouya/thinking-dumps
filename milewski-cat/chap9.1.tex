@@ -1,0 +1,54 @@
+% -*- TeX-master: "master.tex" -*-
+
+\setcounter{section}{9}
+\setcounter{subsection}{0}
+\subsection{Natural Transformations}
+
+Natural transformation is the third thing in the most important foundations of
+category theory. The first is the definition of category, and the second is
+functor, natural transformation is the third.
+
+Category is about structure. Functors are mappings between categories that
+preserves the structure. The intuition about functor is that they take a
+category and embed it into another category. It's like searching a pattern in a
+category. We would also want to compare two functors, or said differently, images
+given by functors. So compare things by mapping one into another, that's a
+natural way of modeling comparsion.
+
+Natural transformations are defined as structure-preserving mappings between
+functors. Given two categories, $C$ and $D$, and two functors $F$ and $G$ which
+$F,G: C\to D$, let $a$ be an object in $C$, which $F$ maps $a$ to $F a$, $G$
+maps $a$ to $G a$. If we want to map one functor to another functor, we want to
+map $F a$ to $G a$. We already have morphisms in $D$ for mapping $F a$ to $G a$.
+To define mapping between functors on $a$ is the same as picking a morphism in
+$D$ that maps from $F a$ to $G a$. So a natural transformation will, for every
+object $a$ in $C$, pick a morphism in $\Hom_D(F a, G a)$. This way a natural
+transformation is creating a family of morphisms in $D$. These individual
+morphisms are called \emph{components} of the natural transformation. Denoted as
+$\alpha_a$ where $\alpha$ is the natural transformation.
+
+So far, we only talked about what a natural transformation does on objects, we
+also need to take a look on morphisms. Given objects $a, b$ in $C$ and morphism
+$f: a \to b$, we have the functors $F, G$ which map $a$ to $F a$, $G a$, and map
+$b$ to $F b$, $G b$, respectively. Let natural transform $\alpha$ on $a$ and
+$b$ be $\alpha_a: F a\to G a$ and $\alpha_b: F b \to G b$.
+
+\begin{figure}[h]
+\centering
+\begin{tikzcd}[math mode=true, sep=large]
+  a \ar{rrr}{F}\ar{rrrdd}[near start]{G}\ar[green]{d}{f} & & & F
+  a\ar[red]{dd}[near start]{\alpha_a}\ar[green]{rd}{F f} & \\
+  b \ar[crossing over]{rrrr}{F}\ar{rrrrdd}{G} & & & & F b\ar[red]{dd}{\alpha_b} \\
+  & & & G a\ar[green]{rd}{G f} & \\
+  & & & & G b
+\end{tikzcd}
+\caption{natural transofrm}
+\end{figure}
+
+We need to have the natural transform preserve structures of $F$ and $G$. That
+means these two paths from $F a$ to $G b$ must be equal. In other words, the
+diagram must commute.
+
+Naturality condition is very strong
+
+Example in set. Natruality is almost determined.
