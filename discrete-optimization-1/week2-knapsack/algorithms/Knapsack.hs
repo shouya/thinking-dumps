@@ -17,6 +17,12 @@ data Problem = Problem { capacity :: Weight
                        , items :: [(Value, Weight)]
                        }
 
+value :: (Value, Weight) -> Value
+value = fst
+
+weight :: (Value, Weight) -> Value
+weight = snd
+
 type Algorithm = Problem -> Solution
 
 
@@ -34,8 +40,8 @@ generateSolution Solution { optimal, objective, selectedItems } = do
   unlines $ [unwords meta, unwords $ map show selectedItems]
     where meta = [show objective, if optimal then "1" else "0"]
 
-solve :: Algorithm -> IO ()
-solve alg = do
+solveBy :: Algorithm -> IO ()
+solveBy alg = do
   args <- getArgs
   contents <- if null args then getContents else readFile (args !! 0)
   putStrLn $ generateSolution . alg . parseProblem $ contents
