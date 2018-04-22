@@ -7,15 +7,17 @@ import time
 import os
 
 PROBLEM_SPEC = {
-  'timeout': 10, # 10 secs
+  'timeout': 20, # in secs
   'objective': 'maximize',
   'algorithms': {
     'brutal': {
       'scale-max': 35
     },
-    'greedy': {},
+    'greedy': {
+      'scale-min': 100
+    },
     'dp': {
-      'scale-max': 400
+      'scale-max': 250
     }
   },
   'parse_scale': lambda inp: int(inp.split('\n')[0].split(' ')[0]),

@@ -2,14 +2,9 @@
 
 import Knapsack
 
-import Control.Applicative
-import Control.Monad.State.Lazy
-
 import Data.List (sortBy)
 import Data.Ord (comparing)
-import Data.Function (on, (&))
-
-type GetItemPriority = (Value, Weight) -> Float
+import Data.Function ((&))
 
 data ScoredItem = ScoredItem { siScore :: Float
                              , siItem  :: Item
@@ -27,7 +22,7 @@ greedyOn tr prob@Problem { capacity, givenItems } =
 
 takeItemUntilExceed :: Weight -> [Item] -> [Item]
 takeItemUntilExceed = takeItemUntilExceed' 0
-  where takeItemUntilExceed' curr cap [] = []
+  where takeItemUntilExceed' _curr _cap []   = []
         takeItemUntilExceed' curr cap (x:xs) = if curr + weight x <= cap
                                                then x : (takeItemUntilExceed' (curr + weight x) cap xs)
                                                else []
