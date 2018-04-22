@@ -2,9 +2,12 @@
 
 import Knapsack
 
+import Control.Monad
+
 import Data.Foldable (maximumBy, Foldable)
 import Data.Ord (comparing)
-import Data.Function (on)
+import Data.Function (on, (&))
+
 
 {-
 data Solution = Solution { optimal :: Bool
@@ -17,23 +20,18 @@ data Problem = Problem { capacity :: Weight
                        }
 -}
 
-powersetIndices :: [a] -> [[Int]]
-powersetIndices = (map . map) fst . powerset . zip [0..]
-  where powerset :: [a] -> [[a]]
-        powerset []     = [[]]
-        powerset (x:xs) = (map (x:) powersetOfRest) ++ powersetOfRest
-          where powersetOfRest = powerset xs
+
+
+powerset :: [a] -> [[a]]
+powerset xs = filterM (\x -> [True, False]) xs
 
 brutal :: Algorithm
-brutal Problem { capacity, items } =
-  Solution { optimal = True, selectedItems, objective}
-  where allPossibilities = powersetIndices items
-        totalWeight indices = sum $ map (\i -> value (items !! i)) indices
-        totalValue indices  = sum $ map (\i -> weight (items !! i)) indices
-        feasible indices = totalWeight indices <= capacity
-        feasibleSolutions = filter feasible allPossibilities
-        selectedItems = maximumBy (comparing `on` fst) feasibleSolutions
-        objective = totalValue selectedItems
-
+brutal prob@Problem { capacity, givenItems } =
+  solution prob selectedItems Optimal
+  where selectedItems = powerset givenItems
+                        & filter feasible
+                        & maximumBy (comparing overallValue)
+        feasible items = sum (fmap weight items) < capacity
+        overallValue items = sum (fmap value items)
 
 main = solveBy brutal

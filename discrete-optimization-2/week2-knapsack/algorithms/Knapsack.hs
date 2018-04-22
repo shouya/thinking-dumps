@@ -2,26 +2,48 @@
 
 module Knapsack where
 
-import System.Environment
+import Control.Monad (forM_)
+
+import Data.Array.IArray (elems)
+import Data.Array.ST hiding (index)
+
+import System.Environment (getArgs)
 
 type Weight = Int
 type Value = Int
-type WeightCapacity = Int
+type WeightCapacity = Weight
 
-data Solution = Solution { optimal :: Bool
+data Optimal = Optimal
+             | NotOptimal
+  deriving (Eq, Ord)
+
+instance Show Optimal where
+  show Optimal = "1"
+  show NotOptimal = "0"
+
+data Item = Item { index  :: Int
+                 , value  :: Value
+                 , weight :: Weight
+                 }
+  deriving (Show, Eq, Ord)
+
+data Solution = Solution { optimal :: Optimal
                          , objective :: Int
-                         , selectedItems :: [Int]
+                         , selectedItems :: [Item]
+                         , numTotalItems :: Int
                          }
+  deriving (Show, Eq, Ord)
+
+
+solution :: Problem -> [Item] -> Optimal -> Solution
+solution Problem { givenItems } selectedItems optimal =
+  Solution { optimal, objective, selectedItems, numTotalItems }
+  where objective = sum $ fmap value selectedItems
+        numTotalItems = length givenItems
 
 data Problem = Problem { capacity :: Weight
-                       , items :: [(Value, Weight)]
+                       , givenItems :: [Item]
                        }
-
-value :: (Value, Weight) -> Value
-value = fst
-
-weight :: (Value, Weight) -> Value
-weight = snd
 
 type Algorithm = Problem -> Solution
 
@@ -33,12 +55,20 @@ parseProblem contents =
       inputs = tail input
       capacity = read (meta !! 1)
       items = map (\[v,w] -> (v,w)) $ (map . map) read inputs
-  in Problem { capacity, items }
+      groupIntoItem index (value, weight) = Item { index, value, weight }
+      givenItems = zipWith groupIntoItem [0..] items
+  in Problem { capacity, givenItems }
 
 generateSolution :: Solution -> String
-generateSolution Solution { optimal, objective, selectedItems } = do
-  unlines $ [unwords meta, unwords $ map show selectedItems]
-    where meta = [show objective, if optimal then "1" else "0"]
+generateSolution Solution { optimal, objective, selectedItems, numTotalItems } = do
+  unlines $ [unwords meta, unwords $ map show $ elems $ indexArray]
+    where meta = [show objective, show optimal]
+          indexArray = runSTUArray $ do
+            array <- newArray (0, numTotalItems - 1) 0
+            forM_ selectedItems $ \Item { index } -> do
+              writeArray array index (1 :: Int)
+            return array
+
 
 solveBy :: Algorithm -> IO ()
 solveBy alg = do
