@@ -74,4 +74,4 @@ solveBy :: Algorithm -> IO ()
 solveBy alg = do
   args <- getArgs
   contents <- if null args then getContents else readFile (args !! 0)
-  putStrLn $ generateSolution . alg . parseProblem $ contents
+  putStr $ generateSolution . alg . parseProblem $ contents

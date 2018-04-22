@@ -5,34 +5,46 @@ import Knapsack
 import Control.Applicative
 import Control.Monad.State.Lazy
 
+import Data.List (sortBy)
 import Data.Ord (comparing)
-import Data.Function (on)
+import Data.Function (on, (&))
 
 type GetItemPriority = (Value, Weight) -> Float
 
-takeWhileM :: Monad m => (a -> m Bool) -> [m a] -> m [a]
-takeWhileM _ []       = return []
-takeWhileM f (mx:mxs) = do
-  x <- mx
-  cond <- f x
-  if cond
-    then do xs <- takeWhileM f mxs
-            return (x:xs)
-    else return []
+data ScoredItem = ScoredItem { siScore :: Float
+                             , siItem  :: Item
+                             }
 
-type IntermediateState = State (Value, Weight)
+type GreedyStrategy = Item -> ScoredItem
 
-belowCapcityAggregate :: (Value, Weight) -> IntermediateState (Value, Weight)
-belowCapacityAggregate (value, weight) = do
-  (aggValue, aggWeight) <- get
-  if aggWeight + weight <= capacity
-    then do set (aggValue + value, aggWeight + weight)
-            return True
-    else return False
+greedyOn :: GreedyStrategy -> Problem -> Solution
+greedyOn tr prob@Problem { capacity, givenItems } =
+  solution prob selectedItems NotOptimal
+  where selectedItems = fmap tr givenItems
+                        & sortBy (comparing siScore)
+                        & fmap siItem
+                        & takeItemUntilExceed capacity
 
-greedyOnCriterion :: GetItemPriority -> Algorithm
-greedyOnCriterion criterion Problem { capacity, items } =
-  let (selectedItems, (objective, _)) = runState takenItems (0, 0)
-  in Solution { optimal = False, selectedItems, objective}
-  where sortedItems = sortBy (comparing `on` criterion) items
-        takenItems = takeWhileM belowCapacityAggregate
+takeItemUntilExceed :: Weight -> [Item] -> [Item]
+takeItemUntilExceed = takeItemUntilExceed' 0
+  where takeItemUntilExceed' curr cap [] = []
+        takeItemUntilExceed' curr cap (x:xs) = if curr + weight x <= cap
+                                               then x : (takeItemUntilExceed' (curr + weight x) cap xs)
+                                               else []
+
+minWeight :: GreedyStrategy
+minWeight item = ScoredItem { siScore = fromIntegral $ -(weight item)
+                            , siItem = item
+                            }
+
+maxValue :: GreedyStrategy
+maxValue item = ScoredItem { siScore = fromIntegral $ value item
+                           , siItem = item
+                           }
+
+bestVWRatio :: GreedyStrategy
+bestVWRatio item = ScoredItem { siScore = fromIntegral (value item) / fromIntegral (weight item)
+                              , siItem = item
+                              }
+main :: IO ()
+main = solveBy $ greedyOn bestVWRatio

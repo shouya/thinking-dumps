@@ -4,26 +4,14 @@ import Knapsack
 
 import Control.Monad
 
-import Data.Foldable (maximumBy, Foldable)
+import Data.Foldable (maximumBy)
 import Data.Ord (comparing)
-import Data.Function (on, (&))
-
-
-{-
-data Solution = Solution { optimal :: Bool
-                         , objective :: Int
-                         , selectedItems :: [Int]
-                         }
-
-data Problem = Problem { capacity :: Weight
-                       , items :: [(Value, Weight)]
-                       }
--}
+import Data.Function ((&))
 
 
 
 powerset :: [a] -> [[a]]
-powerset xs = filterM (\x -> [True, False]) xs
+powerset xs = filterM (const [True, False]) xs
 
 brutal :: Algorithm
 brutal prob@Problem { capacity, givenItems } =
@@ -31,7 +19,8 @@ brutal prob@Problem { capacity, givenItems } =
   where selectedItems = powerset givenItems
                         & filter feasible
                         & maximumBy (comparing overallValue)
-        feasible items = sum (fmap weight items) < capacity
+        feasible items = sum (fmap weight items) <= capacity
         overallValue items = sum (fmap value items)
 
+main :: IO ()
 main = solveBy brutal
