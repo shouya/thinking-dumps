@@ -11,9 +11,12 @@ PROBLEM_SPEC = {
   'objective': 'maximize',
   'algorithms': {
     'brutal': {
-      'scale-max': 20
+      'scale-max': 35
     },
-    'greedy': {}
+    'greedy': {},
+    'dp': {
+      'scale-max': 400
+    }
   },
   'parse_scale': lambda inp: int(inp.split('\n')[0].split(' ')[0]),
   'parse_objective': lambda outp: int(outp.split('\n')[0].split(' ')[0]),
@@ -27,9 +30,9 @@ def fit_size(spec, n):
   min_ = spec.get('scale-min', -1)
   max_ = spec.get('scale-max', -1)
 
-  if min_ != -1 and n <= min_:
+  if min_ != -1 and n < min_:
     return False
-  if max_ != -1 and n >= max_:
+  if max_ != -1 and n > max_:
     return False
 
   return True
@@ -49,7 +52,8 @@ def run_algorithm(alg, input_data, timeout = None):
     proc.check_returncode()
     solution['completed'] = True
   except subprocess.TimeoutExpired:
-    proc.kill()
+    solution['completed'] = False
+  except CalledProcessError:
     solution['completed'] = False
   finally:
     solution['time'] = time.time() - start_time
@@ -89,6 +93,7 @@ def solve_it(input_data):
             file=sys.stderr)
     solutions.append(solution)
 
+  os.chdir("../")
   print("All algorithms tested, evaluating performances.", file=sys.stderr)
 
   feasible_solutions = [sol for sol in solutions if sol['completed']]
