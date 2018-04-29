@@ -34,10 +34,11 @@ lazyTable capacity items = arr
                            nthItemWeight = weight nthItem
                            weightRemovedSolution = arr ! (cap - nthItemWeight, n - 1)
                            newSolution = addItemToSolution nthItem weightRemovedSolution
-                       in if nthItemWeight < cap
+                       in if nthItemWeight <= cap
                           then maxBy compareSolution prevSolution newSolution
                           else prevSolution
 
+traversable ::
 
 dynamicProgramming :: Algorithm
 dynamicProgramming prob@Problem { capacity, givenItems } =

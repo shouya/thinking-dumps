@@ -23,9 +23,10 @@ greedyOn tr prob@Problem { capacity, givenItems } =
 takeItemUntilExceed :: Weight -> [Item] -> [Item]
 takeItemUntilExceed = takeItemUntilExceed' 0
   where takeItemUntilExceed' _curr _cap []   = []
-        takeItemUntilExceed' curr cap (x:xs) = if curr + weight x <= cap
-                                               then x : (takeItemUntilExceed' (curr + weight x) cap xs)
-                                               else []
+        takeItemUntilExceed' curr cap (x:xs) =
+          if curr + weight x <= cap
+          then x : (takeItemUntilExceed' (curr + weight x) cap xs)
+          else []
 
 minWeight :: GreedyStrategy
 minWeight item = ScoredItem { siScore = fromIntegral $ -(weight item)
@@ -38,7 +39,8 @@ maxValue item = ScoredItem { siScore = fromIntegral $ value item
                            }
 
 bestVWRatio :: GreedyStrategy
-bestVWRatio item = ScoredItem { siScore = fromIntegral (value item) / fromIntegral (weight item)
+bestVWRatio item = ScoredItem { siScore = fromIntegral (value item) /
+                                          fromIntegral (weight item)
                               , siItem = item
                               }
 main :: IO ()
