@@ -46,7 +46,7 @@ data Problem = Problem { capacity :: Weight
                        }
 
 type Algorithm = Problem -> Solution
-
+type IOAlgorithm = Problem -> IO String
 
 parseProblem :: String -> Problem
 parseProblem contents =
@@ -69,9 +69,15 @@ generateSolution Solution { optimal, objective, selectedItems, numTotalItems } =
               writeArray array index (1 :: Int)
             return array
 
-
 solveBy :: Algorithm -> IO ()
 solveBy alg = do
   args <- getArgs
   contents <- if null args then getContents else readFile (args !! 0)
   putStr $ generateSolution . alg . parseProblem $ contents
+
+ioSolveBy :: IOAlgorithm -> IO ()
+ioSolveBy alg = do
+  args <- getArgs
+  contents <- if null args then getContents else readFile (args !! 0)
+  sol <- alg $ parseProblem $ contents
+  putStr sol

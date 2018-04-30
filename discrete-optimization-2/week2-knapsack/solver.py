@@ -11,13 +11,16 @@ PROBLEM_SPEC = {
   'objective': 'maximize',
   'algorithms': {
     'brutal': {
-      'scale-max': 35
+      'scale-max': 20
     },
     'greedy': {
       'scale-min': 100
     },
-    'dp': {
-      'scale-max': 250
+    # 'dp': {
+    #   'scale-max': 150
+    # },
+    'minizinc': {
+      'scale-min': 20
     }
   },
   'parse_scale': lambda inp: int(inp.split('\n')[0].split(' ')[0]),
@@ -55,7 +58,7 @@ def run_algorithm(alg, input_data, timeout = None):
     solution['completed'] = True
   except subprocess.TimeoutExpired:
     solution['completed'] = False
-  except CalledProcessError:
+  except subprocess.CalledProcessError:
     solution['completed'] = False
   finally:
     solution['time'] = time.time() - start_time
@@ -74,17 +77,19 @@ def run_algorithm(alg, input_data, timeout = None):
 
 def solve_it(input_data):
   scale = PROBLEM_SPEC['parse_scale'](input_data)
-  possible_alg = [(alg,spec) for alg, spec in PROBLEM_SPEC['algorithms'].items()
+  possible_alg = [(alg,spec)
+                  for alg, spec in PROBLEM_SPEC['algorithms'].items()
                   if fit_size(spec, scale)]
 
   global_timeout = PROBLEM_SPEC.get('timeout', 60*1000)
 
-  os.chdir("algorithms/")
   solutions = []
   for (alg,spec) in possible_alg:
     alg_timeout = spec.get('timeout', global_timeout)
     print(f"Running against algorithm {alg}...", file=sys.stderr)
+    os.chdir("algorithms/")
     solution = run_algorithm(alg, input_data, timeout=alg_timeout)
+    os.chdir("../")
     if solution['completed']:
       print(f"Time: {solution['time']}, " + \
             f"Objective: {solution['objective']}, " + \
@@ -95,7 +100,6 @@ def solve_it(input_data):
             file=sys.stderr)
     solutions.append(solution)
 
-  os.chdir("../")
   print("All algorithms tested, evaluating performances.", file=sys.stderr)
 
   feasible_solutions = [sol for sol in solutions if sol['completed']]

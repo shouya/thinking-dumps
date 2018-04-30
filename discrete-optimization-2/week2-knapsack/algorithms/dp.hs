@@ -38,8 +38,6 @@ lazyTable capacity items = arr
                           then maxBy compareSolution prevSolution newSolution
                           else prevSolution
 
-traversable ::
-
 dynamicProgramming :: Algorithm
 dynamicProgramming prob@Problem { capacity, givenItems } =
   solution prob selectedItems Optimal
