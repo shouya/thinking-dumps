@@ -1,0 +1,15 @@
+** Hotkeys in spacemacs's idris language layer
+
+   - =SPC m d=: when hover on identifier, generate its definition (with holes)
+   - =SPC m c=: case split on variable
+   - =SPC m i a=: search proof space
+   - =C-c C-l=: load source file to inferior idris process
+
+** Command line args for idris binary
+   - =idris <file.idr>=: load file and start an interpreter
+   - =idris -o <exe.out> <file.idr>=: generate executable binary from source file
+
+** Shortcuts in idris interpreter
+
+   - =:r=: reload file
+   - =:t expr=: get type for =expr=
