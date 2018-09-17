@@ -1,0 +1,115 @@
+** cu                                                                 :cmavo:
+
+   #+INDEX: cu
+
+   *cu* is the cmavo used before the selbri[fn:1] in a bridi[fn:2]. It can be omitted if not necessary.
+
+   Vocab:
+
+   - ti :: this one, it
+   - sutra :: fast, quick
+   - bajra :: run
+
+   #+BEGIN_EXAMPLE
+   ti sutra bajra - It fastly run
+
+   ti cu sutra bajra - It fastly run (more explicit)
+
+   ti sutra cu bajra - It, who is fast, run
+   #+END_EXAMPLE
+
+** Pronouns
+
+   | lojban | meaning             |
+   |--------+---------------------|
+   | mi     | I                   |
+   | do     | you (singular)      |
+   | ti     | this one (near me)  |
+   | ta     | that one (near you) |
+   | tu     | that one (remote)   |
+
+   Vocab:
+
+   - prami :: love
+   - plise :: apple
+   - citka :: eat
+
+   #+BEGIN_EXAMPLE
+   mi prami do - I love you.
+   mi prami lo plise - I love apples.
+   lo plise citka do - apples eat you.
+   #+END_EXAMPLE
+
+** Numbers
+
+   | number | lojban |
+   |--------+--------|
+   |      0 | no     |
+   |      1 | pa     |
+   |      2 | re     |
+   |      3 | ci     |
+   |      4 | vo     |
+   |      5 | mu     |
+   |      6 | xa     |
+   |      7 | ze     |
+   |      8 | bi     |
+   |      9 | so     |
+
+   Digits can be compounded to build larger numbers. e.g. pa no no means 100.
+
+   *ro* means for each/all/every, /lo ro plise/ means 'every apple'.
+
+   Vocab:
+
+   - pinxe :: drink
+   - ladru :: milk
+   - mlatu :: cat
+
+   We can use number + object to represent specific number of objects:
+
+   #+BEGIN_EXAMPLE
+   lo mu plise - 5 apples
+   lo pa plise - 1 apple
+
+   lo ro mlatu cu pinxe lo ladru - every cat drinks milk
+   lo ro re mlatu cu pinxe lo ladru - every 2 cats drink milk
+   #+END_EXAMPLE
+
+   *za'u* means more than (>), *me'i* means less than (<). za'u + object means
+   more of the object, za'u + number + object means more than that specific
+   number of objects. Similar for me'i. za'u pa + object can also be used to
+   represent plural number of objects.
+
+   #+BEGIN_EXAMPLE
+   lo za'u mlatu pinxe ladru - more of the cats drink milk.
+   lo me'i mu mlatu pinxe ladru - less than 5 cats drink milk.
+   lo za'u pa mlatu pinxe ladru - cats (plural) drink milk.
+   #+END_EXAMPLE
+
+** le                                                                 :cmavo:
+
+   The cmavo *le* is a prefix meaning like 'the'.
+
+   #+BEGIN_EXAMPLE
+   le plise - the apple/the apples
+   lo plise - an apple/apples
+   #+END_EXAMPLE
+
+   Vocab:
+
+   - fetsi :: female
+   - nakni :: male
+   - prenu :: human/person
+   - le fetsi :: the woman, she
+   - le nakni :: the man, he
+   - le prenu :: the person, he or she (singular)
+
+** xu                                                                 :cmavo:
+
+
+
+* Footnotes
+
+[fn:2] bridi is a 'predicate' in lojban, like a normal complete sentence in other languages.
+
+[fn:1] selbri is like the 'main verb' in a sentence.
