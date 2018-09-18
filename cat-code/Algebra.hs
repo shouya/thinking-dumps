@@ -2,7 +2,7 @@
 
 module Algebra where
 
-import Prelude (Functor(..), Int, Fractional, IO, return, (+), (-), (*), (/), (.), ($), print, Float, take, fromIntegral, Maybe(..))
+import Prelude (Functor(..), Int, Fractional, IO, return, (+), (-), (*), (/), (.), ($), print, Float, take, fromIntegral, Maybe(..), (>=))
 
 class Group g where
   gid     :: g
@@ -122,9 +122,12 @@ unfoldr f = ana unfoldrCoalg
           Just (e, a') -> Cons e a'
           Nothing      -> Nil
 
-fib :: [Int]
-fib = listToHaskellList $ unfoldr f (0,1)
-  where f (a, b) = Just (b, (b, a+b))
+fibBounded :: Int -> [Int]
+fibBounded bound = listToHaskellList $ unfoldr f (0,1)
+  where f (a, b) = if b >= bound
+                   then Nothing
+                   else Just (b, (b, a+b))
+
           
 
 main :: IO ()
@@ -134,6 +137,6 @@ main = do
   print (sum listExample)
   print (sum' listExample)
   print (take 3 $ streamToList $ ana genStreamCoalg 1)
-  print (take 10 fib)
+  print (take 100 (fibBounded 30))
 
 -- to make it compiles with simply `ghc <filename>`
