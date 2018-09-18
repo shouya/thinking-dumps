@@ -2,7 +2,7 @@
 
 module Algebra where
 
-import Prelude (Functor(..), Int, Fractional, IO, return, (+), (-), (*), (/), (.), ($), print)
+import Prelude (Functor(..), Int, Fractional, IO, return, (+), (-), (*), (/), (.), ($), print, Float, take, fromIntegral, Maybe(..))
 
 class Group g where
   gid     :: g
@@ -94,11 +94,46 @@ foldr x0 f = cata foldAlg
 sum' :: Fix (List Int) -> Int
 sum' = foldr 0 (+)
 
+type Coalgebra f a = a -> f a
+
+ana :: (Functor f) => Coalgebra f a -> a -> Fix f
+ana coalg = Fix . fmap (ana coalg) . coalg
+
+data Stream e a = Stream e a
+
+instance Functor (Stream a) where
+  fmap f (Stream e a) = Stream e (f a)
+
+-- generate an infinite list of elements starting at n + 0.5, incremented by 1
+genStreamCoalg :: Int -> Stream Float Int
+genStreamCoalg n = Stream (0.5 + fromIntegral n) (n + 1)
+
+streamToList :: Fix (Stream e) -> [e]
+streamToList s = let (Stream e f) = unFix s in e:(streamToList f)
+
+listToHaskellList :: Fix (List e) -> [e]
+listToHaskellList s = expand (unFix s)
+  where expand Nil        = []
+        expand (Cons e f) = e:(listToHaskellList f)
+
+unfoldr :: (a -> Maybe (e, a)) -> a -> Fix (List e)
+unfoldr f = ana unfoldrCoalg
+  where unfoldrCoalg a = case f a of
+          Just (e, a') -> Cons e a'
+          Nothing      -> Nil
+
+fib :: [Int]
+fib = listToHaskellList $ unfoldr f (0,1)
+  where f (a, b) = Just (b, (b, a+b))
+          
+
 main :: IO ()
 main = do
   print (deepExprAlg deepExprExample)
   print (cata exprAlg deepExprExample)
   print (sum listExample)
   print (sum' listExample)
+  print (take 3 $ streamToList $ ana genStreamCoalg 1)
+  print (take 10 fib)
 
 -- to make it compiles with simply `ghc <filename>`
