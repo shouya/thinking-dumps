@@ -2,6 +2,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes#-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Yoneda where
 
@@ -48,6 +50,31 @@ incStream = Stream 10 $ fmap (+1) incStream
 -- the hom functor representation of above stream
 incFunc :: Hom Integer Integer
 incFunc n = n + 10
+
+-- Yoneda on a functor F: C -> Set on a given object A in C is given by
+-- [C;Set](C(A,-), F) ~= F A
+newtype Yoneda f a = Yoneda { runYoneda :: forall x. (a -> x) -> f x }
+
+-- Yoneda is functorial on both f and a
+instance Functor (Yoneda f) where
+  -- fmap :: (a -> b) ->
+  --         (forall x. (a -> x) -> f x) ->
+  --         (forall y. (b -> y) -> f y)
+  fmap g (Yoneda y) = Yoneda $ \by -> y (by . g)
+
+
+-- to prove functoriality on F, we need to define a new functor class which can
+-- be implemented for higher order functors
+class HFunctor n where
+  hfmap :: (forall a. g a -> h a) -> (forall b. n g b -> n h b)
+
+
+instance HFunctor Yoneda where
+  hfmap :: (forall a. g a -> h a) -> (forall b. Yoneda g b -> Yoneda h b)
+  -- f   :: (forall a. g a -> h a)
+  -- yo  :: (b -> x) -> g b
+  -- ret :: (b -> y) -> h b
+  hfmap f (Yoneda yo) = Yoneda $ \by -> f (yo by)
 
 main :: IO ()
 main = do
