@@ -8,11 +8,11 @@ module Yoneda where
 import Prelude (Functor(..), (.), IO, Monad(..), print, Integer, Int, ($), (+), (-), take)
 
 -- Hom functor
-newtype Hom a b = Hom { unHom :: a -> b }
+type Hom a b = a -> b
 
-instance Functor (Hom a) where
+-- instance Functor (a ->) where
   -- fmap :: (b -> c) -> Hom a b -> Hom a c
-  fmap f g = Hom (f . unHom g)
+  -- fmap f g = f . g
 
 
 -- a functor f is representable by (Rep f) if Hom(Rep f, -)
@@ -33,12 +33,11 @@ instance Representable Stream where
 
   tabulate :: Hom Integer a -> Stream a
   tabulate f = foo 0
-    where foo n = Stream (unHom f n) (foo $ n + 1)
-  
+    where foo n = Stream (f n) (foo $ n + 1)
+
   index :: Stream a -> Hom Integer a
-  index (Stream x xs)  = Hom $ foo
-    where foo 0 = x
-          foo n = (unHom $ index xs) (n - 1)
+  index (Stream x _)  0 = x
+  index (Stream _ xs) n = index xs (n - 1)
 
 streamToList :: Stream a -> [a]
 streamToList (Stream x xs) = x:(streamToList xs)
@@ -48,7 +47,7 @@ incStream :: Stream Integer
 incStream = Stream 10 $ fmap (+1) incStream
 -- the hom functor representation of above stream
 incFunc :: Hom Integer Integer
-incFunc = Hom $ \n -> n + 10
+incFunc n = n + 10
 
 main :: IO ()
 main = do
