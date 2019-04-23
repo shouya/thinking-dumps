@@ -7,7 +7,7 @@
 
 module Yoneda where
 
-import Prelude (Functor(..), (.), IO, Monad(..), print, Integer, Int, ($), (+), (-), take)
+import Prelude (Functor(..), (.), IO, Monad(..), print, Integer, Int, ($), (+), (-), take, undefined)
 
 -- Hom functor
 type Hom a b = a -> b
@@ -51,8 +51,10 @@ incStream = Stream 10 $ fmap (+1) incStream
 incFunc :: Hom Integer Integer
 incFunc n = n + 10
 
+-- Yoneda Lemma
+
 -- Yoneda on a functor F: C -> Set on a given object A in C is given by
--- [C;Set](C(A,-), F) ~= F A
+-- [C;Set](C(A,-), F)
 newtype Yoneda f a = Yoneda { runYoneda :: forall x. (a -> x) -> f x }
 
 -- Yoneda is functorial on both f and a
@@ -60,7 +62,7 @@ instance Functor (Yoneda f) where
   -- fmap :: (a -> b) ->
   --         (forall x. (a -> x) -> f x) ->
   --         (forall y. (b -> y) -> f y)
-  fmap g (Yoneda y) = Yoneda $ \by -> y (by . g)
+  fmap f (Yoneda yo) = Yoneda $ \by -> yo (by . f)
 
 
 -- to prove functoriality on F, we need to define a new functor class which can
@@ -68,13 +70,24 @@ instance Functor (Yoneda f) where
 class HFunctor n where
   hfmap :: (forall a. g a -> h a) -> (forall b. n g b -> n h b)
 
-
 instance HFunctor Yoneda where
   hfmap :: (forall a. g a -> h a) -> (forall b. Yoneda g b -> Yoneda h b)
   -- f   :: (forall a. g a -> h a)
   -- yo  :: (b -> x) -> g b
   -- ret :: (b -> y) -> h b
   hfmap f (Yoneda yo) = Yoneda $ \by -> f (yo by)
+
+-- now we prove Yoneda F A is isomorphic to F A,
+-- [C;Set](C(A,-), F) ~= F A
+
+Identity ~ (* -> *) -> * -> *
+data Identity f a = Identity f a
+
+forward :: (Functor f) => forall a. Yoneda f a -> Identity f a
+forward (Yoneda _yo) = undefined
+
+backward :: (Functor f) => forall a. Identity f a -> Yoneda f a
+backward (Identity g ga) = undefined
 
 main :: IO ()
 main = do
