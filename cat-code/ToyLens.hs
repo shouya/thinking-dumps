@@ -1,6 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 module ToyOptics where
 
@@ -51,28 +52,37 @@ readerToHYoExpanded'' :: (a -> b) -> (forall f. (Functor f) => (f a -> f b))
 readerToHYoExpanded'' ab = fmap ab
 
 -- Here we get our toy lens
-type ToyLens a b = forall f. (Functor f) => (f a -> f b) -> (a -> b)
+type ToyLens a b = forall f. (Functor f) => (f a -> f b)
+
+-- ToyLens a b ~ (a -> b)
 
 
 data F = F Int
 data G = G F
 data H = H G
 
-data Id a = Id { runId :: a }
+h2g :: ToyLens H G -- (f H -> f G)
+h2g fh = fmap (\(H g) -> g) fh
 
-instance Functor Id where
-  fmap f (Id a) = Id (f a)
+g2f :: ToyLens G F
+g2f fg = fmap (\(G f) -> f) fg
 
--- lensH2G :: ToyLens H G -- (f H -> f G) -> H -> G
--- lensH2G fa2fb = fa2fb Id
---
--- lensG2F :: ToyLens G F
--- lensG2F fa2fb a = runId $ fa2fb $ Id a
+f2i :: ToyLens F Int
+f2i ff = fmap (\(F i) -> i) ff
+
+newtype Id a = Id { runId :: a }
+  deriving Functor
+
+view :: ToyLens a b -> a -> b
+view fa2fb a = runId $ fa2fb (Id a)
 
 
 main :: IO ()
-main = return ()
---  let value = H (G (F 10))
---  in print $ (lensH2G . lensG2F) value
+main = do
+  let value = H (G (F 10))
+
+  print $ view (f2i.g2f.h2g) value
+  putStrLn "type checks!"
+
 
 
