@@ -211,23 +211,43 @@ step5' :: (RReader s (RWriter a ((->) b)) t) ->
 step5' = step4'
 
 
+type Lens s t a b = forall f. Functor f => (a -> f b) -> (s -> f t)
+
 -- We finally gets it!
-step6 :: (forall f. (Functor f) => (a -> f b) -> s -> f t) ->
-         (s -> (a, b -> t))
+step6 :: Lens s t a b -> (s -> (a, b -> t))
 step6 afb2sft = sabt $ step5 rrafb2rrsft
   where rrafb2rrsft rrafb = RReader $ afb2sft $ unRR rrafb
         sabt rrsrwabt = \s -> unRW (unRR rrsrwabt s)
 
-step6' :: (s -> (a, b -> t)) ->
-          (forall f. (Functor f) => (a -> f b) -> s -> f t)
+step6' :: (s -> (a, b -> t)) -> Lens s t a b
 step6' sabt afb = unRR $ step5' rrsrwabt rrafb
   where rrsrwabt = RReader (\s -> RWriter (sabt s))
         rrafb = RReader afb
 
--- Bravo! I just proved the two notations to lens are indeed isomorphic!
+-- Bravo! I just proved the two notations for Lens are indeed isomorphic!
+
+-- now let's write down the conversion directly
+-- first we need const and identity functor
+data C a b = C { unC :: a }
+data I a = I { unI :: a }
+
+instance Functor (C a) where
+  fmap _ (C a) = C a
+instance Functor I where
+  fmap ab (I a) = I (ab a)
 
 
+-- at last, the isomorphism!
+
+lens :: (s -> a, s -> b -> t) -> Lens s t a b
+lens (sa,sbt) afb s = fmap (\b -> sbt s b) (afb (sa s))
+
+snel :: Lens s t a b -> (s -> a, s -> b -> t)
+snel afb2sft = (sa, sbt)
+  where sa s = unC $ afb2sft (\a -> C a) s
+        sbt s b = unI $ afb2sft (\a -> I b) s
 
 main = putStrLn "type checks!"
+
 
 
