@@ -8,7 +8,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
---- See: https://bartoszmilewski.com/2016/09/
+-- See: https://bartoszmilewski.com/2016/09/
 
 -- From Yoneda To Lens
 --
@@ -246,6 +246,7 @@ snel :: Lens s t a b -> (s -> a, s -> b -> t)
 snel afb2sft = (sa, sbt)
   where sa s = unC $ afb2sft (\a -> C a) s
         sbt s b = unI $ afb2sft (\a -> I b) s
+
 
 main = putStrLn "type checks!"
 
