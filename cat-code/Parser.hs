@@ -2,7 +2,7 @@
 
 module Parser where
 
--- Implementation to applicative parser
+-- Implementation of an Applicative Parser
 
 import Data.Char
 import Control.Applicative (some, many, empty, (<*>), (<$>), (<|>), Alternative)
