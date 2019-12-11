@@ -7,7 +7,7 @@
 
 module Yoneda where
 
-import Prelude (Functor(..), (.), IO, Monad(..), print, Integer, Int, ($), (+), (-), take, undefined)
+import Prelude (Functor(..), (.), IO, Monad(..), print, Integer, Int, ($), (+), (-), take, undefined, id)
 
 -- Hom functor
 type Hom a b = a -> b
@@ -67,30 +67,41 @@ instance Functor (Yoneda f) where
 
 -- to prove functoriality on F, we need to define a new functor class which can
 -- be implemented for higher order functors
-class HFunctor n where
-  hfmap :: (forall a. g a -> h a) -> (forall b. n g b -> n h b)
+class HFunctor h where
+  hfmap :: (Functor f, Functor g) => (forall a. f a -> g a) -> (forall b. h f b -> h g b)
+  ffmap :: (Functor f) => forall a b. (a -> b) -> (h f a -> h f b)
 
 instance HFunctor Yoneda where
-  hfmap :: (forall a. g a -> h a) -> (forall b. Yoneda g b -> Yoneda h b)
-  -- f   :: (forall a. g a -> h a)
-  -- yo  :: (b -> x) -> g b
-  -- ret :: (b -> y) -> h b
+  hfmap :: (Functor f, Functor g) => (forall a. f a -> g a) -> (forall b. Yoneda f b -> Yoneda g b)
+  -- f   :: (forall a. f a -> g a)
+  -- yo  :: forall x. (b -> x) -> f b
+  -- ret :: forall y. (b -> y) -> g b
   hfmap f (Yoneda yo) = Yoneda $ \by -> f (yo by)
+
+
+  ffmap :: (Functor f) => forall a b. (a -> b) -> (Yoneda f a -> Yoneda f b)
+  -- f   :: (a -> b)
+  -- yo  :: forall x. (a -> x) -> f x
+  -- ret :: forall y. (b -> y) -> f y
+  ffmap f (Yoneda yo) = Yoneda $ \by -> yo (by . f)
 
 -- now we prove Yoneda F A is isomorphic to F A,
 -- [C;Set](C(A,-), F) ~= F A
+--
+-- ((a -> x) -> f x) ~ f a
+--
+-- Identity ~ (* -> *) -> * -> *
+newtype HIdentity f a = HIdentity { runHIdentity :: f a }
 
-Identity ~ (* -> *) -> * -> *
-data Identity f a = Identity f a
+forward :: (Functor f) => forall a. Yoneda f a -> HIdentity f a
+forward (Yoneda yo) = HIdentity (yo id)
 
-forward :: (Functor f) => forall a. Yoneda f a -> Identity f a
-forward (Yoneda _yo) = undefined
-
-backward :: (Functor f) => forall a. Identity f a -> Yoneda f a
-backward (Identity g ga) = undefined
+backward :: (Functor f) => forall a. HIdentity f a -> Yoneda f a
+backward (HIdentity fa) = Yoneda $ \ax -> fmap ax fa
 
 main :: IO ()
 main = do
   -- these show output the same list
   print $ take 10 $ streamToList $ tabulate incFunc
   print $ take 10 $ streamToList $ (tabulate . index) incStream
+
