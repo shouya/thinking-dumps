@@ -1,0 +1,30 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: f9d59f14b5e2fbce161cc74ec37993b09f47fd8e6836f1efd972bb65c876e5c7
+
+name:           haskell-types
+version:        0.1.0.0
+description:    my answers to excercises and notes for "Thinking with Types" by Sandy Maguire
+build-type:     Simple
+
+library
+  exposed-modules:
+      Chap01
+      Chap02
+      Chap03
+      Chap04
+      Chap05
+  other-modules:
+      Paths_haskell_types
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , contravariant
+    , invariant
+    , mtl
+  default-language: Haskell2010

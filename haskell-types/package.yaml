@@ -1,0 +1,13 @@
+name: haskell-types
+version: 0.1.0.0
+
+description: my answers to excercises and notes for "Thinking with Types" by Sandy Maguire
+
+dependencies:
+  - base >= 4.7 && < 5
+  - mtl
+  - contravariant
+  - invariant
+
+library:
+  source-dirs: src
