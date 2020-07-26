@@ -8,6 +8,7 @@ dependencies:
   - mtl
   - contravariant
   - invariant
+  - transformers
 
 library:
   source-dirs: src

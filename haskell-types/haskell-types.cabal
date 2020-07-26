@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f9d59f14b5e2fbce161cc74ec37993b09f47fd8e6836f1efd972bb65c876e5c7
+-- hash: aca7b64c684fdbaecf9a97476248ac94fa46961469da4e6d6237e48f23ab7742
 
 name:           haskell-types
 version:        0.1.0.0
@@ -18,6 +18,7 @@ library
       Chap03
       Chap04
       Chap05
+      Chap06
   other-modules:
       Paths_haskell_types
   hs-source-dirs:
@@ -27,4 +28,5 @@ library
     , contravariant
     , invariant
     , mtl
+    , transformers
   default-language: Haskell2010
