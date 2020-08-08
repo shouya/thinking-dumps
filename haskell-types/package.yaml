@@ -9,6 +9,7 @@ dependencies:
   - contravariant
   - invariant
   - transformers
+  - containers
 
 library:
   source-dirs: src
