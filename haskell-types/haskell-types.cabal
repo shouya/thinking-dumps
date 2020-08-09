@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a2ac5dc6cd1b64faa19f3692f3bb7fbebe43245519ca72fc5ceda9347ea0690e
+-- hash: 1ae1aa8adbb16f13f6cfbc75775b27a86339169cbfe8a93294b55875f1733395
 
 name:           haskell-types
 version:        0.1.0.0
@@ -22,6 +22,7 @@ library
       Chap07
       Chap08
       Chap09
+      Chap10
   other-modules:
       Paths_haskell_types
   hs-source-dirs:
