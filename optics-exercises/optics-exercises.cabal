@@ -1,0 +1,94 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 297ec17b1cb025d79356714e7ca17307b8bc938e074d6d8ef95e59aa90f9f0c1
+
+name:           optics-exercises
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/optics-exercises#readme>
+homepage:       https://github.com/githubuser/optics-exercises#readme
+bug-reports:    https://github.com/githubuser/optics-exercises/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2020 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/optics-exercises
+
+library
+  exposed-modules:
+      Exercise
+      Lib
+  other-modules:
+      Paths_optics_exercises
+  hs-source-dirs:
+      src
+  default-extensions: TemplateHaskell FlexibleInstances FlexibleContexts RankNTypes ScopedTypeVariables TypeApplications TypeFamilies InstanceSigs
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , containers
+    , hspec
+    , lens
+    , lens-aeson
+    , lens-properties
+    , mtl
+    , text
+  default-language: Haskell2010
+
+executable optics-exercises-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_optics_exercises
+  hs-source-dirs:
+      app
+  default-extensions: TemplateHaskell FlexibleInstances FlexibleContexts RankNTypes ScopedTypeVariables TypeApplications TypeFamilies InstanceSigs
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , containers
+    , hspec
+    , lens
+    , lens-aeson
+    , lens-properties
+    , mtl
+    , optics-exercises
+    , text
+  default-language: Haskell2010
+
+test-suite optics-exercises-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      ExerciseSpec
+      Paths_optics_exercises
+  hs-source-dirs:
+      test
+  default-extensions: TemplateHaskell FlexibleInstances FlexibleContexts RankNTypes ScopedTypeVariables TypeApplications TypeFamilies InstanceSigs
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , containers
+    , hspec
+    , lens
+    , lens-aeson
+    , lens-properties
+    , mtl
+    , optics-exercises
+    , text
+  default-language: Haskell2010
