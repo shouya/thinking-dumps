@@ -20,6 +20,8 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 
+
+
 -- Lens laws:
 -- 1. view $ set a = a   (set-get)
 -- 2. set $ view s = s   (get-set)
@@ -58,3 +60,43 @@ msg' = lens getMsg setMsg
     getMsg (ExitCode n) = show n
     setMsg (ReallyBadError _) newMessage = ReallyBadError newMessage
     setMsg (ExitCode n) newMessage = ReallyBadError newMessage
+
+data Prenu = Prenu { _cmene :: String, _nilciho :: Int }
+  deriving (Show, Eq)
+
+prenuNilciho :: Lens' Prenu Int
+prenuNilciho = lens getter setter
+  where getter = _nilciho
+        setter prenu i = prenu { _nilciho = clamp 0 100 i }
+        clamp minVal maxVal = min maxVal . max minVal
+
+breakAllLaws :: Lens' Int Int
+breakAllLaws = lens (+1) (+)
+
+data Builder = Builder
+               { _context :: [String]
+               , _build   :: [String] -> String
+               }
+
+builderLens :: Lens' Builder String
+builderLens = lens getter setter
+  where getter bld = _build bld $ _context bld
+        setter (Builder ctx bld) val =
+          let bld' = \ctx' -> if ctx == ctx'
+                              then val
+                              else bld ctx'
+          in Builder ctx bld'
+
+instance Show Builder where
+  show b = concat ["Builder { _context = ", show $ _context b, "}"]
+
+-- the implementation is not complete, I only checked some
+-- characteristic values for the _build function.
+instance Eq Builder where
+  (Builder c1 b1) == (Builder c2 b2) =
+    c1 == c2 && bldEq c1 b1 b2
+    where bldEq c1 b1 b2 =
+            b1 [] == b2 []
+            && b1 c1 == b2 c1
+            && b1 (c1 <> c1) == b2 (c1 <> c1)
+            && b1 (c1 <> ["A", "B"]) == b2 (c1 <> ["A", "B"])

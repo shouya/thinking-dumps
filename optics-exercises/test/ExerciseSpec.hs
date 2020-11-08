@@ -3,6 +3,7 @@ module ExerciseSpec (spec) where
 import Test.Hspec
 import Test.QuickCheck
 import Control.Lens
+import Control.Lens.Properties
 
 import Exercise
 
@@ -11,8 +12,13 @@ spec = do
   ex1LawsSpec
 
 instance Arbitrary Err where
-  arbitrary = do
-    oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
+  arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
+
+instance Arbitrary Prenu where
+  arbitrary = Prenu <$> arbitrary <*> arbitrary
+
+instance Arbitrary Builder where
+  arbitrary = Builder <$> arbitrary <*> arbitrary
 
 ex1LawsSpec :: Spec
 ex1LawsSpec = do
@@ -33,3 +39,21 @@ ex1LawsSpec = do
     \b s -> view msg' (set msg' b s) == b
   it "3.3 test get-set law for msg" $ expectFailure $
     \s -> set msg' (view msg' s) s == s
+
+
+  it "3.4 prenu doesn't satisfy all lens rules but is still useful" $
+        -- breaks get-set law
+        expectFailure (\s -> set prenuNilciho (view prenuNilciho s) s == s)
+        -- satisfies set-set law
+    .&. property (\b s -> set prenuNilciho b (set prenuNilciho b s) ==
+                          set prenuNilciho b s)
+        -- breaks set-get law
+    .&. expectFailure (\b s -> view prenuNilciho (set prenuNilciho b s) == b)
+
+  it "3.5 break all laws" $
+        expectFailure (\s -> set breakAllLaws (view breakAllLaws s) s == s)
+    .&. expectFailure (\b s -> set breakAllLaws b (set breakAllLaws b s) ==
+                               set breakAllLaws b s)
+    .&. expectFailure (\b s -> view breakAllLaws (set breakAllLaws b s) == b)
+
+  it "3.6 lawful builder lens" $ isLens builderLens

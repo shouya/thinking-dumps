@@ -31,7 +31,6 @@ dependencies:
 - QuickCheck
 - lens-properties
 
-
 library:
   source-dirs: src
 
