@@ -21,6 +21,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 
 
+------- Exercises: Laws -------------
 
 -- Lens laws:
 -- 1. view $ set a = a   (set-get)
@@ -100,3 +101,25 @@ instance Eq Builder where
             && b1 c1 == b2 c1
             && b1 (c1 <> c1) == b2 (c1 <> c1)
             && b1 (c1 <> ["A", "B"]) == b2 (c1 <> ["A", "B"])
+
+
+------- Exercises: Virtual Fields -------------
+data User = User
+            { _firstName :: String
+            , _lastName :: String
+         -- , _username :: String
+            , _email :: String
+            }
+            deriving (Show, Eq)
+makeLenses ''User
+
+username' :: Lens' User String
+username' = email
+
+fullName :: Lens' User String
+fullName = lens getter setter
+  where
+    getter u = unwords [view firstName u, view lastName u]
+    setter u s = let first = words s ^. to head
+                     last = words s ^. to (unwords . tail)
+                 in u { _firstName = first, _lastName = last }

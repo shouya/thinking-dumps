@@ -9,7 +9,8 @@ import Exercise
 
 spec :: Spec
 spec = do
-  ex1LawsSpec
+  exercise_Laws
+  exercise_VirtualFields
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -20,11 +21,11 @@ instance Arbitrary Prenu where
 instance Arbitrary Builder where
   arbitrary = Builder <$> arbitrary <*> arbitrary
 
-ex1LawsSpec :: Spec
-ex1LawsSpec = do
+exercise_Laws :: Spec
+exercise_Laws = do
   it "1.1 get-set law should fail" $ expectFailure $
     \s -> set unlawful2 (view unlawful2 s) s == s
-  it "1.1 set-set law should fail" $ expectFailure $
+  it "1.2 set-set law should fail" $ expectFailure $
     \b s -> set unlawful3 b (set unlawful3 b s) == set unlawful3 b s
 
   -- cheating with quick check
@@ -41,7 +42,7 @@ ex1LawsSpec = do
     \s -> set msg' (view msg' s) s == s
 
 
-  it "3.4 prenu doesn't satisfy all lens rules but is still useful" $
+  it "4 prenu doesn't satisfy all lens rules but is still useful" $
         -- breaks get-set law
         expectFailure (\s -> set prenuNilciho (view prenuNilciho s) s == s)
         -- satisfies set-set law
@@ -50,10 +51,22 @@ ex1LawsSpec = do
         -- breaks set-get law
     .&. expectFailure (\b s -> view prenuNilciho (set prenuNilciho b s) == b)
 
-  it "3.5 break all laws" $
+  it "5 break all laws" $
         expectFailure (\s -> set breakAllLaws (view breakAllLaws s) s == s)
     .&. expectFailure (\b s -> set breakAllLaws b (set breakAllLaws b s) ==
                                set breakAllLaws b s)
     .&. expectFailure (\b s -> view breakAllLaws (set breakAllLaws b s) == b)
 
-  it "3.6 lawful builder lens" $ isLens builderLens
+  it "6 lawful builder lens" $ isLens builderLens
+
+exercise_VirtualFields :: Spec
+exercise_VirtualFields = do
+  let user = User "John" "Cena" "invisible@example.com"
+  it "2.1 fullName lens: view works" $
+    view fullName user `shouldBe` "John Cena"
+  it "2.1 fullName lens: set works" $
+    set fullName "Doctor of Thuganomics" user `shouldBe`
+    User { _firstName = "Doctor"
+         , _lastName = "of Thuganomics"
+         , _email = "invisible@example.com"
+         }
