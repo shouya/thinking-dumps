@@ -83,3 +83,38 @@ exercise_SelfCorrectingLenses = do
     set limePrice' 1.63 prices `shouldBe` ProducePrices 1.63 1.48
   it "test 4" $
     set limePrice' (-1.0) prices `shouldBe` ProducePrices 0.0 0.5
+
+
+instance Arbitrary a => Arbitrary (Preferences a) where
+  arbitrary = Preferences <$> arbitrary <*> arbitrary
+
+instance Eq a => Eq (Preferences a) where
+  Preferences a b == Preferences a' b' = a == a' && b == b'
+
+exercise_PolymorphicLenses :: Spec
+exercise_PolymorphicLenses = do
+  it "1. write down type type signature" $ do
+    -- type Lens (Volpal x) (Volpal y) x y =
+    --     forall f. Functor f => (x -> f y) -> Vorpal x -> f (Vorpal y)
+    shouldBe True True
+  it "2. change the type of the best and worst fields" $
+    -- polymorphic lens laws do not type check, so I'll only test for
+    -- the cases when a ~ b.
+    isLens (preferenceLens @String @String)
+    .&.
+    isLens (preferenceLens @Int @Int)
+
+  it "3. What is the type of the lens" $
+    -- type Lens (Result a) (Result b) (Either a String) (Either b String) =
+    -- the focus cannot be a and b because lens require us to focus on a single
+    -- focus, while Either don't always give us an a or b.
+    shouldBe True True
+
+  it "4. Is it possible to change more than one type variable at a time?" $
+    -- Yes! Lens (Foo s s') (Foo t t') (s, s') (t, t') is valid
+    shouldBe True True
+
+  it "5. write a lens for (Predicate a)" $
+    -- It's impossible to get an 'a' from Predicate a. We can get
+    -- a (a -> Bool) function though.
+    shouldBe True True

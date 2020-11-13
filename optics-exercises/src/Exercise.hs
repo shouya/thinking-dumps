@@ -154,3 +154,20 @@ limePrice' = priceLens limePrice lemonPrice
 
 lemonPrice' :: Lens' ProducePrices Float
 lemonPrice' = priceLens lemonPrice limePrice
+
+----- Exercises: Polymorhic Lenses
+data Preferences a = Preferences { _best :: a , _worst :: a }
+  deriving Show
+makeLenses ''Preferences
+
+preferenceLens :: Lens (Preferences a) (Preferences b) (a, a) (b, b)
+preferenceLens = lens getter setter
+  where getter p = (p ^. best, p ^. worst)
+        setter p (a1, a2) = p { _best = a1, _worst = a2 }
+
+data Predicate a = Predicate (a -> Bool)
+
+predLens :: Lens (Predicate a) (Predicate b) (a -> Bool) (b -> Bool)
+predLens = lens getter setter
+  where getter (Predicate f) = f
+        setter (Predicate _) g = Predicate g
