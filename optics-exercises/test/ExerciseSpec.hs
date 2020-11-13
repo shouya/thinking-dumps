@@ -11,6 +11,7 @@ spec :: Spec
 spec = do
   exercise_Laws
   exercise_VirtualFields
+  exercise_SelfCorrectingLenses
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -70,3 +71,15 @@ exercise_VirtualFields = do
          , _lastName = "of Thuganomics"
          , _email = "invisible@example.com"
          }
+
+exercise_SelfCorrectingLenses :: Spec
+exercise_SelfCorrectingLenses = do
+  let prices = ProducePrices 1.50 1.48
+  it "test 1" $
+    set limePrice' 2 prices `shouldBe` ProducePrices 2.0 1.5
+  it "test 2" $
+    set limePrice' 1.8 prices `shouldBe` ProducePrices 1.8 1.48
+  it "test 3" $
+    set limePrice' 1.63 prices `shouldBe` ProducePrices 1.63 1.48
+  it "test 4" $
+    set limePrice' (-1.0) prices `shouldBe` ProducePrices 0.0 0.5

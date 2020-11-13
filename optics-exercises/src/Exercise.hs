@@ -123,3 +123,34 @@ fullName = lens getter setter
     setter u s = let first = words s ^. to head
                      last = words s ^. to (unwords . tail)
                  in u { _firstName = first, _lastName = last }
+
+------- Exercises: Self-Correcting Lens -------
+
+data ProducePrices =
+  ProducePrices { _limePrice :: Float
+                , _lemonPrice :: Float
+                }
+  deriving (Show, Eq)
+
+makeLenses ''ProducePrices
+
+priceLens :: Lens' ProducePrices Float ->
+             Lens' ProducePrices Float ->
+             Lens' ProducePrices Float
+priceLens selfLens otherLens = lens getter setter
+  where getter u = u ^. selfLens
+        setter u v = let price' = selfPriceNormalized v
+                         otherPrice = u ^. otherLens
+                         otherPrice' = otherPriceNormalized price' otherPrice
+                     in u & selfLens  .~ price'
+                          & otherLens .~ otherPrice'
+        selfPriceNormalized p = if p < 0 then 0.0 else p
+        otherPriceNormalized p p' = if abs (p - p') <= 0.5
+                                    then p'
+                                    else p - 0.5 * signum (p - p')
+
+limePrice' :: Lens' ProducePrices Float
+limePrice' = priceLens limePrice lemonPrice
+
+lemonPrice' :: Lens' ProducePrices Float
+lemonPrice' = priceLens lemonPrice limePrice
