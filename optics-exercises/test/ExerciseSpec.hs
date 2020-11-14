@@ -5,6 +5,10 @@ import Test.QuickCheck
 import Control.Lens
 import Control.Lens.Properties
 
+import Data.Char (toUpper)
+import qualified Data.Map as M
+import qualified Data.Text as T
+
 import Exercise
 
 spec :: Spec
@@ -12,6 +16,10 @@ spec = do
   exercise_Laws
   exercise_VirtualFields
   exercise_SelfCorrectingLenses
+  exercise_PolymorphicLenses
+  exercise_LensCompositions
+  exercise_Operators
+  exercise_SimpleFolds
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -96,7 +104,7 @@ exercise_PolymorphicLenses = do
   it "1. write down type type signature" $ do
     -- type Lens (Volpal x) (Volpal y) x y =
     --     forall f. Functor f => (x -> f y) -> Vorpal x -> f (Vorpal y)
-    shouldBe True True
+    True
   it "2. change the type of the best and worst fields" $
     -- polymorphic lens laws do not type check, so I'll only test for
     -- the cases when a ~ b.
@@ -108,13 +116,124 @@ exercise_PolymorphicLenses = do
     -- type Lens (Result a) (Result b) (Either a String) (Either b String) =
     -- the focus cannot be a and b because lens require us to focus on a single
     -- focus, while Either don't always give us an a or b.
-    shouldBe True True
+    True
 
   it "4. Is it possible to change more than one type variable at a time?" $
     -- Yes! Lens (Foo s s') (Foo t t') (s, s') (t, t') is valid
-    shouldBe True True
+    True
 
   it "5. write a lens for (Predicate a)" $
     -- It's impossible to get an 'a' from Predicate a. We can get
     -- a (a -> Bool) function though.
-    shouldBe True True
+    True
+
+exercise_LensCompositions :: Spec
+exercise_LensCompositions = do
+  it "1. fill in the blank" $
+    view (_2._1._2) ("Ginerva", (("Galileo", "Waldo"), "Malfoy")) `shouldBe`
+    "Waldo"
+
+  it "2. fill in the missing type" $
+    -- mysteryDomino :: Eight Two
+    True
+
+  it "3. rewrite the type as polymoprhic lens" $
+    -- Functor f => (Armadillo -> f Hedgehog) -> (Platypus -> f BabySloth)
+    -- Lens Platypus BabySloth Armadillo Hedgehog
+    True
+
+  it "4. Find a way to compose ALL of the following lensees" $
+    -- trivial
+    True
+
+exercise_Operators :: Spec
+exercise_Operators = do
+  it "1.1 reach goal A" $ do
+    let goalA = Kingdom { _name = "Duloc: a perfect place" , _army = Army { _archers = 22 , _knights = 42 } , _gate = Gate { _open = False , _oilTemp = 10.0 } }
+    let goalA' = duloc & name <>~ ": a perfect place"
+                       & army.knights .~ 42
+                       & gate.open %~ not
+    goalA' `shouldBe` goalA
+
+  it "1.2 reach goal B" $ do
+    let goalB = Kingdom { _name = "Dulocinstein" , _army = Army { _archers = 17 , _knights = 26 } , _gate = Gate { _open = True , _oilTemp = 100.0}}
+    let goalB' = duloc & name .~ "Dulocinstein"
+                       & army.archers -~ 5
+                       & army.knights *~ 2
+                       & army.knights -~ 2
+                       & gate.oilTemp ^~ 2
+    goalB' `shouldBe` goalB
+
+  it "1.3 reach goal C" $ do
+    let goalC = ("Duloc: Home", Kingdom { _name = "Duloc: Home of the talking Donkeys" , _army = Army { _archers = 22 , _knights = 14 } , _gate = Gate { _open = True , _oilTemp = 5.0 } })
+    let goalC' = duloc & name .~ "Duloc: Home"
+                       & gate.oilTemp -~ 5
+                       & name <<<>~ " of the talking Donkeys"
+    goalC' `shouldBe` goalC
+
+  it "2.1 fill in undefined" $ do
+    let goal = (True, "opossums")
+    let goal' = (False, "opossums") & _1 ||~ True
+    goal' `shouldBe` goal
+
+  it "2.2 fill in undefined" $ do
+    let goal = ((False,"DUDLEY - THE WORST"),20.0)
+    let goal' = ((True, "Dudley"), 55.0) & _1 . _2 <>~ " - the worst"
+                                         & _2 -~ 15
+                                         & _2 //~ 2
+                                         & _1 . _2 %~ map toUpper
+                                         & _1 . _1 &&~ False
+    goal' `shouldBe` goal
+
+  it "3. Name a lens operator that takes only two arguments" $ do
+    -- ^.
+    True
+
+  it "4. What’s the type signature of %∼?" $ do
+    -- (%~) :: Lens s t a b -> (a -> b) -> s -> t
+    True
+
+exercise_SimpleFolds :: Spec
+exercise_SimpleFolds = do
+  it "1. guess the results" $ do
+    let beastSizes = [(3, "Sirens"), (882, "Kraken"), (92, "Ogopogo")]
+    beastSizes ^.. folded `shouldBe` [(3, "Sirens"), (882, "Kraken"), (92, "Ogopogo")]
+    beastSizes ^.. folded.folded `shouldBe` ["Sirens", "Kraken", "Ogopogo"]
+    beastSizes ^.. folded.folded.folded `shouldBe` "SirensKrakenOgopogo"
+    beastSizes ^.. folded._2 `shouldBe` beastSizes ^.. folded.folded
+    toListOf (folded.folded) [[1,2,3],[4,5,6]] `shouldBe` [1,2,3,4,5,6]
+    toListOf (folded.folded) (M.fromList [("Jack", "Captain"), ("Will", "First Mate")])
+      `shouldBe` "CaptainFirst Mate"
+    ("Hello", "It's me") ^.. both.folded `shouldBe` "HelloIt's me"
+    ("Why", "So", "Serious?") ^.. each `shouldBe` ["Why", "So", "Serious?"]
+    let quotes = [("Why", "So", "Serious?"), ("This", "is", "SPARTA")]
+    quotes ^.. each.each.each `shouldBe` "WhySoSerious?ThisisSPARTA"
+
+  it "2. Write out the 'specialized' types" $ do
+    -- toListOf (folded . _1) [(1, 'a'), (2, 'b'), (3, 'c')]
+    -- folded :: Fold [(Int, Char)] (Int, Char)
+    -- _1     :: Fold (Int, Char) Char
+
+    -- toListOf (_2 . folded) (False, S.fromList ["one", "two", "three"])
+    -- _2       :: Fold (Bool, Set String) (Set String)
+    -- folded   :: Fold (Set String) String
+    -- toListOf :: Fold (Bool, Set String) String -> (Bool, Set String) -> [String]
+
+    -- toListOf (folded . folded) (M.fromList [("Jack", "Captain"), ("Will", "First Mate")])
+    -- folded (1st) :: Fold (Map String String) String
+    -- folded (2nd) :: Fold String Char
+    -- toListOf     :: Fold (Map String String) Char -> Map String String -> [Char]
+    True
+
+  it "3. Fill in the blank" $ do
+    [1, 2, 3] ^.. folded `shouldBe` [1,2,3]
+    [1, 2, 3] ^.. id `shouldBe` [[1,2,3]]
+    ("Light", "Dark") ^.. _1 `shouldBe` ["Light"]
+    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded.both
+      `shouldBe` ["Light", "Dark", "Happy", "Sad"]
+    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded._1
+      `shouldBe` ["Light", "Happy"]
+    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded._2.folded
+      `shouldBe` "DarkSad"
+    ("Bond", "James", "Bond") ^.. each
+      `shouldBe` ["Bond", "James", "Bond"]

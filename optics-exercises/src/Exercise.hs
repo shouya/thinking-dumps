@@ -171,3 +171,29 @@ predLens :: Lens (Predicate a) (Predicate b) (a -> Bool) (b -> Bool)
 predLens = lens getter setter
   where getter (Predicate f) = f
         setter (Predicate _) g = Predicate g
+
+------- Exercises - Operators
+data Gate = Gate { _open :: Bool
+                 , _oilTemp :: Float }
+          deriving (Eq, Show)
+makeLenses ''Gate
+
+data Army = Army { _archers :: Int
+                 , _knights :: Int }
+          deriving (Eq, Show)
+makeLenses ''Army
+
+data Kingdom = Kingdom { _name :: String
+                       , _army :: Army
+                       , _gate :: Gate }
+             deriving (Eq, Show)
+makeLenses ''Kingdom
+
+
+duloc :: Kingdom
+duloc = Kingdom { _name = "Duloc"
+                , _army = Army { _archers = 22 , _knights = 14 }
+                , _gate = Gate { _open = True , _oilTemp = 10.0 }
+                }
+
+--- Exercises: Simple Folds
