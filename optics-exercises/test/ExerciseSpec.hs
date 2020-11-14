@@ -7,6 +7,7 @@ import Control.Lens.Properties
 
 import Data.Char (toUpper)
 import qualified Data.Map as M
+import qualified Data.Set as S
 import qualified Data.Text as T
 
 import Exercise
@@ -20,6 +21,7 @@ spec = do
   exercise_LensCompositions
   exercise_Operators
   exercise_SimpleFolds
+  exercise_CustomFolds
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -237,3 +239,61 @@ exercise_SimpleFolds = do
       `shouldBe` "DarkSad"
     ("Bond", "James", "Bond") ^.. each
       `shouldBe` ["Bond", "James", "Bond"]
+
+exercise_CustomFolds :: Spec
+exercise_CustomFolds = do
+  it "1. fill in the blanks" $ do
+    ["Yer", "a", "wizard", "Harry"] ^.. folded . folded
+      `shouldBe` "YerawizardHarry"
+    [[1, 2, 3], [4, 5, 6]] ^.. folded . folding (take 2)
+      `shouldBe` [1, 2, 4, 5]
+    [[1, 2, 3], [4, 5, 6]] ^.. folded . to (take 2)
+      `shouldBe` [[1,2], [4,5]]
+    ["bob", "otto", "hannah"] ^.. folded . to reverse
+      `shouldBe` ["bob", "otto", "hannah"]
+    ("abc", "def") ^.. folding (\(a, b) -> [a, b]). to reverse . folded
+      `shouldBe` "cbafed"
+
+  it "2. fill in the blanks" $ do
+    [1..5] ^.. folded . to (*100)
+      `shouldBe` [100,200,300,400,500]
+
+    (1, 2) ^.. both
+      `shouldBe` [1, 2]
+
+    [(1, "one"), (2, "two")] ^.. folded._2
+      `shouldBe` ["one", "two"]
+
+    (Just 1, Just 2, Just 3) ^.. each.folded
+      `shouldBe` [1, 2, 3]
+
+    [Left 1, Right 2, Left 3] ^.. folded.folded
+      `shouldBe` [2]
+
+    [([1, 2], [3, 4]), ([5, 6], [7, 8])] ^.. folded.both.folded
+      `shouldBe` [1, 2, 3, 4, 5, 6, 7, 8]
+
+    [1, 2, 3, 4] ^.. folding (\[a,b,c,d] -> [(a,b), (c,d)]) .
+                     folding (\(a,b) -> [Left a, Right b])
+      `shouldBe` [Left 1, Right 2, Left 3, Right 4]
+
+    [(1, (2, 3)), (4, (5, 6))] ^.. folded.folding (\(a,(b,c)) -> [a,b,c])
+      `shouldBe` [1, 2, 3, 4, 5, 6]
+
+    [(Just 1, Left "one"), (Nothing, Right 2)] ^.. folded .
+                                                   folding (\(a,b) -> [a^..folded, b^..folded]) .
+                                                   folded
+      `shouldBe` [1, 2]
+
+    [(1, "one"), (2, "two")] ^.. folded . folding (\(a,b) -> [Left a, Right b])
+      `shouldBe` [Left 1, Right "one", Left 2, Right "two"]
+    S.fromList ["apricots", "apples"] ^.. folded . folding reverse
+      `shouldBe` "selppastocirpa"
+
+  it "3. (bonus) Devise a fold which returns the expected results." $ do
+    [(12, 45, 66), (91, 123, 87)] ^.. folded._2.folding (reverse.show)
+      `shouldBe` "54321"
+
+    [(1,"a"),(2,"b"),(3,"c"),(4,"d")] ^..
+      folded.folding (\(a,b) -> if even a then Just b else Nothing)
+      `shouldBe` ["b", "d"]
