@@ -5,7 +5,7 @@ import Test.QuickCheck
 import Control.Lens
 import Control.Lens.Properties
 
-import Data.Char (toUpper)
+import Data.Char (toUpper, isAlpha)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -25,6 +25,7 @@ spec = do
   exercise_SimpleFolds
   exercise_CustomFolds
   exercise_FoldActions
+  exercise_HigherOrderFolds
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -354,3 +355,63 @@ exercise_FoldActions = do
     let output4 = ["b", "d"]
     input4 ^.. folded . filtered (even . fst) . _2
       `shouldBe` output4
+
+
+exercise_HigherOrderFolds :: Spec
+exercise_HigherOrderFolds = do
+  it "1. fill in the blanks" $ do
+    "Here's looking at you, kid" ^.. dropping 7 folded
+      `shouldBe` "looking at you, kid"
+
+    ["My Precious", "Hakuna Matata", "No problemo"] ^.. folded . taking 1 worded
+      `shouldBe` ["My","Hakuna","No"]
+
+
+    ["My Precious", "Hakuna Matata", "No problemo"] ^.. taking 1 (folded . worded)
+      `shouldBe` ["My"]
+
+    ["My Precious", "Hakuna Matata", "No problemo"] ^.. folded . taking 1 worded . folded
+      `shouldBe` "MyHakunaNo"
+
+    ["My Precious", "Hakuna Matata", "No problemo"] ^.. folded . takingWhile isAlpha folded
+      `shouldBe` "MyHakunaNo"
+
+    sumOf (taking 2 each) (10, 50, 100)
+      `shouldBe` 60
+
+    ("stressed", "guns", "evil") ^.. backwards each
+      `shouldBe` ["evil","guns","stressed"]
+
+    ("stressed", "guns", "evil") ^.. backwards each . to reverse
+      `shouldBe` ["live","snug","desserts"]
+
+    "blink182 k9 blazeit420" ^.. worded . droppingWhile isAlpha folded
+      `shouldBe` "1829420"
+
+  describe "2. solve the problems" $ do
+    let sample = [-10, -5, 4, 3, 8, 6, -2, 3, -5, -7] :: [Int]
+
+    it "find # of days it took to thaw" $ do
+      lengthOf (takingWhile (<0) folded) sample `shouldBe` 2
+
+    it "warmest temperature in first 4 days" $ do
+      maximumOf (taking 4 each) sample `shouldBe` Just 4
+
+    it "the temperature after the warmest day in the 4 days" $ do
+      let maxTemp = 4
+      sample ^? dropping 1 (droppingWhile (/= maxTemp) each) `shouldBe` Just 3
+
+    it "how many freezing days at the end" $ do
+      lengthOf (takingWhile (<0) (reversed.each)) sample `shouldBe` 2
+
+    it "list the days from first thaw to next freeze" $ do
+      sample ^.. takingWhile (>= 0) (droppingWhile (<0) each)
+        `shouldBe` [4,3,8,6]
+
+    it "bonus: list the days from first thaw to last freeze" $ do
+      sample ^.. (backwards $ droppingWhile (<0) $ backwards $ droppingWhile (<0) each)
+        `shouldBe` [4,3,8,6,-2,3]
+
+      let trimmingWhile p = backwards.droppingWhile p.backwards.droppingWhile p
+      sample ^.. trimmingWhile (<0) each
+        `shouldBe` [4,3,8,6,-2,3]
