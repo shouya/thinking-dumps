@@ -9,6 +9,8 @@ import Data.Char (toUpper)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
+import Data.Monoid
+import Data.Ord
 
 import Exercise
 
@@ -22,6 +24,7 @@ spec = do
   exercise_Operators
   exercise_SimpleFolds
   exercise_CustomFolds
+  exercise_FoldActions
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -297,3 +300,57 @@ exercise_CustomFolds = do
     [(1,"a"),(2,"b"),(3,"c"),(4,"d")] ^..
       folded.folding (\(a,b) -> if even a then Just b else Nothing)
       `shouldBe` ["b", "d"]
+
+exercise_FoldActions :: Spec
+exercise_FoldActions = do
+  it "1. Pick the matching action from the list" $ do
+    has folded [] `shouldBe` False
+    foldOf both ("Yo", "Adrian!") `shouldBe` "YoAdrian!"
+    elemOf each "phone" ("E.T.", "phone", "home")
+      `shouldBe` True
+    minimumOf folded [5, 7, 2, 3, 13, 17, 11]
+      `shouldBe` Just 2
+    lastOf folded [5, 7, 2, 3, 13, 17, 11]
+      `shouldBe` Just 11
+    anyOf folded ((> 9) . length) ["Bulbasaur", "Charmander", "Squirtle"]
+      `shouldBe` True
+    findOf folded even [11, 22, 3, 5, 6]
+      `shouldBe` Just 22
+
+  it "2. retrieve the output from the input" $ do
+    let input1 = ["umbrella", "olives", "racecar", "hammer"]
+    let output1 = Just "racecar"
+    findOf folded (\x -> x == reverse x) input1 `shouldBe` output1
+
+    let input2 = (2, 4, 6)
+    let output2 = True
+    allOf each even input2 `shouldBe` output2
+
+    let input3 = [(2, "I'll"), (3, "Be"), (1, "Back")]
+    let output3 = Just (3,"Be")
+    maximumByOf each (comparing fst) input3 `shouldBe` output3
+
+    let input4 = (1, 2)
+    let output4 = 3
+    getSum (foldMapOf both Sum input4) `shouldBe` output4
+
+  it "3. bonus" $ do
+    let input1 = "Do or do not, there is no try."
+    let output1 = Just "there"
+    maximumByOf worded (comparing (length . filter (`elem` "aeiou"))) input1
+      `shouldBe` output1
+
+    let input2 = ["a", "b", "c"]
+    let output2 = "cba"
+    foldOf (reversed.folded) input2
+      `shouldBe` output2
+
+    let input3 = [(12, 45, 66), (91, 123, 87)]
+    let output3 = "54321"
+    foldOf (folded._2.to show.reversed) input3
+      `shouldBe` output3
+
+    let input4 = [(1, "a"), (2, "b"), (3, "c"), (4, "d")]
+    let output4 = ["b", "d"]
+    input4 ^.. folded . filtered (even . fst) . _2
+      `shouldBe` output4
