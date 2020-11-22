@@ -31,6 +31,7 @@ spec = do
   exercise_FoldActions
   exercise_HigherOrderFolds
   exercise_Filtering
+  exercise_SimpleTraversals
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -460,3 +461,54 @@ exercise_Filtering = do
                                 . folded
                                 . movePower
     power `shouldBe` 303
+
+exercise_SimpleTraversals :: Spec
+exercise_SimpleTraversals = do
+  describe "short questions" $ do
+    it "What type of optic: compose a traversal with a fold?" $ do
+      -- Fold
+      True
+    it "Which of the optics we’ve learned can act as a traversal?" $ do
+      -- Lens, Traversal
+      True
+    it "Which of the optics we’ve learned can act as a fold?" $ do
+      -- Lens, Fold, Traversal
+      True
+
+  describe "fill the blanks" $ do
+    it "1" $ do
+      (("Jurassic", "Park") & each .~ "N/A") `shouldBe` ("N/A", "N/A")
+    it "2" $ do
+      (("Jurassic", "Park") & both . traversed .~ 'x') `shouldBe`
+        ("xxxxxxxx", "xxxx")
+    it "3" $ do
+      (("Malcolm", ["Kaylee", "Inara", "Jayne"]) & beside id traversed %~ take 3)
+        `shouldBe` ("Mal", ["Kay", "Ina", "Jay"])
+    it "4" $ do
+      (("Malcolm", ["Kaylee", "Inara", "Jayne"]) & _2 . element 1 .~ "River")
+        `shouldBe` ("Malcolm", ["Kaylee", "River", "Jayne"])
+    it "5" $ do
+      let result = ["Die Another Day", "Live and Let Die", "You Only Live Twice"]
+            & traversed . elementOf worded 1 . traversed .~ 'x'
+      result `shouldBe` [ "Die xxxxxxx Day"
+                        , "Live xxx Let Die"
+                        , "You xxxx Live Twice"
+                        ]
+    it "6" $ do
+      let result = ((1, 2), (3, 4)) & beside both both +~ 1
+      result `shouldBe` ((2, 3), (4, 5))
+
+    it "7" $ do
+      let result = (1, (2, [3, 4])) & beside id (beside id each) +~ 1
+      result `shouldBe` (2, (3, [4, 5]))
+
+    it "8" $ do
+      let result = ((True, "Strawberries"), (False, "Blueberries"), (True, "Blackberries"))
+            & each . filtered fst . _2 . taking 5 traversed %~ toUpper
+      result `shouldBe`
+        ((True, "STRAWberries"), (False, "Blueberries"), (True, "BLACKberries"))
+
+    it "9" $ do
+      let input = ((True, "Strawberries"), (False, "Blueberries"), (True, "Blackberries"))
+      let result = input & each %~ snd
+      result `shouldBe` ("Strawberries", "Blueberries", "Blackberries")
