@@ -1,0 +1,13 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "optics-exercises:lib"
+
+    - path: "./app/Main.hs"
+      component: "optics-exercises:exe:optics-exercises-exe"
+
+    - path: "./app/Paths_optics_exercises.hs"
+      component: "optics-exercises:exe:optics-exercises-exe"
+
+    - path: "./test"
+      component: "optics-exercises:test:optics-exercises-test"

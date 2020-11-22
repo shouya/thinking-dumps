@@ -1,3 +1,4 @@
+{- HLINT ignore "Use camelCase" -}
 module ExerciseSpec (spec) where
 
 import Test.Hspec
@@ -8,9 +9,10 @@ import Control.Lens.Properties
 import Data.Char (toUpper, isAlpha)
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Data.Text as T
+-- import qualified Data.Text as T
 import Data.Monoid
 import Data.Ord
+import Data.Function
 
 import Exercise
 
@@ -26,6 +28,7 @@ spec = do
   exercise_CustomFolds
   exercise_FoldActions
   exercise_HigherOrderFolds
+  exercise_Filtering
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -192,7 +195,7 @@ exercise_Operators = do
     goal' `shouldBe` goal
 
   it "3. Name a lens operator that takes only two arguments" $ do
-    -- ^.
+    -- (^.)
     True
 
   it "4. What’s the type signature of %∼?" $ do
@@ -409,9 +412,21 @@ exercise_HigherOrderFolds = do
         `shouldBe` [4,3,8,6]
 
     it "bonus: list the days from first thaw to last freeze" $ do
-      sample ^.. (backwards $ droppingWhile (<0) $ backwards $ droppingWhile (<0) each)
+      sample ^.. backwards (droppingWhile (<0) $ backwards $ droppingWhile (<0) each)
         `shouldBe` [4,3,8,6,-2,3]
 
       let trimmingWhile p = backwards.droppingWhile p.backwards.droppingWhile p
       sample ^.. trimmingWhile (<0) each
         `shouldBe` [4,3,8,6,-2,3]
+
+
+exercise_Filtering :: Spec
+exercise_Filtering = do
+  it "list all cards whose name starts with 'S'" $ do
+    let cards = deck ^.. folded . filteredBy (cardName . _head . only 'S')
+    let cards' = filter (\c -> head (_cardName c) == 'S') deck
+    cards `shouldBe` cards'
+
+  it "find lowest attack power of all moves" $ do
+    let card = minimumByOf (folded . moves . folded) (compare `on` _movePower) deck
+    card `shouldBe` Just (Move "Soggy" 3)
