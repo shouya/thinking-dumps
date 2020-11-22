@@ -1,4 +1,6 @@
 {- HLINT ignore "Use camelCase" -}
+{- HLINT ignore "Redundant $" -}
+{- HLINT ignore "Redundant do" -}
 module ExerciseSpec (spec) where
 
 import Test.Hspec
@@ -430,3 +432,31 @@ exercise_Filtering = do
   it "find lowest attack power of all moves" $ do
     let card = minimumByOf (folded . moves . folded) (compare `on` _movePower) deck
     card `shouldBe` Just (Move "Soggy" 3)
+
+  it "find the name of first card with more than one move" $ do
+    let card = deck ^? folded
+                     . filteredBy (moves . to length . filtered (>1))
+                     . cardName
+    card `shouldBe` Just "Kapichu"
+
+  it "find any Hot cards with a move with more than 30 power" $ do
+    let card = deck ^? folded
+                     . filteredBy (aura . only Hot)
+                     . filteredBy (moves . folded . movePower . filtered (>30))
+                     . cardName
+    card `shouldBe` Just "Spicyeon"
+
+  it "list all names of holographic cards with a Wet aura" $ do
+    let cards = deck ^.. folded
+                       . filteredBy (aura . only Wet)
+                       . filteredBy (holo . only True)
+                       . cardName
+    cards `shouldBe` ["Garydose"]
+
+  it "find sum of all attack power belonging to non-leafy cards" $ do
+    let power = flip sumOf deck $ folded
+                                . filteredBy (aura . filtered (/= Leafy))
+                                . moves
+                                . folded
+                                . movePower
+    power `shouldBe` 303
