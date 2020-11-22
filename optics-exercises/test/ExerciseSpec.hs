@@ -8,13 +8,15 @@ import Test.QuickCheck
 import Control.Lens
 import Control.Lens.Properties
 
-import Data.Char (toUpper, isAlpha)
+import Data.Char (toUpper, toLower, isAlpha)
 import qualified Data.Map as M
 import qualified Data.Set as S
 -- import qualified Data.Text as T
 import Data.Monoid
 import Data.Ord
 import Data.Function
+import Control.Applicative
+import Control.Monad.State
 
 import Exercise
 
@@ -32,6 +34,7 @@ spec = do
   exercise_HigherOrderFolds
   exercise_Filtering
   exercise_SimpleTraversals
+  exercise_TraversalActions
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -512,3 +515,50 @@ exercise_SimpleTraversals = do
       let input = ((True, "Strawberries"), (False, "Blueberries"), (True, "Blackberries"))
       let result = input & each %~ snd
       result `shouldBe` ("Strawberries", "Blueberries", "Blackberries")
+
+
+exercise_TraversalActions :: Spec
+exercise_TraversalActions = do
+  describe "fill in the blanks" $ do
+    it "1" $ do
+      sequenceAOf _1 (Nothing :: Maybe Int, "Rosebud") `shouldBe` Nothing
+    it "2" $ do
+      let result = [[('a', 1), ('c', 2)], [('a', 1), ('d', 2)], [('b', 1), ('c', 2)], [('b', 1), ('d', 2)]]
+      let input = [("ab", 1), ("cd", 2)]
+      sequenceAOf (traversed . _1) input `shouldBe` result
+    it "3" $ do
+      let result = sequenceAOf traversed [ZipList [1, 2], ZipList [3, 4]]
+      result `shouldBe` ZipList [[1,3], [2,4]]
+    it "4" $ do
+      let result = sequenceAOf (traversed . _2) [('a', ZipList [1,2]), ('b', ZipList [3,4])]
+      result `shouldBe` ZipList [[('a',1),('b',3)],[('a',2),('b',4)]]
+    it "5" $ do
+      let input = ([1, 1, 1], (1, 1))
+      let traversal = beside each both
+      let result = traverseOf traversal (\n -> modify (+n) >> get) input
+      runState result 0 `shouldBe` (([1,2,3],(4,5)), 5)
+
+  describe "run the following with %%~" $ do
+    it "1" $ do
+      let result = ("ab", True) & (_1 . traversed) %%~ (\c -> [toLower c, toUpper c])
+      result `shouldBe` [("ab", True), ("aB", True), ("Ab", True), ("AB", True)]
+    it "2" $ do
+      let input = [('a', True), ('b', False)]
+      let expect = input & (traversed . _1) %%~ (\c -> [toLower c, toUpper c])
+      let result = [[('a', True), ('b', False)], [('a', True), ('B', False)], [('A', True), ('b', False)], [('A', True), ('B', False)]]
+      expect `shouldBe` result
+
+  describe "write a validation function" $ do
+    let validateAge account = account & user . age %%~ validate
+          where validate age | age <= 0   = Left "Age must be greater than 0"
+                             | age >= 150 = Left "Age must be less than 150"
+                             | otherwise  = Right age
+    let badAccount1 = Account "bad1" (UserT "bad1" (-10))
+    let badAccount2 = Account "bad2" (UserT "bad2" 170)
+    let goodAccount = Account "good" (UserT "good" 25)
+    it "invalid age case 1" $ do
+      has _Left (validateAge badAccount1)
+    it "invalid age case 2" $ do
+      has _Left (validateAge badAccount2)
+    it "valid age case" $ do
+      validateAge goodAccount `shouldBe` Right goodAccount

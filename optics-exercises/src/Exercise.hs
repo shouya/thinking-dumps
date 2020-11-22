@@ -219,3 +219,12 @@ deck =  [ Card "Skwortul"    Wet   False [Move "Squirt" 20]
         , Card "Spicyeon"    Hot   False [Move "Capsaicisize" 40]
         , Card "Sparkeon"    Spark True  [Move "Shock" 40, Move "Battery" 50]
         ]
+
+---- Exercises: Traversal Actions
+data UserT = UserT {_userName :: String, _age :: Int} deriving (Show, Eq)
+
+makeLenses ''UserT
+
+data Account = Account {_accountId :: String, _user :: UserT} deriving (Show, Eq)
+
+makeLenses ''Account
