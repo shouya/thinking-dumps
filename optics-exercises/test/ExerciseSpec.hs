@@ -5,7 +5,7 @@ module ExerciseSpec (spec) where
 
 import Test.Hspec
 import Test.QuickCheck
-import Control.Lens
+import Control.Lens hiding ((&))
 import Control.Lens.Properties
 
 import Data.Char (toUpper, toLower, isAlpha)
@@ -14,7 +14,7 @@ import qualified Data.Set as S
 -- import qualified Data.Text as T
 import Data.Monoid
 import Data.Ord
-import Data.Function
+import Data.Function hiding ((&))
 import Control.Applicative
 import Control.Monad.State
 
@@ -37,6 +37,14 @@ spec = do
   exercise_TraversalActions
   exercise_CustomTraversals
   exercise_TraversalLaws
+  exercise_PartsOf
+
+-- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
+-- so it plays well with `shouldBe`
+infixl 2 &
+(&) :: a -> (a -> b) -> b
+a & f = f a
+
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -632,3 +640,21 @@ exercise_TraversalLaws = do
     it "traversed" $ do
       -- lawful
       True
+
+exercise_PartsOf :: Spec
+exercise_PartsOf = do
+  it "fill in the blanks" $ do
+    [1,2,3,4] ^. partsOf (traversed . filtered even)
+      `shouldBe` [2,4]
+
+    ["Aardvark", "Bandicoot", "Capybara"]
+      -- the original book uses "^." which doesn't type check
+      ^.. traversed . partsOf (taking 3 traversed)
+      `shouldBe` ["Aar", "Ban", "Cap"]
+
+    ([1, 2], M.fromList [('a', 3), ('b', 4)])
+      ^. partsOf (beside each each)
+      `shouldBe` [1,2,3,4]
+
+    [1, 2, 3, 4] & partsOf (traversed . filtered even) .~ [20, 40]
+      `shouldBe` [1,20,3,40]
