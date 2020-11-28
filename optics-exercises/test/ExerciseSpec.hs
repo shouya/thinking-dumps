@@ -3,22 +3,21 @@
 {- HLINT ignore "Redundant do" -}
 module ExerciseSpec (spec) where
 
-import Test.Hspec
-import Test.QuickCheck
+-- import qualified Data.Text as T
+
+import Control.Applicative
 import Control.Lens hiding ((&))
 import Control.Lens.Properties
-
-import Data.Char (toUpper, toLower, isAlpha)
+import Control.Monad.State
+import Data.Char (isAlpha, toLower, toUpper)
+import Data.Function hiding ((&))
 import qualified Data.Map as M
-import qualified Data.Set as S
--- import qualified Data.Text as T
 import Data.Monoid
 import Data.Ord
-import Data.Function hiding ((&))
-import Control.Applicative
-import Control.Monad.State
-
+import qualified Data.Set as S
 import Exercise
+import Test.Hspec
+import Test.QuickCheck
 
 spec :: Spec
 spec = do
@@ -43,9 +42,9 @@ spec = do
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
 infixl 2 &
+
 (&) :: a -> (a -> b) -> b
 a & f = f a
-
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -58,39 +57,51 @@ instance Arbitrary Builder where
 
 exercise_Laws :: Spec
 exercise_Laws = do
-  it "1.1 get-set law should fail" $ expectFailure $
-    \s -> set unlawful2 (view unlawful2 s) s == s
-  it "1.2 set-set law should fail" $ expectFailure $
-    \b s -> set unlawful3 b (set unlawful3 b s) == set unlawful3 b s
+  it "1.1 get-set law should fail" $
+    expectFailure $
+      \s -> set unlawful2 (view unlawful2 s) s == s
+  it "1.2 set-set law should fail" $
+    expectFailure $
+      \b s -> set unlawful3 b (set unlawful3 b s) == set unlawful3 b s
 
   -- cheating with quick check
-  it "2.1 test get-set law for msg" $ property $
-    \s -> set msg (view msg s) s == s
-  it "2.2 test set-set law for msg" $ expectFailure $
-    \b s -> set msg b (set msg b s) == s
+  it "2.1 test get-set law for msg" $
+    property $
+      \s -> set msg (view msg s) s == s
+  it "2.2 test set-set law for msg" $
+    expectFailure $
+      \b s -> set msg b (set msg b s) == s
 
-  it "3.1 test set-set law for msg" $ property $
-    \b s -> set msg' b (set msg' b s) == set msg' b s
-  it "3.2 test set-get law for msg" $ property $
-    \b s -> view msg' (set msg' b s) == b
-  it "3.3 test get-set law for msg" $ expectFailure $
-    \s -> set msg' (view msg' s) s == s
-
+  it "3.1 test set-set law for msg" $
+    property $
+      \b s -> set msg' b (set msg' b s) == set msg' b s
+  it "3.2 test set-get law for msg" $
+    property $
+      \b s -> view msg' (set msg' b s) == b
+  it "3.3 test get-set law for msg" $
+    expectFailure $
+      \s -> set msg' (view msg' s) s == s
 
   it "4 prenu doesn't satisfy all lens rules but is still useful" $
-        -- breaks get-set law
-        expectFailure (\s -> set prenuNilciho (view prenuNilciho s) s == s)
-        -- satisfies set-set law
-    .&. property (\b s -> set prenuNilciho b (set prenuNilciho b s) ==
-                          set prenuNilciho b s)
-        -- breaks set-get law
-    .&. expectFailure (\b s -> view prenuNilciho (set prenuNilciho b s) == b)
+    -- breaks get-set law
+    expectFailure (\s -> set prenuNilciho (view prenuNilciho s) s == s)
+      -- satisfies set-set law
+      .&. property
+        ( \b s ->
+            set prenuNilciho b (set prenuNilciho b s)
+              == set prenuNilciho b s
+        )
+      -- breaks set-get law
+      .&. expectFailure (\b s -> view prenuNilciho (set prenuNilciho b s) == b)
 
   it "5 break all laws" $
-        expectFailure (\s -> set breakAllLaws (view breakAllLaws s) s == s)
-    .&. expectFailure (\b s -> set breakAllLaws b (set breakAllLaws b s) ==
-                               set breakAllLaws b s)
-    .&. expectFailure (\b s -> view breakAllLaws (set breakAllLaws b s) == b)
+    expectFailure (\s -> set breakAllLaws (view breakAllLaws s) s == s)
+      .&. expectFailure
+        ( \b s ->
+            set breakAllLaws b (set breakAllLaws b s)
+              == set breakAllLaws b s
+        )
+      .&. expectFailure (\b s -> view breakAllLaws (set breakAllLaws b s) == b)
 
   it "6 lawful builder lens" $ isLens builderLens
 
@@ -100,11 +111,12 @@ exercise_VirtualFields = do
   it "2.1 fullName lens: view works" $
     view fullName user `shouldBe` "John Cena"
   it "2.1 fullName lens: set works" $
-    set fullName "Doctor of Thuganomics" user `shouldBe`
-    User { _firstName = "Doctor"
-         , _lastName = "of Thuganomics"
-         , _email = "invisible@example.com"
-         }
+    set fullName "Doctor of Thuganomics" user
+      `shouldBe` User
+        { _firstName = "Doctor",
+          _lastName = "of Thuganomics",
+          _email = "invisible@example.com"
+        }
 
 exercise_SelfCorrectingLenses :: Spec
 exercise_SelfCorrectingLenses = do
@@ -118,7 +130,6 @@ exercise_SelfCorrectingLenses = do
   it "test 4" $
     set limePrice' (-1.0) prices `shouldBe` ProducePrices 0.0 0.5
 
-
 instance Arbitrary a => Arbitrary (Preferences a) where
   arbitrary = Preferences <$> arbitrary <*> arbitrary
 
@@ -131,12 +142,16 @@ exercise_PolymorphicLenses = do
     -- type Lens (Volpal x) (Volpal y) x y =
     --     forall f. Functor f => (x -> f y) -> Vorpal x -> f (Vorpal y)
     True
-  it "2. change the type of the best and worst fields" $
-    -- polymorphic lens laws do not type check, so I'll only test for
-    -- the cases when a ~ b.
-    isLens (preferenceLens @String @String)
-    .&.
-    isLens (preferenceLens @Int @Int)
+
+  -- I commented this out because my document formatter doesn't play well
+  -- with the @Type application syntax.
+  --
+  -- it "2. change the type of the best and worst fields" $
+  --   -- polymorphic lens laws do not type check, so I'll only test for
+  --   -- the cases when a ~ b.
+  --   isLens (preferenceLens @String @String)
+  --   .&.
+  --   isLens (preferenceLens @Int @Int)
 
   it "3. What is the type of the lens" $
     -- type Lens (Result a) (Result b) (Either a String) (Either b String) =
@@ -156,8 +171,8 @@ exercise_PolymorphicLenses = do
 exercise_LensCompositions :: Spec
 exercise_LensCompositions = do
   it "1. fill in the blank" $
-    view (_2._1._2) ("Ginerva", (("Galileo", "Waldo"), "Malfoy")) `shouldBe`
-    "Waldo"
+    view (_2 . _1 . _2) ("Ginerva", (("Galileo", "Waldo"), "Malfoy"))
+      `shouldBe` "Waldo"
 
   it "2. fill in the missing type" $
     -- mysteryDomino :: Eight Two
@@ -175,26 +190,29 @@ exercise_LensCompositions = do
 exercise_Operators :: Spec
 exercise_Operators = do
   it "1.1 reach goal A" $ do
-    let goalA = Kingdom { _name = "Duloc: a perfect place" , _army = Army { _archers = 22 , _knights = 42 } , _gate = Gate { _open = False , _oilTemp = 10.0 } }
-    let goalA' = duloc & name <>~ ": a perfect place"
-                       & army.knights .~ 42
-                       & gate.open %~ not
+    let goalA = Kingdom {_name = "Duloc: a perfect place", _army = Army {_archers = 22, _knights = 42}, _gate = Gate {_open = False, _oilTemp = 10.0}}
+    let goalA' =
+          duloc & name <>~ ": a perfect place"
+            & army . knights .~ 42
+            & gate . open %~ not
     goalA' `shouldBe` goalA
 
   it "1.2 reach goal B" $ do
-    let goalB = Kingdom { _name = "Dulocinstein" , _army = Army { _archers = 17 , _knights = 26 } , _gate = Gate { _open = True , _oilTemp = 100.0}}
-    let goalB' = duloc & name .~ "Dulocinstein"
-                       & army.archers -~ 5
-                       & army.knights *~ 2
-                       & army.knights -~ 2
-                       & gate.oilTemp ^~ 2
+    let goalB = Kingdom {_name = "Dulocinstein", _army = Army {_archers = 17, _knights = 26}, _gate = Gate {_open = True, _oilTemp = 100.0}}
+    let goalB' =
+          duloc & name .~ "Dulocinstein"
+            & army . archers -~ 5
+            & army . knights *~ 2
+            & army . knights -~ 2
+            & gate . oilTemp ^~ 2
     goalB' `shouldBe` goalB
 
   it "1.3 reach goal C" $ do
-    let goalC = ("Duloc: Home", Kingdom { _name = "Duloc: Home of the talking Donkeys" , _army = Army { _archers = 22 , _knights = 14 } , _gate = Gate { _open = True , _oilTemp = 5.0 } })
-    let goalC' = duloc & name .~ "Duloc: Home"
-                       & gate.oilTemp -~ 5
-                       & name <<<>~ " of the talking Donkeys"
+    let goalC = ("Duloc: Home", Kingdom {_name = "Duloc: Home of the talking Donkeys", _army = Army {_archers = 22, _knights = 14}, _gate = Gate {_open = True, _oilTemp = 5.0}})
+    let goalC' =
+          duloc & name .~ "Duloc: Home"
+            & gate . oilTemp -~ 5
+            & name <<<>~ " of the talking Donkeys"
     goalC' `shouldBe` goalC
 
   it "2.1 fill in undefined" $ do
@@ -203,12 +221,13 @@ exercise_Operators = do
     goal' `shouldBe` goal
 
   it "2.2 fill in undefined" $ do
-    let goal = ((False,"DUDLEY - THE WORST"),20.0)
-    let goal' = ((True, "Dudley"), 55.0) & _1 . _2 <>~ " - the worst"
-                                         & _2 -~ 15
-                                         & _2 //~ 2
-                                         & _1 . _2 %~ map toUpper
-                                         & _1 . _1 &&~ False
+    let goal = ((False, "DUDLEY - THE WORST"), 20.0)
+    let goal' =
+          ((True, "Dudley"), 55.0) & _1 . _2 <>~ " - the worst"
+            & _2 -~ 15
+            & _2 //~ 2
+            & _1 . _2 %~ map toUpper
+            & _1 . _1 &&~ False
     goal' `shouldBe` goal
 
   it "3. Name a lens operator that takes only two arguments" $ do
@@ -224,16 +243,16 @@ exercise_SimpleFolds = do
   it "1. guess the results" $ do
     let beastSizes = [(3, "Sirens"), (882, "Kraken"), (92, "Ogopogo")]
     beastSizes ^.. folded `shouldBe` [(3, "Sirens"), (882, "Kraken"), (92, "Ogopogo")]
-    beastSizes ^.. folded.folded `shouldBe` ["Sirens", "Kraken", "Ogopogo"]
-    beastSizes ^.. folded.folded.folded `shouldBe` "SirensKrakenOgopogo"
-    beastSizes ^.. folded._2 `shouldBe` beastSizes ^.. folded.folded
-    toListOf (folded.folded) [[1,2,3],[4,5,6]] `shouldBe` [1,2,3,4,5,6]
-    toListOf (folded.folded) (M.fromList [("Jack", "Captain"), ("Will", "First Mate")])
+    beastSizes ^.. folded . folded `shouldBe` ["Sirens", "Kraken", "Ogopogo"]
+    beastSizes ^.. folded . folded . folded `shouldBe` "SirensKrakenOgopogo"
+    beastSizes ^.. folded . _2 `shouldBe` beastSizes ^.. folded . folded
+    toListOf (folded . folded) [[1, 2, 3], [4, 5, 6]] `shouldBe` [1, 2, 3, 4, 5, 6]
+    toListOf (folded . folded) (M.fromList [("Jack", "Captain"), ("Will", "First Mate")])
       `shouldBe` "CaptainFirst Mate"
-    ("Hello", "It's me") ^.. both.folded `shouldBe` "HelloIt's me"
+    ("Hello", "It's me") ^.. both . folded `shouldBe` "HelloIt's me"
     ("Why", "So", "Serious?") ^.. each `shouldBe` ["Why", "So", "Serious?"]
     let quotes = [("Why", "So", "Serious?"), ("This", "is", "SPARTA")]
-    quotes ^.. each.each.each `shouldBe` "WhySoSerious?ThisisSPARTA"
+    quotes ^.. each . each . each `shouldBe` "WhySoSerious?ThisisSPARTA"
 
   it "2. Write out the 'specialized' types" $ do
     -- toListOf (folded . _1) [(1, 'a'), (2, 'b'), (3, 'c')]
@@ -252,14 +271,14 @@ exercise_SimpleFolds = do
     True
 
   it "3. Fill in the blank" $ do
-    [1, 2, 3] ^.. folded `shouldBe` [1,2,3]
-    [1, 2, 3] ^.. id `shouldBe` [[1,2,3]]
+    [1, 2, 3] ^.. folded `shouldBe` [1, 2, 3]
+    [1, 2, 3] ^.. id `shouldBe` [[1, 2, 3]]
     ("Light", "Dark") ^.. _1 `shouldBe` ["Light"]
-    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded.both
+    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded . both
       `shouldBe` ["Light", "Dark", "Happy", "Sad"]
-    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded._1
+    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded . _1
       `shouldBe` ["Light", "Happy"]
-    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded._2.folded
+    [("Light", "Dark"), ("Happy", "Sad")] ^.. folded . _2 . folded
       `shouldBe` "DarkSad"
     ("Bond", "James", "Bond") ^.. each
       `shouldBe` ["Bond", "James", "Bond"]
@@ -272,54 +291,56 @@ exercise_CustomFolds = do
     [[1, 2, 3], [4, 5, 6]] ^.. folded . folding (take 2)
       `shouldBe` [1, 2, 4, 5]
     [[1, 2, 3], [4, 5, 6]] ^.. folded . to (take 2)
-      `shouldBe` [[1,2], [4,5]]
+      `shouldBe` [[1, 2], [4, 5]]
     ["bob", "otto", "hannah"] ^.. folded . to reverse
       `shouldBe` ["bob", "otto", "hannah"]
-    ("abc", "def") ^.. folding (\(a, b) -> [a, b]). to reverse . folded
+    ("abc", "def") ^.. folding (\(a, b) -> [a, b]) . to reverse . folded
       `shouldBe` "cbafed"
 
   it "2. fill in the blanks" $ do
-    [1..5] ^.. folded . to (*100)
-      `shouldBe` [100,200,300,400,500]
+    [1 .. 5] ^.. folded . to (* 100)
+      `shouldBe` [100, 200, 300, 400, 500]
 
     (1, 2) ^.. both
       `shouldBe` [1, 2]
 
-    [(1, "one"), (2, "two")] ^.. folded._2
+    [(1, "one"), (2, "two")] ^.. folded . _2
       `shouldBe` ["one", "two"]
 
-    (Just 1, Just 2, Just 3) ^.. each.folded
+    (Just 1, Just 2, Just 3) ^.. each . folded
       `shouldBe` [1, 2, 3]
 
-    [Left 1, Right 2, Left 3] ^.. folded.folded
+    [Left 1, Right 2, Left 3] ^.. folded . folded
       `shouldBe` [2]
 
-    [([1, 2], [3, 4]), ([5, 6], [7, 8])] ^.. folded.both.folded
+    [([1, 2], [3, 4]), ([5, 6], [7, 8])] ^.. folded . both . folded
       `shouldBe` [1, 2, 3, 4, 5, 6, 7, 8]
 
-    [1, 2, 3, 4] ^.. folding (\[a,b,c,d] -> [(a,b), (c,d)]) .
-                     folding (\(a,b) -> [Left a, Right b])
+    [1, 2, 3, 4]
+      ^.. folding (\[a, b, c, d] -> [(a, b), (c, d)])
+        . folding (\(a, b) -> [Left a, Right b])
       `shouldBe` [Left 1, Right 2, Left 3, Right 4]
 
-    [(1, (2, 3)), (4, (5, 6))] ^.. folded.folding (\(a,(b,c)) -> [a,b,c])
+    [(1, (2, 3)), (4, (5, 6))] ^.. folded . folding (\(a, (b, c)) -> [a, b, c])
       `shouldBe` [1, 2, 3, 4, 5, 6]
 
-    [(Just 1, Left "one"), (Nothing, Right 2)] ^.. folded .
-                                                   folding (\(a,b) -> [a^..folded, b^..folded]) .
-                                                   folded
+    [(Just 1, Left "one"), (Nothing, Right 2)]
+      ^.. folded
+        . folding (\(a, b) -> [a ^.. folded, b ^.. folded])
+        . folded
       `shouldBe` [1, 2]
 
-    [(1, "one"), (2, "two")] ^.. folded . folding (\(a,b) -> [Left a, Right b])
+    [(1, "one"), (2, "two")] ^.. folded . folding (\(a, b) -> [Left a, Right b])
       `shouldBe` [Left 1, Right "one", Left 2, Right "two"]
     S.fromList ["apricots", "apples"] ^.. folded . folding reverse
       `shouldBe` "selppastocirpa"
 
   it "3. (bonus) Devise a fold which returns the expected results." $ do
-    [(12, 45, 66), (91, 123, 87)] ^.. folded._2.folding (reverse.show)
+    [(12, 45, 66), (91, 123, 87)] ^.. folded . _2 . folding (reverse . show)
       `shouldBe` "54321"
 
-    [(1,"a"),(2,"b"),(3,"c"),(4,"d")] ^..
-      folded.folding (\(a,b) -> if even a then Just b else Nothing)
+    [(1, "a"), (2, "b"), (3, "c"), (4, "d")]
+      ^.. folded . folding (\(a, b) -> if even a then Just b else Nothing)
       `shouldBe` ["b", "d"]
 
 exercise_FoldActions :: Spec
@@ -348,7 +369,7 @@ exercise_FoldActions = do
     allOf each even input2 `shouldBe` output2
 
     let input3 = [(2, "I'll"), (3, "Be"), (1, "Back")]
-    let output3 = Just (3,"Be")
+    let output3 = Just (3, "Be")
     maximumByOf each (comparing fst) input3 `shouldBe` output3
 
     let input4 = (1, 2)
@@ -363,19 +384,18 @@ exercise_FoldActions = do
 
     let input2 = ["a", "b", "c"]
     let output2 = "cba"
-    foldOf (reversed.folded) input2
+    foldOf (reversed . folded) input2
       `shouldBe` output2
 
     let input3 = [(12, 45, 66), (91, 123, 87)]
     let output3 = "54321"
-    foldOf (folded._2.to show.reversed) input3
+    foldOf (folded . _2 . to show . reversed) input3
       `shouldBe` output3
 
     let input4 = [(1, "a"), (2, "b"), (3, "c"), (4, "d")]
     let output4 = ["b", "d"]
     input4 ^.. folded . filtered (even . fst) . _2
       `shouldBe` output4
-
 
 exercise_HigherOrderFolds :: Spec
 exercise_HigherOrderFolds = do
@@ -384,8 +404,7 @@ exercise_HigherOrderFolds = do
       `shouldBe` "looking at you, kid"
 
     ["My Precious", "Hakuna Matata", "No problemo"] ^.. folded . taking 1 worded
-      `shouldBe` ["My","Hakuna","No"]
-
+      `shouldBe` ["My", "Hakuna", "No"]
 
     ["My Precious", "Hakuna Matata", "No problemo"] ^.. taking 1 (folded . worded)
       `shouldBe` ["My"]
@@ -400,10 +419,10 @@ exercise_HigherOrderFolds = do
       `shouldBe` 60
 
     ("stressed", "guns", "evil") ^.. backwards each
-      `shouldBe` ["evil","guns","stressed"]
+      `shouldBe` ["evil", "guns", "stressed"]
 
     ("stressed", "guns", "evil") ^.. backwards each . to reverse
-      `shouldBe` ["live","snug","desserts"]
+      `shouldBe` ["live", "snug", "desserts"]
 
     "blink182 k9 blazeit420" ^.. worded . droppingWhile isAlpha folded
       `shouldBe` "1829420"
@@ -412,7 +431,7 @@ exercise_HigherOrderFolds = do
     let sample = [-10, -5, 4, 3, 8, 6, -2, 3, -5, -7] :: [Int]
 
     it "find # of days it took to thaw" $ do
-      lengthOf (takingWhile (<0) folded) sample `shouldBe` 2
+      lengthOf (takingWhile (< 0) folded) sample `shouldBe` 2
 
     it "warmest temperature in first 4 days" $ do
       maximumOf (taking 4 each) sample `shouldBe` Just 4
@@ -422,20 +441,19 @@ exercise_HigherOrderFolds = do
       sample ^? dropping 1 (droppingWhile (/= maxTemp) each) `shouldBe` Just 3
 
     it "how many freezing days at the end" $ do
-      lengthOf (takingWhile (<0) (reversed.each)) sample `shouldBe` 2
+      lengthOf (takingWhile (< 0) (reversed . each)) sample `shouldBe` 2
 
     it "list the days from first thaw to next freeze" $ do
-      sample ^.. takingWhile (>= 0) (droppingWhile (<0) each)
-        `shouldBe` [4,3,8,6]
+      sample ^.. takingWhile (>= 0) (droppingWhile (< 0) each)
+        `shouldBe` [4, 3, 8, 6]
 
     it "bonus: list the days from first thaw to last freeze" $ do
-      sample ^.. backwards (droppingWhile (<0) $ backwards $ droppingWhile (<0) each)
-        `shouldBe` [4,3,8,6,-2,3]
+      sample ^.. backwards (droppingWhile (< 0) $ backwards $ droppingWhile (< 0) each)
+        `shouldBe` [4, 3, 8, 6, -2, 3]
 
-      let trimmingWhile p = backwards.droppingWhile p.backwards.droppingWhile p
-      sample ^.. trimmingWhile (<0) each
-        `shouldBe` [4,3,8,6,-2,3]
-
+      let trimmingWhile p = backwards . droppingWhile p . backwards . droppingWhile p
+      sample ^.. trimmingWhile (< 0) each
+        `shouldBe` [4, 3, 8, 6, -2, 3]
 
 exercise_Filtering :: Spec
 exercise_Filtering = do
@@ -449,31 +467,39 @@ exercise_Filtering = do
     card `shouldBe` Just (Move "Soggy" 3)
 
   it "find the name of first card with more than one move" $ do
-    let card = deck ^? folded
-                     . filteredBy (moves . to length . filtered (>1))
-                     . cardName
+    let card =
+          deck
+            ^? folded
+              . filteredBy (moves . to length . filtered (> 1))
+              . cardName
     card `shouldBe` Just "Kapichu"
 
   it "find any Hot cards with a move with more than 30 power" $ do
-    let card = deck ^? folded
-                     . filteredBy (aura . only Hot)
-                     . filteredBy (moves . folded . movePower . filtered (>30))
-                     . cardName
+    let card =
+          deck
+            ^? folded
+              . filteredBy (aura . only Hot)
+              . filteredBy (moves . folded . movePower . filtered (> 30))
+              . cardName
     card `shouldBe` Just "Spicyeon"
 
   it "list all names of holographic cards with a Wet aura" $ do
-    let cards = deck ^.. folded
-                       . filteredBy (aura . only Wet)
-                       . filteredBy (holo . only True)
-                       . cardName
+    let cards =
+          deck
+            ^.. folded
+              . filteredBy (aura . only Wet)
+              . filteredBy (holo . only True)
+              . cardName
     cards `shouldBe` ["Garydose"]
 
   it "find sum of all attack power belonging to non-leafy cards" $ do
-    let power = flip sumOf deck $ folded
-                                . filteredBy (aura . filtered (/= Leafy))
-                                . moves
-                                . folded
-                                . movePower
+    let power =
+          flip sumOf deck $
+            folded
+              . filteredBy (aura . filtered (/= Leafy))
+              . moves
+              . folded
+              . movePower
     power `shouldBe` 303
 
 exercise_SimpleTraversals :: Spec
@@ -493,8 +519,8 @@ exercise_SimpleTraversals = do
     it "1" $ do
       (("Jurassic", "Park") & each .~ "N/A") `shouldBe` ("N/A", "N/A")
     it "2" $ do
-      (("Jurassic", "Park") & both . traversed .~ 'x') `shouldBe`
-        ("xxxxxxxx", "xxxx")
+      (("Jurassic", "Park") & both . traversed .~ 'x')
+        `shouldBe` ("xxxxxxxx", "xxxx")
     it "3" $ do
       (("Malcolm", ["Kaylee", "Inara", "Jayne"]) & beside id traversed %~ take 3)
         `shouldBe` ("Mal", ["Kay", "Ina", "Jay"])
@@ -502,12 +528,14 @@ exercise_SimpleTraversals = do
       (("Malcolm", ["Kaylee", "Inara", "Jayne"]) & _2 . element 1 .~ "River")
         `shouldBe` ("Malcolm", ["Kaylee", "River", "Jayne"])
     it "5" $ do
-      let result = ["Die Another Day", "Live and Let Die", "You Only Live Twice"]
-            & traversed . elementOf worded 1 . traversed .~ 'x'
-      result `shouldBe` [ "Die xxxxxxx Day"
-                        , "Live xxx Let Die"
-                        , "You xxxx Live Twice"
-                        ]
+      let result =
+            ["Die Another Day", "Live and Let Die", "You Only Live Twice"]
+              & traversed . elementOf worded 1 . traversed .~ 'x'
+      result
+        `shouldBe` [ "Die xxxxxxx Day",
+                     "Live xxx Let Die",
+                     "You xxxx Live Twice"
+                   ]
     it "6" $ do
       let result = ((1, 2), (3, 4)) & beside both both +~ 1
       result `shouldBe` ((2, 3), (4, 5))
@@ -517,16 +545,16 @@ exercise_SimpleTraversals = do
       result `shouldBe` (2, (3, [4, 5]))
 
     it "8" $ do
-      let result = ((True, "Strawberries"), (False, "Blueberries"), (True, "Blackberries"))
-            & each . filtered fst . _2 . taking 5 traversed %~ toUpper
-      result `shouldBe`
-        ((True, "STRAWberries"), (False, "Blueberries"), (True, "BLACKberries"))
+      let result =
+            ((True, "Strawberries"), (False, "Blueberries"), (True, "Blackberries"))
+              & each . filtered fst . _2 . taking 5 traversed %~ toUpper
+      result
+        `shouldBe` ((True, "STRAWberries"), (False, "Blueberries"), (True, "BLACKberries"))
 
     it "9" $ do
       let input = ((True, "Strawberries"), (False, "Blueberries"), (True, "Blackberries"))
       let result = input & each %~ snd
       result `shouldBe` ("Strawberries", "Blueberries", "Blackberries")
-
 
 exercise_TraversalActions :: Spec
 exercise_TraversalActions = do
@@ -539,15 +567,15 @@ exercise_TraversalActions = do
       sequenceAOf (traversed . _1) input `shouldBe` result
     it "3" $ do
       let result = sequenceAOf traversed [ZipList [1, 2], ZipList [3, 4]]
-      result `shouldBe` ZipList [[1,3], [2,4]]
+      result `shouldBe` ZipList [[1, 3], [2, 4]]
     it "4" $ do
-      let result = sequenceAOf (traversed . _2) [('a', ZipList [1,2]), ('b', ZipList [3,4])]
-      result `shouldBe` ZipList [[('a',1),('b',3)],[('a',2),('b',4)]]
+      let result = sequenceAOf (traversed . _2) [('a', ZipList [1, 2]), ('b', ZipList [3, 4])]
+      result `shouldBe` ZipList [[('a', 1), ('b', 3)], [('a', 2), ('b', 4)]]
     it "5" $ do
       let input = ([1, 1, 1], (1, 1))
       let traversal = beside each both
-      let result = traverseOf traversal (\n -> modify (+n) >> get) input
-      runState result 0 `shouldBe` (([1,2,3],(4,5)), 5)
+      let result = traverseOf traversal (\n -> modify (+ n) >> get) input
+      runState result 0 `shouldBe` (([1, 2, 3], (4, 5)), 5)
 
   describe "run the following with %%~" $ do
     it "1" $ do
@@ -561,9 +589,11 @@ exercise_TraversalActions = do
 
   describe "write a validation function" $ do
     let validateAge account = account & user . age %%~ validate
-          where validate age | age <= 0   = Left "Age must be greater than 0"
-                             | age >= 150 = Left "Age must be less than 150"
-                             | otherwise  = Right age
+          where
+            validate age
+              | age <= 0 = Left "Age must be greater than 0"
+              | age >= 150 = Left "Age must be less than 150"
+              | otherwise = Right age
     let badAccount1 = Account "bad1" (UserT "bad1" (-10))
     let badAccount2 = Account "bad2" (UserT "bad2" 170)
     let goodAccount = Account "good" (UserT "good" 25)
@@ -576,9 +606,9 @@ exercise_TraversalActions = do
 
 exercise_CustomTraversals :: Spec
 exercise_CustomTraversals = do
-  let transactions = [Deposit 10, Withdrawal  20, Deposit 30]
+  let transactions = [Deposit 10, Withdrawal 20, Deposit 30]
   it "1. rewrite amount transaction" $ do
-    let transactions' = transactions & traversed . amountT %~ (+1)
+    let transactions' = transactions & traversed . amountT %~ (+ 1)
     transactions' `shouldBe` [Deposit 11, Withdrawal 21, Deposit 31]
 
   it "2. rewrite both" $ do
@@ -588,9 +618,9 @@ exercise_CustomTraversals = do
     Deposit 10 ^? transactionDelta `shouldBe` Just 10
     Withdrawal 10 ^? transactionDelta `shouldBe` Just (-10)
     Deposit 10 & transactionDelta .~ 15 `shouldBe` Deposit 15
-    Withdrawal 10 & transactionDelta .~ (-15) `shouldBe ` Withdrawal 15
+    Withdrawal 10 & transactionDelta .~ (-15) `shouldBe` Withdrawal 15
     Deposit 10 & transactionDelta +~ 5 `shouldBe` Deposit 15
-    Withdrawal 10 & transactionDelta +~ 5 `shouldBe ` Withdrawal 5
+    Withdrawal 10 & transactionDelta +~ 5 `shouldBe` Withdrawal 5
 
   it "4. implement left" $ do
     Left 5 & leftT +~ 5 `shouldBe` (Left 10 :: Either Int Int)
@@ -612,12 +642,10 @@ exercise_TraversalLaws = do
     5 & law1BreakingT %%~ pure `shouldNotBe` (pure 5 :: [Int])
 
   it "3. break the second law!" $ do
-    2 & law2BreakingT %~ (`div` 2) & law2BreakingT %~ (+1)
-      `shouldNotBe`
-      2 & law2BreakingT %~ ((+1) . (`div` 2))
-    2 & filtered even %~ (`div` 2) & filtered even %~ (+1)
-      `shouldNotBe`
-      2 & filtered even %~ ((+1) . (`div` 2))
+    2 & law2BreakingT %~ (`div` 2) & law2BreakingT %~ (+ 1)
+      `shouldNotBe` 2 & law2BreakingT %~ ((+ 1) . (`div` 2))
+    2 & filtered even %~ (`div` 2) & filtered even %~ (+ 1)
+      `shouldNotBe` 2 & filtered even %~ ((+ 1) . (`div` 2))
 
   describe "4. decide if the these traversal are lawful or not" $ do
     it "taking" $ do
@@ -632,10 +660,11 @@ exercise_TraversalLaws = do
       --- lawful. the focus is fixed.
       True
 
-    it "lined" $ do
-      -- not lawful. same reason as worded
-      "foo\nbar" & lined <>~ "\nbaz" & lined <>~ "X"
-      `shouldNotBe` "foo\nbar" & lined <>~ "X\nbaz"
+    it "lined" $
+      do
+        -- not lawful. same reason as worded
+        "foo\nbar" & lined <>~ "\nbaz" & lined <>~ "X"
+        `shouldNotBe` "foo\nbar" & lined <>~ "X\nbaz"
 
     it "traversed" $ do
       -- lawful
@@ -644,8 +673,8 @@ exercise_TraversalLaws = do
 exercise_PartsOf :: Spec
 exercise_PartsOf = do
   it "fill in the blanks" $ do
-    [1,2,3,4] ^. partsOf (traversed . filtered even)
-      `shouldBe` [2,4]
+    [1, 2, 3, 4] ^. partsOf (traversed . filtered even)
+      `shouldBe` [2, 4]
 
     ["Aardvark", "Bandicoot", "Capybara"]
       -- the original book uses "^." which doesn't type check
@@ -654,10 +683,10 @@ exercise_PartsOf = do
 
     ([1, 2], M.fromList [('a', 3), ('b', 4)])
       ^. partsOf (beside each each)
-      `shouldBe` [1,2,3,4]
+      `shouldBe` [1, 2, 3, 4]
 
     [1, 2, 3, 4] & partsOf (traversed . filtered even) .~ [20, 40]
-      `shouldBe` [1,20,3,40]
+      `shouldBe` [1, 20, 3, 40]
 
     ["Aardvark", "Bandicoot", "Capybara"]
       & partsOf (taking 1 traversed . traversed) .~ "Kangaroo"
@@ -668,20 +697,19 @@ exercise_PartsOf = do
       --- the original book missed a blank
       `shouldBe` ["Antdvark", "Bandicoot", "Capybara"]
 
-    -- the rest of the problems don't have answerable blanks
+-- the rest of the problems don't have answerable blanks
 
 exercise_IndexableStructures :: Spec
 exercise_IndexableStructures = do
   it "1. fill in the blanks" $ do
     ["Larry", "Curly", "Moe"]
       & ix 1 .~ "Wiggly"
-      `shouldBe` ["Larry","Wiggly","Moe"]
+      `shouldBe` ["Larry", "Wiggly", "Moe"]
 
     let heroesAndVillains = M.fromList [("Superman", "Lex"), ("Batman", "Joker")]
 
     heroesAndVillains & at "Spiderman" .~ Just "Goblin"
-      `shouldBe`
-      M.fromList [("Batman","Joker"),("Spiderman","Goblin"),("Superman","Lex")]
+      `shouldBe` M.fromList [("Batman", "Joker"), ("Spiderman", "Goblin"), ("Superman", "Lex")]
 
     sans "Superman" heroesAndVillains
       `shouldBe` M.fromList [("Batman", "Joker")]
@@ -693,7 +721,7 @@ exercise_IndexableStructures = do
 
   it "2. use ix and at to go from input to the output" $ do
     let input = M.fromList [("candy bars", 13), ("soda", 34), ("gum", 7)]
-    let output = M.fromList [("candy bars",13),("ice cream",5),("soda",37)]
+    let output = M.fromList [("candy bars", 13), ("ice cream", 5), ("soda", 37)]
 
     input
       & ix "soda" .~ 37
