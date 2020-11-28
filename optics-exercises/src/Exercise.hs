@@ -269,3 +269,15 @@ besideT :: Traversal s t a b
         -> Traversal s' t' a b
         -> Traversal (s,s') (t,t') a b
 besideT l r f (x, y) = (,) <$> l f x <*> r f y
+
+
+------ Exercises: Traversal laws
+
+law1BreakingT :: Traversal' Int Int
+law1BreakingT f n = negate <$> f n
+
+--- aka (filtered even)
+law2BreakingT :: Traversal' Int Int
+law2BreakingT f n
+  | even n    = f n
+  | otherwise = pure n

@@ -36,6 +36,7 @@ spec = do
   exercise_SimpleTraversals
   exercise_TraversalActions
   exercise_CustomTraversals
+  exercise_TraversalLaws
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -590,3 +591,44 @@ exercise_CustomTraversals = do
 
   it "5. Bonus: Reimplement beside" $
     (((1, 2), 3) & besideT both id +~ 3) `shouldBe` ((4, 5), 6)
+
+exercise_TraversalLaws :: Spec
+exercise_TraversalLaws = do
+  it "1. which law does worded break?" $ do
+    -- it breaks the "coherent focus" law.
+    ("foo bar" & worded <>~ " baz" & worded <>~ "a") `shouldBe` "fooa baza bara baza"
+    ("foo bar" & worded <>~ "a baz") `shouldBe` "fooa baz bara baz"
+
+  it "2. break the first law!" $ do
+    (5 & law1BreakingT %%~ pure) `shouldNotBe` (pure 5 :: [Int])
+
+  it "3. break the second law!" $ do
+    (2 & law2BreakingT %~ (`div` 2) & law2BreakingT %~ (+1))
+      `shouldNotBe`
+      (2 & law2BreakingT %~ ((+1) . (`div` 2)))
+    (2 & filtered even %~ (`div` 2) & filtered even %~ (+1))
+      `shouldNotBe`
+      (2 & filtered even %~ ((+1) . (`div` 2)))
+
+  describe "4. decide if the these traversal are lawful or not" $ do
+    it "taking" $ do
+      -- taking is lawful. for law 2, the focused elements are fixed
+      True
+
+    it "beside" $ do
+      -- beside is lawful. for law 2, the focus is fixed
+      True
+
+    it "each" $ do
+      --- lawful. the focus is fixed.
+      True
+
+    it "lined" $ do
+      -- not lawful. same reason as worded
+      ("foo\nbar" & lined <>~ "\nbaz" & lined <>~ "X")
+      `shouldNotBe`
+        ("foo\nbar" & lined <>~ "X\nbaz")
+
+    it "traversed" $ do
+      -- lawful
+      True
