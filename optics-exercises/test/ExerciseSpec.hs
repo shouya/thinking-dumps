@@ -38,6 +38,7 @@ spec = do
   exercise_CustomTraversals
   exercise_TraversalLaws
   exercise_PartsOf
+  exercise_IndexableStructures
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -668,3 +669,34 @@ exercise_PartsOf = do
       `shouldBe` ["Antdvark", "Bandicoot", "Capybara"]
 
     -- the rest of the problems don't have answerable blanks
+
+exercise_IndexableStructures :: Spec
+exercise_IndexableStructures = do
+  it "1. fill in the blanks" $ do
+    ["Larry", "Curly", "Moe"]
+      & ix 1 .~ "Wiggly"
+      `shouldBe` ["Larry","Wiggly","Moe"]
+
+    let heroesAndVillains = M.fromList [("Superman", "Lex"), ("Batman", "Joker")]
+
+    heroesAndVillains & at "Spiderman" .~ Just "Goblin"
+      `shouldBe`
+      M.fromList [("Batman","Joker"),("Spiderman","Goblin"),("Superman","Lex")]
+
+    sans "Superman" heroesAndVillains
+      `shouldBe` M.fromList [("Batman", "Joker")]
+
+    S.fromList ['a', 'e', 'i', 'o', 'u']
+      & at 'y' .~ Just ()
+      & at 'i' .~ Nothing
+      `shouldBe` S.fromList "aeouy"
+
+  it "2. use ix and at to go from input to the output" $ do
+    let input = M.fromList [("candy bars", 13), ("soda", 34), ("gum", 7)]
+    let output = M.fromList [("candy bars",13),("ice cream",5),("soda",37)]
+
+    input
+      & ix "soda" .~ 37
+      & sans "gum"
+      & at "ice cream" ?~ 5
+      `shouldBe` output
