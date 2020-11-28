@@ -657,3 +657,14 @@ exercise_PartsOf = do
 
     [1, 2, 3, 4] & partsOf (traversed . filtered even) .~ [20, 40]
       `shouldBe` [1,20,3,40]
+
+    ["Aardvark", "Bandicoot", "Capybara"]
+      & partsOf (taking 1 traversed . traversed) .~ "Kangaroo"
+      `shouldBe` ["Kangaroo", "Bandicoot", "Capybara"]
+
+    ["Aardvark", "Bandicoot", "Capybara"]
+      & partsOf (traversed . traversed) .~ "Ant"
+      --- the original book missed a blank
+      `shouldBe` ["Antdvark", "Bandicoot", "Capybara"]
+
+    -- the rest of the problems don't have answerable blanks
