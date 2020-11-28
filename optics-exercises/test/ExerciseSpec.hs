@@ -581,42 +581,42 @@ exercise_CustomTraversals = do
     transactions' `shouldBe` [Deposit 11, Withdrawal 21, Deposit 31]
 
   it "2. rewrite both" $ do
-    ((1, 2) & bothT %~ (* 5)) `shouldBe` (5, 10)
+    (1, 2) & bothT %~ (* 5) `shouldBe` (5, 10)
 
   it "3. rewrite transaction delta" $ do
-    (Deposit 10 ^? transactionDelta) `shouldBe` Just 10
-    (Withdrawal 10 ^? transactionDelta) `shouldBe` Just (-10)
-    (Deposit 10 & transactionDelta .~ 15) `shouldBe` Deposit 15
-    (Withdrawal 10 & transactionDelta .~ (-15)) `shouldBe ` Withdrawal 15
-    (Deposit 10 & transactionDelta +~ 5) `shouldBe` Deposit 15
-    (Withdrawal 10 & transactionDelta +~ 5) `shouldBe ` Withdrawal 5
+    Deposit 10 ^? transactionDelta `shouldBe` Just 10
+    Withdrawal 10 ^? transactionDelta `shouldBe` Just (-10)
+    Deposit 10 & transactionDelta .~ 15 `shouldBe` Deposit 15
+    Withdrawal 10 & transactionDelta .~ (-15) `shouldBe ` Withdrawal 15
+    Deposit 10 & transactionDelta +~ 5 `shouldBe` Deposit 15
+    Withdrawal 10 & transactionDelta +~ 5 `shouldBe ` Withdrawal 5
 
   it "4. implement left" $ do
-    (Left 5 & leftT +~ 5) `shouldBe` (Left 10 :: Either Int Int)
-    (Right 5 & leftT +~ 5) `shouldBe` (Right 5 :: Either Int Int)
-    (Left 5 & leftT .~ 10) `shouldBe` (Left 10 :: Either Int Int)
-    (Right 5 & leftT +~ 10) `shouldBe` (Right 5 :: Either Int Int)
+    Left 5 & leftT +~ 5 `shouldBe` (Left 10 :: Either Int Int)
+    Right 5 & leftT +~ 5 `shouldBe` (Right 5 :: Either Int Int)
+    Left 5 & leftT .~ 10 `shouldBe` (Left 10 :: Either Int Int)
+    Right 5 & leftT +~ 10 `shouldBe` (Right 5 :: Either Int Int)
 
   it "5. Bonus: Reimplement beside" $
-    (((1, 2), 3) & besideT both id +~ 3) `shouldBe` ((4, 5), 6)
+    ((1, 2), 3) & besideT both id +~ 3 `shouldBe` ((4, 5), 6)
 
 exercise_TraversalLaws :: Spec
 exercise_TraversalLaws = do
   it "1. which law does worded break?" $ do
     -- it breaks the "coherent focus" law.
-    ("foo bar" & worded <>~ " baz" & worded <>~ "a") `shouldBe` "fooa baza bara baza"
-    ("foo bar" & worded <>~ "a baz") `shouldBe` "fooa baz bara baz"
+    "foo bar" & worded <>~ " baz" & worded <>~ "a" `shouldBe` "fooa baza bara baza"
+    "foo bar" & worded <>~ "a baz" `shouldBe` "fooa baz bara baz"
 
   it "2. break the first law!" $ do
-    (5 & law1BreakingT %%~ pure) `shouldNotBe` (pure 5 :: [Int])
+    5 & law1BreakingT %%~ pure `shouldNotBe` (pure 5 :: [Int])
 
   it "3. break the second law!" $ do
-    (2 & law2BreakingT %~ (`div` 2) & law2BreakingT %~ (+1))
+    2 & law2BreakingT %~ (`div` 2) & law2BreakingT %~ (+1)
       `shouldNotBe`
-      (2 & law2BreakingT %~ ((+1) . (`div` 2)))
-    (2 & filtered even %~ (`div` 2) & filtered even %~ (+1))
+      2 & law2BreakingT %~ ((+1) . (`div` 2))
+    2 & filtered even %~ (`div` 2) & filtered even %~ (+1)
       `shouldNotBe`
-      (2 & filtered even %~ ((+1) . (`div` 2)))
+      2 & filtered even %~ ((+1) . (`div` 2))
 
   describe "4. decide if the these traversal are lawful or not" $ do
     it "taking" $ do
@@ -633,9 +633,8 @@ exercise_TraversalLaws = do
 
     it "lined" $ do
       -- not lawful. same reason as worded
-      ("foo\nbar" & lined <>~ "\nbaz" & lined <>~ "X")
-      `shouldNotBe`
-        ("foo\nbar" & lined <>~ "X\nbaz")
+      "foo\nbar" & lined <>~ "\nbaz" & lined <>~ "X"
+      `shouldNotBe` "foo\nbar" & lined <>~ "X\nbaz"
 
     it "traversed" $ do
       -- lawful
