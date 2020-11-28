@@ -35,6 +35,7 @@ spec = do
   exercise_Filtering
   exercise_SimpleTraversals
   exercise_TraversalActions
+  exercise_CustomTraversals
 
 instance Arbitrary Err where
   arbitrary = oneof [ExitCode <$> arbitrary, ReallyBadError <$> arbitrary]
@@ -562,3 +563,30 @@ exercise_TraversalActions = do
       has _Left (validateAge badAccount2)
     it "valid age case" $ do
       validateAge goodAccount `shouldBe` Right goodAccount
+
+exercise_CustomTraversals :: Spec
+exercise_CustomTraversals = do
+  let transactions = [Deposit 10, Withdrawal  20, Deposit 30]
+  it "1. rewrite amount transaction" $ do
+    let transactions' = transactions & traversed . amountT %~ (+1)
+    transactions' `shouldBe` [Deposit 11, Withdrawal 21, Deposit 31]
+
+  it "2. rewrite both" $ do
+    ((1, 2) & bothT %~ (* 5)) `shouldBe` (5, 10)
+
+  it "3. rewrite transaction delta" $ do
+    (Deposit 10 ^? transactionDelta) `shouldBe` Just 10
+    (Withdrawal 10 ^? transactionDelta) `shouldBe` Just (-10)
+    (Deposit 10 & transactionDelta .~ 15) `shouldBe` Deposit 15
+    (Withdrawal 10 & transactionDelta .~ (-15)) `shouldBe ` Withdrawal 15
+    (Deposit 10 & transactionDelta +~ 5) `shouldBe` Deposit 15
+    (Withdrawal 10 & transactionDelta +~ 5) `shouldBe ` Withdrawal 5
+
+  it "4. implement left" $ do
+    (Left 5 & leftT +~ 5) `shouldBe` (Left 10 :: Either Int Int)
+    (Right 5 & leftT +~ 5) `shouldBe` (Right 5 :: Either Int Int)
+    (Left 5 & leftT .~ 10) `shouldBe` (Left 10 :: Either Int Int)
+    (Right 5 & leftT +~ 10) `shouldBe` (Right 5 :: Either Int Int)
+
+  it "5. Bonus: Reimplement beside" $
+    (((1, 2), 3) & besideT both id +~ 3) `shouldBe` ((4, 5), 6)

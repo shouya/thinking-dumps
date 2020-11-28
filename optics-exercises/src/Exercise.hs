@@ -198,7 +198,12 @@ duloc = Kingdom { _name = "Duloc"
 
 --- Exercises: Filtering
 -- A data structure to represent a single card
-data Card = Card { _cardName :: String , _aura :: Aura , _holo :: Bool , _moves :: [Move] } deriving (Show, Eq)
+data Card = Card { _cardName :: String
+                 , _aura :: Aura
+                 , _holo :: Bool
+                 , _moves :: [Move]
+                 }
+          deriving (Show, Eq)
 -- Each card has an aura-type
 data Aura = Wet | Hot | Spark | Leafy deriving (Show, Eq)
 -- Cards have attack moves
@@ -228,3 +233,39 @@ makeLenses ''UserT
 data Account = Account {_accountId :: String, _user :: UserT} deriving (Show, Eq)
 
 makeLenses ''Account
+
+---- Exercises: Custom traversals
+data Transaction
+  = Withdrawal { _amount :: Int }
+  | Deposit    { _amount :: Int }
+  deriving (Show, Eq)
+makeLenses ''Transaction
+
+newtype BankAccount = BankAccount {_transactions :: [Transaction]}
+  deriving (Show, Eq)
+
+makeLenses ''BankAccount
+
+amountT :: Traversal' Transaction Int
+amountT handler (Withdrawal amt) = Withdrawal <$> handler amt
+amountT handler (Deposit amt) = Deposit <$> handler amt
+
+
+bothT :: Traversal (a, a) (b, b) a b
+-- bothT :: (a -> s b) -> (a, a) -> s (b, b)
+bothT f (x, y) = (,) <$> f x <*> f y
+
+transactionDelta :: Traversal' Transaction Int
+transactionDelta handler (Withdrawal amt) = Withdrawal . negate <$> handler (-amt)
+transactionDelta handler (Deposit amt) = Deposit <$> handler amt
+
+leftT :: Traversal (Either a b) (Either a' b) a a'
+-- leftT :: (a -> s a') -> Either a b -> s (Either a b')
+leftT f (Left v) = Left <$> f v
+leftT _f (Right v) = pure $ Right v
+
+
+besideT :: Traversal s t a b
+        -> Traversal s' t' a b
+        -> Traversal (s,s') (t,t') a b
+besideT l r f (x, y) = (,) <$> l f x <*> r f y
