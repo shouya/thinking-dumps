@@ -696,6 +696,12 @@ exercise_PartsOf = do
       & partsOf (traversed . traversed) .~ "Ant"
       --- the original book missed a blank
       `shouldBe` ["Antdvark", "Bandicoot", "Capybara"]
+  it "try out my handcrafted partsOf combinator" $ do
+    [1, 2, 3, 4] & myPartsOf (traversed . filtered even) %~ reverse
+      `shouldBe` [1, 4, 3, 2]
+
+    [1,2,3,4] & myUnsafePartsOf traversed %~ map show
+      `shouldBe` ["1", "2", "3", "4"]
 
 -- the rest of the problems don't have answerable blanks
 
@@ -708,14 +714,14 @@ exercise_IndexableStructures = do
 
     let heroesAndVillains = M.fromList [("Superman", "Lex"), ("Batman", "Joker")]
 
-    heroesAndVillains & at "Spiderman" .~ Just "Goblin"
+    heroesAndVillains & at "Spiderman" ?~ "Goblin"
       `shouldBe` M.fromList [("Batman", "Joker"), ("Spiderman", "Goblin"), ("Superman", "Lex")]
 
     sans "Superman" heroesAndVillains
       `shouldBe` M.fromList [("Batman", "Joker")]
 
     S.fromList ['a', 'e', 'i', 'o', 'u']
-      & at 'y' .~ Just ()
+      & at 'y' ?~ ()
       & at 'i' .~ Nothing
       `shouldBe` S.fromList "aeouy"
 
