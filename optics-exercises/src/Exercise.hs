@@ -1,18 +1,21 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Exercise where
 
 import Control.Lens
 import Control.Monad.State.Lazy
+import Data.Map (Map)
+import qualified Data.Map as M
 import Data.Maybe
+import Data.Char
 import Text.Read hiding (get)
 
 ------- Exercises: Laws -------------
@@ -314,9 +317,8 @@ myPartsOf t = lens getter setter
     -- setter :: s -> [a] -> s
     setter s xs = evalState (s & t %%~ assignElem) xs
     assignElem a = state $ \case
-        [] -> (a, [])
-        (x : xs) -> (x, xs)
-
+      [] -> (a, [])
+      (x : xs) -> (x, xs)
 
 -- thanks to: https://stackoverflow.com/a/65064222/1232832
 myUnsafePartsOf :: Traversal s t a b -> Lens s t [a] [b]
@@ -327,5 +329,23 @@ myUnsafePartsOf traverse = lens getter setter
     -- setter :: s -> [b] -> t
     setter s xs = evalState (s & traverse %%~ assignElem) xs
     assignElem _a = state $ \case
-        [] -> error "list not long enough"
-        (b : bs) -> (b, bs)
+      [] -> error "list not long enough"
+      (b : bs) -> (b, bs)
+
+----- Exercises Custom Indexed Structures
+
+--- task: implement a case-insensitive ix for map
+newtype CIMap a = CIMap (Map String a)
+  deriving (Eq, Show)
+
+type instance Index   (CIMap _) = String
+type instance IxValue (CIMap a) = a
+
+instance Ixed (CIMap a) where
+  ix :: String -> Traversal' (CIMap a) a
+  -- ix :: String -> forall f. (a -> f a) -> CIMap a -> f (CIMap a)
+  ix key f (CIMap m) =
+    case M.lookup lowerKey m of
+      Just v -> (\v' -> CIMap (M.insert lowerKey v' m)) <$> f v
+      Nothing -> pure (CIMap m)
+    where lowerKey = map toLower key

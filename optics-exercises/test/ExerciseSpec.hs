@@ -38,6 +38,8 @@ spec = do
   exercise_TraversalLaws
   exercise_PartsOf
   exercise_IndexableStructures
+  exercise_CustomIndexedStructures
+  exercise_MissingValues
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -700,7 +702,7 @@ exercise_PartsOf = do
     [1, 2, 3, 4] & myPartsOf (traversed . filtered even) %~ reverse
       `shouldBe` [1, 4, 3, 2]
 
-    [1,2,3,4] & myUnsafePartsOf traversed %~ map show
+    [1, 2, 3, 4] & myUnsafePartsOf traversed %~ map show
       `shouldBe` ["1", "2", "3", "4"]
 
 -- the rest of the problems don't have answerable blanks
@@ -734,3 +736,58 @@ exercise_IndexableStructures = do
       & sans "gum"
       & at "ice cream" ?~ 5
       `shouldBe` output
+
+exercise_CustomIndexedStructures :: Spec
+exercise_CustomIndexedStructures = do
+  -- Implement both Ixed and At for a newtype wrapper around a Map
+  -- which makes indexing case insensitive, you can specialize to
+  -- String or Text keys. Write the ix instance manually even though
+  -- it has a default implementation. It’s okay to assume that user
+  -- will only interact with the map via Ixed and At.
+  let m = CIMap (M.fromList [("happy", 10 :: Int)])
+  it "ix works" $
+    do
+      m & ix "Happy" .~ 12
+      `shouldBe` CIMap (M.fromList [("happy", 12)])
+
+exercise_MissingValues :: Spec
+exercise_MissingValues = do
+  it "1. focus the value at key 'first' or 'second" $ do
+    let optic = ix "first" `failing` ix "second"
+    M.fromList [("first", False), ("second", False)] & optic .~ True
+      `shouldBe` M.fromList [("first", True), ("second", False)]
+
+    M.fromList [("second", False)] & optic .~ True
+      `shouldBe` M.fromList [("second", True)]
+
+  it "2. focus first element if it's even, otherwise focus the second" $ do
+    let optic = (ix 0 . filtered even) `failing` (ix 1 . filtered odd)
+    (1, 1) & optic *~ 10 `shouldBe` (1, 10)
+    (2, 2) & optic *~ 10 `shouldBe` (20, 2)
+
+  it "3. focus all even numbers in a list, if none then focus all numbers" $ do
+    let optic = (traversed . filtered even) `failing` traversed
+    [1, 2, 3, 4] ^.. optic `shouldBe` [2, 4]
+    [1, 3, 5] ^.. optic `shouldBe` [1, 3, 5]
+
+  it "4. fill the blanks" $ do
+    Nothing ^. non "default" `shouldBe` "default"
+    Nothing & non 100 +~ 7 `shouldBe` Just 107
+
+    M.fromList [("Perogies", True), ("Pizza", True), ("Pilsners", True)]
+      ^. at "Broccoli" . non False `shouldBe` False
+
+    M.fromList [("Breath of the wild", 22000000), ("Odyssey", 9070000)]
+      & at "Wario's Woods" . non 0 +~ 999
+      `shouldBe` M.fromList
+        [ ("Breath of the wild", 22000000),
+          ("Odyssey", 9070000),
+          ("Wario's Woods", 999)
+        ]
+
+    ["Math", "Science", "Geograph"] ^. pre (ix 10) . non "Unscheduled"
+      `shouldBe` "Unscheduled"
+
+  it "bonus" $ do
+    [1, 2, 3, 4] ^.. traversed . pre (filtered even) . non (-1)
+      `shouldBe` [-1, 2, -1, 4]
