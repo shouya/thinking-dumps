@@ -64,5 +64,6 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wno-partial-type-signatures
     dependencies:
     - optics-exercises

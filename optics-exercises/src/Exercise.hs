@@ -349,3 +349,8 @@ instance Ixed (CIMap a) where
       Just v -> (\v' -> CIMap (M.insert lowerKey v' m)) <$> f v
       Nothing -> pure (CIMap m)
     where lowerKey = map toLower key
+
+
+--- For Exercises: Prisms
+data ContactInfo = Email String | Telephone Int | Address String String String
+makePrisms ''ContactInfo

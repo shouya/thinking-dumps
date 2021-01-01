@@ -1,3 +1,5 @@
+{-# LANGUAGE PartialTypeSignatures #-}
+
 {- HLINT ignore "Use camelCase" -}
 {- HLINT ignore "Redundant $" -}
 {- HLINT ignore "Redundant do" -}
@@ -40,6 +42,7 @@ spec = do
   exercise_IndexableStructures
   exercise_CustomIndexedStructures
   exercise_MissingValues
+  exercise_Prisms
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -745,10 +748,8 @@ exercise_CustomIndexedStructures = do
   -- it has a default implementation. It’s okay to assume that user
   -- will only interact with the map via Ixed and At.
   let m = CIMap (M.fromList [("happy", 10 :: Int)])
-  it "ix works" $
-    do
-      m & ix "Happy" .~ 12
-      `shouldBe` CIMap (M.fromList [("happy", 12)])
+  it "ix works" $ do
+    m & ix "Happy" .~ 12 `shouldBe` CIMap (M.fromList [("happy", 12)])
 
 exercise_MissingValues :: Spec
 exercise_MissingValues = do
@@ -791,3 +792,50 @@ exercise_MissingValues = do
   it "bonus" $ do
     [1, 2, 3, 4] ^.. traversed . pre (filtered even) . non (-1)
       `shouldBe` [-1, 2, -1, 4]
+
+exercise_Prisms :: Spec
+exercise_Prisms = do
+  it "1. what prisms will be generated?" $ do
+    -- _Email :: Prism' ContactInfo String
+    -- _Telephone :: Prism' ContactInfo Int
+    -- _Address :: Prism' (String, String, String)
+    True
+
+  it "2. Fill in the blanks" $ do
+    (Right 35 & _Right +~ 5) `shouldBe` (Right 40 :: _ () _)
+
+    [Just "Mind", Just "Power", Nothing, Just "Soul", Nothing, Just "Time"]
+      ^.. folded . _Just `shouldBe` ["Mind", "Power", "Soul", "Time"]
+
+    [Just "Mind", Just "Power", Nothing, Just "Soul", Nothing, Just "Time"]
+      & traversed . _Just <>~ " Stone"
+      `shouldBe` [ Just "Mind Stone",
+                   Just "Power Stone",
+                   Nothing,
+                   Just "Soul Stone",
+                   Nothing,
+                   Just "Time Stone"
+                 ]
+
+    Left (Right True, "Eureka!") & _Left . _1 . _Right %~ not
+      `shouldBe` (Left (Right False :: _ () _, "Eureka!") :: _ _ ())
+
+    _Cons # ("Do",["Re", "Mi"]) `shouldBe` ["Do", "Re", "Mi"]
+
+    isn't (_Show :: Prism' String Int) "not an int" `shouldBe` True
+
+  it "3.1 convert input to output" $ do
+    let input = (Just 1, Nothing, Just 3)
+    let output = [1, 3]
+    input ^.. each . _Just `shouldBe` output
+
+  it "3.2 convert input to output" $ do
+    let input = ('x', "yz")
+    let output = "xzy"
+    _Cons # (input & _2 %~ reverse) `shouldBe` output
+
+  it "3.3 convert input to output" $ do
+    let input = "do the hokey pokey"
+    let output = Left (Just (Right "do the hokey pokey"))
+    -- stupid! gotta specify all unknown types
+    _Left . _Just . _Right # input `shouldBe` (output :: _ (_ (_ () _)) ())

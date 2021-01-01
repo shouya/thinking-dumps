@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 297ec17b1cb025d79356714e7ca17307b8bc938e074d6d8ef95e59aa90f9f0c1
+-- hash: dd19b10de971e42c582ef59997ff7ffa81d810365735ce0124decf548f9c768e
 
 name:           optics-exercises
 version:        0.1.0.0
@@ -78,7 +78,7 @@ test-suite optics-exercises-test
   hs-source-dirs:
       test
   default-extensions: TemplateHaskell FlexibleInstances FlexibleContexts RankNTypes ScopedTypeVariables TypeApplications TypeFamilies InstanceSigs
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wno-partial-type-signatures
   build-depends:
       QuickCheck
     , aeson
