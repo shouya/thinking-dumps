@@ -12,10 +12,10 @@ module Exercise where
 
 import Control.Lens
 import Control.Monad.State.Lazy
+import Data.Char
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
-import Data.Char
 import Text.Read hiding (get)
 
 ------- Exercises: Laws -------------
@@ -338,7 +338,8 @@ myUnsafePartsOf traverse = lens getter setter
 newtype CIMap a = CIMap (Map String a)
   deriving (Eq, Show)
 
-type instance Index   (CIMap _) = String
+type instance Index (CIMap _) = String
+
 type instance IxValue (CIMap a) = a
 
 instance Ixed (CIMap a) where
@@ -348,9 +349,50 @@ instance Ixed (CIMap a) where
     case M.lookup lowerKey m of
       Just v -> (\v' -> CIMap (M.insert lowerKey v' m)) <$> f v
       Nothing -> pure (CIMap m)
-    where lowerKey = map toLower key
-
+    where
+      lowerKey = map toLower key
 
 --- For Exercises: Prisms
 data ContactInfo = Email String | Telephone Int | Address String String String
+
 makePrisms ''ContactInfo
+
+--- For Exercises: Custom prisms
+_Factor :: Int -> Prism' Int Int
+_Factor n = prism' embed match
+  where
+    embed :: Int -> Int
+    embed i = i * n
+    match :: Int -> Maybe Int
+    match i = if i `mod` n == 0 then Just (i `div` n) else Nothing
+
+_Tail :: Prism' [a] [a]
+_Tail = prism' embed match
+  where
+    embed :: [a] -> [a]
+    embed xs = xs
+    match :: [a] -> Maybe [a]
+    match [] = Nothing
+    match (x : xs) = Just xs
+
+_ListCons :: Prism [a] [b] (a, [a]) (b, [b])
+_ListCons = prism embed match
+  where
+    embed (x, xs) = x : xs
+    match [] = Left []
+    match (x : xs) = Right (x, xs)
+
+_Cycles :: Int -> Prism' String String
+_Cycles n = prism' embed match
+  where
+    embed s = concat $ replicate n s
+    match xs = extractCycle n xs
+    extractCycle n xs
+      | (length xs `div` n) /= 0 = Nothing
+      | otherwise =
+        let len = length xs `div` n
+            first = take len xs
+         in case extractCycle (n - 1) (drop len xs) of
+              Nothing -> Nothing
+              Just first' | first == first' -> Just first
+              _ -> Nothing

@@ -1,5 +1,4 @@
 {-# LANGUAGE PartialTypeSignatures #-}
-
 {- HLINT ignore "Use camelCase" -}
 {- HLINT ignore "Redundant $" -}
 {- HLINT ignore "Redundant do" -}
@@ -839,3 +838,21 @@ exercise_Prisms = do
     let output = Left (Just (Right "do the hokey pokey"))
     -- stupid! gotta specify all unknown types
     _Left . _Just . _Right # input `shouldBe` (output :: _ (_ (_ () _)) ())
+
+
+exercise_CustomPrisms :: Spec
+exercise_CustomPrisms = do
+  it "1. write a _Tail prism" $ do
+    -- It's not possible. Because there is no lawful implementation of "embed".
+    True
+
+  it "2. write a _ListCons prism" $ do
+    -- See Exercise.hs
+    True
+  it "3. (Bonus) Implement _Cycle to detect exactly 'n' repetitions" $ do
+    "dogdogdog" ^? _Cycles 3 `shouldBe` Just "dog"
+    "dogdogdogdog" ^? _Cycles 3 `shouldBe` Nothing
+    "aaa" ^? _Cycles 3 `shouldBe` Just "a"
+    "xyz" ^? _Cycles 3 `shouldBe` Nothing
+    _Cycles 3 # "dog" `shouldBe` "dogdogdog"
+    "dogdogdog" & _Cycles 3 .~ "cats" `shouldBe` "catscatscats"
