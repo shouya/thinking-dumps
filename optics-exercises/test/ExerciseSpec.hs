@@ -1,4 +1,5 @@
 {-# LANGUAGE PartialTypeSignatures #-}
+
 {- HLINT ignore "Use camelCase" -}
 {- HLINT ignore "Redundant $" -}
 {- HLINT ignore "Redundant do" -}
@@ -42,6 +43,8 @@ spec = do
   exercise_CustomIndexedStructures
   exercise_MissingValues
   exercise_Prisms
+  exercise_CustomPrisms
+  exercise_PrismLaws
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -819,7 +822,7 @@ exercise_Prisms = do
     Left (Right True, "Eureka!") & _Left . _1 . _Right %~ not
       `shouldBe` (Left (Right False :: _ () _, "Eureka!") :: _ _ ())
 
-    _Cons # ("Do",["Re", "Mi"]) `shouldBe` ["Do", "Re", "Mi"]
+    _Cons # ("Do", ["Re", "Mi"]) `shouldBe` ["Do", "Re", "Mi"]
 
     isn't (_Show :: Prism' String Int) "not an int" `shouldBe` True
 
@@ -839,7 +842,6 @@ exercise_Prisms = do
     -- stupid! gotta specify all unknown types
     _Left . _Just . _Right # input `shouldBe` (output :: _ (_ (_ () _)) ())
 
-
 exercise_CustomPrisms :: Spec
 exercise_CustomPrisms = do
   it "1. write a _Tail prism" $ do
@@ -856,3 +858,26 @@ exercise_CustomPrisms = do
     "xyz" ^? _Cycles 3 `shouldBe` Nothing
     _Cycles 3 # "dog" `shouldBe` "dogdogdog"
     "dogdogdog" & _Cycles 3 .~ "cats" `shouldBe` "catscatscats"
+
+exercise_PrismLaws :: Spec
+exercise_PrismLaws = do
+  it "1. implement _Contains prism and determine if it's lawful" $ do
+    -- It is not lawful. It breaks the review-preview law.
+    _Contains 1 # S.fromList [1] & preview (_Contains 1)
+      `shouldNotBe` Just (S.fromList [1])
+    _Contains 1 # S.fromList [1] & preview (_Contains 1)
+      `shouldBe` Just (S.fromList [])
+
+  it "2. is _Singleton lawful?" $ do
+    -- it is
+    let law1 a = preview _Singleton (review _Singleton a) == Just (a :: Int)
+        law2 s = case preview _Singleton s of
+                   Nothing -> True
+                   Just (a :: Int) -> review _Singleton a == s
+        law3 s = case matching _Singleton (s :: [Int]) of
+                   Left (t :: [Int]) -> matching _Singleton t == Left s
+                   Right _ -> True
+      in property law1 .&. property law2 .&. property law3
+
+  it "3. write a Prism that fails the first law" $ do
+    _PlusOne # (-1) & review _PlusOne `shouldNotBe` (-1)

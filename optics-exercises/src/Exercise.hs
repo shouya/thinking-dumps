@@ -15,6 +15,8 @@ import Control.Monad.State.Lazy
 import Data.Char
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Set (Set)
+import qualified Data.Set as S
 import Data.Maybe
 import Text.Read hiding (get)
 
@@ -373,7 +375,7 @@ _Tail = prism' embed match
     embed xs = xs
     match :: [a] -> Maybe [a]
     match [] = Nothing
-    match (x : xs) = Just xs
+    match (_x : xs) = Just xs
 
 _ListCons :: Prism [a] [b] (a, [a]) (b, [b])
 _ListCons = prism embed match
@@ -387,8 +389,11 @@ _Cycles n = prism' embed match
   where
     embed s = concat $ replicate n s
     match xs = extractCycle n xs
+    extractCycle 0 [] = Just ""
+    extractCycle 0 _xs = Nothing
+    extractCycle 1 xs = Just xs
     extractCycle n xs
-      | (length xs `div` n) /= 0 = Nothing
+      | (length xs `mod` n) /= 0 = Nothing
       | otherwise =
         let len = length xs `div` n
             first = take len xs
@@ -396,3 +401,24 @@ _Cycles n = prism' embed match
               Nothing -> Nothing
               Just first' | first == first' -> Just first
               _ -> Nothing
+
+
+--- For exercises: Prism laws
+_Contains :: Ord a => a -> Prism' (Set a) (Set a)
+_Contains a = prism' embed match
+  where embed s = S.insert a s
+        match s = if S.member a s
+                  then Just (S.delete a s)
+                  else Nothing
+
+_Singleton :: Prism' [a] a
+_Singleton = prism' embed match
+  where embed a = [a]
+        match [a] = Just a
+        match _ = Nothing
+
+_PlusOne :: Prism' Int Int
+_PlusOne = prism' embed match
+  where embed n = n + 1
+        match 0 = Nothing
+        match n = Just $ n - 1
