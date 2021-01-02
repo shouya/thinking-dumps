@@ -11,13 +11,15 @@ import Control.Applicative
 import Control.Lens hiding ((&))
 import Control.Lens.Properties
 import Control.Monad.State
-import Data.Char (isAlpha, toLower, toUpper)
+import Data.Char (isAlpha, isUpper, toLower, toUpper)
 import Data.Function hiding ((&))
+import Data.List (transpose)
 import qualified Data.Map as M
 import Data.Monoid
 import Data.Ord
 import qualified Data.Set as S
 import Exercise
+import Numeric.Lens
 import Test.Hspec
 import Test.QuickCheck
 
@@ -45,6 +47,7 @@ spec = do
   exercise_Prisms
   exercise_CustomPrisms
   exercise_PrismLaws
+  exercise_IntroToIsos
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -872,12 +875,69 @@ exercise_PrismLaws = do
     -- it is
     let law1 a = preview _Singleton (review _Singleton a) == Just (a :: Int)
         law2 s = case preview _Singleton s of
-                   Nothing -> True
-                   Just (a :: Int) -> review _Singleton a == s
+          Nothing -> True
+          Just (a :: Int) -> review _Singleton a == s
         law3 s = case matching _Singleton (s :: [Int]) of
-                   Left (t :: [Int]) -> matching _Singleton t == Left s
-                   Right _ -> True
-      in property law1 .&. property law2 .&. property law3
+          Left (t :: [Int]) -> matching _Singleton t == Left s
+          Right _ -> True
+     in property law1 .&. property law2 .&. property law3
 
   it "3. write a Prism that fails the first law" $ do
     _PlusOne # (-1) & review _PlusOne `shouldNotBe` (-1)
+
+exercise_IntroToIsos :: Spec
+exercise_IntroToIsos = do
+  it "1. choose optics" $ do
+    -- For each of the following tasks, choose whether it’s best suited
+    -- to a Lens, Traversal, Prism, or Iso:
+    --
+    -- • Focus a Celsius temperature in Fahrenheit
+    -- A: iso
+
+    -- • Focus the last element of a list
+    -- A: prism
+
+    -- • View a JSON object as its corresponding Haskell Record
+    -- A: prism if we want to handle errors, otherwise iso
+
+    -- • Rotate the elements of a three-tuple one to the right
+    -- A: iso
+
+    -- • Focus on the ‘bits’ of an Int as Bools.
+    -- A: iso
+
+    -- • Focusing an IntSet from a Set Int
+    -- A: I'm not sure what IntSet is, but I guess it should be 'iso'.
+    True
+
+  it "2. fill in the blank" $ do
+    ("Beauty", "Age") ^. swapped `shouldBe` ("Age", "Beauty")
+    50 ^. from (adding 10) `shouldBe` 40
+    0 & multiplying 4 +~ 12 `shouldBe` 3.0
+    0 & adding 10 . multiplying 2 .~ 24 `shouldBe` 2
+    [1, 2, 3] & reversed %~ tail `shouldBe` [1, 2]
+    view flipped (++) [1, 2] [3, 4] `shouldBe` [3, 4, 1, 2]
+    [1, 2, 3] ^. reversed `shouldBe` [3, 2, 1]
+    -- bonus
+    [[1, 2, 3], [10, 20, 30]] & involuted transpose %~ tail
+      `shouldBe` [[2, 3], [20, 30]]
+    let switchCase c = if isUpper c then toLower c else toUpper c
+    (32, "Hi") & _2 . involuted (map switchCase) .~ ("hELLO" :: String)
+      `shouldBe` (32, "Hello")
+
+  it "3. implement fahrenheit lens" $ do
+    let c2F (c :: Double) = (c * (9 / 5)) + 32
+    -- I literally just paraphrased c2F!
+    let f2C (f :: Double) = review (multiplying (9 / 5) . adding 32) f
+    let fahrenheit = iso c2F f2C
+    let fahrenheit' = iso c2F f2C
+    -- because of some haskell type checker limitations, i wasn't able to use
+    -- the same fahrenheit twice
+    0.0 ^. fahrenheit' `shouldBe` 32.0
+    100.0 ^. from fahrenheit `shouldBe` 37.777777777777778
+
+    -- alternatively, we can just combine other isos
+    let fahrenheit2 = multiplying (9 / 5) . adding 32
+    let fahrenheit2' = multiplying (9 / 5) . adding 32
+    0.0 ^. fahrenheit2 `shouldBe` 32.0
+    100.0 ^. from fahrenheit2' `shouldBe` 37.777777777777778
