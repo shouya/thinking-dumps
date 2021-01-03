@@ -1000,4 +1000,42 @@ exercise_IsoLaws = do
     [(1, 2), (1, 3)] ^. from sorted . sorted `shouldNotBe` [(1, 2), (1, 3)]
 
 exercise_IndexedOptics :: Spec
-exercise_IndexedOptics = do return ()
+exercise_IndexedOptics = do
+  it "1. fill in the blanks" $ do
+    M.fromList [("streamResponse", False), ("useSSL", True)] ^@.. itraversed
+      `shouldBe` [("streamResponse", False), ("useSSL", True)]
+
+    (M.fromList [('a', 1), ('b', 2)], M.fromList [('c', 3), ('d', 4)])
+      ^@.. both . itraversed
+      `shouldBe` [('a', 1), ('b', 2), ('c', 3), ('d', 4)]
+
+    M.fromList [('a', (True, 1)), ('b', (False, 2))]
+      ^@.. itraversed <. _1
+      `shouldBe` [('a', True), ('b', False)]
+
+    [ M.fromList [("Tulips", 5), ("Roses", 3)],
+      M.fromList [("Goldfish", 11), ("Frogs", 8)]
+      ]
+      ^@.. itraversed <.> itraversed
+      `shouldBe` [ ((0, "Roses"), 3),
+                   ((0, "Tulips"), 5),
+                   ((1, "Frogs"), 8),
+                   ((1, "Goldfish"), 11)
+                 ]
+
+    [10, 20, 30] & itraversed %@~ (+)
+      `shouldBe` [10, 21, 32]
+
+    -- I changed the printing part to the next two questions to make it
+    -- return a list Monad so the result can be verified easily.
+    itraverseOf
+      itraversed
+      (\i s -> [replicate i ' ' <> s])
+      ["one", "two", "three"]
+      `shouldBe` [["one", " two", "  three"]]
+
+    itraverseOf
+      itraversed
+      (\n s -> [show n <> ": " <> s])
+      ["Go shopping", "Eat lunch", "Take a nap"]
+      `shouldBe` [["0: Go shopping", "1: Eat lunch", "2: Take a nap"]]
