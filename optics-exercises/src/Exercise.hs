@@ -13,11 +13,13 @@ module Exercise where
 import Control.Lens
 import Control.Monad.State.Lazy
 import Data.Char
+import Data.List.NonEmpty (NonEmpty(..))
 import Data.Map (Map)
+import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
-import Data.Maybe
 import Text.Read hiding (get)
 
 ------- Exercises: Laws -------------
@@ -402,31 +404,51 @@ _Cycles n = prism' embed match
               Just first' | first == first' -> Just first
               _ -> Nothing
 
-
 --- For exercises: Prism laws
 _Contains :: Ord a => a -> Prism' (Set a) (Set a)
 _Contains a = prism' embed match
-  where embed s = S.insert a s
-        match s = if S.member a s
-                  then Just (S.delete a s)
-                  else Nothing
+  where
+    embed s = S.insert a s
+    match s =
+      if S.member a s
+        then Just (S.delete a s)
+        else Nothing
 
 _Singleton :: Prism' [a] a
 _Singleton = prism' embed match
-  where embed a = [a]
-        match [a] = Just a
-        match _ = Nothing
+  where
+    embed a = [a]
+    match [a] = Just a
+    match _ = Nothing
 
 _PlusOne :: Prism' Int Int
 _PlusOne = prism' embed match
-  where embed n = n + 1
-        match 0 = Nothing
-        match n = Just $ n - 1
+  where
+    embed n = n + 1
+    match 0 = Nothing
+    match n = Just $ n - 1
 
--- For exercises: Projected isos
+-- For exercise: Projected isos
 -- instance Enum Bool
 intNot :: Int -> Int
 intNot = not ^. dimapping enum (from enum)
 
 -- simplified
 intNot' = fromEnum . not . toEnum
+
+-- For exercise: Iso laws
+mapList :: Ord k => Iso' (M.Map k v) [(k, v)]
+mapList = iso M.toList M.fromList
+
+nonEmptyList :: Iso' [a] (Maybe (NonEmpty a))
+nonEmptyList = iso to from
+  where
+    to [] = Nothing
+    to (x : xs) = Just (x :| xs)
+    from Nothing = []
+    from (Just (x :| xs)) = x : xs
+
+sorted :: (Ord a) => Iso' [a] [(Int, a)]
+sorted = iso to from
+  where to xs = sortOn snd $ zip [0..] xs
+        from xs = snd <$> sortOn fst xs

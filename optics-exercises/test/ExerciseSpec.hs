@@ -15,6 +15,7 @@ import Control.Monad.State
 import Data.Char (isAlpha, isUpper, toLower, toUpper)
 import Data.Function hiding ((&))
 import Data.List (transpose)
+import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Map as M
 import Data.Monoid
 import Data.Ord
@@ -50,6 +51,8 @@ spec = do
   exercise_PrismLaws
   exercise_IntroToIsos
   exercise_ProjectedIsos
+  exercise_IsoLaws
+  exercise_IndexedOptics
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -66,6 +69,9 @@ instance Arbitrary Prenu where
 
 instance Arbitrary Builder where
   arbitrary = Builder <$> arbitrary <*> arbitrary
+
+instance Arbitrary a => Arbitrary (NonEmpty a) where
+  arbitrary = (:|) <$> arbitrary <*> arbitrary
 
 exercise_Laws :: Spec
 exercise_Laws = do
@@ -966,3 +972,32 @@ exercise_ProjectedIsos = do
     evaluate (intNot 2) `shouldThrow` anyException
 
     intNot' 0 `shouldBe` 1
+
+exercise_IsoLaws :: Spec
+exercise_IsoLaws = do
+  it "1. find a counter example to show mapList is unlawful" $ do
+    [('a', 1), ('a', 2)] ^. from mapList . mapList
+      `shouldNotBe` [('a', 1), ('a', 2)]
+
+  it "2. is there a lawful impl of nonEmptyList" $
+    -- yes
+    let law1 (a :: [Int]) =
+          a ^. nonEmptyList . from nonEmptyList == a
+        law2 (a :: Maybe (NonEmpty Int)) =
+          a ^. from nonEmptyList . nonEmptyList == a
+     in property law1 .&. property law2
+
+  it "3. is sorted lawful" $ do
+    -- obviously not. sorted will map different versions of lists into
+    -- one list, for example, both [2,3,1] and [3,2,1] gets mapped to [1,2,3].
+    -- Therefore it's not reversible, so there is no possible impl of lawful
+    -- sorted.
+    True
+
+  it "4. is this version of sorted lawful?" $ do
+    -- no. although no information is lost during the conversion, there is no
+    -- way to guarantee the index in [(Int, a)] is always valid.
+    [(1, 2), (1, 3)] ^. from sorted . sorted `shouldNotBe` [(1, 2), (1, 3)]
+
+exercise_IndexedOptics :: Spec
+exercise_IndexedOptics = do return ()
