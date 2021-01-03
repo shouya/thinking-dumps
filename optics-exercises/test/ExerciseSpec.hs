@@ -8,6 +8,7 @@ module ExerciseSpec (spec) where
 -- import qualified Data.Text as T
 
 import Control.Applicative
+import Control.Exception (evaluate)
 import Control.Lens hiding ((&))
 import Control.Lens.Properties
 import Control.Monad.State
@@ -48,6 +49,7 @@ spec = do
   exercise_CustomPrisms
   exercise_PrismLaws
   exercise_IntroToIsos
+  exercise_ProjectedIsos
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -941,3 +943,26 @@ exercise_IntroToIsos = do
     let fahrenheit2' = multiplying (9 / 5) . adding 32
     0.0 ^. fahrenheit2 `shouldBe` 32.0
     100.0 ^. from fahrenheit2' `shouldBe` 37.777777777777778
+
+exercise_ProjectedIsos :: Spec
+exercise_ProjectedIsos = do
+  it "1. Fill in the blank" $ do
+    ("Beauty", "Age") ^. mapping reversed . swapped
+      `shouldBe` ("egA", "Beauty")
+
+    [True, False, True] ^. mapping (involuted not)
+      `shouldBe` [False, True, False]
+
+    [True, False, True] & mapping (involuted not) %~ filter id
+      `shouldBe` [False]
+
+    -- a function is a covariant functor on its return type
+    (show ^. mapping reversed) 1234
+      `shouldBe` "4321"
+
+  it "2. implement intNot with dimapping" $ do
+    intNot 0 `shouldBe` 1
+    intNot 1 `shouldBe` 0
+    evaluate (intNot 2) `shouldThrow` anyException
+
+    intNot' 0 `shouldBe` 1

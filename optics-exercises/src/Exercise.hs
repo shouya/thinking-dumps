@@ -422,3 +422,11 @@ _PlusOne = prism' embed match
   where embed n = n + 1
         match 0 = Nothing
         match n = Just $ n - 1
+
+-- For exercises: Projected isos
+-- instance Enum Bool
+intNot :: Int -> Int
+intNot = not ^. dimapping enum (from enum)
+
+-- simplified
+intNot' = fromEnum . not . toEnum
