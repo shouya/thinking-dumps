@@ -13,13 +13,16 @@ module Exercise where
 import Control.Lens
 import Control.Monad.State.Lazy
 import Data.Char
-import Data.List.NonEmpty (NonEmpty(..))
-import Data.Map (Map)
 import Data.List
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as S
+import Data.Text (Text)
+import qualified Data.Text as T
+import Data.Text.Lens
 import Text.Read hiding (get)
 
 ------- Exercises: Laws -------------
@@ -450,5 +453,34 @@ nonEmptyList = iso to from
 
 sorted :: (Ord a) => Iso' [a] [(Int, a)]
 sorted = iso to from
-  where to xs = sortOn snd $ zip [0..] xs
-        from xs = snd <$> sortOn fst xs
+  where
+    to xs = sortOn snd $ zip [0 ..] xs
+    from xs = snd <$> sortOn fst xs
+
+-- For exercise: Custom indexed optics
+ipair :: IndexedFold Bool (a, a) a
+ipair = ifolding (\(x, y) -> [(False, x), (True, y)])
+
+ipair' :: IndexedTraversal Bool (a, a) (b, b) a b
+ipair' p (x, y) = (,) <$> indexed p False x <*> indexed p True y
+
+oneIndexed :: IndexedTraversal Int [a] [b] a b
+oneIndexed = reindexed (+ 1) itraversed
+
+oneIndexed' :: IndexedTraversal Int [a] [b] a b
+oneIndexed' f xs = helper (1 :: Int) f xs
+  where
+    helper _ _ [] = pure []
+    helper n f (x : xs) = (:) <$> indexed f n x <*> helper (n + 1) f xs
+
+invertedIndex :: IndexedTraversal Int [a] [b] a b
+invertedIndex =
+  reindexed
+    (\(xs, i) -> length xs - i - 1)
+    (selfIndex <.> itraversed)
+
+ichars :: IndexedTraversal Int Text Text Char Char
+ichars = unpacked . itraversed
+
+icharCoords :: IndexedTraversal (Int, Int) Text Text Char Char
+icharCoords = unpacked . (lined <.> traversed)

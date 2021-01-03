@@ -20,6 +20,7 @@ import qualified Data.Map as M
 import Data.Monoid
 import Data.Ord
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Exercise
 import Numeric.Lens
 import Test.Hspec
@@ -54,6 +55,7 @@ spec = do
   exercise_IsoLaws
   exercise_IndexedOptics
   exercise_IndexFilters
+  exercise_CustomIndexedOptics
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -1089,7 +1091,7 @@ exercise_IndexFilters = do
 
   it "2.2 set the empty square at (1,0) to 'Z'" $ do
     board
-      & (itraversed <.> itraversed) . index (1, 0))
+      & (itraversed <.> itraversed) . index (1, 0)
       .~ 'Z'
       `shouldBe` ["XOO", "ZXO", "X.."]
 
@@ -1098,4 +1100,39 @@ exercise_IndexFilters = do
       `shouldBe` "OX."
   it "2.4 get the 3rd row" $ do
     board ^.. itraversed . index 2 . traversed
-      `shouldBe` "OX."
+      `shouldBe` "X.."
+
+exercise_CustomIndexedOptics :: Spec
+exercise_CustomIndexedOptics = do
+  it "1. implement indexed optics ipair/ipair'" $ do
+    ('a', 'b') ^@.. ipair `shouldBe` [(False, 'a'), (True, 'b')]
+    ('a', 'b') ^@.. ipair' `shouldBe` [(False, 'a'), (True, 'b')]
+
+  it "2. implement oneIndexed" $ do
+    ['a' .. 'c'] ^@.. oneIndexed `shouldBe` [(1, 'a'), (2, 'b'), (3, 'c')]
+    ['a' .. 'c'] ^@.. oneIndexed' `shouldBe` [(1, 'a'), (2, 'b'), (3, 'c')]
+
+    -- I failed to implement invertedIndex myself. From the answer
+    -- the author used selfIndex to expose the whole structure for further
+    -- icompose and use that to determine the relative position.
+    -- I reproduced the cdoe in Exercise.hs.
+    ['a' .. 'd'] ^@.. invertedIndex
+      `shouldBe` [(3, 'a'), (2, 'b'), (1, 'c'), (0, 'd')]
+
+  it "3.1 build chars using combinator" $ do
+    (T.pack "banana") ^@.. ichars
+      `shouldBe` [(0, 'b'), (1, 'a'), (2, 'n'), (3, 'a'), (4, 'n'), (5, 'a')]
+
+  it "3.2 build charCoords using combinator" $ do
+    (T.pack "line\nby\nline") ^@.. icharCoords
+      `shouldBe` [ ((0, 0), 'l'),
+                   ((0, 1), 'i'),
+                   ((0, 2), 'n'),
+                   ((0, 3), 'e'),
+                   ((1, 0), 'b'),
+                   ((1, 1), 'y'),
+                   ((2, 0), 'l'),
+                   ((2, 1), 'i'),
+                   ((2, 2), 'n'),
+                   ((2, 3), 'e')
+                 ]
