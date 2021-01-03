@@ -53,6 +53,7 @@ spec = do
   exercise_ProjectedIsos
   exercise_IsoLaws
   exercise_IndexedOptics
+  exercise_IndexFilters
 
 -- redefine (&) to infixl 2 (was infixl 1 in Control.Lens).
 -- so it plays well with `shouldBe`
@@ -1039,3 +1040,62 @@ exercise_IndexedOptics = do
       (\n s -> [show n <> ": " <> s])
       ["Go shopping", "Eat lunch", "Take a nap"]
       `shouldBe` [["0: Go shopping", "1: Eat lunch", "2: Take a nap"]]
+
+exercise_IndexFilters :: Spec
+exercise_IndexFilters = do
+  -- exercises :: M.Map String (M.Map String Int)
+  let exercises =
+        M.fromList
+          [ ("Monday", M.fromList [("pushups", 10), ("crunches", 20)]),
+            ("Wednesday", M.fromList [("pushups", 15), ("handstands", 3)]),
+            ("Friday", M.fromList [("crunches", 25), ("handstands", 5)])
+          ]
+
+  it "1.1 compute the total number of crunches" $ do
+    sumOf
+      (itraversed . itraversed . index "crunches")
+      exercises
+      `shouldBe` 45
+
+  it "1.2 compute the number across all types on Wednesday" $ do
+    sumOf
+      (itraversed . index "Wednesday" . traversed)
+      exercises
+      `shouldBe` 18
+
+  it "1.3 list out the number of push ups for each day" $ do
+    itoListOf
+      (itraversed <. (itraversed . index "pushups"))
+      exercises
+      `shouldBe` [("Monday", 10), ("Wednesday", 15)]
+
+  let board =
+        [ "XOO",
+          ".XO",
+          "X.."
+        ]
+  it "2.1 generate a list of positions along with their indices" $ do
+    board ^@.. itraversed <.> itraversed
+      `shouldBe` [ ((0, 0), 'X'),
+                   ((0, 1), 'O'),
+                   ((0, 2), 'O'),
+                   ((1, 0), '.'),
+                   ((1, 1), 'X'),
+                   ((1, 2), 'O'),
+                   ((2, 0), 'X'),
+                   ((2, 1), '.'),
+                   ((2, 2), '.')
+                 ]
+
+  it "2.2 set the empty square at (1,0) to 'Z'" $ do
+    board
+      & (itraversed <.> itraversed) . index (1, 0))
+      .~ 'Z'
+      `shouldBe` ["XOO", "ZXO", "X.."]
+
+  it "2.3 get the 2nd column as a list" $ do
+    board ^.. traversed . itraversed . index 1
+      `shouldBe` "OX."
+  it "2.4 get the 3rd row" $ do
+    board ^.. itraversed . index 2 . traversed
+      `shouldBe` "OX."
