@@ -1,0 +1,722 @@
+# -*- org-confirm-babel-evaluate: nil -*-
+
+#+begin_comment
+Run =org-babel-execute-buffer= (=C-c C-v b=) to evaluate all code blocks.
+#+end_comment
+
+* The reasoned schemer
+:PROPERTIES:
+:ID:       76057E43-8326-4461-8D95-4998464816AB
+:END:
+
+Install minikanren package here: https://pkgs.racket-lang.org/package/minikanren
+
+#+begin_src scheme :session
+(require minikanren)
+
+;; #u, #s
+(define fail (== #t #f))
+(define succ (== #t #t))
+#+end_src
+
+#+RESULTS:
+: #<void>
+
+** Playthings
+
+(fresh) and (run) introduces new unbound logic variables - called "fresh" variables.
+
+== operator "unifies" variables.
+
+_.0 _.1... are "reification" of fresh variables.
+
+=conde= tries all possibilities. the matrix is like a disjunction of conjunctions.
+
+(run n (var) body...) will give at most n solutions
+(run* (var) body...) will give all solutions (potentially infinite loop)
+
+** Teaching old toys new tricks
+
+We can define building blocks based on these primitives:
+
+#+begin_src scheme :session
+;; car
+(define (caro xs v)
+  (fresh (rest)
+         (== (cons v rest) xs)))
+
+;; cdr
+(define (cdro xs v)
+  (fresh (first)
+         (== (cons first v) xs)))
+
+;; cons
+(define (conso x xs v)
+  (== (cons x xs) v))
+
+;; null?
+(define (nullo xs)
+  (== '() xs))
+
+;; eq?
+(define (eqo a b)
+  (== a b))
+
+;; pair?
+(define (pairo p)
+  (fresh (x y)
+         (== (cons x y) p)))
+#+end_src
+
+#+RESULTS:
+: #<void>
+
+
+One discovery is that unnesting is similar to CPS.
+
+#+begin_src scheme :session
+(run* (x)
+      (fresh (v)
+             (cdro '(h e l l o) v)
+             (caro v x)))
+
+;; compare to
+;; (car (cdr '(h e l l o)))
+#+end_src
+
+#+RESULTS:
+| e |
+
+
+The "XXX-o" functions are like their functional counterparts but instead of assignment, they define logical relations. For example, we would write =(setq v (car lst))= to define =v= from a fresh variable to specific values. The miniKanren version would write it to be ~(== v (car lst))~ or ~(caro lst v)~. The second version is more powerful because it allows us to have any values fresh - either ~v~ or ~lst~.
+
+So generally, I observed that logical programming version is like a superset of the functional programming version. We can think of regular functional programming is like a special case of logical programming while restricting a single-direction relationship in the run-time order.
+
+** Seeing old friends in new ways
+
+I think the "old friend" here refers to "recursion".
+
+#+begin_src scheme :session :results list
+(define (listo xs)
+  (conde
+   ((nullo xs))
+   ((pairo xs)
+    (fresh (rest)
+           (cdro xs rest)
+           (listo rest)))))
+
+(run 10 (q) (listo q))
+#+end_src
+
+#+RESULTS:
+- hline
+- (_\.0)
+- (_\.0 _\.1)
+- (_\.0 _\.1 _\.2)
+- (_\.0 _\.1 _\.2 _\.3)
+- (_\.0 _\.1 _\.2 _\.3 _\.4)
+- (_\.0 _\.1 _\.2 _\.3 _\.4 _\.5)
+- (_\.0 _\.1 _\.2 _\.3 _\.4 _\.5 _\.6)
+- (_\.0 _\.1 _\.2 _\.3 _\.4 _\.5 _\.6 _\.7)
+- (_\.0 _\.1 _\.2 _\.3 _\.4 _\.5 _\.6 _\.7 _\.8)
+
+First Commandment: To transform a function whose value is a Boolean into a function whose value is a goal, replace =cond= with =conde= and unnest each question and answer. Unnest the answer =#t= (or =#f=) by replacing it with =#s= (or =#u=).
+
+#+begin_src scheme :session :results list
+;; lol? - list-of-lists?
+(define (lolo xs)
+  (conde
+   ((nullo xs))
+   ((fresh (first rest)
+           (conso first rest xs)
+           (lolo rest)
+           (listo first)
+           ))))
+
+(run 10 (p) (lolo p))
+#+end_src
+
+#+RESULTS:
+- hline
+- (nil)
+- ((_\.0))
+- ((_\.0 _\.1))
+- (nil nil)
+- ((_\.0 _\.1 _\.2))
+- ((_\.0 _\.1 _\.2 _\.3))
+- ((_\.0) nil)
+- ((_\.0 _\.1 _\.2 _\.3 _\.4))
+- ((_\.0 _\.1 _\.2 _\.3 _\.4 _\.5))
+
+#+begin_src scheme :session :results list
+;; twins?
+(define (twinso s)
+  (fresh (a b)
+         (== (cons a (cons b '())) s)
+         (== a b)))
+
+;; lot? or list-of-twins?
+(define (loto l)
+  (conde
+   ((nullo l))
+   ((fresh (x xs)
+           (caro l x)
+           (twinso x)
+           (cdro l xs)
+           (loto xs))
+    )))
+
+(run 5 (p) (loto p))
+#+end_src
+
+#+RESULTS:
+- hline
+- ((_\.0 _\.0))
+- ((_\.0 _\.0) (_\.1 _\.1))
+- ((_\.0 _\.0) (_\.1 _\.1) (_\.2 _\.2))
+- ((_\.0 _\.0) (_\.1 _\.1) (_\.2 _\.2) (_\.3 _\.3))
+
+
+#+begin_src scheme :session
+;; map
+(define (listof predo l)
+  (conde
+   ((nullo l))
+   ((fresh (x xs)
+           (caro l x)
+           (cdro l xs)
+           (predo x)
+           (listof predo xs)))))
+
+(define (loto2 p)
+  (listof twinso p))
+
+(run 5 (p) (loto2 p))
+#+end_src
+
+#+RESULTS:
+|-----------+-----------+-----------+-----------|
+| (_.0 _.0) |           |           |           |
+| (_.0 _.0) | (_.1 _.1) |           |           |
+| (_.0 _.0) | (_.1 _.1) | (_.2 _.2) |           |
+| (_.0 _.0) | (_.1 _.1) | (_.2 _.2) | (_.3 _.3) |
+
+
+#+begin_src scheme :session :results list
+;; eq-car?
+(define (eq-caro l v)
+  (caro l v))
+
+;; member?
+(define (membero x l)
+  (conde
+   ;; I added an extra constraint here to enforce l as a proper list
+   ((listo l) (eq-caro l x))
+   ((fresh (xs)
+           (cdro l xs)
+           (membero x xs)))))
+
+(run 10 (p) (membero 'foo p))
+#+end_src
+
+#+RESULTS:
+- (foo)
+- (foo _\.0)
+- (_\.0 foo)
+- (foo _\.0 _\.1)
+- (foo _\.0 _\.1 _\.2)
+- (_\.0 foo _\.1)
+- (foo _\.0 _\.1 _\.2 _\.3)
+- (foo _\.0 _\.1 _\.2 _\.3 _\.4)
+- (_\.0 _\.1 foo)
+- (_\.0 foo _\.1 _\.2)
+
+#+begin_src scheme :session :results list
+(run 4 (p) (membero p '(hummus with pita)))
+#+end_src
+
+#+RESULTS:
+- hummus
+- with
+- pita
+
+#+begin_src scheme :session
+(run* (x) (membero 'foo `(hummus ,x pita)))
+#+end_src
+
+#+RESULTS:
+| foo |
+
+#+begin_src scheme :session :results list
+;; last element of l is x
+(define (pmembero x l)
+  (conde
+   ((eq-caro l x) (cdro l '()))
+   ((fresh (d)
+           (cdro l d)
+           (pmembero x d)))))
+
+(run 5 (l) (pmembero 'tofu l))
+#+end_src
+
+#+RESULTS:
+- (tofu)
+- (_\.0 tofu)
+- (_\.0 _\.1 tofu)
+- (_\.0 _\.1 _\.2 tofu)
+- (_\.0 _\.1 _\.2 _\.3 tofu)
+
+
+#+begin_src scheme :session :results list
+(define (memberrevo x l)
+  (conde
+   ((fresh (d)
+           (cdro l d)
+           (memberrevo x d)))
+   ((eq-caro l x))))
+
+(run* (x) (memberrevo x '(a b c)))
+#+end_src
+
+#+RESULTS:
+- a
+- b
+- c
+
+** Members Only
+
+#+begin_src scheme :session :results list
+(define (memo x l out)
+  (conde
+   ((eq-caro l x) (== l out))
+   ((fresh (xs)
+           (cdro l xs)
+           (memo x xs out)))))
+
+(run 10 (x) (fresh (q) (memo x '(1 2 3) q)))
+#+end_src
+
+#+RESULTS:
+- 1
+- 2
+- 3
+
+#+begin_src scheme :session :results list
+(run 10 (q) (fresh (x) (memo x '(1 2 3) q)))
+#+end_src
+
+#+RESULTS:
+- (1 2 3)
+- (2 3)
+- (3)
+
+*Second commandment*: To transform a function whose value is not a Boolean into a function whose value is goal, add extra argument to hold its value, replace cond with conde, and unnest each question and answers.
+
+#+begin_src scheme :session :results list
+(run* (q) (memo 'tofu '(a tofu b tofu c) q))
+#+end_src
+
+#+RESULTS:
+- (tofu b tofu c)
+- (tofu c)
+
+^ instead of just outputing one result, it's able to find all possibilities!
+
+#+begin_src scheme :session :results list
+(define (rembero x l out)
+  (conde
+   ((eq-caro l x) (cdro l out))
+   ((fresh (a as res)
+           (conso a as l)
+           (rembero x as res)
+           (conso a res out)))))
+
+(run 10 (q) (fresh (x) (rembero q '(1 2 3 4 5 6) x)))
+#+end_src
+
+#+RESULTS:
+- 1
+- 2
+- 3
+- 4
+- 5
+- 6
+
+#+begin_src scheme :session :results list
+(run* (r) (fresh (y z)
+                 (rembero y `(,y d ,z e) `(,y d e))
+                 (== `(,y ,z) r)))
+#+end_src
+
+#+RESULTS:
+- (d d)
+- (d d)
+- (_\.0 _\.0)
+- (e e)
+
+#+begin_src scheme :session :results list
+(define (surpriseo s)
+  (rembero s '(a b c) '(a b c)))
+
+(run* (r) (== r 'x) (surpriseo r))
+#+end_src
+
+#+RESULTS:
+
+** Double Your Fun
+
+#+begin_src scheme :session :results list
+(define (appendo l s out)
+  (conde
+   ((nullo l) (== s out))
+   ((fresh (x xs p)
+           (conso x xs l)
+           (conso x p out)
+           (appendo xs s p)
+           ))))
+
+(run 7 (x) (fresh (y) (appendo x y '(a b c d e))))
+#+end_src
+
+#+RESULTS:
+- hline
+- (a)
+- (a b)
+- (a b c)
+- (a b c d)
+- (a b c d e)
+
+Now we swap the two conde cases:
+
+#+begin_src scheme :session :results list
+(define (swappendo l s out)
+  (conde
+   ((fresh (x xs p)
+           (conso x xs l)
+           (conso x p out)
+           (swappendo xs s p)
+           ))
+   ((nullo l) (== s out))))
+
+(run 1 (z) (fresh (x y) (swappendo x y z)))
+#+end_src
+
+#+RESULTS:
+- _\.0
+
+I couldn't reproduce the result in the book because the miniKanren implementation I'm using may have different evaluation strategy.
+
+
+#+begin_src scheme :session :results list
+(define (unwrapo x out)
+  (conde
+   ((== x out))
+   ((pairo x) (fresh (p)
+                     (caro x p)
+                     (unwrapo p out)))
+   ))
+
+(run 3 (p) (unwrapo p 'pizza))
+#+end_src
+
+#+RESULTS:
+: - pizza
+: - (pizza . _\.0)
+: - ((pizza . _\.0) . _\.1)
+
+#+begin_src scheme :session :results list
+(define (flatteno s out)
+  (conde
+   ((== s out))
+   ((pairo s) (fresh (a b o1 o2)
+                     (conso a b s)
+                     (appendo o1 o2 out)
+                     (flatteno a o1)
+                     (flatteno b o2)))
+   ))
+
+(run 10 (p) (flatteno p '(1 2 3 4)))
+#+end_src
+
+#+RESULTS:
+- (1 2 3 4)
+- (nil 1 2 3 4)
+- ((1) 2 3 4)
+- (nil nil 1 2 3 4)
+- ((nil) 1 2 3 4)
+- (nil (1) 2 3 4)
+- ((1) nil 2 3 4)
+- (nil nil nil 1 2 3 4)
+- ((1 2) 3 4)
+- (nil (nil) 1 2 3 4)
+
+#+begin_src scheme :session :results list
+(run 2 (p) (flatteno '(1) p))
+#+end_src
+
+#+RESULTS:
+- (1)
+
+** The Fun Never Ends
+
+#+begin_comment
+I think the title signifies that in this chapter we will explore some expressions that will run into loops.
+#+end_comment
+
+#+begin_src scheme :session :results list
+(define (anyo g)
+  (conde
+   (g)
+   ((anyo g))))
+
+(define nevero (anyo fail))
+
+(run 1 (q)
+     fail
+     nevero)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src scheme :session :results list
+(define alwayso (anyo succ))
+(run 5 (q)
+     alwayso
+     (== #t q))
+#+end_src
+
+#+RESULTS:
+: - '(#t #t #t #t #t)
+
+#+begin_src scheme :session :results list
+;; succeeds at least once
+(define (salo g)
+  (conde
+   [succ]
+   [g]))
+
+(run 1 (q)
+     (salo nevero)
+     (== #t q))
+#+end_src
+
+#+RESULTS:
+: - '(#t)
+
+#+begin_src scheme :session :results list
+(run 5 (q)
+     (conde
+      [(== #f q) alwayso]
+      [(anyo (== #t q))])
+     (== #t q))
+#+end_src
+
+#+RESULTS:
+: - '(#t #t #t #t #t)
+
+Obviously my =conde= isn't the original implementation used in TRS. Probably it's =condi=?
+
+#+begin_src scheme :session :results list
+(run 1 (q)
+     (conde
+      [(== #f q) alwayso]
+      [(== #t q)])
+     (== #t q))
+#+end_src
+
+#+RESULTS:
+: - '(#t)
+
+If I change the =1= to =2= in above code, the code will stuck. It looks like it behaves just like =condi= in this case.
+
+So the idea is, =conde= does a depth-first search and =condi= does a breath-first search?
+
+#+begin_src scheme :session :results list
+(define (teacupo x)
+  (conde
+   [(== 'tea x)]
+   [(== 'cup x)]))
+
+(run 5 (r)
+     (conde
+      [(teacupo r)]
+      [(== #f r)]))
+#+end_src
+
+#+RESULTS:
+: - '(#f tea cup)
+
+No, my implementation of =conde= is definitely not =condi=. If it's =condi=, it would have returned ='(tea #f cup)=.
+
+#+begin_src scheme :session :results list
+(run 5 (q)
+     (conde
+      [(== #f q) alwayso]
+      [(== #t q) alwayso])
+     (== #t q))
+#+end_src
+
+#+RESULTS:
+: - '(#t #t #t #t #t)
+
+With the canonical definition of =conde=, above code would stuck in the first =alwayso= when it performs depth first search.
+
+#+begin_src scheme :session :results list
+(run 5 (q)
+     (conde
+      [alwayso]
+      [nevero])
+     (== #t q))
+#+end_src
+
+#+RESULTS:
+: - '(#t #t #t #t #t)
+
+This could would stuck with =condi= because after returning the first value it will stuck in the =nevero= and never come out.
+
+** A Bit Too Much
+
+#+begin_src scheme :session :results list
+(define (bit-xoro x y r)
+  (conde
+   [(== 0 x) (== 0 y) (== 0 r)]
+   [(== 0 x) (== 1 y) (== 1 r)]
+   [(== 1 x) (== 0 y) (== 1 r)]
+   [(== 1 x) (== 1 y) (== 0 r)]
+   ))
+
+(run* (p)
+      (fresh (x y r)
+             (bit-xoro x y r)
+             (== `(,x ,y ,r) p)))
+#+end_src
+
+#+RESULTS:
+- (0 0 0)
+- (0 1 1)
+- (1 0 1)
+- (1 1 0)
+
+#+begin_src scheme :session :results list
+(define (bit-ando x y r)
+  (conde
+   [(== 0 x) (== 0 y) (== 0 r)]
+   [(== 0 x) (== 1 y) (== 0 r)]
+   [(== 1 x) (== 0 y) (== 0 r)]
+   [(== 1 x) (== 1 y) (== 1 r)]
+   ))
+
+(define (half-addero x y r c)
+  (fresh ()
+         (bit-xoro x y r)
+         (bit-ando x y c)))
+
+(run* (p) (fresh (x y r c)
+                 (half-addero x y r c)
+                 (== `(,x ,y ,r ,c) p)))
+#+end_src
+
+#+RESULTS:
+- (0 0 0 0)
+- (0 1 1 0)
+- (1 0 1 0)
+- (1 1 0 1)
+
+
+#+begin_src scheme :session :results list
+(define (full-addero b x y r c)
+  (fresh (w xy wz)
+         (half-addero x y w xy)
+         (half-addero w b r wz)
+         (bit-xoro xy wz c)))
+
+(run* (s)
+      (fresh (r c)
+             (full-addero 0 1 1 r c)
+             (== `(,r ,c) s)))
+#+end_src
+
+#+RESULTS:
+- (0 1)
+
+
+#+begin_src scheme :session :results verbatim
+(define (build-num n)
+  (cond
+   [(zero? n) '()]
+   [(even? n) (cons 0 (build-num (quotient n 2)))]
+   [(odd? n)  (cons 1 (build-num (quotient n 2)))]))
+
+(build-num 17290)
+#+end_src
+
+#+RESULTS:
+: (0 1 0 1 0 0 0 1 1 1 0 0 0 0 1)
+
+
+#+begin_src scheme :session :results list
+(define (poso n)
+  (fresh (a d)
+         (== `(,a . ,d) n)))
+
+(define (>1o n)
+  (fresh (a ad dd)
+         (== `(,a ,ad . ,dd) n)))
+
+(list
+ (run* (q) (poso '()) (== q #t))
+ (run* (q) (poso '(1)) (== q #t))
+ (run* (q) (>1o '()) (== q #t))
+ (run* (q) (>1o '(1)) (== q #t))
+ (run* (q) (>1o '(0 1)) (== q #t)))
+ #+end_src
+
+ #+RESULTS:
+ : - '(() (#t) () () (#t))
+
+** Playground
+
+#+begin_src scheme :session
+(run* (q) (== 1 1))
+#+end_src
+
+#+RESULTS:
+| _.0 |
+
+*** Eight-queen problem
+
+#+begin_src scheme :session :results list
+(define (lengtho xs n)
+  (conde
+   [(nullo xs) (== n 0)]
+   [(fresh (rest)
+           (lengtho rest (- n 1))
+           (cdro xs rest))]))
+
+(define (valid-elemo x)
+  (conde
+   [(== x 0)]
+   [(== x 1)]))
+
+(define (rowo row)
+  (fresh ()
+         (lengtho row 8)
+         (listof valid-elemo row)
+         ))
+
+(define (boardo board)
+  (fresh ()
+         (lengtho board 8)
+         (listof rowo board)
+         ))
+
+
+;; this currently run forever, I'll investigate later
+(run 4 (p) (boardo p))
+#+end_src
+
+#+RESULTS:
+:
+
+
+#  LocalWords:  hline TRS
