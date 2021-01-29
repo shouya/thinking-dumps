@@ -451,7 +451,7 @@ I couldn't reproduce the result in the book because the miniKanren implementatio
 - (nil (nil) 1 2 3 4)
 
 #+begin_src scheme :session :results list
-(run 2 (p) (flatteno '(1) p))
+(run 1 (p) (flatteno '(1) p))
 #+end_src
 
 #+RESULTS:
@@ -712,11 +712,20 @@ This could would stuck with =condi= because after returning the first value it w
 
 
 ;; this currently run forever, I'll investigate later
-(run 4 (p) (boardo p))
+(run 10 (p) (rowo p))
 #+end_src
 
 #+RESULTS:
-:
+- (0 0 0 0 0 0 0 0)
+- (1 0 0 0 0 0 0 0)
+- (0 1 0 0 0 0 0 0)
+- (1 1 0 0 0 0 0 0)
+- (0 0 1 0 0 0 0 0)
+- (1 0 1 0 0 0 0 0)
+- (0 1 1 0 0 0 0 0)
+- (1 1 1 0 0 0 0 0)
+- (0 0 0 1 0 0 0 0)
+- (1 0 0 1 0 0 0 0)
 
 
 #  LocalWords:  hline TRS
