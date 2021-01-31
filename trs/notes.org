@@ -9,7 +9,7 @@ Run =org-babel-execute-buffer= (=C-c C-v b=) to evaluate all code blocks.
 :ID:       76057E43-8326-4461-8D95-4998464816AB
 :END:
 
-Install minikanren package here: https://pkgs.racket-lang.org/package/minikanren
+Install miniKanren package here: https://pkgs.racket-lang.org/package/minikanren
 
 #+begin_src scheme :session
 (require minikanren)
@@ -671,8 +671,115 @@ This could would stuck with =condi= because after returning the first value it w
  (run* (q) (>1o '(0 1)) (== q #t)))
  #+end_src
 
- #+RESULTS:
- : - '(() (#t) () () (#t))
+#+RESULTS:
+: - '(() (#t) () () (#t))
+
+The way the book define addero is needlessly complex. I'll provide a simpler definition.
+
+#+begin_src scheme :session :results list
+(define (add1 n r)
+  (conde
+   [(== '() n) (== '(1) r)]
+   ;; n is even
+   [(fresh (a)
+           (== `(0 . ,a) n)
+           (== `(1 . ,a) r))]
+   ;; n is odd
+   [(fresh (a rr)
+           (== `(1 . ,a) n)
+           (== `(0 . ,rr) r)
+           (add1 a rr))]))
+
+(run 2 (q) (add1 q '(0 1 0 1)))
+#+end_src
+
+#+RESULTS:
+- (1 0 0 1)
+
+#+begin_src scheme :session :results list
+(define (ge1o n)
+  (conde [(== '(1) n)]
+         [(fresh (a s)
+                 (== `(,a . ,s) n)
+                 (conde [(== 0 a)] [(== 1 a)])
+                 (ge1o s))]))
+
+(define (valid-numo n)
+  (conde [(== '() n)]
+         [(ge1o n)]))
+
+(define (addero n m r)
+  (conde
+   [(== '() n) (== m r)]
+   [(== '() m) (== n r)]
+   [(fresh (ns m1 ms rs)
+           (== `(0 . ,ns) n)
+           (== `(,m1 . ,ms) m)
+           (addero ns ms rs)
+           (== `(,m1 . ,rs) r)
+           )]
+   [(fresh (ns m1 ms rs rrs)
+           (== `(1 . ,ns) n)
+           (== `(,m1 . ,ms) m)
+           (== `(,m1 . ,rs) rrs)
+           (add1 rrs r)
+           (addero ns ms rs)
+           )]))
+
+;; (run 6 (q) (fresh (a b)
+;;                   (addero a b '(0 0 1))
+;;                   (== `((0 0 1) = ,a + ,b) q)))
+;; (run 10 (q) (addero '(1) '(1) q))
+(run 10 (q) (add1 '() q))
+;; (run 20 (q) (valid-numo q))
+#+end_src
+
+#+RESULTS:
+- (1)
+
+** Under the Hood
+
+I tried to follow chapter 7 and 8 but can't make sense of why the author is doing those. So I decided to go straight to chapter 9 to learn about the implementation.
+
+#+begin_src scheme :session :results list
+(define (var v) `(var ,v))
+(define (var-eq? a b) (and (var? a) (var? b) (eq? (cdr a) (cdr b))))
+(define (var? v) (and (pair? v) (eq? (car v) 'var)))
+(define (ground? v) (not (var? v)))
+(define u (var 'u))
+(define v (var 'v))
+(define w (var 'w))
+(define x (var 'x))
+(define y (var 'y))
+(define z (var 'z))
+#+end_src
+
+#+RESULTS:
+: - #<void>
+
+#+begin_src scheme :session :results verbatim
+(require racket/match)
+(define (walk v subs)
+  (match subs
+    ['() v]
+    [`((,vv . ,d) . ,r) #:when (var-eq? v vv)
+     (cond
+      [(ground? d) d]
+      [else (walk d r)])]
+    [`(,f . ,r)
+     (let ([vv (walk v r)])
+       (cond
+        [(ground? vv) vv]
+        [(var-eq? vv v) v]
+        [else (walk vv (list f))]))]))
+
+
+(walk x (list (cons z w) (cons x y) (cons y z)))
+;; (walk x (list (cons x 'aa)))
+#+end_src
+
+#+RESULTS:
+: (var w)
 
 ** Playground
 
@@ -686,12 +793,14 @@ This could would stuck with =condi= because after returning the first value it w
 *** Eight-queen problem
 
 #+begin_src scheme :session :results list
-(define (lengtho xs n)
-  (conde
-   [(nullo xs) (== n 0)]
-   [(fresh (rest)
-           (lengtho rest (- n 1))
-           (cdro xs rest))]))
+(define-syntax (lengtho stx)
+  (syntax-case stx ()
+    [(_ l n)
+     (with_syntax ([(var1 ...) (generate-temporaries (make-list n 'x))])
+                  (fresh (var1 ...)
+                         (== (var2 ...) l)))]))
+
+
 
 (define (valid-elemo x)
   (conde
@@ -710,22 +819,13 @@ This could would stuck with =condi= because after returning the first value it w
          (listof rowo board)
          ))
 
-
+pp
 ;; this currently run forever, I'll investigate later
 (run 10 (p) (rowo p))
 #+end_src
 
 #+RESULTS:
-- (0 0 0 0 0 0 0 0)
-- (1 0 0 0 0 0 0 0)
-- (0 1 0 0 0 0 0 0)
-- (1 1 0 0 0 0 0 0)
-- (0 0 1 0 0 0 0 0)
-- (1 0 1 0 0 0 0 0)
-- (0 1 1 0 0 0 0 0)
-- (1 1 1 0 0 0 0 0)
-- (0 0 0 1 0 0 0 0)
-- (1 0 0 1 0 0 0 0)
+:
 
 
 #  LocalWords:  hline TRS
