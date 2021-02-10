@@ -737,6 +737,14 @@ The way the book define addero is needlessly complex. I'll provide a simpler def
 #+RESULTS:
 - (1)
 
+#+begin_comment
+I used to opine the implementation on the book peculiar and didn't understood the intention. After I read the article "Relational Programming in miniKanren" by W.E.B., chapter 6 talks about the motivation behind this implementation and its advantage over the naive implementation.
+
+
+> Importantly, these relations are refutationally complete—if an individual arithmetic relation is called with arguments that do not satisfy the relation, the relation will fail in finite time rather than diverge.
+#+end_comment
+
+
 ** Under the Hood
 
 I tried to follow chapter 7 and 8 but can't make sense of why the author is doing those. So I decided to go straight to chapter 9 to learn about the implementation.
@@ -746,9 +754,8 @@ I tried to follow chapter 7 and 8 but can't make sense of why the author is doin
 (define (var-eq? a b) (and (var? a) (var? b) (eq? (cdr a) (cdr b))))
 (define (var? v) (and (pair? v) (eq? (car v) 'var)))
 (define (ground? v) (not (var? v)))
-(define u (var 'u))
-(define v (var 'v))
 (define w (var 'w))
+(define v (var 'v))
 (define x (var 'x))
 (define y (var 'y))
 (define z (var 'z))
@@ -759,27 +766,105 @@ I tried to follow chapter 7 and 8 but can't make sense of why the author is doin
 
 #+begin_src scheme :session :results verbatim
 (require racket/match)
+
+;; the same walk, but won't loop
 (define (walk v subs)
-  (match subs
-    ['() v]
-    [`((,vv . ,d) . ,r) #:when (var-eq? v vv)
-     (cond
-      [(ground? d) d]
-      [else (walk d r)])]
-    [`(,f . ,r)
-     (let ([vv (walk v r)])
-       (cond
-        [(ground? vv) vv]
-        [(var-eq? vv v) v]
-        [else (walk vv (list f))]))]))
+  (match (assoc v subs)
+    [#f v]
+    [(cons _ d) #:when (ground? d) d]
+    [(cons _ vv) (walk vv (remove (cons v vv) subs))]))
 
 
-(walk x (list (cons z w) (cons x y) (cons y z)))
+(walk w (list (cons z w) (cons x y) (cons y z) (cons w x)))
 ;; (walk x (list (cons x 'aa)))
 #+end_src
 
 #+RESULTS:
 : (var w)
+
+#+begin_src scheme :session :results verbatim
+(define (ext-s x v s)
+  (cons (cons x v) s))
+
+(ext-s x w (list (cons z w) (cons x y)))
+#+end_src
+
+#+RESULTS:
+: (((var x) var w) ((var z) var w) ((var x) var y))
+
+
+#+begin_src scheme :session :results list
+(define (unify v u s)
+  (define vv (walk v s))
+  (define uu (walk u s))
+  (match (list vv uu)
+    [_ #:when (equal? vv uu) s]
+    [_ #:when (var? vv) (ext-s vv uu s)]
+    [_ #:when (var? uu) (ext-s uu vv s)]
+    [(list (cons vv vs) (cons uu us))
+     (match (unify vv uu s)
+       [#f #f]
+       [ss (unify vs us ss)])]
+    [_ #f]))
+
+(list
+ (unify 1 2 '())
+ (unify x x '())
+ (unify x y '())
+ (unify x y (list (cons x z) (cons y z)))
+ )
+#+end_src
+
+#+RESULTS:
+: - '(#f () (((var x) var y)) (((var x) var z) ((var y) var z)))
+
+#+begin_src scheme :session :results list
+(define (walk* v s)
+  (match (walk v s)
+    [v #:when (var? v) v]
+    [(cons v vs)
+     (cons (walk* v s)
+           (walk* vs s))]
+    [v v]))
+
+(walk* y (list (cons y `(,w ,z c))
+               (cons v 'b)
+               (cons x v)
+               (cons z x)))
+#+end_src
+
+#+RESULTS:
+- (var w)
+- b
+- c
+
+#+begin_src scheme :session :results list
+(define (reify-name n)
+  (string->symbol (string-append "_" "." (number->string n))))
+(define (reify-s v s)
+  (match (walk v s)
+    [v #:when (var? v)  (ext-s v (reify-name (length s)) s)]
+    [(cons v vs) (reify-s vs (reify-s v s))]
+    [_ s]))
+
+(reify-s z '())
+#+end_src
+
+#+RESULTS:
+: - ((var z) . _\.0)
+
+#+begin_src scheme :session :results verbatim
+(define (reify v)
+  (walk* v (reify-s v '())))
+
+(let ([s (list (cons y (list z w 'c w))
+               (cons x y)
+               (cons z 'a))])
+  (reify (walk* x s)))
+#+end_src
+
+#+RESULTS:
+: (a _.0 c _.0)
 
 ** Playground
 
