@@ -2,3 +2,5 @@ common
 *.html
 *.ml
 deps.*
+*.vos
+*.vok
