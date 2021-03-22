@@ -281,7 +281,7 @@ Proof. simpl. reflexivity. Qed.
     separate from the surrounding text.  In the HTML version of the
     files, these pieces of text appear in a [different font]. *)
 
-(** **** Exercise: 1 star, standard (nandb) 
+(** **** Exercise: 1 star, standard (nandb)
 
     The command [Admitted] can be used as a placeholder for an
     incomplete proof.  We use it in exercises to indicate the parts
@@ -295,36 +295,43 @@ Proof. simpl. reflexivity. Qed.
     function should return [true] if either or both of its inputs are
     [false]. *)
 
-Definition nandb (b1:bool) (b2:bool) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition nandb (b1:bool) (b2:bool) : bool := (negb (b1 && b2)).
 
 Example test_nandb1:               (nandb true false) = true.
-(* FILL IN HERE *) Admitted.
-Example test_nandb2:               (nandb false false) = true.
-(* FILL IN HERE *) Admitted.
-Example test_nandb3:               (nandb false true) = true.
-(* FILL IN HERE *) Admitted.
-Example test_nandb4:               (nandb true true) = false.
-(* FILL IN HERE *) Admitted.
-(** [] *)
+Proof. simpl. reflexivity. Qed.
 
-(** **** Exercise: 1 star, standard (andb3) 
+Example test_nandb2:               (nandb false false) = true.
+Proof. simpl. reflexivity. Qed.
+
+Example test_nandb3:               (nandb false true) = true.
+Proof. simpl. reflexivity. Qed.
+
+Example test_nandb4:               (nandb true true) = false.
+Proof. simpl. reflexivity. Qed.
+
+
+(** **** Exercise: 1 star, standard (andb3)
 
     Do the same for the [andb3] function below. This function should
     return [true] when all of its inputs are [true], and [false]
     otherwise. *)
 
-Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool :=
+  (b1 && b2 && b3).
+
 
 Example test_andb31:                 (andb3 true true true) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 Example test_andb32:                 (andb3 false true true) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 Example test_andb33:                 (andb3 true false true) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 Example test_andb34:                 (andb3 true true false) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -701,6 +708,7 @@ Fixpoint plus (n : nat) (m : nat) : nat :=
 (** Adding three to two now gives us five, as we'd expect. *)
 
 Compute (plus 3 2).
+Check (plus 3 2).
 (* ===> 5 : nat *)
 
 (** The steps of simplification that Coq performs can be
@@ -750,7 +758,7 @@ Fixpoint exp (base power : nat) : nat :=
     | S p => mult base (exp base p)
   end.
 
-(** **** Exercise: 1 star, standard (factorial) 
+(** **** Exercise: 1 star, standard (factorial)
 
     Recall the standard mathematical factorial function:
 
@@ -759,13 +767,18 @@ Fixpoint exp (base power : nat) : nat :=
 
     Translate this into Coq. *)
 
-Fixpoint factorial (n:nat) : nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint factorial (n:nat) : nat :=
+  match n with
+  | O => 1
+  | S n => (mult (S n) (factorial n))
+  end.
+
 
 Example test_factorial1:          (factorial 3) = 6.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 Example test_factorial2:          (factorial 5) = (mult 10 12).
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 (** [] *)
 
 (** Again, we can make numerical expressions easier to read and write
@@ -850,7 +863,7 @@ Proof. simpl. reflexivity.  Qed.
     can try to prove, while [x =? y] is an _expression_ whose
     value (either [true] or [false]) we can compute. *)
 
-(** **** Exercise: 1 star, standard (ltb) 
+(** **** Exercise: 1 star, standard (ltb)
 
     The [ltb] function tests natural numbers for [l]ess-[t]han,
     yielding a [b]oolean.  Instead of making up a new [Fixpoint] for
@@ -858,17 +871,20 @@ Proof. simpl. reflexivity.  Qed.
     function.  (It can be done with just one previously defined
     function, but you can use two if you want.) *)
 
-Definition ltb (n m : nat) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition ltb (n m : nat) : bool :=
+  (leb n m) && (negb (eqb n m)).
 
 Notation "x <? y" := (ltb x y) (at level 70) : nat_scope.
 
 Example test_ltb1:             (ltb 2 2) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 Example test_ltb2:             (ltb 2 4) = true.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 Example test_ltb3:             (ltb 4 2) = false.
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -1018,14 +1034,19 @@ Proof.
     making this change in the above proof and see what difference it
     makes.) *)
 
-(** **** Exercise: 1 star, standard (plus_id_exercise) 
+(** **** Exercise: 1 star, standard (plus_id_exercise)
 
     Remove "[Admitted.]" and fill in the proof. *)
 
 Theorem plus_id_exercise : forall n m o : nat,
   n = m -> m = o -> n + m = m + o.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m o.
+  intros H1 H2.
+  rewrite -> H1. rewrite -> H2.
+  reflexivity.
+Qed.
+
 (** [] *)
 
 (** The [Admitted] command tells Coq that we want to skip trying
@@ -1065,7 +1086,7 @@ Proof.
   rewrite <- mult_n_O.
   reflexivity. Qed.
 
-(** **** Exercise: 1 star, standard (mult_n_1) 
+(** **** Exercise: 1 star, standard (mult_n_1)
 
     Use those two lemmas about multiplication that we just checked to
     prove the following theorem.  Hint: recall that [1] is [S O]. *)
@@ -1073,8 +1094,11 @@ Proof.
 Theorem mult_n_1 : forall p : nat,
   p * 1 = p.
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros p.
+  rewrite <- mult_n_Sm.
+  rewrite <- mult_n_O.
+  reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1256,7 +1280,7 @@ Proof.
       - reflexivity. }
 Qed.
 
-(** **** Exercise: 2 stars, standard (andb_true_elim2) 
+(** **** Exercise: 2 stars, standard (andb_true_elim2)
 
     Prove the following claim, marking cases (and subcases) with
     bullets when you use [destruct]. Hint: delay introducing the
@@ -1265,7 +1289,15 @@ Qed.
 Theorem andb_true_elim2 : forall b c : bool,
   andb b c = true -> c = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b [].
+  - reflexivity.
+  - intro H. rewrite <- H.
+    destruct b.
+    + reflexivity.
+    + reflexivity.
+Qed.
+
+
 (** [] *)
 
 (** Before closing the chapter, let's mention one final
@@ -1306,10 +1338,12 @@ Qed.
 Theorem zero_nbeq_plus_1 : forall n : nat,
   0 =? (n + 1) = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros [|n'].
+  - reflexivity.
+  - reflexivity.
+Qed.
 
-(* ================================================================= *)
+    (* ================================================================= *)
 (** ** More on Notation (Optional) *)
 
 (** (In general, sections marked Optional are not needed to follow the
@@ -1380,7 +1414,7 @@ Fixpoint plus' (n : nat) (m : nat) : nat :=
     "decreasing analysis" is not very sophisticated, it is sometimes
     necessary to write functions in slightly unnatural ways. *)
 
-(** **** Exercise: 2 stars, standard, optional (decreasing) 
+(** **** Exercise: 2 stars, standard, optional (decreasing)
 
     To get a concrete sense of this, find a way to write a sensible
     [Fixpoint] definition (of a simple function on numbers, say) that
@@ -1390,14 +1424,20 @@ Fixpoint plus' (n : nat) (m : nat) : nat :=
     out your solution so that it doesn't cause Coq to reject the whole
     file!) *)
 
-(* FILL IN HERE
+(* My solution:
+
+Fixpoint plus'' (n : nat) (m : nat) : nat :=
+  match n with
+  | O => m
+  | S n' => (plus'' (pred n) m)
+  end.
 
     [] *)
 
 (* ################################################################# *)
 (** * More Exercises *)
 
-(** **** Exercise: 1 star, standard (identity_fn_applied_twice) 
+(** **** Exercise: 1 star, standard (identity_fn_applied_twice)
 
     Use the tactics you have learned so far to prove the following
     theorem about boolean functions. *)
@@ -1407,17 +1447,31 @@ Theorem identity_fn_applied_twice :
   (forall (x : bool), f x = x) ->
   forall (b : bool), f (f b) = b.
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros f H b0.
+  rewrite -> H.
+  rewrite -> H.
+  reflexivity.
+Qed.
 (** [] *)
 
-(** **** Exercise: 1 star, standard (negation_fn_applied_twice) 
+(** **** Exercise: 1 star, standard (negation_fn_applied_twice)
 
     Now state and prove a theorem [negation_fn_applied_twice] similar
     to the previous one but where the second hypothesis says that the
     function [f] has the property that [f x = negb x]. *)
 
-(* FILL IN HERE *)
+Theorem negation_fn_applied_twice :
+  forall (f : bool -> bool),
+  (forall (x : bool), f x = negb x) ->
+  forall (b: bool), f (f b) = b.
+Proof.
+  intros f H b0.
+  rewrite -> H.
+  rewrite -> H.
+  destruct b0.
+  - reflexivity.
+  - reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_negation_fn_applied_twice : option (nat*string) := None.
@@ -1425,7 +1479,7 @@ Definition manual_grade_for_negation_fn_applied_twice : option (nat*string) := N
 
     [] *)
 
-(** **** Exercise: 3 stars, standard, optional (andb_eq_orb) 
+(** **** Exercise: 3 stars, standard, optional (andb_eq_orb)
 
     Prove the following theorem.  (Hint: This one can be a bit tricky,
     depending on how you approach it.  You will probably need both
@@ -1437,11 +1491,14 @@ Theorem andb_eq_orb :
   (andb b c = orb b c) ->
   b = c.
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros b c.
+  destruct b.
+  - simpl. intro. rewrite <- H. reflexivity.
+  - simpl. intro. rewrite <- H. reflexivity.
+Qed.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (binary) 
+(** **** Exercise: 3 stars, standard (binary)
 
     We can generalize our unary representation of natural numbers to
     the more efficient binary representation by treating a binary
