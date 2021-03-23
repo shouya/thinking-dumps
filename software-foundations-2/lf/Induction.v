@@ -204,22 +204,39 @@ Proof.
 Theorem mult_0_r : forall n:nat,
   n * 0 = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - simpl. rewrite -> IHn'. reflexivity.
+Qed.
 
 Theorem plus_n_Sm : forall n m : nat,
   S (n + m) = n + (S m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - simpl. rewrite -> IHn'. reflexivity.
+Qed.
+
 
 Theorem plus_comm : forall n m : nat,
   n + m = m + n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m.
+  induction n as [|n' IHn'].
+  - simpl. rewrite <- plus_n_O. reflexivity.
+  - simpl. rewrite -> IHn'. rewrite <- plus_n_Sm. reflexivity.
+Qed.
 
 Theorem plus_assoc : forall n m p : nat,
   n + (m + p) = (n + m) + p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - simpl. rewrite <- IHn'. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (double_plus)
@@ -236,7 +253,11 @@ Fixpoint double (n:nat) :=
 
 Lemma double_plus : forall n, double n = n + n .
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - reflexivity.
+  - simpl. rewrite -> IHn'. rewrite -> plus_n_Sm. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (evenb_S)
@@ -251,15 +272,26 @@ Proof.
 Theorem evenb_S : forall n : nat,
   evenb (S n) = negb (evenb n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - rewrite -> IHn'. rewrite -> negb_involutive. reflexivity.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (destruct_induction)
 
-    Briefly explain the difference between the tactics [destruct]
-    and [induction].
+    Briefly explain the difference between the tactics [destruct] and
+    [induction].
 
-(* FILL IN HERE *)
+- destruct only destruct a variable of inductive type into its
+  constructors.
+
+- induction, on top of that, introduces an extra assumption about the
+  theorem hold for the preceding iteration.
+
 *)
 
 (* Do not modify the following line: *)
@@ -455,9 +487,32 @@ Proof.
 
     Translate your solution for [plus_comm] into an informal proof:
 
-    Theorem: Addition is commutative.
 
-    Proof: (* FILL IN HERE *)
+    Theorem: Addition is commutative. In other words,
+             for all natural number n, m, n + m = m + n.
+
+    Proof: By induction on n,
+
+    - First, suppose n = 0, we need to prove 0 + m = m + 0.
+      By definition of +, the LHS can be written as m.
+      By plus_n_O, m = m + 0.
+
+    - Next, suppose n' + m = m + n', we now show S n' + m = m + S n'.
+      By definition of +, the LHS can be written as S (n' + m).
+      By inductive hypothesis, the LHS can be writen as S (m + n'),
+      By plus_n_Sm, S (m + n') = m + S n'.
+    Qed.
+
+( for reference only:
+Theorem plus_comm : forall n m : nat,
+  n + m = m + n.
+Proof.
+  intros n m.
+  induction n as [|n' IHn'].
+  - simpl. rewrite <- plus_n_O. reflexivity.
+  - simpl. rewrite -> IHn'. rewrite <- plus_n_Sm. reflexivity.
+Qed.
+)
 *)
 
 (* Do not modify the following line: *)
@@ -472,7 +527,14 @@ Definition manual_grade_for_plus_comm_informal : option (nat*string) := None.
 
     Theorem: [true = n =? n] for any [n].
 
-    Proof: (* FILL IN HERE *)
+    Proof: By induction on n:
+
+    - For n = 0, 0 = 0 holds.
+    - For n = S n', suppose true = n' =? n'.
+      We need to prove true = S n' =? S n'
+      By definition of =?, S n' =? S n' = n' =? n'.
+      By inductive assumption, true = n' =? n'. Thus finishes the proof.
+    Qed.
 *)
 (** [] *)
 
