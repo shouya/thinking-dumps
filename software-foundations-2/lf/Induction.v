@@ -549,16 +549,39 @@ Definition manual_grade_for_plus_comm_informal : option (nat*string) := None.
 Theorem plus_swap : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros n m p.
+  rewrite <- plus_comm.
+  rewrite <- plus_assoc.
+  assert (H: p + n = n + p). { rewrite <- plus_comm. reflexivity. }
+  rewrite <- H.
+  reflexivity.
+Qed.
 (** Now prove commutativity of multiplication.  You will probably
     want to define and prove a "helper" theorem to be used
     in the proof of this one. Hint: what is [n * (1 + k)]? *)
 
+Lemma mult_m_Sn: forall m n : nat,
+  m * S n = m + m * n.
+Proof.
+  intros m n.
+  induction m.
+  - simpl. reflexivity.
+  - simpl. rewrite -> plus_assoc. rewrite -> IHm. rewrite -> plus_assoc.
+    assert (H: n + (m + m * n) = m + (n + m * n)).
+    { rewrite -> plus_swap. reflexivity. }
+    rewrite <- plus_assoc. rewrite <- plus_assoc.
+    rewrite -> H.
+    reflexivity.
+Qed.
+
 Theorem mult_comm : forall m n : nat,
   m * n = n * m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros m n.
+  induction n.
+  - simpl. rewrite -> mult_0_r. reflexivity.
+  - simpl. rewrite -> mult_m_Sn. rewrite IHn. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (more_exercises)
@@ -573,35 +596,54 @@ Proof.
 
 Check leb.
 
+(* should be provable using induction *)
 Theorem leb_refl : forall n:nat,
   true = (n <=? n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n.
+  - reflexivity.
+  - simpl. rewrite IHn. reflexivity.
+Qed.
 
+(* should be provable with simplification *)
 Theorem zero_nbeq_S : forall n:nat,
   0 =? (S n) = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  simpl. reflexivity.
+Qed.
 
+(* should be provable by destructing b *)
 Theorem andb_false_r : forall b : bool,
   andb b false = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct b.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+Qed.
 
+(* should be provable by induction on p *)
 Theorem plus_ble_compat_l : forall n m p : nat,
   n <=? m = true -> (p + n) <=? (p + m) = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction p.
+  - simpl. rewrite H. simpl. reflexivity.
+  - simpl. rewrite IHp. reflexivity.
+Qed.
 
+(* should be proved by simplification *)
 Theorem S_nbeq_0 : forall n:nat,
   (S n) =? 0 = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. simpl. reflexivity. Qed.
 
+(* should be proved by induction (or perhaps simplification is enough) *)
 Theorem mult_1_l : forall n:nat, 1 * n = n.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. simpl. rewrite <- plus_n_O. reflexivity. Qed.
 
+(* just destruct everything *)
 Theorem all3_spec : forall b c : bool,
     orb
       (andb b c)
@@ -609,13 +651,39 @@ Theorem all3_spec : forall b c : bool,
                (negb c))
   = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  destruct b.
+  - destruct c.
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+  - destruct c.
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+Qed.
 
+(* induction *)
 Theorem mult_plus_distr_r : forall n m p : nat,
   (n + m) * p = (n * p) + (m * p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  induction p.
+  - rewrite -> mult_0_r. rewrite -> mult_0_r. rewrite -> mult_0_r. reflexivity.
+  - rewrite -> mult_m_Sn. rewrite -> mult_m_Sn. rewrite -> mult_m_Sn.
+    assert (H: (n+n*p) + (m+m*p) = (n+m) + (n*p+m*p)).
+    { rewrite -> plus_assoc.
+      assert (H1: n + n*p + m = n + (n*p + m)). { rewrite plus_assoc. reflexivity. }
+      rewrite H1.
+      assert (H2: n*p + m = m + n*p). { rewrite <- plus_comm. reflexivity. }
+      rewrite H2.
+      rewrite plus_assoc.
+      rewrite plus_assoc.
+      reflexivity.
+    }
+    rewrite H.
+    rewrite IHp.
+    reflexivity.
+Qed.
 
+(* induction *)
 Theorem mult_assoc : forall n m p : nat,
   n * (m * p) = (n * m) * p.
 Proof.
