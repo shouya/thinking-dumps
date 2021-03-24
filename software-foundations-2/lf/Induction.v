@@ -687,7 +687,12 @@ Qed.
 Theorem mult_assoc : forall n m p : nat,
   n * (m * p) = (n * m) * p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - simpl. rewrite -> IHn'. rewrite -> mult_plus_distr_r. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (eqb_refl)  *)
@@ -695,7 +700,12 @@ Proof.
 Theorem eqb_refl : forall n : nat,
   true = (n =? n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n as [|n' IHn'].
+  - simpl. reflexivity.
+  - simpl. rewrite <- IHn'. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (plus_swap')
@@ -712,7 +722,14 @@ Proof.
 Theorem plus_swap' : forall n m p : nat,
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p.
+  rewrite <- plus_comm.
+  rewrite <- plus_assoc.
+  replace (p + n) with (n + p).
+  reflexivity.
+  rewrite <- plus_comm.
+  reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, especially useful (binary_commute)
@@ -741,7 +758,20 @@ Proof.
     want to change your original definitions to make the property
     easier to prove, feel free to do so! *)
 
-(* FILL IN HERE *)
+Theorem binary_commute : forall b : bin,
+  bin_to_nat (incr b) = S (bin_to_nat b).
+Proof.
+  intros b.
+  induction b.
+  - simpl. reflexivity.
+  - simpl incr. simpl bin_to_nat. rewrite <- plus_n_O.
+    reflexivity.
+  - simpl incr. simpl bin_to_nat. rewrite <- plus_n_O. rewrite <- plus_n_O.
+    rewrite IHb. simpl "+".
+    assert (H: bin_to_nat b + S (bin_to_nat b) = S (bin_to_nat b + bin_to_nat b)).
+    { rewrite plus_n_Sm. reflexivity. }
+    rewrite H. reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_commute : option (nat*string) := None.
