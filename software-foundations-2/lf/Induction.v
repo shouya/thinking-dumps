@@ -936,19 +936,8 @@ Proof.
     + simpl. reflexivity.
 Qed.
 
-Lemma normalize_idempotent: forall b,
-  normalize (normalize b) = normalize b.
-Proof.
-  intros.
-  induction b.
-  - simpl. reflexivity.
-  - simpl. induction (normalize b).
-    + reflexivity.
-    +
-
-
 Lemma nat_to_bin_2x : forall n,
-  nat_to_bin (n + n) = double (nat_to_bin n).
+  nat_to_bin (n + n) = double_b (nat_to_bin n).
 Proof.
   intros.
   induction n.
@@ -958,6 +947,16 @@ Proof.
     rewrite incr_twice. reflexivity.
 Qed.
 
+Lemma incr_double_normalize_b: forall b,
+  incr (double_b (normalize b)) = B1 (normalize b).
+Proof.
+  intros.
+  induction (normalize b).
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+Qed.
+
 Theorem bin_nat_bin : forall b, nat_to_bin (bin_to_nat b) = normalize b.
 Proof.
   intro b.
@@ -965,12 +964,15 @@ Proof.
   - simpl. reflexivity.
   - simpl bin_to_nat. rewrite <- plus_n_O.
     rewrite nat_to_bin_2x. rewrite IHb.
-    refl
-    assert (H: nat_to_bin (a + a) = B0 )
+    simpl. reflexivity.
+  - simpl. rewrite <- plus_n_O.
+    rewrite nat_to_bin_2x. rewrite IHb.
+    rewrite incr_double_normalize_b.
+    reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_inverse_c : option (nat*string) := None.
 (** [] *)
 
 (* 2020-09-09 20:51 *)
-simpl.
