@@ -777,6 +777,7 @@ Qed.
 Definition manual_grade_for_binary_commute : option (nat*string) := None.
 (** [] *)
 
+
 (** **** Exercise: 5 stars, advanced (binary_inverse)
 
     This is a further continuation of the previous exercises about
@@ -786,8 +787,56 @@ Definition manual_grade_for_binary_commute : option (nat*string) := None.
     (a) First, write a function to convert natural numbers to binary
         numbers. *)
 
-Fixpoint nat_to_bin (n:nat) : bin
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint half (n : nat) : nat :=
+  match n with
+  | O => O
+  | S O => O
+  | S (S n') => S (half n')
+  end.
+
+Compute half 8.
+Compute half 11.
+
+Module BinaryPlayground.
+
+Inductive bin' : Type :=
+  | Ep
+  | T1 (zeroes: nat) (b: bin').
+
+Fixpoint bin'_len (b: bin') : nat :=
+  match b with
+  | Ep => 0 (* should be -1 but we can't represent it *)
+  | T1 n Ep => n
+  | T1 n b => n + S (bin'_len b)
+  end.
+
+Fixpoint bin'_to_nat(b: bin') : nat :=
+  match b with
+  | Ep => 0
+  | T1 n b' => exp 2 (bin'_len b) + bin'_to_nat b'
+  end.
+
+(* 0b = 0 *)
+Compute bin'_to_nat Ep.
+
+(* 0b1 = 1 *)
+Compute bin'_to_nat(T1 0 Ep).
+
+(* 0b10 = 2 *)
+Compute bin'_to_nat(T1 1 Ep).
+
+(* 0b101001101 = 333 *)
+Compute bin'_to_nat(
+        T1 1 (T1 2 (T1 0 (T1 1 (T1 0 Ep))))
+        ).
+
+End BinaryPlayground.
+
+Fixpoint nat_to_bin (n:nat) : bin :=
+  match n with
+  | O => Z
+  | S n => incr (nat_to_bin n)
+  end.
 
 (** Prove that, if we start with any [nat], convert it to binary, and
     convert it back, we get the same [nat] we started with.  (Hint: If
@@ -797,7 +846,12 @@ Fixpoint nat_to_bin (n:nat) : bin
 
 Theorem nat_bin_nat : forall n, bin_to_nat (nat_to_bin n) = n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro n.
+  induction n.
+  - simpl. reflexivity.
+  - simpl. rewrite binary_commute. rewrite IHn.
+    reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_inverse_a : option (nat*string) := None.
@@ -808,7 +862,19 @@ Definition manual_grade_for_binary_inverse_a : option (nat*string) := None.
         the same number we started with.  However, this is not the
         case!  Explain (in a comment) what the problem is. *)
 
-(* FILL IN HERE *)
+(*
+This binary representation can express invalid state. Or put in other words,
+number doesn't always have unique representation in this system.
+
+Preceding zeroes doesn't change the value of the number, like this:
+
+- B0 (B0 Z) = Z
+- B1 (B0 (B0 Z)) = B1 Z
+
+*)
+
+Compute bin_to_nat (B1 (B0 (B0 Z))) =? bin_to_nat (B1 Z).
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_inverse_b : option (nat*string) := None.
@@ -825,10 +891,86 @@ Definition manual_grade_for_binary_inverse_b : option (nat*string) := None.
         proof -- that will allow the main proof to make progress.) Don't
         define this using [nat_to_bin] and [bin_to_nat]! *)
 
-(* FILL IN HERE *)
+Fixpoint double_b(b : bin) : bin :=
+  match b with
+  | Z => Z
+  | n => B0 n
+  end.
+
+Fixpoint normalize(b : bin) : bin :=
+  match b with
+  | Z => Z
+  | B1 n => B1 (normalize n)
+  | B0 n => double_b (normalize n)
+  end.
+
+Compute normalize (B0 (B1 (B0 (B0 Z)))).
+Compute normalize (normalize (B0 (B1 (B0 (B0 Z))))).
+
+Compute normalize (B1 (B0 (B0 (B1 (B0 (B0 Z)))))).
+
+(* 2n+2 = 2(n+1) *)
+Lemma incr_twice : forall b,
+  incr (incr (double_b b)) = (double_b (incr b)).
+Proof.
+  intro b.
+  induction b.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+  - simpl. reflexivity.
+Qed.
+
+Lemma incr_normalize_commute: forall b,
+  normalize (incr b) = incr (normalize b).
+Proof.
+  intros.
+  induction b.
+  - simpl. reflexivity.
+  - simpl. induction (normalize b).
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+  - simpl. rewrite IHb. destruct (normalize b).
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+    + simpl. reflexivity.
+Qed.
+
+Lemma normalize_idempotent: forall b,
+  normalize (normalize b) = normalize b.
+Proof.
+  intros.
+  induction b.
+  - simpl. reflexivity.
+  - simpl. induction (normalize b).
+    + reflexivity.
+    +
+
+
+Lemma nat_to_bin_2x : forall n,
+  nat_to_bin (n + n) = double (nat_to_bin n).
+Proof.
+  intros.
+  induction n.
+  - simpl. reflexivity.
+  - simpl "+". rewrite <- plus_n_Sm. repeat simpl nat_to_bin.
+    rewrite IHn. repeat rewrite <- incr_normalize_commute.
+    rewrite incr_twice. reflexivity.
+Qed.
+
+Theorem bin_nat_bin : forall b, nat_to_bin (bin_to_nat b) = normalize b.
+Proof.
+  intro b.
+  induction b.
+  - simpl. reflexivity.
+  - simpl bin_to_nat. rewrite <- plus_n_O.
+    rewrite nat_to_bin_2x. rewrite IHb.
+    refl
+    assert (H: nat_to_bin (a + a) = B0 )
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_binary_inverse_c : option (nat*string) := None.
 (** [] *)
 
 (* 2020-09-09 20:51 *)
+simpl.
