@@ -891,7 +891,7 @@ Definition manual_grade_for_binary_inverse_b : option (nat*string) := None.
         proof -- that will allow the main proof to make progress.) Don't
         define this using [nat_to_bin] and [bin_to_nat]! *)
 
-Fixpoint double_b(b : bin) : bin :=
+Definition double_b(b : bin) : bin :=
   match b with
   | Z => Z
   | n => B0 n
