@@ -133,14 +133,14 @@ Proof.
 Theorem snd_fst_is_swap : forall (p : natprod),
   (snd p, fst p) = swap_pair p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  destruct p. simpl. reflexivity. Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (fst_swap_is_snd)  *)
 Theorem fst_swap_is_snd : forall (p : natprod),
   fst (swap_pair p) = snd p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  destruct p. simpl. reflexivity. Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -283,43 +283,55 @@ Proof. reflexivity. Qed.
 (* ----------------------------------------------------------------- *)
 (** *** Exercises *)
 
-(** **** Exercise: 2 stars, standard, especially useful (list_funs) 
+(** **** Exercise: 2 stars, standard, especially useful (list_funs)
 
     Complete the definitions of [nonzeros], [oddmembers], and
     [countoddmembers] below. Have a look at the tests to understand
     what these functions should do. *)
 
-Fixpoint nonzeros (l:natlist) : natlist
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint nonzeros (l:natlist) : natlist :=
+  match l with
+  | [] => []
+  | (0 :: xs) => nonzeros xs
+  | (n :: xs) => n :: nonzeros xs
+  end.
+
 
 Example test_nonzeros:
   nonzeros [0;1;0;2;3;0;0] = [1;2;3].
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
-Fixpoint oddmembers (l:natlist) : natlist
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint oddmembers (l:natlist) : natlist :=
+  match l with
+  | [] => []
+  | (n :: xs) => match oddb n with
+               | true => n :: (oddmembers xs)
+               | false => oddmembers xs
+               end
+  end.
+
 
 Example test_oddmembers:
   oddmembers [0;1;0;2;3;0;0] = [1;3].
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
-Definition countoddmembers (l:natlist) : nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition countoddmembers (l:natlist) : nat :=
+  length (oddmembers l).
 
 Example test_countoddmembers1:
   countoddmembers [1;0;3;1;4;5] = 4.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_countoddmembers2:
   countoddmembers [0;2;4] = 0.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_countoddmembers3:
   countoddmembers nil = 0.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (alternate) 
+(** **** Exercise: 3 stars, advanced (alternate)
 
     Complete the following definition of [alternate], which
     interleaves two lists into one, alternating between elements taken
@@ -333,8 +345,14 @@ Example test_countoddmembers3:
     of both lists at the same time.  One possible solution involves
     defining a new kind of pairs, but this is not the only way.)  *)
 
-Fixpoint alternate (l1 l2 : natlist) : natlist
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint alternate (l1 l2 : natlist) : natlist :=
+  match l1 with
+  | [] => l2
+  | (x::xs) => x :: match l2 with
+                 | [] => []
+                 | (y::ys) => x :: y :: (alternate xs ys)
+                 end
+  end.
 
 Example test_alternate1:
   alternate [1;2;3] [4;5;6] = [1;4;2;5;3;6].
@@ -362,7 +380,7 @@ Example test_alternate4:
 
 Definition bag := natlist.
 
-(** **** Exercise: 3 stars, standard, especially useful (bag_functions) 
+(** **** Exercise: 3 stars, standard, especially useful (bag_functions)
 
     Complete the following definitions for the functions
     [count], [sum], [add], and [member] for bags. *)
@@ -413,7 +431,7 @@ Example test_member2:             member 2 [1;4;1] = false.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (bag_more_functions) 
+(** **** Exercise: 3 stars, standard, optional (bag_more_functions)
 
     Here are some more [bag] functions for you to practice with. *)
 
@@ -463,7 +481,7 @@ Example test_subset2:              subset [1;2;2] [2;1;4;1] = false.
  (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (add_inc_count) 
+(** **** Exercise: 2 stars, standard, especially useful (add_inc_count)
 
     Adding a value to a bag should increase the value's count by one.
     State that as a theorem and prove it. *)
@@ -807,7 +825,7 @@ Search (?x + ?y = ?y + ?x).
 (* ================================================================= *)
 (** ** List Exercises, Part 1 *)
 
-(** **** Exercise: 3 stars, standard (list_exercises) 
+(** **** Exercise: 3 stars, standard (list_exercises)
 
     More practice with lists: *)
 
@@ -843,7 +861,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (eqblist) 
+(** **** Exercise: 2 stars, standard (eqblist)
 
     Fill in the definition of [eqblist], which compares
     lists of numbers for equality.  Prove that [eqblist l l]
@@ -903,7 +921,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (bag_count_sum) 
+(** **** Exercise: 3 stars, standard, optional (bag_count_sum)
 
     Write down an interesting theorem [bag_count_sum] about bags
     involving the functions [count] and [sum], and prove it using
@@ -913,7 +931,7 @@ Proof.
 
     [] *)
 
-(** **** Exercise: 4 stars, advanced (rev_injective) 
+(** **** Exercise: 4 stars, advanced (rev_injective)
 
     Prove that the [rev] function is injective. There is a hard way
     and an easy way to do this. *)
@@ -1005,7 +1023,7 @@ Definition option_elim (d : nat) (o : natoption) : nat :=
   | None => d
   end.
 
-(** **** Exercise: 2 stars, standard (hd_error) 
+(** **** Exercise: 2 stars, standard (hd_error)
 
     Using the same idea, fix the [hd] function from earlier so we don't
     have to pass a default element for the [nil] case.  *)
@@ -1024,7 +1042,7 @@ Example test_hd_error3 : hd_error [5;6] = Some 5.
 
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (option_elim_hd) 
+(** **** Exercise: 1 star, standard, optional (option_elim_hd)
 
     This exercise relates your new [hd_error] to the old [hd]. *)
 
@@ -1122,7 +1140,7 @@ Proof.
 (** [] *)
 End PartialMap.
 
-(** **** Exercise: 2 stars, standard, optional (baz_num_elts) 
+(** **** Exercise: 2 stars, standard, optional (baz_num_elts)
 
     Consider the following inductive definition: *)
 
