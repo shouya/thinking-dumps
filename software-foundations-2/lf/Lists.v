@@ -348,27 +348,28 @@ Proof. reflexivity. Qed.
 Fixpoint alternate (l1 l2 : natlist) : natlist :=
   match l1 with
   | [] => l2
-  | (x::xs) => x :: match l2 with
-                 | [] => []
-                 | (y::ys) => x :: y :: (alternate xs ys)
-                 end
+  | (x::xs) => match l2 with
+             | [] => x::xs
+             | (y::ys) => x :: y :: (alternate xs ys)
+             end
   end.
 
 Example test_alternate1:
   alternate [1;2;3] [4;5;6] = [1;4;2;5;3;6].
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_alternate2:
   alternate [1] [4;5;6] = [1;4;5;6].
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_alternate3:
   alternate [1;2;3] [4] = [1;4;2;3].
-  (* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
 
 Example test_alternate4:
   alternate [] [20;30] = [20;30].
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (* ----------------------------------------------------------------- *)
@@ -385,15 +386,23 @@ Definition bag := natlist.
     Complete the following definitions for the functions
     [count], [sum], [add], and [member] for bags. *)
 
-Fixpoint count (v : nat) (s : bag) : nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint count (v : nat) (s : bag) : nat :=
+  match s with
+  | [] => 0
+  | n::xs => match eqb n v with
+           | true => 1 + count v xs
+           | false => count v xs
+           end
+  end.
 
 (** All these proofs can be done just by [reflexivity]. *)
 
 Example test_count1:              count 1 [1;2;3;1;4;1] = 3.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 Example test_count2:              count 6 [1;2;3;1;4;1] = 0.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 
 (** Multiset [sum] is similar to set [union]: [sum a b] contains all
     the elements of [a] and of [b].  (Mathematicians usually define
@@ -407,28 +416,30 @@ Example test_count2:              count 6 [1;2;3;1;4;1] = 0.
     whether [sum] can be implemented in another way -- perhaps by
     using one or more functions that have already been defined.  *)
 
-Definition sum : bag -> bag -> bag
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition sum : bag -> bag -> bag := app.
+
 
 Example test_sum1:              count 1 (sum [1;2;3] [1;4;1]) = 3.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
-Definition add (v : nat) (s : bag) : bag
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition add (v : nat) (s : bag) : bag := cons v s.
 
 Example test_add1:                count 1 (add 1 [1;4;1]) = 3.
- (* FILL IN HERE *) Admitted.
-Example test_add2:                count 5 (add 1 [1;4;1]) = 0.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
-Definition member (v : nat) (s : bag) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Example test_add2:                count 5 (add 1 [1;4;1]) = 0.
+Proof. reflexivity. Qed.
+
+Definition member (v : nat) (s : bag) : bool := ltb 0 (count v s).
+
 
 Example test_member1:             member 1 [1;4;1] = true.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 
 Example test_member2:             member 2 [1;4;1] = false.
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (bag_more_functions)
