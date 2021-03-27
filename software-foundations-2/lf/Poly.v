@@ -943,7 +943,19 @@ Proof. reflexivity. Qed.
     situation where it would be useful for [X] and [Y] to be
     different? *)
 
-(* FILL IN HERE *)
+(* As a programmer by trade, I know a lot of such use cases in
+practice.
+
+ Here's a simple example. The following non-recursive definition of
+ app takes advantage of that. *)
+
+Definition app' {X : Type} (xs ys : list X) : list X :=
+  fold cons xs ys.
+
+Example app'_example :
+  app' [1;2;3] [4;5;6] = app [1;2;3] [4;5;6].
+Proof. reflexivity. Qed.
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_fold_types_different : option (nat*string) := None.
@@ -1021,7 +1033,11 @@ Proof. reflexivity. Qed.
 Theorem fold_length_correct : forall X (l : list X),
   fold_length l = length l.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - reflexivity.
+  - simpl. rewrite <- IHl. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (fold_map)
@@ -1029,15 +1045,25 @@ Proof.
     We can also define [map] in terms of [fold].  Finish [fold_map]
     below. *)
 
-Definition fold_map {X Y: Type} (f: X -> Y) (l: list X) : list Y
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition fold_map {X Y: Type} (f: X -> Y) (l: list X) : list Y :=
+  fold (fun x xs => f x :: xs) l [].
+
+Example fold_map_example_1 : fold_map S [1;2;3] = [2;3;4].
+Proof. reflexivity. Qed.
 
 (** Write down a theorem [fold_map_correct] in Coq stating that
    [fold_map] is correct, and prove it.  (Hint: again, remember that
    [reflexivity] simplifies expressions a bit more aggressively than
    [simpl].) *)
 
-(* FILL IN HERE *)
+Theorem fold_map_correct : forall X Y (f : X -> Y) (l : list X),
+  fold_map f l = map f l.
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - simpl. rewrite <- IHl. reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_fold_map : option (nat*string) := None.
@@ -1066,9 +1092,8 @@ Definition prod_curry {X Y Z : Type}
 (** As an exercise, define its inverse, [prod_uncurry].  Then prove
     the theorems below to show that the two are inverses. *)
 
-Definition prod_uncurry {X Y Z : Type}
-  (f : X -> Y -> Z) (p : X * Y) : Z
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition prod_uncurry {X Y Z : Type} (f : X -> Y -> Z) (p : X * Y) : Z :=
+  let (x, y) := p in f x y.
 
 (** As a (trivial) example of the usefulness of currying, we can use it
     to shorten one of the examples that we saw above: *)
@@ -1086,14 +1111,15 @@ Theorem uncurry_curry : forall (X Y Z : Type)
                         (f : X -> Y -> Z)
                         x y,
   prod_curry (prod_uncurry f) x y = f x y.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. reflexivity. Qed.
 
 Theorem curry_uncurry : forall (X Y Z : Type)
                         (f : (X * Y) -> Z) (p : X * Y),
   prod_uncurry (prod_curry f) p = f p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. destruct p. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced (nth_error_informal)
@@ -1109,8 +1135,7 @@ Proof.
    Write an informal proof of the following theorem:
 
    forall X l n, length l = n -> @nth_error X l n = None
-*)
-(* FILL IN HERE *)
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_informal_proof : option (nat*string) := None.
@@ -1159,52 +1184,54 @@ Definition three : cnat := @doit3times.
 (** Successor of a natural number: given a Church numeral [n],
     the successor [succ n] is a function that iterates its
     argument once more than [n]. *)
-Definition succ (n : cnat) : cnat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition succ (n : cnat) : cnat :=
+  fun X f x => f (n X f x).
 
 Example succ_1 : succ zero = one.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example succ_2 : succ one = two.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example succ_3 : succ two = three.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** [] *)
 
 (** **** Exercise: 1 star, advanced (church_plus)  *)
 
 (** Addition of two natural numbers: *)
-Definition plus (n m : cnat) : cnat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition plus (n m : cnat) : cnat :=
+  fun X f x => m X f ((n X f) x).
+
 
 Example plus_1 : plus zero one = one.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example plus_2 : plus two three = plus three two.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example plus_3 :
   plus (plus two two) three = plus one (plus three three).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced (church_mult)  *)
 
 (** Multiplication: *)
-Definition mult (n m : cnat) : cnat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition mult (n m : cnat) : cnat :=
+  fun X f x => m X (n X f) x.
+
 
 Example mult_1 : mult one one = one.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example mult_2 : mult zero (plus three three) = zero.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example mult_3 : mult two three = plus three three.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** [] *)
 
@@ -1217,17 +1244,27 @@ Proof. (* FILL IN HERE *) Admitted.
     a "Universe inconsistency" error, try iterating over a different
     type.  Iterating over [cnat] itself is usually problematic.) *)
 
-Definition exp (n m : cnat) : cnat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition to_nat (x : cnat) : nat := x nat S 0.
+Fixpoint from_nat (x : nat) : cnat :=
+  match x with
+  | O => zero
+  | S x' => succ (from_nat x')
+  end.
+
+Definition exp (n m : cnat) : cnat :=
+  fun X f x => m (X -> X) (n X) f x.
+
+
+Compute to_nat(exp two three).
 
 Example exp_1 : exp two two = plus two two.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example exp_2 : exp three zero = one.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example exp_3 : exp three two = plus (mult two (mult two two)) one.
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** [] *)
 
