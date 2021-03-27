@@ -1195,7 +1195,11 @@ Definition eqb_id (x1 x2 : id) :=
 (** **** Exercise: 1 star, standard (eqb_id_refl)  *)
 Theorem eqb_id_refl : forall x, true = eqb_id x x.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. destruct x. induction n.
+  - reflexivity.
+  - simpl. rewrite <- eqb_refl. reflexivity.
+Qed.
+
 (** [] *)
 
 (** Now we define the type of partial maps: *)
@@ -1241,7 +1245,10 @@ Theorem update_eq :
   forall (d : partial_map) (x : id) (v: nat),
     find x (update d x v) = Some v.
 Proof.
- (* FILL IN HERE *) Admitted.
+  intros. simpl. rewrite <- eqb_id_refl. reflexivity.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard (update_neq)  *)
@@ -1249,7 +1256,11 @@ Theorem update_neq :
   forall (d : partial_map) (x y : id) (o: nat),
     eqb_id x y = false -> find x (update d y o) = find x d.
 Proof.
- (* FILL IN HERE *) Admitted.
+  intros.
+  simpl.
+  rewrite H. reflexivity.
+Qed.
+
 (** [] *)
 End PartialMap.
 
@@ -1264,7 +1275,16 @@ Inductive baz : Type :=
 (** How _many_ elements does the type [baz] have? (Explain in words,
     in a comment.) *)
 
-(* FILL IN HERE *)
+(* There is no base constructor, so there is no
+   possible, "finite" element. However, there can be elements that are infinite.
+
+   The "baz" type can be thought of a infinite list of either:
+
+   - a bottom value
+   - either true or false
+
+   Overall, there are 3*infinity = infinity of possible elements.
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_baz_num_elts : option (nat*string) := None.
