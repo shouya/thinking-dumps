@@ -131,7 +131,7 @@ Example test_repeat2 :
   repeat bool false 1 = cons bool false (nil bool).
 Proof. reflexivity. Qed.
 
-(** **** Exercise: 2 stars, standard (mumble_grumble) 
+(** **** Exercise: 2 stars, standard (mumble_grumble)
 
     Consider the following two inductively defined types. *)
 
@@ -148,14 +148,24 @@ Inductive grumble (X:Type) : Type :=
 
 (** Which of the following are well-typed elements of [grumble X] for
     some type [X]?  (Add YES or NO to each line.)
-      - [d (b a 5)]
-      - [d mumble (b a 5)]
-      - [d bool (b a 5)]
-      - [e bool true]
-      - [e mumble (b c 0)]
-      - [e bool (b c 0)]
-      - [c]  *)
-(* FILL IN HERE *)
+      - [d (b a 5)]                NO
+      - [d mumble (b a 5)]         YES
+      - [d bool (b a 5)]           YES
+      - [e bool true]              YES
+      - [e mumble (b c 0)]         YES
+      - [e bool (b c 0)]           NO
+      - [c]                        YES
+
+ *)
+
+(* Check (d (b a 5)). *)
+Check (d mumble (b a 5)).
+Check (d bool (b a 5)).
+Check (e bool true).
+Check (e mumble (b c 5)).
+(* Check (e bool (b c 0)). *)
+Check c.
+
 End MumbleGrumble.
 
 (* Do not modify the following line: *)
@@ -385,7 +395,7 @@ Definition list123''' := [1; 2; 3].
 (* ----------------------------------------------------------------- *)
 (** *** Exercises *)
 
-(** **** Exercise: 2 stars, standard, optional (poly_exercises) 
+(** **** Exercise: 2 stars, standard, optional (poly_exercises)
 
     Here are a few simple exercises, just like ones in the [Lists]
     chapter, for practice with polymorphism.  Complete the proofs below. *)
@@ -393,32 +403,61 @@ Definition list123''' := [1; 2; 3].
 Theorem app_nil_r : forall (X:Type), forall l:list X,
   l ++ [] = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - reflexivity.
+  - simpl. rewrite IHl. reflexivity.
+Qed.
+
 
 Theorem app_assoc : forall A (l m n:list A),
   l ++ m ++ n = (l ++ m) ++ n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - simpl. reflexivity.
+  - simpl. rewrite IHl. reflexivity.
+Qed.
 
 Lemma app_length : forall (X:Type) (l1 l2 : list X),
   length (l1 ++ l2) = length l1 + length l2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l1.
+  - reflexivity.
+  - simpl. rewrite IHl1. reflexivity.
+Qed.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (more_poly_exercises) 
+(** **** Exercise: 2 stars, standard, optional (more_poly_exercises)
 
     Here are some slightly more interesting ones... *)
 
 Theorem rev_app_distr: forall X (l1 l2 : list X),
   rev (l1 ++ l2) = rev l2 ++ rev l1.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l1.
+  - simpl. rewrite app_nil_r. reflexivity.
+  - simpl. rewrite IHl1. rewrite app_assoc. reflexivity.
+Qed.
+
+Theorem rev_l_x : forall X: Type, forall x xs,
+    rev (xs ++ [x]) = @cons X x (rev xs).
+Proof.
+  intros. induction xs.
+  + reflexivity.
+  + simpl. rewrite IHxs. reflexivity.
+Qed.
 
 Theorem rev_involutive : forall X : Type, forall l : list X,
   rev (rev l) = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - reflexivity.
+  - simpl. rewrite rev_l_x. rewrite IHl. reflexivity.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -479,7 +518,7 @@ Fixpoint combine {X Y : Type} (lx : list X) (ly : list Y)
   | x :: tx, y :: ty => (x, y) :: (combine tx ty)
   end.
 
-(** **** Exercise: 1 star, standard, optional (combine_checks) 
+(** **** Exercise: 1 star, standard, optional (combine_checks)
 
     Try answering the following questions on paper and
     checking your answers in Coq:
@@ -493,7 +532,7 @@ Fixpoint combine {X Y : Type} (lx : list X) (ly : list Y)
 
     [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (split) 
+(** **** Exercise: 2 stars, standard, especially useful (split)
 
     The function [split] is the right inverse of [combine]: it takes a
     list of pairs and returns a pair of lists.  In many functional
@@ -503,13 +542,18 @@ Fixpoint combine {X Y : Type} (lx : list X) (ly : list Y)
     given unit test. *)
 
 Fixpoint split {X Y : Type} (l : list (X*Y))
-               : (list X) * (list Y)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+  : (list X) * (list Y) :=
+  match l with
+  | [] => ([], [])
+  | (x, y) :: l' => let (xs, ys) := split l'
+                    in (x::xs, y::ys)
+  end.
+
 
 Example test_split:
   split [(1,false);(2,false)] = ([1;2],[false;false]).
-Proof.
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -552,14 +596,17 @@ Proof. reflexivity. Qed.
 Example test_nth_error3 : nth_error [true] 2 = None.
 Proof. reflexivity. Qed.
 
-(** **** Exercise: 1 star, standard, optional (hd_error_poly) 
+(** **** Exercise: 1 star, standard, optional (hd_error_poly)
 
     Complete the definition of a polymorphic version of the
     [hd_error] function from the last chapter. Be sure that it
     passes the unit tests below. *)
 
-Definition hd_error {X : Type} (l : list X) : option X
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition hd_error {X : Type} (l : list X) : option X :=
+  match l with
+  | [] => None
+  | x :: _ => Some x
+  end.
 
 (** Once again, to force the implicit arguments to be explicit,
     we can use [@] before the name of the function. *)
@@ -567,9 +614,11 @@ Definition hd_error {X : Type} (l : list X) : option X
 Check @hd_error : forall X : Type, list X -> option X.
 
 Example test_hd_error1 : hd_error [1;2] = Some 1.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 Example test_hd_error2 : hd_error  [[1];[2]]  = Some [1].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -679,26 +728,27 @@ Example test_filter2':
   = [ [3]; [4]; [8] ].
 Proof. reflexivity. Qed.
 
-(** **** Exercise: 2 stars, standard (filter_even_gt7) 
+(** **** Exercise: 2 stars, standard (filter_even_gt7)
 
     Use [filter] (instead of [Fixpoint]) to write a Coq function
     [filter_even_gt7] that takes a list of natural numbers as input
     and returns a list of just those that are even and greater than
     7. *)
 
-Definition filter_even_gt7 (l : list nat) : list nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition filter_even_gt7 (l : list nat) : list nat :=
+  filter (fun x => evenb x && ltb 7 x) l.
 
 Example test_filter_even_gt7_1 :
   filter_even_gt7 [1;2;6;9;10;3;12;8] = [10;12;8].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_filter_even_gt7_2 :
   filter_even_gt7 [5;2;6;19;129] = [].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (partition) 
+(** **** Exercise: 3 stars, standard (partition)
 
     Use [filter] to write a Coq function [partition]:
 
@@ -714,14 +764,15 @@ Example test_filter_even_gt7_2 :
 
 Definition partition {X : Type}
                      (test : X -> bool)
-                     (l : list X)
-                   : list X * list X
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+                     (l : list X) : list X * list X :=
+  (filter test l , filter (fun x => negb (test x)) l).
 
 Example test_partition1: partition oddb [1;2;3;4;5] = ([1;3;5], [2;4]).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 Example test_partition2: partition (fun x => false) [5;9;0] = ([], [5;9;0]).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -763,18 +814,34 @@ Proof. reflexivity. Qed.
 (* ----------------------------------------------------------------- *)
 (** *** Exercises *)
 
-(** **** Exercise: 3 stars, standard (map_rev) 
+(** **** Exercise: 3 stars, standard (map_rev)
 
     Show that [map] and [rev] commute.  You may need to define an
     auxiliary lemma. *)
 
+Lemma map_app_distr : forall (X Y : Type)
+                             (f : X -> Y)
+                             (xs ys: list X),
+  map f (xs ++ ys) = map f xs ++ map f ys.
+Proof.
+  intros.
+  induction xs.
+  - reflexivity.
+  - simpl. rewrite IHxs. reflexivity.
+Qed.
+
 Theorem map_rev : forall (X Y : Type) (f : X -> Y) (l : list X),
   map f (rev l) = rev (map f l).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - reflexivity.
+  - simpl. rewrite <- IHl. rewrite map_app_distr. reflexivity.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (flat_map) 
+(** **** Exercise: 2 stars, standard, especially useful (flat_map)
 
     The function [map] maps a [list X] to a [list Y] using a function
     of type [X -> Y].  We can define a similar function, [flat_map],
@@ -786,14 +853,18 @@ Proof.
       = [1; 2; 3; 5; 6; 7; 10; 11; 12].
 *)
 
-Fixpoint flat_map {X Y: Type} (f: X -> list Y) (l: list X)
-                   : (list Y)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint flat_map {X Y: Type} (f: X -> list Y) (l: list X) : (list Y) :=
+  match l with
+  | [] => []
+  | x::xs => f x ++ flat_map f xs
+  end.
+
 
 Example test_flat_map1:
   flat_map (fun n => [n;n;n]) [1;5;4]
   = [1; 1; 1; 5; 5; 5; 4; 4; 4].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (** Lists are not the only inductive type for which [map] makes sense.
@@ -806,7 +877,7 @@ Definition option_map {X Y : Type} (f : X -> Y) (xo : option X)
     | Some x => Some (f x)
   end.
 
-(** **** Exercise: 2 stars, standard, optional (implicit_args) 
+(** **** Exercise: 2 stars, standard, optional (implicit_args)
 
     The definitions and uses of [filter] and [map] use implicit
     arguments in many places.  Replace the curly braces around the
@@ -815,6 +886,8 @@ Definition option_map {X Y : Type} (f : X -> Y) (xo : option X)
     done so correctly.  (This exercise is not to be turned in; it is
     probably easiest to do it on a _copy_ of this file that you can
     throw away afterwards.)
+
+    This problem is pretty easy to me. So I'm going to skip it.
 *)
 (** [] *)
 
@@ -862,7 +935,7 @@ Example fold_example3 :
   fold app  [[1];[];[2;3];[4]] [] = [1;2;3;4].
 Proof. reflexivity. Qed.
 
-(** **** Exercise: 1 star, advanced (fold_types_different) 
+(** **** Exercise: 1 star, advanced (fold_types_different)
 
     Observe that the type of [fold] is parameterized by _two_ type
     variables, [X] and [Y], and the parameter [f] is a binary operator
@@ -928,7 +1001,7 @@ Proof. reflexivity. Qed.
 
 Module Exercises.
 
-(** **** Exercise: 2 stars, standard (fold_length) 
+(** **** Exercise: 2 stars, standard (fold_length)
 
     Many common functions on lists can be implemented in terms of
     [fold].  For example, here is an alternative definition of [length]: *)
@@ -951,7 +1024,7 @@ Proof.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (fold_map) 
+(** **** Exercise: 3 stars, standard (fold_map)
 
     We can also define [map] in terms of [fold].  Finish [fold_map]
     below. *)
@@ -970,7 +1043,7 @@ Definition fold_map {X Y: Type} (f: X -> Y) (l: list X) : list Y
 Definition manual_grade_for_fold_map : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, advanced (currying) 
+(** **** Exercise: 2 stars, advanced (currying)
 
     In Coq, a function [f : A -> B -> C] really has the type [A
     -> (B -> C)].  That is, if you give [f] a value of type [A], it
@@ -1023,7 +1096,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, advanced (nth_error_informal) 
+(** **** Exercise: 2 stars, advanced (nth_error_informal)
 
     Recall the definition of the [nth_error] function:
 
