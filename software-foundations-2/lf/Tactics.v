@@ -1072,7 +1072,27 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool),
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct (f true) eqn:ft; destruct (f false) eqn:ff; destruct b;
+    repeat (try rewrite ft; try rewrite ff); reflexivity.
+Qed.
+
+(* above is equivalent to enumerating all cases below *)
+Theorem bool_fn_applied_thrice' :
+  forall (f : bool -> bool) (b : bool),
+  f (f (f b)) = f b.
+Proof.
+  intros.
+  destruct (f true) eqn:ft; destruct (f false) eqn:ff; destruct b.
+  - rewrite ft. rewrite ft. rewrite ft. reflexivity.
+  - rewrite ff. rewrite ft. rewrite ft. reflexivity.
+  - rewrite ft. rewrite ft. rewrite ft. reflexivity.
+  - rewrite ff. rewrite ff. rewrite ff. reflexivity.
+  - rewrite ft. rewrite ff. rewrite ft. reflexivity.
+  - rewrite ff. rewrite ft. rewrite ff. reflexivity.
+  - rewrite ft. rewrite ff. rewrite ff. reflexivity.
+  - rewrite ff. rewrite ff. rewrite ff. reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1153,7 +1173,16 @@ Proof.
 Theorem eqb_sym : forall (n m : nat),
   (n =? m) = (m =? n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n.
+  induction n.
+  - intro. destruct m.
+    + reflexivity.
+    + reflexivity.
+  - intro. destruct m.
+    + reflexivity.
+    + simpl. rewrite IHn. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, optional (eqb_sym_informal)
@@ -1164,8 +1193,7 @@ Proof.
    Theorem: For any [nat]s [n] [m], [(n =? m) = (m =? n)].
 
    Proof: *)
-   (* FILL IN HERE
-
+   (* skipping this one
     [] *)
 
 (** **** Exercise: 3 stars, standard, optional (eqb_trans)  *)
@@ -1174,7 +1202,12 @@ Theorem eqb_trans : forall n m p,
   m =? p = true ->
   n =? p = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply eqb_true in H.
+  apply eqb_true in H0.
+  rewrite H. rewrite <- H0.
+  rewrite <- eqb_refl. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (split_combine)
@@ -1191,14 +1224,24 @@ Proof.
     things than necessary.  Hint: what property do you need of [l1]
     and [l2] for [split (combine l1 l2) = (l1,l2)] to be true?) *)
 
-Definition split_combine_statement : Prop
+Definition split_combine_statement : Prop :=
+  forall {X} (l1 l2 : list X), length l1 = length l2 -> split (combine l1 l2) = (l1, l2).
   (* ("[: Prop]" means that we are giving a name to a
      logical proposition here.) *)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 
 Theorem split_combine : split_combine_statement.
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold split_combine_statement.
+  intros X l1 l2 Hl.
+  generalize dependent l2.
+  induction l1 as [|x1 l1'].
+  - simpl. intros. f_equal. destruct l2. reflexivity. discriminate Hl.
+  - simpl. destruct l2 as [|x2 l2']; intros.
+    + simpl in Hl. discriminate Hl.
+    + simpl in Hl. injection Hl as Hl. apply IHl1' in Hl.
+      simpl split. rewrite Hl. reflexivity.
+Qed.
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_split_combine : option (nat*string) := None.
@@ -1214,7 +1257,13 @@ Theorem filter_exercise : forall (X : Type) (test : X -> bool)
      filter test l = x :: lf ->
      test x = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X test.
+  induction l.
+  - intros. simpl in H. discriminate H.
+  - simpl. intros. destruct (test x0) eqn:testx0.
+    + injection H. intros. rewrite <- H1. rewrite testx0. reflexivity.
+    + apply IHl with (lf:=lf). rewrite H. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, especially useful (forall_exists_challenge)
