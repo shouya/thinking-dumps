@@ -1225,7 +1225,7 @@ Qed.
     and [l2] for [split (combine l1 l2) = (l1,l2)] to be true?) *)
 
 Definition split_combine_statement : Prop :=
-  forall {X} (l1 l2 : list X), length l1 = length l2 -> split (combine l1 l2) = (l1, l2).
+  forall X (l1 l2 : list X), length l1 = length l2 -> split (combine l1 l2) = (l1, l2).
   (* ("[: Prop]" means that we are giving a name to a
      logical proposition here.) *)
 
