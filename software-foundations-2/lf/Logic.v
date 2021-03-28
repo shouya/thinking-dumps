@@ -148,7 +148,11 @@ Qed.
 Example and_exercise :
   forall n m : nat, n + m = 0 -> n = 0 /\ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - destruct n. reflexivity. discriminate H.
+  - destruct m. reflexivity. rewrite <- plus_n_Sm in H. discriminate H.
+Qed.
 (** [] *)
 
 (** So much for proving conjunctive statements.  To go in the other
@@ -226,7 +230,11 @@ Proof.
 Lemma proj2 : forall P Q : Prop,
   P /\ Q -> Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H.
+  assumption.
+Qed.
+
 (** [] *)
 
 (** Finally, we sometimes need to rearrange the order of conjunctions
@@ -242,7 +250,7 @@ Proof.
     - (* left *) apply HQ.
     - (* right *) apply HP.  Qed.
 
-(** **** Exercise: 2 stars, standard (and_assoc) 
+(** **** Exercise: 2 stars, standard (and_assoc)
 
     (In the following proof of associativity, notice how the _nested_
     [intros] pattern breaks the hypothesis [H : P /\ (Q /\ R)] down into
@@ -253,7 +261,9 @@ Theorem and_assoc : forall P Q R : Prop,
   P /\ (Q /\ R) -> (P /\ Q) /\ R.
 Proof.
   intros P Q R [HP [HQ HR]].
-  (* FILL IN HERE *) Admitted.
+  split; try split; assumption.
+Qed.
+
 (** [] *)
 
 (** By the way, the infix notation [/\] is actually just syntactic
@@ -317,14 +327,24 @@ Qed.
 Lemma mult_eq_0 :
   forall n m, n * m = 0 -> n = 0 \/ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros [|n'] [|m'] H.
+  - simpl in H. left. assumption.
+  - simpl in H. left. assumption.
+  - rewrite mult_0_r in H. right. assumption.
+  - simpl in H. discriminate H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (or_commut)  *)
 Theorem or_commut : forall P Q : Prop,
   P \/ Q  -> Q \/ P.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H.
+  - right. assumption.
+  - left. assumption.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -339,7 +359,7 @@ Proof.
 
 (** To see how negation works, recall the _principle of explosion_
     from the [Tactics] chapter, which asserts that, if we assume a
-    contradiction, then any other proposition can be derived. 
+    contradiction, then any other proposition can be derived.
     Following this intuition, we could define [~ P] ("not [P]") as
     [forall Q, P -> Q].
 
@@ -372,7 +392,7 @@ Proof.
     follows whatever you like"; this is another common name for the
     principle of explosion. *)
 
-(** **** Exercise: 2 stars, standard, optional (not_implies_our_not) 
+(** **** Exercise: 2 stars, standard, optional (not_implies_our_not)
 
     Show that Coq's definition of negation implies the intuitive one
     mentioned above: *)
@@ -380,7 +400,9 @@ Proof.
 Fact not_implies_our_not : forall (P:Prop),
   ~ P -> (forall (Q:Prop), P -> Q).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply H in H0. destruct H0.
+Qed.
 (** [] *)
 
 (** Inequality is a frequent enough example of negated statement
@@ -433,13 +455,18 @@ Proof.
   (* WORKED IN CLASS *)
   intros P H. unfold not. intros G. apply G. apply H.  Qed.
 
-(** **** Exercise: 2 stars, advanced (double_neg_inf) 
+(** **** Exercise: 2 stars, advanced (double_neg_inf)
 
     Write an informal proof of [double_neg]:
 
-   _Theorem_: [P] implies [~~P], for any proposition [P]. *)
+   _Theorem_: [P] implies [~~P], for any proposition [P].
+ *)
 
-(* FILL IN HERE *)
+(*
+   Suppose P holds, we prove (P -> False) -> False holds.
+   We assume (H: P -> False) holds and prove False holds.
+   Given H holds and P holds, by conditional elimination law, False holds. Qed.
+*)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_double_neg_inf : option (nat*string) := None.
@@ -449,22 +476,32 @@ Definition manual_grade_for_double_neg_inf : option (nat*string) := None.
 Theorem contrapositive : forall (P Q : Prop),
   (P -> Q) -> (~Q -> ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q. unfold not. intros.
+  apply H0. apply H. apply H1.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (not_both_true_and_false)  *)
 Theorem not_both_true_and_false : forall P : Prop,
   ~ (P /\ ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold not. intros.
+  destruct H. apply H0. apply H.
+Qed.
 (** [] *)
 
-(** **** Exercise: 1 star, advanced (informal_not_PNP) 
+(** **** Exercise: 1 star, advanced (informal_not_PNP)
 
     Write an informal proof (in English) of the proposition [forall P
-    : Prop, ~(P /\ ~P)]. *)
+    : Prop, ~(P /\ ~P)].
+*)
 
-(* FILL IN HERE *)
+(*
+    We need to prove (P /\ (P -> False)) -> False holds.
+    Assume (P /\ (P -> False)), we need to prove False holds.
+    Assume P and (H: P -> False), we need to prove False holds.
+    Based on P and H, False holds.
+*)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_informal_not_PNP : option (nat*string) := None.
@@ -560,7 +597,7 @@ Proof.
     intros H. rewrite H. intros H'. discriminate H'.
 Qed.
 
-(** **** Exercise: 1 star, standard, optional (iff_properties) 
+(** **** Exercise: 1 star, standard, optional (iff_properties)
 
     Using the above proof that [<->] is symmetric ([iff_sym]) as
     a guide, prove that it is also reflexive and transitive. *)
@@ -568,19 +605,35 @@ Qed.
 Theorem iff_refl : forall P : Prop,
   P <-> P.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro; assumption.
+Qed.
+
 
 Theorem iff_trans : forall P Q R : Prop,
   (P <-> Q) -> (Q <-> R) -> (P <-> R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. destruct H. destruct H0. split; intro.
+  - auto.
+  - auto.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (or_distributes_over_and)  *)
 Theorem or_distributes_over_and : forall P Q R : Prop,
   P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - intro. destruct H.
+    + split. left. assumption. left. assumption.
+    + destruct H. split. right. assumption. right. assumption.
+  - intro. destruct H. destruct H; destruct H0.
+    + left. assumption.
+    + left. assumption.
+    + left. assumption.
+    + right. split; assumption.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -691,7 +744,7 @@ Proof.
   exists (2 + m).
   apply Hm.  Qed.
 
-(** **** Exercise: 1 star, standard, especially useful (dist_not_exists) 
+(** **** Exercise: 1 star, standard, especially useful (dist_not_exists)
 
     Prove that "[P] holds for all [x]" implies "there is no [x] for
     which [P] does not hold."  (Hint: [destruct H as [x E]] works on
@@ -700,10 +753,13 @@ Proof.
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold not.
+  intro. destruct H0.
+  apply H0. apply H.
+Qed.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (dist_exists_or) 
+(** **** Exercise: 2 stars, standard (dist_exists_or)
 
     Prove that existential quantification distributes over
     disjunction. *)
@@ -711,7 +767,15 @@ Proof.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - intros [H]. destruct H0.
+    + left. exists H. apply H0.
+    + right. exists H. apply H0.
+  - intros. destruct H; destruct H.
+    + exists x. left. apply H.
+    + exists x. right. apply H.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -754,7 +818,8 @@ Example In_example_2 :
 Proof.
   (* WORKED IN CLASS *)
   simpl.
-  intros n [H | [H | []]].
+  intros n.
+  intros [H | [H | []]].
   - exists 1. rewrite <- H. reflexivity.
   - exists 2. rewrite <- H. reflexivity.
 Qed.
@@ -796,7 +861,21 @@ Theorem In_map_iff :
     exists x, f x = y /\ In x l.
 Proof.
   intros A B f l y. split.
-  (* FILL IN HERE *) Admitted.
+  - induction l. simpl.
+    + intro. exfalso. apply H.
+    + simpl. intro. destruct H.
+      * exists x. split. apply H. left. reflexivity.
+      * apply IHl in H. destruct H. exists x0. destruct H. split.
+        -- apply H.
+        -- right. apply H0.
+  - intros [x]. induction l.
+    + destruct H. apply H0.
+    + simpl in H. simpl. destruct H. destruct H0.
+      * left. rewrite H0. apply H.
+      * right. apply IHl. split.
+        -- apply H.
+        -- apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (In_app_iff)  *)
@@ -804,10 +883,10 @@ Theorem In_app_iff : forall A l l' (a:A),
   In a (l++l') <-> In a l \/ In a l'.
 Proof.
   intros A l. induction l as [|a' l' IH].
-  (* FILL IN HERE *) Admitted.
+(* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, especially useful (All) 
+(** **** Exercise: 3 stars, standard, especially useful (All)
 
     Recall that functions returning propositions can be seen as
     _properties_ of their arguments. For instance, if [P] has type
@@ -830,7 +909,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (combine_odd_even) 
+(** **** Exercise: 2 stars, standard, optional (combine_odd_even)
 
     Complete the definition of the [combine_odd_even] function below.
     It takes as arguments two properties of numbers, [Podd] and
@@ -902,7 +981,7 @@ Check plus_comm : forall n m : nat, n + m = m + n.
     theorem tells us what we can use that theorem for, just as the
     type of a "computational" object tells us what we can do with that
     object -- e.g., if we have a term of type [nat -> nat -> nat], we
-    can give it two [nat]s as arguments and get a [nat] back. 
+    can give it two [nat]s as arguments and get a [nat] back.
     Similarly, if we have an object of type [n = m -> n + n = m + m]
     and we provide it an "argument" of type [n = m], we can derive
     [n + n = m + m]. *)
@@ -1151,7 +1230,7 @@ Print Assumptions function_equality_ex2.
          forall (X Y : Type) (f g : X -> Y),
                 (forall x : X, f x = g x) -> f = g *)
 
-(** **** Exercise: 4 stars, standard (tr_rev_correct) 
+(** **** Exercise: 4 stars, standard (tr_rev_correct)
 
     One problem with the definition of the list-reversing function
     [rev] that we have is that it performs a call to [app] on each
@@ -1372,7 +1451,7 @@ Qed.
     between the boolean and propositional worlds will often be
     convenient in later chapters. *)
 
-(** **** Exercise: 2 stars, standard (logical_connectives) 
+(** **** Exercise: 2 stars, standard (logical_connectives)
 
     The following theorems relate the propositional connectives studied
     in this chapter to the corresponding boolean operations. *)
@@ -1388,7 +1467,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 1 star, standard (eqb_neq) 
+(** **** Exercise: 1 star, standard (eqb_neq)
 
     The following theorem is an alternate "negative" formulation of
     [eqb_eq] that is more convenient in certain situations.  (We'll see
@@ -1400,7 +1479,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (eqb_list) 
+(** **** Exercise: 3 stars, standard (eqb_list)
 
     Given a boolean operator [eqb] for testing equality of elements of
     some type [A], we can define a function [eqb_list] for testing
@@ -1421,7 +1500,7 @@ Proof.
 
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (All_forallb) 
+(** **** Exercise: 2 stars, standard, especially useful (All_forallb)
 
     Recall the function [forallb], from the exercise
     [forall_exists_challenge] in chapter [Tactics]: *)
@@ -1561,7 +1640,7 @@ Qed.
     this line of reasoning cannot be encoded in Coq without assuming
     additional axioms. *)
 
-(** **** Exercise: 3 stars, standard (excluded_middle_irrefutable) 
+(** **** Exercise: 3 stars, standard (excluded_middle_irrefutable)
 
     Proving the consistency of Coq with the general excluded middle
     axiom requires complicated reasoning that cannot be carried out
@@ -1587,7 +1666,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (not_exists_dist) 
+(** **** Exercise: 3 stars, advanced (not_exists_dist)
 
     It is a theorem of classical logic that the following two
     assertions are equivalent:
@@ -1608,7 +1687,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 5 stars, standard, optional (classical_axioms) 
+(** **** Exercise: 5 stars, standard, optional (classical_axioms)
 
     For those who like a challenge, here is an exercise taken from the
     Coq'Art book by Bertot and Casteran (p. 123).  Each of the
