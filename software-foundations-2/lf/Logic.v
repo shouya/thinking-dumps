@@ -883,7 +883,18 @@ Theorem In_app_iff : forall A l l' (a:A),
   In a (l++l') <-> In a l \/ In a l'.
 Proof.
   intros A l. induction l as [|a' l' IH].
-(* FILL IN HERE *) Admitted.
+  - split.
+    + simpl. intro. right. apply H.
+    + simpl. intro. destruct H. exfalso. apply H. apply H.
+  - split; intros.
+    + simpl in H. simpl. destruct H.
+      * left. left. apply H.
+      * apply IH in H. destruct H. left. right. apply H. right. apply H.
+    + simpl. simpl in H. destruct H. destruct H.
+      * left. apply H.
+      * right. apply IH. left. apply H.
+      * right. apply IH. right. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, especially useful (All)
@@ -898,15 +909,38 @@ Proof.
     lemma below.  (Of course, your definition should _not_ just
     restate the left-hand side of [All_In].) *)
 
-Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop :=
+  match l with
+  | [] => True
+  | (x :: l') => P x /\ All P l'
+  end.
+
 
 Theorem All_In :
   forall T (P : T -> Prop) (l : list T),
     (forall x, In x l -> P x) <->
     All P l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l as [|x l' IHl]; split.
+  - (* l := []; -> direction *)
+    intro. simpl. apply I.
+  - (* l := []; <- direction *)
+    intros. simpl in H0. exfalso. apply H0.
+  - (* l := x :: l'; -> direction *)
+    simpl. intros. split.
+    + (* P x *)
+      apply H. left. reflexivity.
+    + (* All P l' *)
+      apply IHl. intros. apply H. right. apply H0.
+  - (* l := x :: l'; <- direction *)
+    simpl. intros. destruct H. destruct H0.
+    + (* when x = x0 *)
+      rewrite <- H0. apply H.
+    + (* when In x0 l' *)
+      apply IHl in H0. apply H0. apply H1.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (combine_odd_even)
@@ -917,8 +951,11 @@ Proof.
     equivalent to [Podd n] when [n] is odd and equivalent to [Peven n]
     otherwise. *)
 
-Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop :=
+  fun n => match oddb n with
+        | true  => Podd n
+        | false => Peven n
+        end.
 
 (** To test your definition, prove the following facts: *)
 
@@ -928,7 +965,14 @@ Theorem combine_odd_even_intro :
     (oddb n = false -> Peven n) ->
     combine_odd_even Podd Peven n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros * H1 H2. unfold combine_odd_even.
+  destruct (oddb n).
+  - (* oddb n = true *)
+    apply H1. reflexivity.
+  - (* oddb n = false *)
+    apply H2. reflexivity.
+Qed.
+
 
 Theorem combine_odd_even_elim_odd :
   forall (Podd Peven : nat -> Prop) (n : nat),
@@ -936,7 +980,9 @@ Theorem combine_odd_even_elim_odd :
     oddb n = true ->
     Podd n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold combine_odd_even in H. rewrite H0 in H. apply H.
+Qed.
 
 Theorem combine_odd_even_elim_even :
   forall (Podd Peven : nat -> Prop) (n : nat),
@@ -944,8 +990,9 @@ Theorem combine_odd_even_elim_even :
     oddb n = false ->
     Peven n.
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros.
+  unfold combine_odd_even in H. rewrite H0 in H. apply H.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1257,7 +1304,16 @@ Definition tr_rev {X} (l : list X) : list X :=
 
 Theorem tr_rev_correct : forall X, @tr_rev X = @rev X.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intro.
+  apply functional_extensionality.
+  intros l. induction l as [|x l' IHl].
+  - (* l = [] *)
+    intros. reflexivity.
+  - (* l = x :: l' *)
+    simpl. unfold tr_rev. simpl. rewrite <- IHl.
+
+
+
 (** [] *)
 
 (* ================================================================= *)
