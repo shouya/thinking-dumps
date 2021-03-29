@@ -1302,6 +1302,25 @@ Definition tr_rev {X} (l : list X) : list X :=
 
     Prove that the two definitions are indeed equivalent. *)
 
+Lemma rev_append_appends :
+  forall X (l xs: list X) (x : X), rev_append l (x::xs) = rev_append l [x] ++ xs.
+Proof.
+  intros X l.
+  induction l.
+  - simpl. intros. reflexivity.
+  - simpl. intros. rewrite (IHl [x0]). rewrite IHl. rewrite <- app_assoc.
+    simpl. reflexivity.
+Qed.
+
+Lemma rev_append_recur :
+  forall X (l: list X) (x : X), rev_append l [x] = rev_append l [] ++ [x].
+Proof.
+  intros X l.
+  induction l.
+  - simpl. reflexivity.
+  - simpl. intro. apply rev_append_appends.
+Qed.
+
 Theorem tr_rev_correct : forall X, @tr_rev X = @rev X.
 Proof.
   intro.
@@ -1311,8 +1330,8 @@ Proof.
     intros. reflexivity.
   - (* l = x :: l' *)
     simpl. unfold tr_rev. simpl. rewrite <- IHl.
-
-
+    unfold tr_rev. apply rev_append_recur.
+Qed.
 
 (** [] *)
 
@@ -1347,11 +1366,30 @@ Proof.
 Qed.
 
 (** **** Exercise: 3 stars, standard (evenb_double_conv)  *)
+Lemma negb_true : forall b, (negb b) = true -> b = false.
+Proof.
+  intros []; simpl; intro.
+  - discriminate H.
+  - reflexivity.
+Qed.
+
 Lemma evenb_double_conv : forall n, exists k,
   n = if evenb n then double k else S (double k).
 Proof.
-  (* Hint: Use the [evenb_S] lemma from [Induction.v]. *)
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction n as [|n' IHn].
+  - (* n = 0 *) exists 0. reflexivity.
+  - destruct (evenb n') eqn:Heven; destruct IHn as [k0 IHn].
+    + (* n = S n', evenb n' = true *)
+      assert (Hodd: evenb (S n') = false).
+      { rewrite evenb_S. rewrite Heven. reflexivity. }
+      rewrite Hodd. exists k0. rewrite IHn. reflexivity.
+    + (* n = S n', evenb n' = false *)
+      assert (Hodd: evenb (S n') = true).
+      { rewrite evenb_S. rewrite Heven. reflexivity. }
+      rewrite Hodd. rewrite IHn. exists (S k0). simpl. reflexivity.
+Qed.
+
 (** [] *)
 
 (** Now the main theorem: *)
