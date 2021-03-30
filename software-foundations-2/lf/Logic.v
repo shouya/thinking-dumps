@@ -1553,12 +1553,27 @@ Qed.
 Theorem andb_true_iff : forall b1 b2:bool,
   b1 && b2 = true <-> b1 = true /\ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* semi-auto proof *grim* *)
+  destruct b1; destruct b2;
+    split; intros; try split; try destruct H;
+      simpl; try simpl in H;
+      try reflexivity; try discriminate H; try discriminate H0.
+Qed.
 
 Theorem orb_true_iff : forall b1 b2,
   b1 || b2 = true <-> b1 = true \/ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  destruct b1; destruct b2;
+    split; intros; try split; try destruct H;
+      simpl; try simpl in H;
+        try reflexivity; try discriminate H; try discriminate H0.
+  (* left with four disjunctions *)
+  left. reflexivity.
+  left. reflexivity.
+  right. reflexivity.
+  right. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard (eqb_neq)
@@ -1570,7 +1585,18 @@ Proof.
 Theorem eqb_neq : forall x y : nat,
   x =? y = false <-> x <> y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold not. split; intros.
+  - apply not_true_iff_false in H.
+    apply H.
+    rewrite <- H0.
+    rewrite <- eqb_refl.
+    reflexivity.
+  - apply not_true_iff_false.
+    intro.
+    apply H.
+    apply eqb_eq in H0.
+    apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (eqb_list)
@@ -1582,16 +1608,55 @@ Proof.
     definition is correct, prove the lemma [eqb_list_true_iff]. *)
 
 Fixpoint eqb_list {A : Type} (eqb : A -> A -> bool)
-                  (l1 l2 : list A) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+         (l1 l2 : list A) : bool :=
+  match (l1, l2) with
+  | ([], []) => true
+  | (x::l1', y::l2') => eqb x y && eqb_list eqb l1' l2'
+  | _ => false
+  end.
 
 Theorem eqb_list_true_iff :
   forall A (eqb : A -> A -> bool),
     (forall a1 a2, eqb a1 a2 = true <-> a1 = a2) ->
     forall l1 l2, eqb_list eqb l1 l2 = true <-> l1 = l2.
 Proof.
-(* FILL IN HERE *) Admitted.
-
+  split.
+  - (* eqb_list eqb l1 l2 = true -> l1 = l2 *)
+    generalize dependent l2.
+    induction l1 as [|x l1'].
+    + (* l1 := [] *)
+      intros. destruct l2 as [|y l2'].
+      * (* l2 := [] *) reflexivity.
+      * (* l2 := y::l2' *) simpl in H0. discriminate H0.
+    + (* l1 := x::l1' *)
+      destruct l2 as [|y l2'].
+      * (* l2 := [] *) intros. simpl in H0. discriminate H0.
+      * simpl. intros. f_equal.
+        -- (* x = y *)
+          apply H.
+          apply andb_true_iff in H0.
+          destruct H0.
+          apply H0.
+        -- (* l1' = l2' *)
+          apply IHl1'.
+          apply andb_true_iff in H0.
+          destruct H0.
+          apply H1.
+  - (* eqb_list eqb l1 l2 = true <- l1 = l2 *)
+    generalize dependent l2.
+    induction l1 as [|x l1'].
+    + (* l1 := [] *)
+      intros. rewrite <- H0. reflexivity.
+    + (* l1 := x::l1' *)
+      destruct l2 as [|y l2'].
+      * (* l2 := [] *) intros. discriminate H0.
+      * (* l2 := y::l2' *) intros. simpl. injection H0 as H0 H1.
+        apply andb_true_iff. split.
+        -- (* eqb x y = true *)
+          rewrite H0. apply H. reflexivity.
+        -- (* eqb_list eqb l1' l2' = true *)
+          rewrite <- H1. apply IHl1'. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, especially useful (All_forallb)
@@ -1611,15 +1676,78 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
 Theorem forallb_true_iff : forall X test (l : list X),
    forallb test l = true <-> All (fun x => test x = true) l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l as [|x l' IHl].
+  - (* l := [] *) split.
+    + (* -> direction *) intros. reflexivity.
+    + (* <- direction *) intros. reflexivity.
+  - (* l := x :: l' *) split.
+    + (* -> direction *)
+      simpl. intros. apply andb_true_iff in H. destruct H.
+      split.
+      * apply H.
+      * apply IHl. apply H0.
+    + (* <- direction *) simpl. intros. destruct H.
+      apply andb_true_iff. split.
+      * apply H.
+      * apply IHl. apply H0.
+Qed.
 
 (** (Ungraded thought question) Are there any important properties of
     the function [forallb] which are not captured by this
     specification? *)
 
-(* FILL IN HERE
+(*
+This is an important property to test:
 
-    [] *)
+   forallb test l = false <-> exists x, In x l /\ test x = false.
+
+And below is the proof.
+
+[] *)
+
+Theorem andb_false_iff: forall b1 b2,
+  b1 && b2 = false <-> b1 = false \/ b2 = false.
+Proof.
+  (* copy-pasting my semi-auto proof *)
+  destruct b1; destruct b2;
+    split; intros; try split; try destruct H;
+      simpl; try simpl in H;
+        try reflexivity; try discriminate H; try discriminate H0.
+  - left. reflexivity.
+  - right. reflexivity.
+  - left. reflexivity.
+  - right. reflexivity.
+Qed.
+
+Theorem negb_forallb_exists: forall A (test : A -> bool) (l : list A),
+  forallb test l = false <-> exists x, In x l /\ test x = false.
+Proof.
+  intros.
+  induction l as [|x l' IHl].
+  - (* l := [] *)
+    simpl. split.
+    + (* -> direction *) intro. discriminate H.
+    + (* <- direction *) intros. destruct H. destruct H. exfalso. apply H.
+  - (* l := x::l' *)
+    simpl. split.
+    + (* -> direction *)
+      intro.
+      destruct IHl.
+      apply andb_false_iff in H. destruct H.
+      * (* test x = false *) exists x. split.
+        left. reflexivity. apply H.
+      * (*  forallb test l' = false *) destruct H0.
+        apply H. exists x0. destruct H0. split.
+        right. apply H0.
+        apply H2.
+    + (* <- direction *)
+      intro. destruct H. destruct H.
+      apply andb_false_iff.
+      destruct H.
+      * left. rewrite H. apply H0.
+      *  right. apply IHl. exists x0. split. apply H. apply H0.
+Qed.
 
 (* ================================================================= *)
 (** ** Classical vs. Constructive Logic *)
@@ -1757,7 +1885,8 @@ Theorem excluded_middle_irrefutable: forall (P:Prop),
   ~ ~ (P \/ ~ P).
 Proof.
   unfold not. intros P H.
-  (* FILL IN HERE *) Admitted.
+  apply H. right. intro HH. apply H. left. apply HH.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (not_exists_dist)
@@ -1778,7 +1907,18 @@ Theorem not_exists_dist :
   forall (X:Type) (P : X -> Prop),
     ~ (exists x, ~ P x) -> (forall x, P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  assert (HH: P x \/ ~ (P x)).
+  { apply H. }
+  destruct HH.
+  - apply H1.
+  - unfold not in H0. unfold not in H1. exfalso. apply H0.
+    exists x. apply H1.
+Qed.
+
+(* I proved these two above, but I still don't understand why they
+work. I also can't explain how I did it. *)
+
 (** [] *)
 
 (** **** Exercise: 5 stars, standard, optional (classical_axioms)
@@ -1809,8 +1949,79 @@ Definition de_morgan_not_and_not := forall P Q:Prop,
 Definition implies_to_or := forall P Q:Prop,
   (P->Q) -> (~P\/Q).
 
-(* FILL IN HERE
+Theorem excluded_middle_implies_peirce :
+  excluded_middle -> peirce.
+Proof.
+  unfold excluded_middle. unfold peirce. intros.
+  assert (HH: (P \/ ~P)).
+  { apply H. }
+  destruct HH.
+  apply H1.
+  apply H0. unfold not in H1.
+  intro. exfalso. apply H1. apply H2.
+Qed.
+(* WTF? How did it work? *)
 
-    [] *)
+Theorem peirce_implies_double_negation_elimination :
+  peirce -> double_negation_elimination.
+Proof.
+  unfold double_negation_elimination. unfold peirce. unfold not. intros.
+  apply (H _ False).
+  intro. apply H0 in H1. exfalso. apply H1.
+Qed.
+(* WTF???? How did it work? *)
+
+Theorem double_negation_elimination_implies_de_morgan_not_and_not :
+  double_negation_elimination -> de_morgan_not_and_not.
+Proof.
+  unfold double_negation_elimination. unfold de_morgan_not_and_not.
+  intros.
+  assert (HH: ~~(P \/ Q)).
+  intro. apply H0. split.
+  - intro. apply H1. left. apply H2.
+  - intro. apply H1. right. apply H2.
+  - apply H in HH. apply HH.
+Qed.
+(* I still don't understand how I did it... The symmetry looks neat though. *)
+
+Theorem de_morgan_not_and_not_implies_implies_to_or :
+  de_morgan_not_and_not -> implies_to_or.
+Proof.
+  unfold implies_to_or. unfold de_morgan_not_and_not.
+  intros.
+  assert (HH: ~(~~ P /\ ~Q) -> ~P \/ Q).
+  { apply H. }
+  apply HH. intro. destruct H1.
+  apply H1. intro. apply H2. apply H0. apply H3.
+Qed.
+(*
+
+ I'm slowly getting it.. at least I gain some heuristic on where
+ should I look.
+
+ In this theorem, I know I need to use the assumption to derive the goal I was
+ trying to prove, namely (~P \/ Q). Then somehow it just worked.
+ *)
+
+Theorem implies_implies_to_or_implies_excluded_middle :
+  implies_to_or -> excluded_middle.
+Proof.
+  unfold implies_to_or. unfold excluded_middle.
+  intros.
+  assert (HH: (P -> P) -> ~P \/ P).
+  { apply H. }
+  assert (HHH: ~P \/ P).
+  { apply HH. intro. apply H0. }
+  destruct HHH.
+  - right. apply H0.
+  - left. apply H0.
+Qed.
+(* with that heuristic in mind it's much easier to work it out.
+
+I remembered last time I was stuck here. It's really rewarding to have
+proved this 5-star problem this time!  Excited!
+*)
+
+(* [] *)
 
 (* 2020-09-09 20:51 *)
