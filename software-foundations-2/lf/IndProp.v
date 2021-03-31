@@ -156,7 +156,12 @@ Qed.
 Theorem ev_double : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction n.
+  - simpl. apply ev_0.
+  - simpl. apply ev_SS. apply IHn.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -240,6 +245,25 @@ Proof.
     (* We must prove that [n] is even from no assumptions! *)
 Abort.
 
+(* I guess It should be provable by induction on n?? *)
+Theorem evSS_ev_my_take : forall n,
+  ev (S (S n)) -> ev n.
+Proof.
+  intros n.
+  induction n.
+  - intros E. apply ev_0.
+  - intros.
+    (*
+  n : nat
+  IHn : ev (S (S n)) -> ev n
+  H : ev (S (S (S n)))
+  ============================
+  ev (S n)
+
+    Nope.. I'm stuck in this case *)
+Admitted.
+
+
 (** What happened, exactly?  Calling [destruct] has the effect of
     replacing all occurrences of the property argument by the values
     that correspond to each constructor.  This is enough in the case
@@ -315,7 +339,7 @@ Qed.
 Theorem one_not_even' : ~ ev 1.
   intros H. inversion H. Qed.
 
-(** **** Exercise: 1 star, standard (inversion_practice) 
+(** **** Exercise: 1 star, standard (inversion_practice)
 
     Prove the following result using [inversion].  (For extra practice,
     you can also prove it using the inversion lemma.) *)
@@ -323,17 +347,38 @@ Theorem one_not_even' : ~ ev 1.
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H as [|n' HH Heq].
+  inversion HH as [|n'' HHH HHeq].
+  apply HHH.
+Qed.
+
+Theorem SSSSev__even_with_inversion_lemma : forall n,
+  ev (S (S (S (S n)))) -> ev n.
+Proof.
+  intros.
+  apply ev_inversion in H. destruct H. discriminate H.
+  destruct H. destruct H.
+  injection H as H.
+  apply ev_inversion in H0. destruct H0. rewrite H0 in H. discriminate H.
+  destruct H0. destruct H0.
+  rewrite <- H in H0. injection H0 as H0. rewrite H0. apply H1.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 1 star, standard (ev5_nonsense) 
+(** **** Exercise: 1 star, standard (ev5_nonsense)
 
     Prove the following result using [inversion]. *)
 
 Theorem ev5_nonsense :
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  inversion H1.
+  inversion H3.
+Qed.
 (** [] *)
 
 (** The [inversion] tactic does quite a bit of work. For
@@ -492,10 +537,23 @@ Qed.
 (** **** Exercise: 2 stars, standard (ev_sum)  *)
 Theorem ev_sum : forall n m, ev n -> ev m -> ev (n + m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  - (* n=0 *)
+    simpl. apply H0.
+  - (* n=SS n0 *)
+    simpl. apply ev_SS.
+    induction H0.
+    + (* m = 0 *)
+      rewrite <- plus_n_O.
+      apply H1.
+    + (* m = S S m0 *)
+      rewrite <- plus_n_Sm. rewrite <- plus_n_Sm.
+      apply ev_SS. apply IHev.
+Qed.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced, optional (ev'_ev) 
+(** **** Exercise: 4 stars, advanced, optional (ev'_ev)
 
     In general, there may be multiple ways of defining a
     property inductively.  For example, here's a (slightly contrived)
@@ -513,10 +571,30 @@ Inductive ev' : nat -> Prop :=
 
 Theorem ev'_ev : forall n, ev' n <-> ev n.
 Proof.
- (* FILL IN HERE *) Admitted.
+  intros. split.
+  - (* -> *)
+    intro.
+    induction H as [| | n m IHevn' IHevn IHevm' IHevm].
+    + (* 0 *) apply ev_0.
+    + (* 2 *) apply ev_SS. apply ev_0.
+    + (* n + m *) apply ev_sum. apply IHevn. apply IHevm.
+  - (* <- *)
+    intro.
+    induction H as [| n IHSSn].
+    + (* 0 *) apply ev'_0.
+    + (* 2 *) assert (S(S(n)) = 2 + n).
+      { reflexivity. }
+      rewrite H.
+      apply ev'_sum.
+      * (* ev' 2 *)
+        apply ev'_2.
+      * (* ev' n *)
+        apply IHIHSSn.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced, especially useful (ev_ev__ev) 
+(** **** Exercise: 3 stars, advanced, especially useful (ev_ev__ev)
 
     There are two pieces of evidence you could attempt to induct upon
     here. If one doesn't work, try the other. *)
@@ -527,7 +605,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (ev_plus_plus) 
+(** **** Exercise: 3 stars, standard, optional (ev_plus_plus)
 
     This exercise can be completed without induction or case analysis.
     But, you will need a clever assertion and some tedious rewriting.
@@ -621,7 +699,7 @@ Inductive next_ev : nat -> nat -> Prop :=
   | ne_1 n (H: ev (S n))     : next_ev n (S n)
   | ne_2 n (H: ev (S (S n))) : next_ev n (S (S n)).
 
-(** **** Exercise: 2 stars, standard, optional (total_relation) 
+(** **** Exercise: 2 stars, standard, optional (total_relation)
 
     Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
@@ -630,7 +708,7 @@ Inductive next_ev : nat -> nat -> Prop :=
 
     [] *)
 
-(** **** Exercise: 2 stars, standard, optional (empty_relation) 
+(** **** Exercise: 2 stars, standard, optional (empty_relation)
 
     Define an inductive binary relation [empty_relation] (on numbers)
     that never holds. *)
@@ -651,7 +729,7 @@ Inductive next_ev : nat -> nat -> Prop :=
     will, in the second case, add the induction hypothesis that the
     goal holds when [e2] is replaced with [n']. *)
 
-(** **** Exercise: 3 stars, standard, optional (le_exercises) 
+(** **** Exercise: 3 stars, standard, optional (le_exercises)
 
     Here are a number of facts about the [<=] and [<] relations that
     we are going to need later in the course.  The proofs make good
@@ -736,7 +814,7 @@ Proof.
 
 Module R.
 
-(** **** Exercise: 3 stars, standard, especially useful (R_provability) 
+(** **** Exercise: 3 stars, standard, especially useful (R_provability)
 
     We can define three-place relations, four-place relations,
     etc., in just the same way as binary relations.  For example,
@@ -767,7 +845,7 @@ Inductive R : nat -> nat -> nat -> Prop :=
 Definition manual_grade_for_R_provability : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (R_fact) 
+(** **** Exercise: 3 stars, standard, optional (R_fact)
 
     The relation [R] above actually encodes a familiar function.
     Figure out which function; then state and prove this equivalence
@@ -783,7 +861,7 @@ Proof.
 
 End R.
 
-(** **** Exercise: 2 stars, advanced (subsequence) 
+(** **** Exercise: 2 stars, advanced (subsequence)
 
     A list is a _subsequence_ of another list if all of the elements
     in the first list occur in the same order in the second list,
@@ -842,7 +920,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (R_provability2) 
+(** **** Exercise: 2 stars, standard, optional (R_provability2)
 
     Suppose we give Coq the following definition:
 
@@ -1021,8 +1099,8 @@ Proof.
 Qed.
 
 (** (Notice how the last example applies [MApp] to the string
-    [[1]] directly.  Since the goal mentions [[1; 2]] instead of 
-    [[1] ++ [2]], Coq wouldn't be able to figure out how to split 
+    [[1]] directly.  Since the goal mentions [[1; 2]] instead of
+    [[1] ++ [2]], Coq wouldn't be able to figure out how to split
     the string on its own.)
 
     Using [inversion], we can also show that certain strings do _not_
@@ -1074,7 +1152,7 @@ Qed.
 (** (Note the use of [app_nil_r] to change the goal of the theorem to
     exactly the same shape expected by [MStarApp].) *)
 
-(** **** Exercise: 3 stars, standard (exp_match_ex1) 
+(** **** Exercise: 3 stars, standard (exp_match_ex1)
 
     The following lemmas show that the informal matching rules given
     at the beginning of the chapter can be obtained from the formal
@@ -1103,7 +1181,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, standard, optional (reg_exp_of_list_spec) 
+(** **** Exercise: 4 stars, standard, optional (reg_exp_of_list_spec)
 
     Prove that [reg_exp_of_list] satisfies the following
     specification: *)
@@ -1194,7 +1272,7 @@ Proof.
       apply (IH2 Hin).
 Qed.
 
-(** **** Exercise: 4 stars, standard (re_not_empty) 
+(** **** Exercise: 4 stars, standard (re_not_empty)
 
     Write a recursive function [re_not_empty] that tests whether a
     regular expression matches some string. Prove that your function
@@ -1349,7 +1427,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 5 stars, advanced (weak_pumping) 
+(** **** Exercise: 5 stars, advanced (weak_pumping)
 
     One of the first really interesting theorems in the theory of
     regular expressions is the so-called _pumping lemma_, which
@@ -1483,7 +1561,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 5 stars, advanced, optional (pumping) 
+(** **** Exercise: 5 stars, advanced, optional (pumping)
 
     Now here is the usual version of the pumping lemma. In addition to
     requiring that [s2 <> []], it also requires that [length s1 +
@@ -1620,7 +1698,7 @@ Proof.
       intros H'. right. apply IHl'. apply H'.
 Qed.
 
-(** **** Exercise: 3 stars, standard, especially useful (eqbP_practice) 
+(** **** Exercise: 3 stars, standard, especially useful (eqbP_practice)
 
     Use [eqbP] as above to prove the following: *)
 
@@ -1652,7 +1730,7 @@ Proof.
 (* ################################################################# *)
 (** * Additional Exercises *)
 
-(** **** Exercise: 3 stars, standard, especially useful (nostutter_defn) 
+(** **** Exercise: 3 stars, standard, especially useful (nostutter_defn)
 
     Formulating inductive definitions of properties is an important
     skill you'll need in this course.  Try to solve this exercise
@@ -1680,27 +1758,27 @@ Inductive nostutter {X:Type} : list X -> Prop :=
 
 Example test_nostutter_1: nostutter [3;1;4;1;5;6].
 (* FILL IN HERE *) Admitted.
-(* 
+(*
   Proof. repeat constructor; apply eqb_neq; auto.
   Qed.
 *)
 
 Example test_nostutter_2:  nostutter (@nil nat).
 (* FILL IN HERE *) Admitted.
-(* 
+(*
   Proof. repeat constructor; apply eqb_neq; auto.
   Qed.
 *)
 
 Example test_nostutter_3:  nostutter [5].
 (* FILL IN HERE *) Admitted.
-(* 
+(*
   Proof. repeat constructor; auto. Qed.
 *)
 
 Example test_nostutter_4:      not (nostutter [3;1;1;4]).
 (* FILL IN HERE *) Admitted.
-(* 
+(*
   Proof. intro.
   repeat match goal with
     h: nostutter _ |- _ => inversion h; clear h; subst
@@ -1712,7 +1790,7 @@ Example test_nostutter_4:      not (nostutter [3;1;1;4]).
 Definition manual_grade_for_nostutter : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced (filter_challenge) 
+(** **** Exercise: 4 stars, advanced (filter_challenge)
 
     Let's prove that our definition of [filter] from the [Poly]
     chapter matches an abstract specification.  Here is the
@@ -1749,7 +1827,7 @@ Definition manual_grade_for_nostutter : option (nat*string) := None.
 Definition manual_grade_for_filter_challenge : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 5 stars, advanced, optional (filter_challenge_2) 
+(** **** Exercise: 5 stars, advanced, optional (filter_challenge_2)
 
     A different way to characterize the behavior of [filter] goes like
     this: Among all subsequences of [l] with the property that [test]
@@ -1760,7 +1838,7 @@ Definition manual_grade_for_filter_challenge : option (nat*string) := None.
 
     [] *)
 
-(** **** Exercise: 4 stars, standard, optional (palindromes) 
+(** **** Exercise: 4 stars, standard, optional (palindromes)
 
     A palindrome is a sequence that reads the same backwards as
     forwards.
@@ -1789,7 +1867,7 @@ Definition manual_grade_for_filter_challenge : option (nat*string) := None.
 Definition manual_grade_for_pal_pal_app_rev_pal_rev : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 5 stars, standard, optional (palindrome_converse) 
+(** **** Exercise: 5 stars, standard, optional (palindrome_converse)
 
     Again, the converse direction is significantly more difficult, due
     to the lack of evidence.  Using your definition of [pal] from the
@@ -1802,7 +1880,7 @@ Definition manual_grade_for_pal_pal_app_rev_pal_rev : option (nat*string) := Non
 
     [] *)
 
-(** **** Exercise: 4 stars, advanced, optional (NoDup) 
+(** **** Exercise: 4 stars, advanced, optional (NoDup)
 
     Recall the definition of the [In] property from the [Logic]
     chapter, which asserts that a value [x] appears at least once in a
@@ -1839,7 +1917,7 @@ Definition manual_grade_for_pal_pal_app_rev_pal_rev : option (nat*string) := Non
 Definition manual_grade_for_NoDup_disjoint_etc : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced, optional (pigeonhole_principle) 
+(** **** Exercise: 4 stars, advanced, optional (pigeonhole_principle)
 
     The _pigeonhole principle_ states a basic fact about counting: if
     we distribute more than [n] items into [n] pigeonholes, some
@@ -2016,7 +2094,7 @@ Proof.
     rewrite Happ. apply (MApp s0 _ s1 _ Hmat0 Hmat1).
 Qed.
 
-(** **** Exercise: 3 stars, standard, optional (app_ne) 
+(** **** Exercise: 3 stars, standard, optional (app_ne)
 
     [App re0 re1] matches [a::s] iff [re0] matches the empty string
     and [a::s] matches [re1] or [s=s0++s1], where [a::s0] matches [re0]
@@ -2047,7 +2125,7 @@ Proof.
     + apply MUnionR. apply H.
 Qed.
 
-(** **** Exercise: 3 stars, standard, optional (star_ne) 
+(** **** Exercise: 3 stars, standard, optional (star_ne)
 
     [a::s] matches [Star re] iff [s = s0 ++ s1], where [a::s0] matches
     [re] and [s1] matches [Star re]. Like [app_ne], this observation is
@@ -2077,7 +2155,7 @@ Proof.
 Definition refl_matches_eps m :=
   forall re : reg_exp ascii, reflect ([ ] =~ re) (m re).
 
-(** **** Exercise: 2 stars, standard, optional (match_eps) 
+(** **** Exercise: 2 stars, standard, optional (match_eps)
 
     Complete the definition of [match_eps] so that it tests if a given
     regex matches the empty string: *)
@@ -2085,7 +2163,7 @@ Fixpoint match_eps (re: reg_exp ascii) : bool
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (match_eps_refl) 
+(** **** Exercise: 3 stars, standard, optional (match_eps_refl)
 
     Now, prove that [match_eps] indeed tests if a given regex matches
     the empty string.  (Hint: You'll want to use the reflection lemmas
@@ -2114,7 +2192,7 @@ Definition is_der re (a : ascii) re' :=
     satisfies the following property: *)
 Definition derives d := forall a re, is_der re a (d a re).
 
-(** **** Exercise: 3 stars, standard, optional (derive) 
+(** **** Exercise: 3 stars, standard, optional (derive)
 
     Define [derive] so that it derives strings. One natural
     implementation uses [match_eps] in some cases to determine if key
@@ -2173,7 +2251,7 @@ Example test_der7 :
 Proof.
   (* FILL IN HERE *) Admitted.
 
-(** **** Exercise: 4 stars, standard, optional (derive_corr) 
+(** **** Exercise: 4 stars, standard, optional (derive_corr)
 
     Prove that [derive] in fact always derives strings.
 
@@ -2209,7 +2287,7 @@ Proof.
 Definition matches_regex m : Prop :=
   forall (s : string) re, reflect (s =~ re) (m s re).
 
-(** **** Exercise: 2 stars, standard, optional (regex_match) 
+(** **** Exercise: 2 stars, standard, optional (regex_match)
 
     Complete the definition of [regex_match] so that it matches
     regexes. *)
@@ -2217,7 +2295,7 @@ Fixpoint regex_match (s : string) (re : reg_exp ascii) : bool
   (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (regex_refl) 
+(** **** Exercise: 3 stars, standard, optional (regex_refl)
 
     Finally, prove that [regex_match] in fact matches regexes.
 
