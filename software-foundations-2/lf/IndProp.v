@@ -594,6 +594,16 @@ Qed.
 
 (** [] *)
 
+Theorem plus_n_m_zero : forall n m, n + m = 0 <-> m = 0 /\ n = 0.
+Proof.
+  split.
+  - (* -> *)
+    induction n.
+    + simpl. intros. split. apply H. reflexivity.
+    + simpl. intros. discriminate H.
+  - (* <- *)
+    intros. destruct H. rewrite H. rewrite H0. reflexivity.
+Qed.
 (** **** Exercise: 3 stars, advanced, especially useful (ev_ev__ev)
 
     There are two pieces of evidence you could attempt to induct upon
@@ -602,7 +612,14 @@ Qed.
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H0.
+  - simpl in H. apply H.
+  - simpl in H.
+    + inversion H.
+      apply IHev.
+      apply H2.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (ev_plus_plus)
@@ -614,7 +631,25 @@ Proof.
 Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  assert (ev ((n+n) + (m+p))).
+  {
+    (* the "tedious rewriting" part lol *)
+    rewrite plus_assoc.
+    rewrite (plus_comm _ m).
+    rewrite plus_assoc.
+    rewrite (plus_comm m n).
+    rewrite <- plus_assoc.
+    (* above rewriting converts "(n+n) + (m+p)" to "(n+m) + (n+p)" *)
+    apply ev_sum.
+    - apply H.
+    - apply H0.
+  }
+  apply (ev_ev__ev (n+n)) in H1.
+  - apply H1.
+  - rewrite <- double_plus. apply ev_double.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -703,19 +738,23 @@ Inductive next_ev : nat -> nat -> Prop :=
 
     Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
+Inductive total_relation : nat -> nat -> Prop :=
+  | total n m : total_relation n m.
 
-(* FILL IN HERE
+(* [] *)
 
-    [] *)
+Goal total_relation 1 3.
+  apply total.
+Qed.
 
 (** **** Exercise: 2 stars, standard, optional (empty_relation)
 
     Define an inductive binary relation [empty_relation] (on numbers)
     that never holds. *)
 
-(* FILL IN HERE
+Inductive empty_relation : nat -> nat -> Prop :=.
 
-    [] *)
+(* [] *)
 
 (** From the definition of [le], we can sketch the behaviors of
     [destruct], [inversion], and [induction] on a hypothesis [H]
@@ -737,40 +776,103 @@ Inductive next_ev : nat -> nat -> Prop :=
 
 Lemma le_trans : forall m n o, m <= n -> n <= o -> m <= o.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H0.
+  - apply H.
+  - apply le_S. apply IHle.
+Qed.
 
 Theorem O_le_n : forall n,
   0 <= n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - apply le_n.
+  - apply le_S. apply IHn.
+Qed.
 
 Theorem n_le_m__Sn_le_Sm : forall n m,
   n <= m -> S n <= S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H.
+  - apply le_n.
+  - apply le_S. apply IHle.
+Qed.
 
 Theorem Sn_le_Sm__n_le_m : forall n m,
   S n <= S m -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  - apply le_n.
+  - inversion H1.
+    + apply le_S.
+      apply le_n.
+    + apply le_S.
+      apply (le_trans _ (S n) _).
+      * apply le_S.
+        apply le_n.
+      * apply H2.
+Qed.
 
 Theorem le_plus_l : forall a b,
   a <= a + b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction b.
+  - rewrite <- plus_n_O.
+    reflexivity.
+  - rewrite <- plus_n_Sm.
+    apply le_S.
+    apply IHb.
+Qed.
+
+Lemma plus_le_left : forall n1 n2 m,
+  n1 + n2 <= m -> n1 <= m.
+Proof.
+  intros.
+  induction n2.
+  + rewrite <- plus_n_O in H.
+    apply H.
+  + rewrite <- plus_n_Sm in H.
+    apply le_S in H.
+    apply Sn_le_Sm__n_le_m in H.
+    apply IHn2 in H. apply H.
+Qed.
 
 Theorem plus_le : forall n1 n2 m,
   n1 + n2 <= m ->
   n1 <= m /\ n2 <= m.
 Proof.
- (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - (* n1 <= m *)
+    apply (plus_le_left _ n2).
+    apply H.
+  - (* n2 <= m *)
+    rewrite plus_comm in H.
+    apply (plus_le_left _ n1).
+    apply H.
+Qed.
+
 
 (** Hint: the next one may be easiest to prove by induction on [n]. *)
 
 Theorem add_le_cases : forall n m p q,
     n + m <= p + q -> n <= p \/ m <= q.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros.
+  induction n.
+  - (* p := 0 *)
+    simpl in H. left. apply O_le_n.
+
+  - (* n := S n *)
+    simpl in H.
+    apply le_S in H. apply Sn_le_Sm__n_le_m in H. apply IHn in H. clear IHn.
+
+
+
+
 
 Theorem lt_S : forall n m,
   n < m ->
