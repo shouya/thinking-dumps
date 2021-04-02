@@ -840,6 +840,16 @@ Proof.
     apply IHn2 in H. apply H.
 Qed.
 
+Lemma plus_le_right : forall n1 n2 m,
+  n1 + n2 <= m -> n2 <= m.
+Proof.
+  intros.
+  rewrite plus_comm in H.
+  apply plus_le_left in H.
+  apply H.
+Qed.
+
+
 Theorem plus_le : forall n1 n2 m,
   n1 + n2 <= m ->
   n1 <= m /\ n2 <= m.
@@ -850,8 +860,7 @@ Proof.
     apply (plus_le_left _ n2).
     apply H.
   - (* n2 <= m *)
-    rewrite plus_comm in H.
-    apply (plus_le_left _ n1).
+    apply (plus_le_right n1 _).
     apply H.
 Qed.
 
@@ -862,34 +871,66 @@ Theorem add_le_cases : forall n m p q,
     n + m <= p + q -> n <= p \/ m <= q.
 Proof.
   intros.
+  generalize dependent m.
+  generalize dependent p.
+  generalize dependent q.
   induction n.
-  - (* p := 0 *)
+  - (* n := 0 *)
+    intros.
     simpl in H. left. apply O_le_n.
 
   - (* n := S n *)
-    simpl in H.
-    apply le_S in H. apply Sn_le_Sm__n_le_m in H. apply IHn in H. clear IHn.
-
-
-
-
+    intros.
+    destruct p.
+    + right. apply (plus_le_left _ (S n) _).
+      rewrite plus_comm. simpl. simpl in H. apply H.
+    + simpl in H. apply Sn_le_Sm__n_le_m in H. apply IHn in H. destruct H.
+      * left. apply n_le_m__Sn_le_Sm. apply H.
+      * right. apply H.
+Qed.
 
 Theorem lt_S : forall n m,
   n < m ->
   n < S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H.
+  - apply le_S. apply le_n.
+  - apply le_S. apply le_S. apply H.
+Qed.
 
 Theorem plus_lt : forall n1 n2 m,
   n1 + n2 < m ->
   n1 < m /\ n2 < m.
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold lt.
+  intros.
+  split.
+  replace (S (n1 + n2)) with  (S n1 + n2) in H.
+  - apply plus_le_left in H.
+    apply H.
+  - simpl. reflexivity.
+  - rewrite plus_n_Sm in H.
+    apply plus_le_right in H.
+    apply H.
+Qed.
 
 Theorem leb_complete : forall n m,
   n <=? m = true -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - (* n := 0 *)
+    intros.
+    apply O_le_n.
+  - (* n := S n *)
+    intros.
+    destruct m.
+    + (* m : = 0 *)
+      unfold leb in H. discriminate H.
+    + (* m := S m*)
+      simpl leb in H. apply n_le_m__Sn_le_Sm. apply IHn. apply H.
+Qed.
+
 
 (** Hint: The next one may be easiest to prove by induction on [m]. *)
 
@@ -897,7 +938,17 @@ Theorem leb_correct : forall n m,
   n <= m ->
   n <=? m = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  intros.
+  - (* n := 0 *)
+    simpl. reflexivity.
+  - (* n := S n *)
+    destruct m.
+    + (* m := 0 *)
+      intros. inversion H.
+    + (* m := S m *)
+      intros. apply Sn_le_Sm__n_le_m in H. simpl. apply IHn. apply H.
+Qed.
 
 (** Hint: The next one can easily be proved without using [induction]. *)
 
