@@ -955,14 +955,33 @@ Qed.
 Theorem leb_true_trans : forall n m o,
   n <=? m = true -> m <=? o = true -> n <=? o = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply leb_complete in H.
+  apply leb_complete in H0.
+  apply leb_correct.
+  apply (le_trans _ m _).
+  apply H.
+  apply H0.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (leb_iff)  *)
 Theorem leb_iff : forall n m,
   n <=? m = true <-> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - (* -> direction *)
+    intros.
+    apply leb_complete.
+    apply H.
+  - (* <- direction *)
+    intros.
+    apply leb_correct.
+    apply H.
+Qed.
+
 (** [] *)
 
 Module R.
@@ -980,6 +999,9 @@ Inductive R : nat -> nat -> nat -> Prop :=
    | c4 m n o (H : R (S m) (S n) (S (S o))) : R m n o
    | c5 m n o (H : R m n o) : R n m o.
 
+(* I figured out this relation encodes the notion of plus.
+   Namely, R a b c <-> plus a b = c
+ *)
 (** - Which of the following propositions are provable?
       - [R 1 1 2]
       - [R 2 2 6]
@@ -992,7 +1014,8 @@ Inductive R : nat -> nat -> nat -> Prop :=
       would the set of provable propositions change?  Briefly (1
       sentence) explain your answer. *)
 
-(* FILL IN HERE *)
+(* R 1 1 2 is     provable because 1 + 1 = 2 *)
+(* R 2 2 6 is not provable because 2 + 2 <> 6 *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_R_provability : option (nat*string) := None.
@@ -1004,12 +1027,36 @@ Definition manual_grade_for_R_provability : option (nat*string) := None.
     Figure out which function; then state and prove this equivalence
     in Coq? *)
 
-Definition fR : nat -> nat -> nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition fR : nat -> nat -> nat := plus.
 
 Theorem R_equiv_fR : forall m n o, R m n o <-> fR m n = o.
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold fR.
+  intros.
+  split.
+  - (* -> direction *)
+    intro.
+    induction H.
+    + reflexivity.
+    + simpl. rewrite IHR. reflexivity.
+    + rewrite <- plus_n_Sm. rewrite IHR. reflexivity.
+    + simpl in IHR. rewrite <- plus_n_Sm in IHR. injection IHR as IHR. apply IHR.
+    + rewrite plus_comm. apply IHR.
+  - (* <- direction *)
+    intro.
+    generalize dependent o.
+    induction m.
+    + (* m := 0 *)
+      intros.
+      generalize dependent o.
+      induction n.
+      * (* n := 0 *) intros. destruct o. constructor. inversion H.
+      * (* n := S n *) intros. destruct o. simpl in H. inversion H.
+        constructor. apply IHn. simpl in H. simpl. injection H as H. apply H.
+    + (* m := S m *)
+      intros. destruct o. simpl in H. inversion H.
+      constructor. apply IHm. simpl in H. inversion H. reflexivity.
+Qed.
 (** [] *)
 
 End R.
@@ -1052,18 +1099,37 @@ End R.
       Hint: choose your induction carefully! *)
 
 Inductive subseq : list nat -> list nat -> Prop :=
-(* FILL IN HERE *)
+  | ss0 xs : subseq [] xs
+  | ss_init x xs ys (H : subseq xs ys) : subseq (x::xs) (x::ys)
+  | ss_rest x y xs ys (H : subseq (x::xs) ys) : subseq (x::xs) (y::ys)
 .
+
 
 Theorem subseq_refl : forall (l : list nat), subseq l l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - (* subseq [] [] *)
+    constructor.
+  - (* subseq (x::l) (x::l) *)
+    constructor. apply IHl.
+Qed.
 
 Theorem subseq_app : forall (l1 l2 l3 : list nat),
   subseq l1 l2 ->
   subseq l1 (l2 ++ l3).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros l1.
+  induction l1.
+  - (* l1 := [] *)
+    intros. constructor.
+  - (* l1 := S l1 *)
+    intros.
+    inversion H.
+    + (* (x::xs) (x::ys) *)
+      simpl. constructor. apply IHl1. apply H3.
+    + (* (x::xs) (y::ys) *)
+      simpl. constructor.
 
 Theorem subseq_trans : forall (l1 l2 l3 : list nat),
   subseq l1 l2 ->
