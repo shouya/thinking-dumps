@@ -1120,24 +1120,57 @@ Theorem subseq_app : forall (l1 l2 l3 : list nat),
   subseq l1 (l2 ++ l3).
 Proof.
   intros l1.
-  induction l1.
+  destruct l1.
   - (* l1 := [] *)
     intros. constructor.
   - (* l1 := S l1 *)
     intros.
-    inversion H.
+    induction H.
+    + (* (x::xs) [] *)
+      constructor.
     + (* (x::xs) (x::ys) *)
-      simpl. constructor. apply IHl1. apply H3.
+      simpl. constructor. apply IHsubseq.
     + (* (x::xs) (y::ys) *)
-      simpl. constructor.
+      simpl. constructor. apply IHsubseq.
+Qed.
 
 Theorem subseq_trans : forall (l1 l2 l3 : list nat),
   subseq l1 l2 ->
   subseq l2 l3 ->
   subseq l1 l3.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros l1 l2 l3.
+  intro.
+  generalize dependent l3.
+  induction H.
+  - (* [] _ l3 *)
+    intros. constructor.
+  - (* x::xs x::ys l3 *)
+    intros.
+    remember (x::ys) as l2.
+    induction H0.
+    + (* x::xs x::ys=[] l3  *)
+      inversion Heql2.
+    + (* x::xs x::ys x::ys0 *)
+      injection Heql2. intros. clear Heql2. subst xs0 x0.
+      constructor. apply IHsubseq. apply H0.
+    + (* x::xs x::ys y::ys0 *)
+      injection Heql2. intros. clear Heql2. subst xs0 x0.
+      constructor. apply IHsubseq0. reflexivity.
+  - (* x::xs y::ys l3 *)
+    intros.
+    remember (y::ys) as l2.
+    induction H0.
+    + (* x::xs y::ys=[] l3 *)
+      inversion Heql2.
+    + (* x::xs y::ys y::ys0 *)
+      injection Heql2. intros. clear Heql2. subst xs0 x0.
+      constructor. apply IHsubseq. apply H0.
+    + (* x::xs y::ys y0::ys0 *)
+      injection Heql2. intros. clear Heql2. subst xs0 x0.
+      constructor. apply IHsubseq0. reflexivity.
+Qed.
+
 
 (** **** Exercise: 2 stars, standard, optional (R_provability2)
 
