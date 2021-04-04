@@ -2103,11 +2103,6 @@ Proof.
         -- apply Hpump.
 
   - (* MUnionL *)
-  (* I see where the "weak" comes from. The pumping lemma should be sufficient given
-        max (pumping_constant re1, pumping_constant re2) <= length s1
-     but we are enforcing a stronger condition:
-        pumping_constant re1 + pumping_constant re2 <= length s1
-   *)
     simpl. intros. apply plus_le_left in H.
     apply IH in H.
     destruct H as [l1]. destruct H as [l2]. destruct H as [l3].
@@ -2169,6 +2164,161 @@ Qed.
     requiring that [s2 <> []], it also requires that [length s1 +
     length s2 <= pumping_constant re]. *)
 
+Theorem add_le_cases_reverse : forall n m p q,
+  n <= p /\ m <= q -> n + m <= p + q.
+Proof.
+  intros.
+  generalize dependent m.
+  generalize dependent p.
+  generalize dependent q.
+  induction n.
+  - (* n := 0 *)
+    intros.
+    simpl in H. simpl. destruct H. apply (le_trans _ q). apply H0.
+    rewrite plus_comm. apply le_plus_l.
+
+  - (* n := S n *)
+    intros.
+    simpl. destruct H. destruct p. inversion H.
+    apply Sn_le_Sm__n_le_m in H. simpl. apply n_le_m__Sn_le_Sm.
+    apply IHn. split. apply H. apply H0.
+Qed.
+
+Theorem add_le_cases_stronger : forall n m p q,
+    n + m <= p + q -> n <= p \/ (~(n <= p) /\ m <= q).
+Proof.
+  intros.
+  generalize dependent m.
+  generalize dependent p.
+  generalize dependent q.
+  induction n.
+  - (* n := 0 *)
+    intros.
+    simpl in H. left. apply O_le_n.
+
+  - (* n := S n *)
+    intros.
+    destruct p.
+    + right. split.
+      * intro. inversion H0.
+      * apply (plus_le_left _ (S n) _).
+        rewrite plus_comm. simpl. simpl in H. apply H.
+    + simpl in H. apply Sn_le_Sm__n_le_m in H. apply IHn in H. destruct H.
+      * left. apply n_le_m__Sn_le_Sm. apply H.
+      * right. destruct H. split.
+        -- intro. apply Sn_le_Sm__n_le_m in H1. apply H in H1. apply H1.
+        -- apply H0.
+Qed.
+
+Theorem not_le : forall n m,
+  ~(n <= m) -> S m <= n.
+Proof.
+  intro.
+  induction n.
+  - intros. exfalso. apply H. apply O_le_n.
+  - intros. destruct m.
+    + apply n_le_m__Sn_le_Sm. apply O_le_n.
+    + apply n_le_m__Sn_le_Sm. apply IHn. intro.
+      apply H. apply n_le_m__Sn_le_Sm. apply H0.
+Qed.
+
+Lemma match_empty : forall T (s : list T), s =~ EmptyStr -> s = [].
+Proof.
+  intros.
+  induction s.
+  - reflexivity.
+  - inversion H.
+Qed.
+
+Lemma star_empty : forall T (s : list T), s =~ Star EmptyStr -> s = [].
+Proof.
+  intros.
+  remember (Star EmptyStr) as re.
+  induction H; try inversion Heqre.
+  + reflexivity.
+  + subst. simpl in *. clear Heqre.
+    assert (@Star T EmptyStr = Star EmptyStr).
+    { reflexivity. }
+    apply IHexp_match2 in H1. subst. apply match_empty in H. subst.
+    reflexivity.
+Qed.
+
+Lemma match_app_empty : forall T (re1 re2 : reg_exp T),
+  [ ] =~ App re1 re2 -> [] =~ re1 /\ [] =~ re2.
+Proof.
+  intros.
+  inversion H.
+  subst. apply nil_eq_app_nil_nil in H1. destruct H1. subst. simpl.
+  split; assumption.
+Qed.
+
+Lemma empty_string_regexp_unique : forall T (re : reg_exp T) (s : list T),
+  [ ] =~ re -> s =~ re -> s = [].
+Proof.
+  intros.
+  generalize dependent s.
+  induction re.
+  - inversion H.
+  - intros. inversion H0. reflexivity.
+  - intros. inversion H.
+  - intros. inversion H0. subst.
+    assert (s1 = [] /\ s2 = [] -> s1 ++ s2 = []).
+    { intros. destruct H1. subst. reflexivity. }
+    apply H1. clear H1.
+    split.
+    + apply IHre1. apply (match_app_empty _ _ re2). apply H. apply H4.
+    + apply IHre2. apply (match_app_empty _ re1 _). apply H. apply H5.
+  - intros. inversion H0. subst.
+
+    (* Here's the thing!!! [] =~ Union EmptyString (Char 1) doesn't mean
+      s =~ Union EmptyString (Char 1) -> s = [].
+      It's still possible that s = [1]! This theorem is false!
+
+      Same applies to Star. [] =~ re -> s =~ Star re -> s = [] is false, too.
+      Counter example: "re = Union EmptyString (Char 1)" then it's possible for
+      s = [1;1;1].
+     *)
+
+
+Lemma empty_star_empty : forall T (re : reg_exp T) (s : list T),
+  [ ] =~ re -> s =~ Star re -> s = [].
+Proof.
+  intros. destruct H.
+  inversion H0.
+  - subst. reflexivity.
+  - subst.
+
+
+Lemma pumping_helper : forall T (re: reg_exp T) s1 s2,
+  s1 =~ re ->
+  s2 =~ Star re ->
+  s1 ++ s2 <> [] ->
+  s1 <> [].
+Proof.
+  intros.
+  assert (s1 <> [] \/ s2 <> []).
+  { destruct s1.
+    - right. simpl in H1. apply H1.
+    - left. intro. inversion H2.
+  }
+  destruct H2.
+  - apply H2.
+  - intro. subst. simpl in H1.
+    (* remember (Star re). induction H0; inversion Heqr. *)
+    apply H1.
+
+
+    inversion .
+    + apply H1. subst. apply star_empty in H0. apply H0.
+    + subst.
+
+
+
+
+
+1 <= length s1 + length s2
+
+
 Lemma pumping : forall T (re : reg_exp T) s,
   s =~ re ->
   pumping_constant re <= length s ->
@@ -2185,9 +2335,140 @@ Proof.
     as [ | x | s1 re1 s2 re2 Hmatch1 IH1 Hmatch2 IH2
        | s1 re1 re2 Hmatch IH | re1 s2 re2 Hmatch IH
        | re | s1 s2 re Hmatch1 IH1 Hmatch2 IH2 ].
+
   - (* MEmpty *)
     simpl. intros contra. inversion contra.
-  (* FILL IN HERE *) Admitted.
+  - (* MChar *)
+    simpl. intro contra. inversion contra. inversion H0.
+
+  - (* MApp *)
+    simpl. intro. rewrite app_length in H.
+    apply add_le_cases_stronger in H.
+    destruct H.
+
+    + (* pumping_const re1 <= len s1 *)
+      apply IH1 in H.
+      destruct H as [l1].
+      destruct H as [l2].
+      destruct H as [l3].
+      destruct H as [Happ H].
+      destruct H as [Hnonempty H].
+      destruct H as [Hlen Hpump].
+      exists l1. exists l2. exists (l3 ++ s2).
+      split; try split; try split.
+      * (* sum *)
+        rewrite Happ. rewrite <- app_assoc. rewrite <- app_assoc. reflexivity.
+      * (* l2 <> [] *)
+        apply Hnonempty.
+      * (* len *)
+        apply (le_trans _ (pumping_constant re1)). apply Hlen.
+        apply le_plus_l.
+      * (* pumping *)
+        intro.
+        rewrite app_assoc. rewrite app_assoc.
+        rewrite <- (app_assoc _ l1).
+        apply (MApp (l1 ++ napp m l2 ++ l3)).
+        -- apply Hpump.
+        -- apply Hmatch2.
+    + (* pumping_const re2 <= len s2 *)
+      destruct H as [Hlenre1 H].
+      apply IH2 in H.
+      destruct H as [l1].
+      destruct H as [l2].
+      destruct H as [l3].
+      destruct H as [Happ H].
+      destruct H as [Hnonempty H].
+      destruct H as [Hlen Hpump].
+      exists (s1 ++ l1). exists l2. exists l3.
+      split; try split; try split.
+      * (* sum *)
+        rewrite Happ. rewrite <- app_assoc. reflexivity.
+      * (* l2 <> [] *)
+        apply Hnonempty.
+      * (* len *)
+        rewrite app_length.
+        rewrite <- plus_assoc.
+        apply add_le_cases_reverse. split.
+        -- apply not_le in Hlenre1.
+           apply (le_trans _ (S (length s1))). apply le_S. apply le_n.
+           apply Hlenre1.
+        -- apply Hlen.
+      * (* pumping *)
+        intro.
+        rewrite <- app_assoc.
+        apply (MApp s1).
+        -- apply Hmatch1.
+        -- apply Hpump.
+
+  - (* MUnionL *)
+    simpl. intros. apply plus_le_left in H.
+    apply IH in H.
+    destruct H as [l1]. destruct H as [l2]. destruct H as [l3].
+    destruct H as [Happ H].
+    destruct H as [Hnonempty H].
+    destruct H as [Hlen Hpump].
+    exists l1. exists l2. exists l3. split; try split; try split.
+    + (* sum *) apply Happ.
+    + (* nonempty *) apply Hnonempty.
+    + (* len *) apply (le_trans _ (pumping_constant re1)).
+      apply Hlen. apply le_plus_l.
+    + (* pumping *) intros. apply MUnionL. apply Hpump.
+
+  - (* MUnionR *)
+    simpl. intros. apply plus_le_right in H.
+    apply IH in H.
+    destruct H as [l1]. destruct H as [l2]. destruct H as [l3].
+    destruct H as [Happ H].
+    destruct H as [Hnonempty H].
+    destruct H as [Hlen Hpump].
+    exists l1. exists l2. exists l3. split; try split; try split.
+    + (* sum *) apply Happ.
+    + (* nonempty *) apply Hnonempty.
+    + (* len *) apply (le_trans _ (pumping_constant re2)).
+      apply Hlen. rewrite plus_comm. apply le_plus_l.
+    + (* pumping *) intros. apply MUnionR. apply Hpump.
+
+  - (* MStar0 *)
+    simpl. intro. inversion H. apply pumping_constant_0_false in H1. destruct H1.
+
+  - (* MStarApp *)
+    simpl. rewrite app_length. intro.
+    assert (Hl: 1 <= length s1 + length s2).
+    { apply (le_trans _ (pumping_constant re) _).
+      apply pumping_constant_ge_1.
+      apply H.
+    }
+    assert (Hcase: (1 <= length s1) \/
+                   (1 <= length s2)).
+    { destruct (length s1).
+      + simpl in Hl. right. apply Hl.
+      + left. apply n_le_m__Sn_le_Sm. apply le_0_n.
+    }
+    assert (Hlen_ge_one: forall X (l: list X), 1 <= length l -> l <> []).
+    { intros. destruct l. intro. simpl in H0.
+      apply PeanoNat.Nat.nle_succ_0 in H0. (* ~(S n <= 0) *)
+      inversion H0. simpl in H0. intro.  inversion H1.
+    }
+    assert (Hlen_s1: 1 <= length s1).
+    {
+    }
+
+    destruct Hcase as [Hlen|Hlen].
+    + (* 1 <= length s1 *)
+      exists []. exists s1. exists s2. simpl. split; try split; try split.
+      (* "sum" case is simply proved *)
+      * (* nonempty *) apply Hlen_ge_one. apply Hlen.
+      * (* len *) clear IH1. clear IH2. clear Hl. clear Hlen_ge_one.
+      * (* pumping *) intro. simpl.
+        apply napp_star. apply Hmatch1. apply Hmatch2.
+    + (* 1 <= length s2 *)
+      exists s1. exists s2. exists []. split; try split.
+      * (* sum *) rewrite app_nil_r. reflexivity.
+      * (* nonempty *) apply Hlen_ge_one. apply Hlen.
+      * (* pumping *) intro. rewrite app_nil_r. apply napp_star_right.
+        apply Hmatch1. apply Hmatch2.
+Qed.
+
 
 End Pumping.
 (** [] *)
