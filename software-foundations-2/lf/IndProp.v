@@ -1187,9 +1187,67 @@ Qed.
     - [R 1 [1;2;1;0]]
     - [R 6 [3;2;1;0]]  *)
 
-(* FILL IN HERE
+(* `R n l` encodes a seemingly complex relation.
+Here's a listing of valid relations:
 
-    [] *)
+(+) denotes c2
+(-) denotes c3
+
+R 0 []
++ R 1 [0]
+  + R 2 [1; 0]
+    + R 3 [2; 1; 0]
+      + R 4 [3; 2; 1; 0]
+      - R 2 [2; 1; 0]
+        - R 1 [2; 1; 0]
+          + R 2 [1; 2; 1; 0]
+          - R 0 [2; 1; 0]
+            + R 1 [0; 2; 1; 0]
+    - R 1 [1; 0]
+     + R 2 [1; 1; 0]
+       + R 3 [2; 1; 1; 0]
+       - R 1 [1; 1; 0]
+     - R 0 [1; 0]
+  - R 0 [0]
+    + R 1 [0; 0]
+      + R 2 [1; 0; 0]
+      - R 1 [0; 0]
+        - R 0 [0; 0]
+
+some observations:
+
+- last elements must be 0
+- for two adjacent elements, l=[...;n;m;...], n <= S m
+- n <= length l
+- n <= S(hd(l))
+
+I'm not sure if these four properties are strong enough to be equivalent to R.
+*)
+
+Module R'.
+
+Inductive R : nat -> list nat -> Prop :=
+  | c1 : R 0 []
+  | c2 n l (H: R n l) : R (S n) (n :: l)
+  | c3 n l (H: R (S n) l) : R n l.
+
+Example R_ex_1: R 2 [1; 0].
+Proof. apply c2. apply c2. apply c1. Qed.
+
+Example R_ex_2: R 1 [1; 2; 1].
+Proof. apply c3. apply c2. apply c3. apply c3. apply c2. apply c2. Admitted.
+
+Example R_ex_3: R 6 [3; 2; 1; 0].
+Proof. Admitted.
+
+Example R_ex_2': R 1 [1; 2; 1; 0].
+Proof. apply c3. apply c2. apply c3. apply c3. apply c2. apply c2. apply c2.
+apply c1.
+Qed.
+
+End R'.
+
+(* [] *)
 
 (* ################################################################# *)
 (** * Case Study: Regular Expressions *)
@@ -1413,13 +1471,19 @@ Qed.
 Lemma empty_is_empty : forall T (s : list T),
   ~ (s =~ EmptySet).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. intro.
+  inversion H.
+Qed.
 
 Lemma MUnion' : forall T (s : list T) (re1 re2 : reg_exp T),
   s =~ re1 \/ s =~ re2 ->
   s =~ Union re1 re2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H.
+  - apply MUnionL. apply H.
+  - apply MUnionR. apply H.
+Qed.
 
 (** The next lemma is stated in terms of the [fold] function from the
     [Poly] chapter: If [ss : list (list T)] represents a sequence of
@@ -1430,7 +1494,13 @@ Lemma MStar' : forall T (ss : list (list T)) (re : reg_exp T),
   (forall s, In s ss -> s =~ re) ->
   fold app ss [] =~ Star re.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction ss.
+  - simpl. apply MStar0.
+  - simpl. apply MStarApp.
+    + apply H. simpl. left. reflexivity.
+    + apply IHss. intros. apply H. simpl. right. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, standard, optional (reg_exp_of_list_spec)
@@ -1441,7 +1511,30 @@ Proof.
 Lemma reg_exp_of_list_spec : forall T (s1 s2 : list T),
   s1 =~ reg_exp_of_list s2 <-> s1 = s2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  split; intros.
+  - (* -> *)
+    generalize dependent s1.
+    induction s2.
+    + (* s2 := [], show s1 = [] *)
+      intros. inversion H. reflexivity.
+    + (* s2 := x:l, show s1 = x:l *)
+      intros. simpl in H. inversion H. subst s1 re1 re2.
+      (* H3: s0 ~ Char x *)
+      inversion H3. subst x0 s0. simpl. f_equal. apply IHs2. apply H4.
+
+  - (* <- *)
+    generalize dependent s1.
+    induction s2; intros.
+    + (* s2 := [], show s1 =~ reg_exp_of_list s2 *)
+      simpl. rewrite H. apply MEmpty.
+    + (* s2 := x::s2, show s1 =~ reg_exp_of_list (x :: s2) *)
+      simpl. rewrite H. apply (MApp [x]).
+      * (* prove [x] =~ Char x *)
+        apply MChar.
+      * (* prove s2 =~ reg_exp_of_list s2 *)
+        apply IHs2. reflexivity.
+Qed.
+
 (** [] *)
 
 (** Since the definition of [exp_match] has a recursive
@@ -1530,13 +1623,62 @@ Qed.
     regular expression matches some string. Prove that your function
     is correct. *)
 
-Fixpoint re_not_empty {T : Type} (re : reg_exp T) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint re_not_empty {T : Type} (re : reg_exp T) : bool :=
+  match re with
+  | EmptySet => false
+  | EmptyStr => true
+  | Char _ => true
+  | App re1 re2 => re_not_empty re1 && re_not_empty re2
+  | Union re1 re2 => re_not_empty re1 || re_not_empty re2
+  | Star _ => true
+  end.
+
 
 Lemma re_not_empty_correct : forall T (re : reg_exp T),
   (exists s, s =~ re) <-> re_not_empty re = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  split.
+  - (* -> *)
+    intros. destruct H.
+    induction H.
+    + (* MEmptyStr *)
+      reflexivity.
+    + (* MChar *)
+      reflexivity.
+    + (* MApp *)
+      simpl. rewrite IHexp_match1. rewrite IHexp_match2. reflexivity.
+    + (* MUnionL *)
+      simpl. rewrite IHexp_match. reflexivity.
+    + (* MUnionR *)
+      simpl. rewrite IHexp_match. apply orb_true_iff. right. reflexivity.
+    + (* MStar0 *)
+      reflexivity.
+    + (* MStarApp *)
+      reflexivity.
+
+  - (* <- *)
+    intros.
+    induction re.
+    + (* EmptySet *)
+      inversion H.
+    + (* EmptyStr *)
+      exists []. apply MEmpty.
+    + (* Char *)
+      exists [t]. apply MChar.
+    + (* App *)
+      inversion H.
+      apply andb_true_iff in H1.
+      destruct H1.
+      apply IHre1 in H0. destruct H0 as [x0].
+      apply IHre2 in H1. destruct H1 as [x1].
+      exists (x0 ++ x1). apply MApp. apply H0. apply H1.
+    + (* Union *)
+      simpl in H. apply orb_true_iff in H. destruct H.
+      * apply IHre1 in H. destruct H. exists x. apply MUnionL. apply H.
+      * apply IHre2 in H. destruct H. exists x. apply MUnionR. apply H.
+    + (* Star *)
+      exists []. apply MStar0.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1676,7 +1818,28 @@ Lemma MStar'' : forall T (s : list T) (re : reg_exp T),
     s = fold app ss []
     /\ forall s', In s' ss -> s' =~ re.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  remember (Star re) as re'.
+  induction H; try discriminate.
+  - (* MStar0 *)
+    injection Heqre' as Heqre'.
+    exists []. split.
+    + reflexivity.
+    + intros. inversion H.
+  - (* MStarApp *)
+    injection Heqre' as Heqre'. subst re0.
+    assert (Star re = Star re). reflexivity.
+    apply IHexp_match2 in H1. clear IHexp_match2. destruct H1. destruct H1.
+    exists (s1::x). split.
+    + (* show that (s1 :: x) = fold app (s1 :: x) *)
+      simpl. rewrite <- H1. reflexivity.
+    + (* show that s1 =~ re and forall s' in x, s' =~ re *)
+      simpl. intros.
+      destruct H3.
+      * subst s1. apply H.
+      *  apply H2 in H3. apply H3.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 5 stars, advanced (weak_pumping)
