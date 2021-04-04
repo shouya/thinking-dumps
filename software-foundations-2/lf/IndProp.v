@@ -1945,6 +1945,89 @@ Proof.
     + apply IHm.
 Qed.
 
+Lemma napp_empty : forall T m, @napp T m [] = [].
+Proof.
+  intros.
+  induction m.
+  reflexivity.
+  simpl. apply IHm.
+Qed.
+
+Lemma nil_eq_app_nil_nil : forall T (l1 l2 : list T),
+  l1 ++ l2 = [] -> l1 = [] /\ l2 = [].
+Proof.
+  intros.
+  destruct l1; destruct l2.
+  - split; reflexivity.
+  - inversion H.
+  - inversion H.
+  - inversion H.
+Qed.
+
+Lemma napp_any_star :
+  forall T m s (re : reg_exp T),
+  s =~ Star re -> napp m s =~ Star re.
+Proof.
+  intros.
+  induction m.
+  - simpl. apply MStar0.
+  - simpl. apply star_app. apply H. apply IHm.
+Qed.
+
+Lemma napp_any_star_one :
+  forall T m s (re : reg_exp T),
+  s =~ re -> napp m s =~ Star re.
+Proof.
+  intros.
+  induction m.
+  - simpl. apply MStar0.
+  - simpl. apply star_app.
+    + replace s with (s ++ []). apply MStarApp. apply H. apply MStar0.
+      apply app_nil_r.
+    + apply IHm.
+Qed.
+
+Lemma napp_star_right :
+  forall T m s1 s2 (re : reg_exp T),
+    s1 =~ re -> s2 =~ Star re ->
+    s1 ++ napp m s2 =~ Star re.
+Proof.
+  intros T m s1 s2 re Hs1 Hs2.
+  remember (Star re) as re'.
+  induction Hs2; try inversion Heqre'; try subst.
+  - rewrite napp_empty.
+    apply MStarApp. apply Hs1. apply MStar0.
+  - subst. apply MStarApp. apply Hs1.
+    clear Heqre'.
+    induction m.
+    + simpl. apply MStar0.
+    + simpl. apply star_app. apply MStarApp. apply Hs2_1. apply Hs2_2.
+      apply IHm. intro. apply MStarApp. apply Hs1. apply napp_any_star. apply Hs2_2.
+      intro. rewrite Heqre'. apply MStarApp. apply Hs1.
+      apply napp_any_star_one. apply Hs2_1.
+
+      (* Sorry for this really long and unstructured proof. This one alone
+         is difficult (4 star level I think).
+
+         Basically the idea goes like this. Divide the conditions into 3 cases.
+         - s2 = []
+         - s2 = (s0 ++ s3), m = 0
+         - s2 = (S0 ++ s3), m := S m
+
+         The first two are easy to prove. The last one is equivalent to proving
+
+         (s0 ++ s2) ++ (s0 ++ s2)^n =~ re*
+
+         subject to:
+         - s0 =~ re
+         - s2 =~ re*
+
+         It then requires some divide and conquer, and using some new lemmas
+         related to napp and and Star. Overall the idea is quite clear,
+         although the manipulation here is a bit dirty.
+       *)
+Qed.
+
 (** The (weak) pumping lemma itself says that, if [s =~ re] and if the
     length of [s] is at least the pumping constant of [re], then [s]
     can be split into three substrings [s1 ++ s2 ++ s3] in such a way
@@ -1973,7 +2056,111 @@ Proof.
        | re | s1 s2 re Hmatch1 IH1 Hmatch2 IH2 ].
   - (* MEmpty *)
     simpl. intros contra. inversion contra.
-  (* FILL IN HERE *) Admitted.
+  - (* MChar *)
+    simpl. intro contra. inversion contra. inversion H0.
+
+  - (* MApp *)
+    simpl. intro. rewrite app_length in H. apply add_le_cases in H.
+    destruct H.
+    + (* pumping_const re1 <= len s1 *)
+      apply IH1 in H.
+      destruct H as [l1].
+      destruct H as [l2].
+      destruct H as [l3].
+      destruct H as [Happ H].
+      destruct H as [Hnonempty Hpump].
+      exists l1. exists l2. exists (l3 ++ s2).
+      split; try split.
+      * (* sum *)
+        rewrite Happ. rewrite <- app_assoc. rewrite <- app_assoc. reflexivity.
+      * (* l2 <> [] *)
+        apply Hnonempty.
+      * (* pumping *)
+        intro.
+        rewrite app_assoc. rewrite app_assoc.
+        rewrite <- (app_assoc _ l1).
+        apply (MApp (l1 ++ napp m l2 ++ l3)).
+        -- apply Hpump.
+        -- apply Hmatch2.
+    + (* pumping_const re2 <= len s2 *)
+      apply IH2 in H.
+      destruct H as [l1].
+      destruct H as [l2].
+      destruct H as [l3].
+      destruct H as [Happ H].
+      destruct H as [Hnonempty Hpump].
+      exists (s1 ++ l1). exists l2. exists l3.
+      split; try split.
+      * (* sum *)
+        rewrite Happ. rewrite <- app_assoc. reflexivity.
+      * (* l2 <> [] *)
+        apply Hnonempty.
+      * (* pumping *)
+        intro.
+        rewrite <- app_assoc.
+        apply (MApp s1).
+        -- apply Hmatch1.
+        -- apply Hpump.
+
+  - (* MUnionL *)
+  (* I see where the "weak" comes from. The pumping lemma should be sufficient given
+        max (pumping_constant re1, pumping_constant re2) <= length s1
+     but we are enforcing a stronger condition:
+        pumping_constant re1 + pumping_constant re2 <= length s1
+   *)
+    simpl. intros. apply plus_le_left in H.
+    apply IH in H.
+    destruct H as [l1]. destruct H as [l2]. destruct H as [l3].
+    destruct H as [Happ H]. destruct H as [Hnonempty Hpump].
+    exists l1. exists l2. exists l3. split; try split.
+    + (* sum *) apply Happ.
+    + (* nonempty *) apply Hnonempty.
+    + (* pumping *) intros. apply MUnionL. apply Hpump.
+
+  - (* MUnionR *)
+    simpl. intros. apply plus_le_right in H.
+    apply IH in H.
+    destruct H as [l1]. destruct H as [l2]. destruct H as [l3].
+    destruct H as [Happ H]. destruct H as [Hnonempty Hpump].
+    exists l1. exists l2. exists l3. split; try split.
+    + (* sum *) apply Happ.
+    + (* nonempty *) apply Hnonempty.
+    + (* pumping *) intros. apply MUnionR. apply Hpump.
+
+  - (* MStar0 *)
+    simpl. intro. inversion H. apply pumping_constant_0_false in H1. destruct H1.
+
+  - (* MStarApp *)
+    simpl. rewrite app_length. intro.
+    assert (Hl: 1 <= length s1 + length s2).
+    { apply (le_trans _ (pumping_constant re) _).
+      apply pumping_constant_ge_1.
+      apply H.
+    }
+    assert (Hcase: 1 <= length s1 \/ 1 <= length s2).
+    { destruct (length s1).
+      + simpl in Hl. right. apply Hl.
+      + left. apply n_le_m__Sn_le_Sm. apply le_0_n.
+    }
+    assert (Hlen_ge_one: forall X (l: list X), 1 <= length l -> l <> []).
+    { intros. destruct l. intro. simpl in H0.
+      apply PeanoNat.Nat.nle_succ_0 in H0. (* ~(S n <= 0) *)
+      inversion H0. simpl in H0. intro.  inversion H1.
+    }
+    destruct Hcase as [Hlen|Hlen].
+    + (* 1 <= length s1 *)
+      exists []. exists s1. exists s2. split; try split.
+      (* "sum" case is simply proved *)
+      * (* nonempty *) apply Hlen_ge_one. apply Hlen.
+      * (* pumping *) intro. simpl. apply napp_star. apply Hmatch1. apply Hmatch2.
+    + (* 1 <= length s2 *)
+      exists s1. exists s2. exists []. split; try split.
+      * (* sum *) rewrite app_nil_r. reflexivity.
+      * (* nonempty *) apply Hlen_ge_one. apply Hlen.
+      * (* pumping *) intro. rewrite app_nil_r. apply napp_star_right.
+        apply Hmatch1. apply Hmatch2.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 5 stars, advanced, optional (pumping)
