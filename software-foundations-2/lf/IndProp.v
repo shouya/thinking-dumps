@@ -2541,7 +2541,17 @@ Qed.
 (** **** Exercise: 2 stars, standard, especially useful (reflect_iff)  *)
 Theorem reflect_iff : forall P b, reflect P b -> (P <-> b = true).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  - (* p <-> true = true *)
+    split.
+    + intro. reflexivity.
+    + intro. apply H0.
+  - (* p <-> false = true *)
+    split.
+    + intro. exfalso. apply H0. apply H2.
+    + intro. discriminate H2.
+Qed.
 (** [] *)
 
 (** The advantage of [reflect] over the normal "if and only if"
@@ -2592,7 +2602,15 @@ Fixpoint count n l :=
 Theorem eqbP_practice : forall n l,
   count n l = 0 -> ~(In n l).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - simpl. intro. apply H0.
+  - simpl in *. destruct (eqbP n x).
+    + subst. simpl in H. inversion H.
+    + intro. apply H0. destruct H1.
+      * symmetry. apply H1.
+      * simpl in *. apply IHl in H. apply H in H1. inversion H1.
+Qed.
 (** [] *)
 
 (** This small example shows how reflection gives us a small gain in
@@ -2625,7 +2643,12 @@ Proof.
     [nostutter]. *)
 
 Inductive nostutter {X:Type} : list X -> Prop :=
- (* FILL IN HERE *)
+  | NoSt0         : nostutter []
+  | NoSt1 (x : X) : nostutter [x]
+  | NoStN (x y : X) (Hneq : x <> y)
+          (l : list X)
+          (H : nostutter (y :: l))
+    : nostutter (x :: y :: l)
 .
 (** Make sure each of these tests succeeds, but feel free to change
     the suggested proof (in comments) if the given one doesn't work
@@ -2638,34 +2661,22 @@ Inductive nostutter {X:Type} : list X -> Prop :=
     example with more basic tactics.)  *)
 
 Example test_nostutter_1: nostutter [3;1;4;1;5;6].
-(* FILL IN HERE *) Admitted.
-(*
-  Proof. repeat constructor; apply eqb_neq; auto.
-  Qed.
-*)
+Proof. repeat constructor; apply eqb_neq; auto. Qed.
 
 Example test_nostutter_2:  nostutter (@nil nat).
-(* FILL IN HERE *) Admitted.
-(*
-  Proof. repeat constructor; apply eqb_neq; auto.
-  Qed.
-*)
+Proof. repeat constructor; apply eqb_neq; auto. Qed.
 
 Example test_nostutter_3:  nostutter [5].
-(* FILL IN HERE *) Admitted.
-(*
-  Proof. repeat constructor; auto. Qed.
-*)
+Proof. repeat constructor; auto. Qed.
 
 Example test_nostutter_4:      not (nostutter [3;1;1;4]).
-(* FILL IN HERE *) Admitted.
-(*
-  Proof. intro.
+Proof.
+  intro.
   repeat match goal with
-    h: nostutter _ |- _ => inversion h; clear h; subst
-  end.
+           h: nostutter _ |- _ =>
+           inversion h; clear h; subst
+         end.
   contradiction; auto. Qed.
-*)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_nostutter : option (nat*string) := None.
@@ -2702,7 +2713,53 @@ Definition manual_grade_for_nostutter : option (nat*string) := None.
     to be a merge of two others.  Do this with an inductive relation,
     not a [Fixpoint].)  *)
 
-(* FILL IN HERE *)
+Inductive in_order_merge {X : Type} : list X -> list X -> list X -> Prop :=
+  | IOM_Nil_L (l1 : list X) : in_order_merge l1 [] l1
+  | IOM_Nil_R (l2 : list X) : in_order_merge [] l2 l2
+  | IOM_L (x : X) (l1 l2 l : list X)
+          (H : in_order_merge l1 l2 l)
+    : in_order_merge (x :: l1) l2 (x :: l)
+  | IOM_R (x : X) (l1 l2 l : list X)
+          (H : in_order_merge l1 l2 l)
+    : in_order_merge l1 (x :: l2) (x :: l).
+
+Theorem filter_in_order_merge : forall (X : Type) (l1 l2 l : list X) (test : X -> bool),
+  in_order_merge l1 l2 l ->
+  (forall x, In x l1 -> test x = true) ->
+  (forall x, In x l2 -> test x = false) ->
+  filter test l = l1.
+Proof.
+  intros.
+  induction H.
+  - (* IMO_Nil_L *)
+    induction l1.
+    + reflexivity.
+    + simpl in *. rewrite H0. rewrite IHl1.
+      * reflexivity.
+      * intros. apply H0. right. apply H.
+      * left. reflexivity.
+  - (* IMO_Nil_R *)
+    induction l2.
+    + reflexivity.
+    + simpl in *. rewrite H1. rewrite IHl2.
+      * reflexivity.
+      * intros. apply H1. right. apply H.
+      * left. reflexivity.
+  - (* IMO_L *)
+    simpl in *.
+    rewrite H0. rewrite IHin_order_merge.
+    + reflexivity.
+    + intros. apply H0. right. apply H2.
+    + intros. apply H1. apply H2.
+    + left. reflexivity.
+  - (* IMO_R *)
+    simpl in *.
+    rewrite H1. rewrite IHin_order_merge.
+    + reflexivity.
+    + intros. apply H0. apply H2.
+    + intros. apply H1. right. apply H2.
+    + left. reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_filter_challenge : option (nat*string) := None.
@@ -2715,9 +2772,56 @@ Definition manual_grade_for_filter_challenge : option (nat*string) := None.
     evaluates to [true] on all their members, [filter test l] is the
     longest.  Formalize this claim and prove it. *)
 
-(* FILL IN HERE
+Inductive subseq' {X : Type} : list X -> list X -> Prop :=
+  | SS_Nil (l : list X) : subseq' [] l
+  | SS_Head (x : X) (sl l : list X) (H : subseq' sl l) : subseq' (x :: sl) (x :: l)
+  | SS_Skip (x : X) (sl l : list X) (H : subseq' sl l) : subseq' sl (x :: l)
+.
 
-    [] *)
+Example subseq_ex1 : subseq' [1;2;3] [1;4;2;3;4].
+Proof. repeat constructor. Qed.
+
+Theorem filter_longest_subseq : forall (X : Type) (sl l fl : list X) (test : X -> bool),
+  fl = filter test l ->
+  subseq' sl l ->
+  (forall x, In x sl -> test x = true) ->
+  length sl <= length fl.
+Proof.
+  intros.
+  generalize dependent fl.
+  induction H0.
+  - (* SS_Nil *)
+    intros. simpl. apply O_le_n.
+  - (* SS_Head *)
+    intros.
+    simpl in *.
+    destruct (test x) eqn:Htestx.
+    + (* test x = true *)
+      subst. simpl in *. apply n_le_m__Sn_le_Sm.
+      apply IHsubseq'.
+      * intros. apply H1. right. apply H.
+      * reflexivity.
+    + (* test x = false *)
+      subst. simpl in *.
+      assert (test x = true).
+      { apply H1. left. reflexivity. }
+      rewrite H in Htestx. inversion Htestx.
+  - (* SS_Skip *)
+    intros.
+    simpl in *.
+    destruct (test x) eqn:Htestx.
+    + (* test x = true *)
+      rewrite H. simpl.
+      apply le_S.
+      apply IHsubseq'.
+      * intros. apply H1. apply H2.
+      * subst. reflexivity.
+    + (* test x = false *)
+      apply IHsubseq'.
+      intros. apply H1. apply H2. apply H.
+Qed.
+
+(* [] *)
 
 (** **** Exercise: 4 stars, standard, optional (palindromes)
 
