@@ -2252,72 +2252,60 @@ Proof.
   split; assumption.
 Qed.
 
-Lemma empty_string_regexp_unique : forall T (re : reg_exp T) (s : list T),
-  [ ] =~ re -> s =~ re -> s = [].
+Lemma len_ge_one: forall X (l: list X), 1 <= length l -> l <> [].
+Proof.
+  intros. destruct l.
+  - simpl in H. inversion H.
+  - intro. inversion H0.
+Qed.
+
+Lemma app_not_nil: forall X (l1 l2: list X),
+  l1 ++ l2 <> [] <-> l1 <> [] \/ l2 <> [].
 Proof.
   intros.
-  generalize dependent s.
-  induction re.
-  - inversion H.
-  - intros. inversion H0. reflexivity.
-  - intros. inversion H.
-  - intros. inversion H0. subst.
-    assert (s1 = [] /\ s2 = [] -> s1 ++ s2 = []).
-    { intros. destruct H1. subst. reflexivity. }
-    apply H1. clear H1.
-    split.
-    + apply IHre1. apply (match_app_empty _ _ re2). apply H. apply H4.
-    + apply IHre2. apply (match_app_empty _ re1 _). apply H. apply H5.
-  - intros. inversion H0. subst.
+  split; intros.
+  - (* -> *)
+    destruct l1.
+    + simpl in H. right. apply H.
+    + left. intro. inversion H0.
+  - destruct H.
+    + intro. apply nil_eq_app_nil_nil in H0.
+      destruct H0. subst. apply H. reflexivity.
+    + intro. apply nil_eq_app_nil_nil in H0.
+      destruct H0. subst. apply H. reflexivity.
+Qed.
 
-    (* Here's the thing!!! [] =~ Union EmptyString (Char 1) doesn't mean
-      s =~ Union EmptyString (Char 1) -> s = [].
-      It's still possible that s = [1]! This theorem is false!
-
-      Same applies to Star. [] =~ re -> s =~ Star re -> s = [] is false, too.
-      Counter example: "re = Union EmptyString (Char 1)" then it's possible for
-      s = [1;1;1].
-     *)
-
-
-Lemma empty_star_empty : forall T (re : reg_exp T) (s : list T),
-  [ ] =~ re -> s =~ Star re -> s = [].
-Proof.
-  intros. destruct H.
-  inversion H0.
-  - subst. reflexivity.
-  - subst.
-
-
-Lemma pumping_helper : forall T (re: reg_exp T) s1 s2,
-  s1 =~ re ->
-  s2 =~ Star re ->
-  s1 ++ s2 <> [] ->
-  s1 <> [].
+Lemma star_nonempty : forall  T (re : reg_exp T) (s : list T),
+  s =~ Star re ->
+  s <> [] ->
+  exists s1 s2, s = s1 ++ s2 /\ s1 <> [] /\ s1 =~ re /\ s2 =~ Star re.
 Proof.
   intros.
-  assert (s1 <> [] \/ s2 <> []).
-  { destruct s1.
-    - right. simpl in H1. apply H1.
-    - left. intro. inversion H2.
-  }
-  destruct H2.
-  - apply H2.
-  - intro. subst. simpl in H1.
-    (* remember (Star re). induction H0; inversion Heqr. *)
-    apply H1.
-
-
-    inversion .
-    + apply H1. subst. apply star_empty in H0. apply H0.
-    + subst.
-
-
-
-
-
-1 <= length s1 + length s2
-
+  remember (Star re).
+  induction H; try inversion Heqr. subst.
+  - exfalso. apply H0. reflexivity.
+  - subst. apply app_not_nil in H0. destruct H0.
+    + (* s1 <> [] *)
+      exists s1. exists s2. repeat split.
+      * apply H0.
+      * apply H.
+      * apply H1.
+    + (* s2 <> [] *)
+      apply IHexp_match2 in Heqr.
+      destruct Heqr as [s21]. destruct H2 as [s22]. destruct H2. destruct H3. destruct H4.
+      destruct s1.
+      * (* s1 = [] *) subst.
+        exists s21. exists s22. repeat split.
+        -- apply H3.
+        -- apply H4.
+        -- apply H5.
+      * (* s1 <> [] *) subst.
+        exists (x::s1). exists (s21 ++ s22). repeat split.
+        -- intro. inversion H2.
+        -- apply H.
+        -- apply H1.
+      * apply H0.
+Qed.
 
 Lemma pumping : forall T (re : reg_exp T) s,
   s =~ re ->
@@ -2433,43 +2421,53 @@ Proof.
 
   - (* MStarApp *)
     simpl. rewrite app_length. intro.
-    assert (Hl: 1 <= length s1 + length s2).
-    { apply (le_trans _ (pumping_constant re) _).
-      apply pumping_constant_ge_1.
-      apply H.
-    }
-    assert (Hcase: (1 <= length s1) \/
-                   (1 <= length s2)).
-    { destruct (length s1).
-      + simpl in Hl. right. apply Hl.
-      + left. apply n_le_m__Sn_le_Sm. apply le_0_n.
-    }
-    assert (Hlen_ge_one: forall X (l: list X), 1 <= length l -> l <> []).
-    { intros. destruct l. intro. simpl in H0.
-      apply PeanoNat.Nat.nle_succ_0 in H0. (* ~(S n <= 0) *)
-      inversion H0. simpl in H0. intro.  inversion H1.
-    }
-    assert (Hlen_s1: 1 <= length s1).
-    {
-    }
-
-    destruct Hcase as [Hlen|Hlen].
-    + (* 1 <= length s1 *)
-      exists []. exists s1. exists s2. simpl. split; try split; try split.
-      (* "sum" case is simply proved *)
-      * (* nonempty *) apply Hlen_ge_one. apply Hlen.
-      * (* len *) clear IH1. clear IH2. clear Hl. clear Hlen_ge_one.
-      * (* pumping *) intro. simpl.
-        apply napp_star. apply Hmatch1. apply Hmatch2.
-    + (* 1 <= length s2 *)
-      exists s1. exists s2. exists []. split; try split.
-      * (* sum *) rewrite app_nil_r. reflexivity.
-      * (* nonempty *) apply Hlen_ge_one. apply Hlen.
-      * (* pumping *) intro. rewrite app_nil_r. apply napp_star_right.
-        apply Hmatch1. apply Hmatch2.
+    destruct s1.
+    + (* s1 = [] *)
+      apply star_nonempty in Hmatch2.
+      destruct Hmatch2 as
+          [s21 [s22 [Hs2sum [Hs21nonempty [Hs21match Hs22match]]]]].
+      subst. simpl in *. apply IH2 in H.
+      destruct H as [l1 [l2 [l3 [Happ [Hl2nonempty [Hl12len Hpump]]]]]].
+      exists l1. exists l2. exists l3.
+      repeat split.
+      * apply Happ.
+      * apply Hl2nonempty.
+      * apply Hl12len.
+      * apply Hpump.
+      * simpl in H. apply len_ge_one.
+        apply (le_trans _ (pumping_constant re)).
+        apply pumping_constant_ge_1.
+        apply H.
+    + (* s1 <> [] *)
+      remember (x::s1) as s1_orig. simpl in *.
+      assert (pumping_constant re <= length s1_orig \/
+              length s1_orig <= pumping_constant re).
+      { apply PeanoNat.Nat.le_ge_cases. }
+      destruct H0.
+      -- (* pumping_const re <= |s1_orig| *)
+        apply IH1 in H0.
+        destruct H0 as [l1 [l2 [l3 [Happ [Hl2nonempty [Hl12len Hpump]]]]]].
+        exists l1. exists l2. exists (l3 ++ s2). simpl in *. repeat split.
+        ++ rewrite Happ.
+           rewrite (app_assoc _ _ _ s2).
+           rewrite (app_assoc _ _ _ s2).
+           reflexivity.
+        ++ apply Hl2nonempty.
+        ++ apply Hl12len.
+        ++ intro.
+           rewrite (app_assoc _ _ _ s2).
+           rewrite (app_assoc _ _ _ s2).
+           apply MStarApp. apply Hpump.
+           apply Hmatch2.
+      -- (* pumping_const re >= |s1_orig| *)
+        exists []. exists s1_orig. exists s2. simpl in *. repeat split.
+        ++ intro. subst. inversion H1.
+        ++ apply H0.
+        ++ intro.
+           apply napp_star.
+           apply Hmatch1.
+           apply Hmatch2.
 Qed.
-
-
 End Pumping.
 (** [] *)
 
