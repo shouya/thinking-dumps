@@ -2846,7 +2846,40 @@ Qed.
        forall l, pal l -> l = rev l.
 *)
 
-(* FILL IN HERE *)
+Inductive pal {X}: list X -> Prop :=
+  | Pal_Nil : pal []
+  | Pal_One (x : X) : pal [x]
+  | Pal_X (x : X) (l : list X) (H : pal l) : pal (x :: l ++ [x])
+.
+
+Theorem cons_app_assoc : forall X (x : X) (l1 l2 : list X),
+  x :: l1 ++ l2 = (x :: l1) ++ l2.
+Proof. intros. reflexivity. Qed.
+
+Theorem pal_app_rev : forall X (l : list X), pal (l ++ (rev l)).
+Proof.
+  intros.
+  induction l as [|x l'].
+  - (* l = [] *)
+    simpl. apply Pal_Nil.
+  - (* l = x :: l' *)
+    simpl. rewrite app_assoc.
+    apply Pal_X. apply IHl'.
+Qed.
+
+Theorem pal_rev : forall X (l : list X), pal l -> l = rev l.
+Proof.
+  intros.
+  induction H.
+  - (* Pal_Nil *)
+    reflexivity.
+  - (* Pal_One *)
+    reflexivity.
+  - (* Pal_X *)
+    simpl.
+    rewrite rev_l_x. simpl. rewrite <- IHpal.
+    reflexivity.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_pal_pal_app_rev_pal_rev : option (nat*string) := None.
@@ -2861,9 +2894,112 @@ Definition manual_grade_for_pal_pal_app_rev_pal_rev : option (nat*string) := Non
      forall l, l = rev l -> pal l.
 *)
 
-(* FILL IN HERE
+(* [] *)
 
-    [] *)
+Fixpoint init {X} (l : list X) : list X :=
+  match l with
+  | [] => []
+  | [_] => []
+  | (x :: l') => x :: (init l')
+  end.
+
+Lemma init_tail : forall X (x : X) (l : list X),
+  init (l ++ [x]) = l.
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - simpl. rewrite IHl. clear IHl. remember (l ++ [x]).
+    destruct l0.
+    + symmetry in Heql0.
+      apply Pumping.nil_eq_app_nil_nil in Heql0. destruct Heql0.
+      inversion H0.
+    + reflexivity.
+Qed.
+
+Lemma rev_head_tail : forall  X (x : X) (l : list X),
+  (x :: l) = rev (x :: l) ->
+  l <> [] ->
+  exists l', l' = rev l' /\ l = l' ++ [x].
+Proof.
+  simpl.
+  intros.
+  induction (rev l) eqn:revl.
+  - exists []. simpl. split.
+    + reflexivity.
+    + simpl in H. inversion H. exfalso. apply H0. apply H2.
+  - exists (init l). simpl in *. injection H as Hx. split.
+    + (* init l = rev (init l) *)
+      rewrite H. rewrite init_tail. subst.
+      rewrite rev_app_distr in revl. simpl in revl. injection revl.
+      intro. symmetry. apply H.
+    + (* init l ++ [x] = l *)
+      rewrite H. rewrite init_tail. reflexivity.
+Qed.
+
+Lemma list_length_0 : forall X (l : list X), length l = 0 -> l = [].
+Admitted.
+
+Lemma leb_le : forall n m, (n <=? m) = true <-> n <= m.
+Proof.
+  induction n.
+  simpl.
+  - intros. split. intro. apply O_le_n. intro. reflexivity.
+  - intros. split.
+    + intro. destruct m.
+      * inversion H.
+      * apply n_le_m__Sn_le_Sm. apply IHn. simpl in H. apply H.
+    + intro. destruct m.
+      * inversion H.
+      * simpl. apply Sn_le_Sm__n_le_m in H. apply IHn. apply H.
+Qed.
+
+Lemma lebP : forall n m, reflect (n <= m) (leb n m).
+Proof.
+  intros n m. apply iff_reflect. apply iff_sym.
+  apply leb_le.
+Qed.
+
+Theorem nat_le_ind : forall (b : nat) (P : nat -> Prop),
+  (* P holds for all n <= b *)
+  (forall n, n <= b -> P n) ->
+  (* for b' >= b, P holds for all number below b' implies P (S b') *)
+  (forall b', b <= b' -> (forall n, n <= b' -> (P n)) -> P (S b')) ->
+  (* P holds for all nat *)
+  (forall n, P n).
+Proof.
+  intros.
+  destruct (lebP n b).
+  - (* n <= b *)
+    apply H in H1. apply H1.
+  - (* n > b *)
+Search "ind".
+
+
+Theorem pal_converse : forall X (l : list X), l = rev l -> pal l.
+Proof.
+  intros.
+  remember (length l).
+  generalize dependent l.
+  induction n; intros.
+  - (* l = [] *)
+    simpl. destruct l. apply Pal_Nil. inversion Heqn.
+  - (* l = [x] / l = [x; ...] *)
+    simpl. destruct l. inversion Heqn. destruct n.
+    + (* l = [x] *)
+      simpl in Heqn. inversion Heqn. symmetry in H1. apply list_length_0 in H1.
+      rewrite H1. apply Pal_One.
+    + (* l = [x; l' ;x] *)
+      apply rev_head_tail in H.
+      * (* pal (x::x0::l') *)
+        destruct H as [initl' [Hinitl'rev Hinitl'eq]].
+        rewrite Hinitl'eq. apply Pal_X.
+        apply IHn.
+        apply Hinitl'rev.
+        simpl in Heqn.
+        injection Heqn as Heqn. rewrite Heqn.
+
+
 
 (** **** Exercise: 4 stars, advanced, optional (NoDup)
 
