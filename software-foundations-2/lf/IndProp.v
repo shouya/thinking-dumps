@@ -3084,7 +3084,8 @@ Qed.
     lists (with elements of type X) that have no elements in
     common. *)
 
-(* FILL IN HERE *)
+Definition disjoint {X} (l1 l2 : list X) :=
+  (forall x, In x l1 -> ~(In x l2)) /\ (forall x, In x l2 -> ~(In x l1)).
 
 (** Next, use [In] to define an inductive proposition [NoDup X
     l], which should be provable exactly when [l] is a list (with
@@ -3093,12 +3094,66 @@ Qed.
     bool []] should be provable, while [NoDup nat [1;2;1]] and
     [NoDup bool [true;true]] should not be.  *)
 
-(* FILL IN HERE *)
+Inductive no_dup {X} : list X -> Prop :=
+  | NoDup_Nil : no_dup []
+  | NoDup_Cons (x : X) (l : list X)
+               (Hno_dup : no_dup l)
+               (Hnot_in : ~(In x l)) :
+      no_dup (x :: l)
+.
 
 (** Finally, state and prove one or more interesting theorems relating
     [disjoint], [NoDup] and [++] (list append).  *)
+Theorem disjoint_app_no_dup : forall X (l1 l2 : list X),
+  no_dup (l1 ++ l2) -> disjoint l1 l2.
+Proof.
+  intros.
+  remember (l1 ++ l2).
+  generalize dependent l1.
+  generalize dependent l2.
+  induction H.
+  - (* [] = l1 ++ l2 *)
+    intros.
+    symmetry in Heql.
+    apply Pumping.nil_eq_app_nil_nil in Heql. destruct Heql.
+    split; subst.
+    + intros. inversion H.
+    + intros. inversion H.
+  - (* x :: l = l1 ++ l2 *)
+    intros.
+    unfold disjoint in *.
+    split; intros.
+    + (* x0 in l1 -> ~ (x0 in l2) *)
+      destruct l1.
+      * simpl in *. inversion H0.
+      * simpl in *. inversion Heql. inversion Heql.
+        apply IHno_dup in H3. destruct H3.
+        destruct H0.
+        -- subst. intro. apply Hnot_in.
+           apply In_app_iff. right. apply H0.
+        -- apply H1 in H0. apply H0.
+    + (* x0 in l2 -> ~ (x0 in l1) *)
+      destruct l1.
+      * simpl in *. intro. inversion H1.
+      * simpl in *. inversion Heql. inversion Heql.
+        apply IHno_dup in H3. destruct H3.
+        intro. destruct H6.
+        -- (* prove that x0 in l2 -> x0 <> x1 *)
+          apply Hnot_in.
+          rewrite H5. apply In_app_iff. right. subst. apply H0.
+        -- (* prove that x0 in l2 -> x0 not in l1 *)
+          subst. clear H4.
+          apply (H3 x0). apply H0. apply H6.
+Qed.
 
-(* FILL IN HERE *)
+(* Note that the converse may not be true. Here's an counter example
+
+  l1 = [1; 1]
+  l2 = [2]
+  l1 ++ l2 = [1; 1; 2]
+
+  Then disjoint l1 l2 holds, but no_dup (l1 ++ l2) doesn't hold.
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_NoDup_disjoint_etc : option (nat*string) := None.
@@ -3118,13 +3173,22 @@ Lemma in_split : forall (X:Type) (x:X) (l:list X),
   In x l ->
   exists l1 l2, l = l1 ++ x :: l2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction l.
+  - inversion H.
+  - simpl in *.
+    destruct H.
+    + exists []. exists l. subst. simpl. reflexivity.
+    + apply IHl in H. destruct H as [l1 [l2]].
+      exists (x0 :: l1). exists l2. subst. simpl. reflexivity.
+Qed.
 
 (** Now define a property [repeats] such that [repeats X l] asserts
     that [l] contains at least one repeated element (of type [X]).  *)
 
 Inductive repeats {X:Type} : list X -> Prop :=
-  (* FILL IN HERE *)
+  | Rep_Rep (x : X) (l : list X) (H : In x l)    : repeats (x :: l)
+  | Rep_Add (x : X) (l : list X) (H : repeats l) : repeats (x :: l)
 .
 
 (* Do not modify the following line: *)
@@ -3149,9 +3213,47 @@ Theorem pigeonhole_principle: forall (X:Type) (l1  l2:list X),
    length l2 < length l1 ->
    repeats l1.
 Proof.
-   intros X l1. induction l1 as [|x l1' IHl1'].
-  (* FILL IN HERE *) Admitted.
-
+  intros X l1 l2 Hem.
+  generalize dependent l2.
+  induction l1 as [|x l1' IHl1'].
+  - (* l1 = [] *)
+    intros. inversion H0.
+  - (* l1 = x :: l1' *)
+    simpl. intros.
+    assert ((In x l1') \/ ~(In x l1')).
+    { apply Hem. }
+    destruct H1.
+    + (* x in l1' -> l1 repeats *)
+      apply Rep_Rep. apply H1.
+    + (* x not in l1' -> l1' repeats *)
+      apply Rep_Add.
+      assert (In x l2).
+      { apply H. left. reflexivity. }
+      apply in_split in H2. destruct H2 as [l21 [l22]].
+      apply (IHl1' (l21 ++ l22)).
+      * (* show that forall k, k in l1' -> k in (l21 ++ l22) *)
+        intro k. intros.
+        assert (x <> k).
+        { intro. subst. apply H1. apply H3. }
+        assert (In k l2).
+        { apply H. right. apply H3. }
+        rewrite H2 in H5.
+        rewrite In_app_iff in H5. simpl in H5.
+        rewrite In_app_iff.
+        destruct H5; try destruct H5.
+        -- (* k in l21 *)
+          left. apply H5.
+        -- (* k = x, contradiction *)
+          exfalso. apply H4. apply H5.
+        -- (* k in l22 *)
+          right. apply H5.
+      * (* show that len(l21 + l22) < len(l1') *)
+        rewrite H2 in H0. rewrite app_length in H0.
+        simpl in H0. rewrite <- plus_n_Sm in H0.
+        apply Sn_le_Sm__n_le_m in H0.
+        rewrite app_length. unfold lt.
+        apply H0.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
