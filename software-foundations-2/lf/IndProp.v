@@ -2938,42 +2938,136 @@ Proof.
 Qed.
 
 Lemma list_length_0 : forall X (l : list X), length l = 0 -> l = [].
-Admitted.
-
-Lemma leb_le : forall n m, (n <=? m) = true <-> n <= m.
 Proof.
-  induction n.
-  simpl.
-  - intros. split. intro. apply O_le_n. intro. reflexivity.
-  - intros. split.
-    + intro. destruct m.
-      * inversion H.
-      * apply n_le_m__Sn_le_Sm. apply IHn. simpl in H. apply H.
-    + intro. destruct m.
-      * inversion H.
-      * simpl. apply Sn_le_Sm__n_le_m in H. apply IHn. apply H.
+  destruct l.
+  - reflexivity.
+  - intro. inversion H.
 Qed.
 
-Lemma lebP : forall n m, reflect (n <= m) (leb n m).
+Lemma list_length_1 : forall X (l : list X), length l = 1 -> exists x, l = [x].
 Proof.
-  intros n m. apply iff_reflect. apply iff_sym.
-  apply leb_le.
+  destruct l.
+  - intro. inversion H.
+  - intro. destruct l.
+    + exists x. reflexivity.
+    + simpl in H. inversion H.
 Qed.
 
-Theorem nat_le_ind : forall (b : nat) (P : nat -> Prop),
-  (* P holds for all n <= b *)
-  (forall n, n <= b -> P n) ->
-  (* for b' >= b, P holds for all number below b' implies P (S b') *)
-  (forall b', b <= b' -> (forall n, n <= b' -> (P n)) -> P (S b')) ->
-  (* P holds for all nat *)
-  (forall n, P n).
+(* ev equivalent for odd numbers *)
+Inductive od : nat -> Prop :=
+  | Od_One : od 1
+  | Od_SS n (H: od n) : od (S (S n)).
+
+Lemma od_not_ev_iff: forall n, od n <-> ~(ev n).
+Proof.
+  intro. split.
+  - (* -> *)
+    intro. induction H.
+    + intro. inversion H.
+    + intro. inversion H0. apply IHod. apply H2.
+  - (* <- *)
+    intro. destruct (evenb n) eqn:Hevenb.
+    + apply even_bool_prop in Hevenb. apply ev_even_iff in Hevenb.
+      exfalso. apply H. apply Hevenb.
+    + destruct (evenb_double_conv n).
+      rewrite Hevenb in H0.
+      assert (ev (double x)).
+      { apply ev_double. }
+      generalize dependent n.
+      induction H1.
+      * intros. subst. apply Od_One.
+      * intros. subst. apply Od_SS.
+        apply IHev.
+        -- intro. apply H. apply ev_SS. apply H0.
+        -- simpl in Hevenb. simpl. apply Hevenb.
+        -- reflexivity.
+Qed.
+
+Lemma even_bool_prop_false : forall n, evenb n = false <-> ~(ev n).
+Proof.
+  intros n. split.
+  - intros H. destruct (evenb_double_conv n) as [k Hk].
+    rewrite H in Hk.
+    generalize dependent n.
+    induction k.
+    + intros. simpl in *. subst. intro. inversion H0.
+    + intros. simpl in *. subst.
+      assert (evenb (S (double k)) = false).
+      { simpl. simpl in H. apply H. }
+      apply IHk in H0.
+      intro. apply H0. apply evSS_ev. apply H1. reflexivity.
+  - intros.
+    destruct (evenb n) eqn:Hevn.
+    + apply even_bool_prop in Hevn. apply ev_even_iff in Hevn.
+      exfalso. apply H. apply Hevn.
+    + reflexivity.
+Qed.
+
+Lemma pal_converse_even : forall X (l : list X), ev (length l) -> l = rev l -> pal l.
 Proof.
   intros.
-  destruct (lebP n b).
-  - (* n <= b *)
-    apply H in H1. apply H1.
-  - (* n > b *)
-Search "ind".
+  remember (length l) as n.
+  generalize dependent l.
+
+  induction H.
+  - intros.
+    symmetry in Heqn.
+    apply list_length_0 in Heqn. rewrite Heqn.
+    apply Pal_Nil.
+  - intros.
+    destruct l.
+    + apply Pal_Nil.
+    + destruct l.
+      * apply Pal_One.
+      * apply rev_head_tail in H0.
+        destruct H0 as [initl' [Hinitl'rev Hinitl'eq]].
+        rewrite Hinitl'eq.
+        apply Pal_X. apply IHev.
+        assert (length (x0 :: l) = length (initl' ++ [x])).
+        { rewrite Hinitl'eq. reflexivity. }
+        assert (length l = length initl').
+        { rewrite app_length in H0. simpl in H0.
+          rewrite <- plus_n_Sm in H0. rewrite <- plus_n_O in H0.
+          injection H0 as H0. apply H0.
+        }
+        rewrite <- H1.
+        simpl in Heqn. repeat injection Heqn as Heqn. apply Heqn.
+        apply Hinitl'rev.
+        intro. inversion H1.
+Qed.
+
+Lemma pal_converse_odd : forall X (l : list X), ~ev (length l) -> l = rev l -> pal l.
+Proof.
+  intros.
+  remember (length l) as n.
+  generalize dependent l.
+  apply od_not_ev_iff in H.
+  induction H.
+  - intros.
+    symmetry in Heqn.
+    apply list_length_1 in Heqn. destruct Heqn. rewrite H.
+    apply Pal_One.
+  - intros.
+    destruct l.
+    + apply Pal_Nil.
+    + destruct l.
+      * apply Pal_One.
+      * apply rev_head_tail in H0.
+        destruct H0 as [initl' [Hinitl'rev Hinitl'eq]].
+        rewrite Hinitl'eq.
+        apply Pal_X. apply IHod.
+        assert (length (x0 :: l) = length (initl' ++ [x])).
+        { rewrite Hinitl'eq. reflexivity. }
+        assert (length l = length initl').
+        { rewrite app_length in H0. simpl in H0.
+          rewrite <- plus_n_Sm in H0. rewrite <- plus_n_O in H0.
+          injection H0 as H0. apply H0.
+        }
+        rewrite <- H1.
+        simpl in Heqn. repeat injection Heqn as Heqn. apply Heqn.
+        apply Hinitl'rev.
+        intro. inversion H1.
+Qed.
 
 
 Theorem pal_converse : forall X (l : list X), l = rev l -> pal l.
@@ -2981,24 +3075,17 @@ Proof.
   intros.
   remember (length l).
   generalize dependent l.
-  induction n; intros.
-  - (* l = [] *)
-    simpl. destruct l. apply Pal_Nil. inversion Heqn.
-  - (* l = [x] / l = [x; ...] *)
-    simpl. destruct l. inversion Heqn. destruct n.
-    + (* l = [x] *)
-      simpl in Heqn. inversion Heqn. symmetry in H1. apply list_length_0 in H1.
-      rewrite H1. apply Pal_One.
-    + (* l = [x; l' ;x] *)
-      apply rev_head_tail in H.
-      * (* pal (x::x0::l') *)
-        destruct H as [initl' [Hinitl'rev Hinitl'eq]].
-        rewrite Hinitl'eq. apply Pal_X.
-        apply IHn.
-        apply Hinitl'rev.
-        simpl in Heqn.
-        injection Heqn as Heqn. rewrite Heqn.
-
+  destruct (evenb n) eqn:Hevn.
+  - (* even case *)
+    apply even_bool_prop in Hevn.
+    apply ev_even_iff in Hevn.
+    intros.
+    apply pal_converse_even. subst. apply Hevn. apply H.
+  - (* odd case *)
+    apply even_bool_prop_false in Hevn.
+    intros.
+    apply pal_converse_odd. subst. apply Hevn. apply H.
+Qed.
 
 
 (** **** Exercise: 4 stars, advanced, optional (NoDup)
