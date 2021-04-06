@@ -3254,6 +3254,8 @@ Proof.
         rewrite app_length. unfold lt.
         apply H0.
 Qed.
+
+
 (** [] *)
 
 (* ================================================================= *)
@@ -3398,7 +3400,30 @@ Lemma app_ne : forall (a : ascii) s re0 re1,
     ([ ] =~ re0 /\ a :: s =~ re1) \/
     exists s0 s1, s = s0 ++ s1 /\ a :: s0 =~ re0 /\ s1 =~ re1.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split.
+  - (* -> *)
+    intros.
+    inversion H. subst.
+    destruct s1 as [|x s1'].
+    + (* s1 = [] *)
+      left. split. apply H3. simpl. apply H4.
+    + (* s1 = x :: s1' *)
+      right. exists s1'. exists s2. simpl in *. injection H1 as Heq H2. subst.
+      split.
+      * (* s = s0 ++ s1 *)
+        reflexivity.
+      * (* a::s0 =~ re0 /\ s1 =~ re1 *)
+        split. apply H3. apply H4.
+  - (* <- *)
+    intros. destruct H.
+    + (* [] =~ re0 /\ ... case *)
+      destruct H. apply (MApp []). apply H. apply H0.
+    + (* exists ... case *)
+      destruct H as [s0 [s1 [Hs [Hm1 Hm2]]]].
+      subst.
+      apply (MApp (a::s0)). apply Hm1. apply Hm2.
+Qed.
+
 (** [] *)
 
 (** [s] matches [Union re0 re1] iff [s] matches [re0] or [s] matches [re1]. *)
@@ -3434,7 +3459,31 @@ Lemma star_ne : forall (a : ascii) s re,
     a :: s =~ Star re <->
     exists s0 s1, s = s0 ++ s1 /\ a :: s0 =~ re /\ s1 =~ Star re.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - (* -> *)
+    intros.
+    (* this part is almost the same as the "star_nonempty"
+       lemma I proved for pumping lemma. So I'll just use the result. *)
+    intros.
+    apply (Pumping.star_nonempty ascii re (a :: s)) in H.
+    destruct H as [s1 [s2 [Hsum [Hnonempty [Hm1 Hm2]]]]].
+    destruct s1.
+    + exfalso. apply Hnonempty. reflexivity.
+    + simpl in *. injection Hsum. intros. subst.
+      exists s1. exists s2. split; try split.
+      * apply Hm1.
+      * apply Hm2.
+    + intro. inversion H0.
+  - intros.
+    destruct H as [s1 [s2 [Hsum [Hm1 Hm2]]]].
+    subst.
+    apply (MStarApp (a::s1)).
+    apply Hm1.
+    apply Hm2.
+Qed.
+
+
 (** [] *)
 
 (** The definition of our regex matcher will include two fixpoint
