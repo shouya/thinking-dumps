@@ -2896,27 +2896,6 @@ Definition manual_grade_for_pal_pal_app_rev_pal_rev : option (nat*string) := Non
 
 (* [] *)
 
-Fixpoint init {X} (l : list X) : list X :=
-  match l with
-  | [] => []
-  | [_] => []
-  | (x :: l') => x :: (init l')
-  end.
-
-Lemma init_tail : forall X (x : X) (l : list X),
-  init (l ++ [x]) = l.
-Proof.
-  intros.
-  induction l.
-  - reflexivity.
-  - simpl. rewrite IHl. clear IHl. remember (l ++ [x]).
-    destruct l0.
-    + symmetry in Heql0.
-      apply Pumping.nil_eq_app_nil_nil in Heql0. destruct Heql0.
-      inversion H0.
-    + reflexivity.
-Qed.
-
 Lemma rev_head_tail : forall  X (x : X) (l : list X),
   (x :: l) = rev (x :: l) ->
   l <> [] ->
@@ -2928,13 +2907,13 @@ Proof.
   - exists []. simpl. split.
     + reflexivity.
     + simpl in H. inversion H. exfalso. apply H0. apply H2.
-  - exists (init l). simpl in *. injection H as Hx. split.
+  - exists l0. simpl in *. injection H as Hx. split.
     + (* init l = rev (init l) *)
-      rewrite H. rewrite init_tail. subst.
+      subst.
       rewrite rev_app_distr in revl. simpl in revl. injection revl.
       intro. symmetry. apply H.
     + (* init l ++ [x] = l *)
-      rewrite H. rewrite init_tail. reflexivity.
+      rewrite H. reflexivity.
 Qed.
 
 Lemma list_length_0 : forall X (l : list X), length l = 0 -> l = [].
