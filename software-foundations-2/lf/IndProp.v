@@ -3497,8 +3497,15 @@ Definition refl_matches_eps m :=
 
     Complete the definition of [match_eps] so that it tests if a given
     regex matches the empty string: *)
-Fixpoint match_eps (re: reg_exp ascii) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint match_eps (re: reg_exp ascii) : bool :=
+  match re with
+  | EmptyStr => true
+  | Star _ => true
+  | App re1 re2 => match_eps re1 && match_eps re2
+  | Union re1 re2 => match_eps re1 || match_eps re2
+  | _ => false
+  end.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (match_eps_refl)
@@ -3508,7 +3515,58 @@ Fixpoint match_eps (re: reg_exp ascii) : bool
     [ReflectT] and [ReflectF].) *)
 Lemma match_eps_refl : refl_matches_eps match_eps.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold refl_matches_eps.
+  intros.
+  induction re.
+  - (* EmptySet *)
+    apply ReflectF. intro. inversion H.
+  - (* EmptyStr *)
+    apply ReflectT. apply MEmpty.
+  - (* Char (t : T) *)
+    apply ReflectF. intro. inversion H.
+  - (* App (r1 r2 : reg_exp T) *)
+    destruct (match_eps re1) eqn:Hre1;
+      destruct (match_eps re2) eqn:Hre2;
+      simpl;
+      rewrite Hre1;
+      rewrite Hre2;
+      simpl;
+      try apply ReflectT;
+      try apply ReflectF;
+      inversion IHre1;
+      inversion IHre2.
+    + apply (MApp [] re1 [] re2). apply H. apply H0.
+    + intro. apply H0. inversion H1. subst.
+      apply Pumping.nil_eq_app_nil_nil in H2. destruct H2. subst.
+      simpl in *. apply H6.
+    + intro. apply H. inversion H1. subst.
+      apply Pumping.nil_eq_app_nil_nil in H2. destruct H2. subst.
+      simpl in *. apply H5.
+    + intro. apply H. inversion H1. subst.
+      apply Pumping.nil_eq_app_nil_nil in H2. destruct H2. subst.
+      simpl in *. apply H5.
+  - (* Union (r1 r2 : reg_exp T) *)
+    destruct (match_eps re1) eqn:Hre1;
+      destruct (match_eps re2) eqn:Hre2;
+      simpl;
+      rewrite Hre1;
+      rewrite Hre2;
+      simpl;
+      try apply ReflectT;
+      try apply ReflectF;
+      inversion IHre1;
+      inversion IHre2.
+    + apply MUnionL. apply H.
+    + apply MUnionL. apply H.
+    + apply MUnionR. apply H0.
+    + intro. inversion H1.
+      * subst. apply H. apply H4.
+      * subst. apply H0. apply H4.
+  - (* Star (r : reg_exp T). *)
+    simpl. apply ReflectT. apply MStar0.
+Qed.
+
+
 (** [] *)
 
 (** We'll define other functions that use [match_eps]. However, the
