@@ -3781,8 +3781,12 @@ Definition matches_regex m : Prop :=
 
     Complete the definition of [regex_match] so that it matches
     regexes. *)
-Fixpoint regex_match (s : string) (re : reg_exp ascii) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint regex_match (s : string) (re : reg_exp ascii) : bool :=
+  match s with
+  | [] => match_eps re
+  | (a::s') => regex_match s' (derive a re)
+  end.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (regex_refl)
@@ -3800,7 +3804,19 @@ Fixpoint regex_match (s : string) (re : reg_exp ascii) : bool
     [s =~ derive x re], and vice versa. *)
 Theorem regex_refl : matches_regex regex_match.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold matches_regex. intros. apply iff_reflect.
+  split.
+  - generalize dependent re. induction s.
+    + intros. simpl. destruct (match_eps_refl re).
+      * reflexivity.
+      * exfalso. apply H0. apply H.
+    + intros. simpl. apply IHs. apply derive_corr. apply H.
+  - generalize dependent re. induction s.
+    + intros. simpl in H. destruct (match_eps_refl re).
+      * apply H0.
+      * inversion H.
+    + simpl. intros. apply derive_corr. apply IHs. apply H.
+Qed.
 (** [] *)
 
 (* 2020-09-09 20:51 *)
