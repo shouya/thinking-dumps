@@ -3593,8 +3593,19 @@ Definition derives d := forall a re, is_der re a (d a re).
     Define [derive] so that it derives strings. One natural
     implementation uses [match_eps] in some cases to determine if key
     regex's match the empty string. *)
-Fixpoint derive (a : ascii) (re : reg_exp ascii) : reg_exp ascii
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint derive (a : ascii) (re : reg_exp ascii) : reg_exp ascii :=
+  match re with
+  | EmptySet => EmptySet
+  | EmptyStr => EmptySet
+  | Char t => (if eqb t a then EmptyStr else EmptySet)
+  | App r1 r2 => if match_eps r1
+                then Union (App (derive a r1) r2)
+                           (derive a r2)
+                else App (derive a r1) r2
+  | Union r1 r2 => Union (derive a r1) (derive a r2)
+  | Star r => App (derive a r) (Star r)
+  end.
+
 (** [] *)
 
 (** The [derive] function should pass the following tests. Each test
@@ -3607,45 +3618,56 @@ Example d := ascii_of_nat 100.
 
 (** "c" =~ EmptySet: *)
 Example test_der0 : match_eps (derive c (EmptySet)) = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 
 (** "c" =~ Char c: *)
 Example test_der1 : match_eps (derive c (Char c)) = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** "c" =~ Char d: *)
 Example test_der2 : match_eps (derive c (Char d)) = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** "c" =~ App (Char c) EmptyStr: *)
 Example test_der3 : match_eps (derive c (App (Char c) EmptyStr)) = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** "c" =~ App EmptyStr (Char c): *)
 Example test_der4 : match_eps (derive c (App EmptyStr (Char c))) = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** "c" =~ Star c: *)
 Example test_der5 : match_eps (derive c (Star (Char c))) = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** "cd" =~ App (Char c) (Char d): *)
 Example test_der6 :
   match_eps (derive d (derive c (App (Char c) (Char d)))) = true.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 (** "cd" =~ App (Char d) (Char c): *)
 Example test_der7 :
   match_eps (derive d (derive c (App (Char d) (Char c)))) = false.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
+(* added a few more verifier to validate my implementation *)
+
+(* "cd" =~ (cd)* *)
+Example test_der8 :
+  match_eps (derive d (derive c (Star (App (Char c) (Char d))))) = true.
+Proof. simpl. reflexivity. Qed.
+
+(* "c" =~ (c|d)* *)
+Example test_der9 :
+  match_eps (derive d (derive c (Star (Union (Char c) (Char d))))) = true.
+Proof. simpl. reflexivity. Qed.
+
+(* "cc" =~ c* *)
+Example test_der10 :
+  match_eps (derive c (derive c (Star (Char c)))) = true.
+Proof. simpl. reflexivity. Qed.
+
 
 (** **** Exercise: 4 stars, standard, optional (derive_corr)
 
@@ -3670,7 +3692,79 @@ Proof.
     [Prop]'s naturally using [intro] and [destruct]. *)
 Lemma derive_corr : derives derive.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold derives. intros.
+  induction re; simpl; unfold is_der; intros.
+  - (* EmptySet *)
+    split.
+    + intros. inversion H.
+    + intros. inversion H.
+  - (* EmptyStr *)
+    split.
+    + intros. inversion H.
+    + intros. inversion H.
+  - (* Char (t : T) *)
+    destruct (eqb_spec t a); subst.
+    + split.
+      * intros. inversion H. subst. apply MEmpty.
+      * intros. inversion H. apply MChar.
+    + assert (Hneq: (t <> a)).
+      { apply n. }
+      apply eqb_neq in n.
+      split.
+      * intros. inversion H. subst. exfalso. apply Hneq. reflexivity.
+      * intros. inversion H.
+  - (* App (r1 r2 : reg_exp T) *)
+    destruct (match_eps_refl re1).
+    + (* match_eps re1 = true *)
+      split.
+      * (* a :: s =~ re1 re2 -> ... *)
+        intros. inversion H0. subst.
+        destruct s1 eqn:Hs1; simpl in *.
+        -- apply MUnionR. apply IHre2. subst. apply H5.
+        -- apply MUnionL. inversion H1. subst.
+           apply MApp. apply IHre1. apply H4. apply H5.
+      * (* ... -> a :: s =~ re1 re2 *)
+        intros. inversion H0. inversion H3. subst.
+        -- apply (MApp (a :: s0)). apply IHre1. apply H8. apply H9.
+        -- apply (MApp []). apply H. apply IHre2. apply H3.
+    + (* match_eps re1 = false *)
+      split.
+      * (* a::s =~ s1 s2 -> s =~ (derive a re1) re2 *)
+        intros. inversion H0. subst. destruct s1.
+        -- (* s1 = [], contra *) exfalso. apply H. apply H4.
+        -- simpl in *. inversion H1. subst. apply MApp.
+           apply IHre1. apply H4. apply H5.
+      * (* s =~ (derive a re1) re2 -> a::s =~ s1 s2 *)
+        intros. inversion H0. subst. apply (MApp (a::s1)).
+        apply IHre1. apply H4. apply H5.
+  - (* Union (r1 r2 : reg_exp T) *)
+    split.
+    + (* a :: s =~ Union re1 re2 -> s =~ Union (dervie a re1) (derive a re2) *)
+      intros. inversion H; subst.
+      * apply MUnionL. apply IHre1. apply H2.
+      * apply MUnionR. apply IHre2. apply H1.
+    + (* s =~ Union (derive a re1) (derive a re2) -> a :: s =~ Union re1 re2 *)
+      intros. inversion H; subst.
+      * apply MUnionL. apply IHre1. apply H2.
+      * apply MUnionR. apply IHre2. apply H1.
+
+  - (* Star (r : reg_exp T). *)
+    split.
+    + (* a :: s =~ Star re -> s =~ App (derive a re) (Star re) *)
+      intros. apply star_ne in H.
+      destruct H as [s0 [s1 [Heq [Hm1 Hm2]]]].
+      subst.
+      apply (MApp s0).
+      * apply IHre. apply Hm1.
+      * apply Hm2.
+    + (* s =~ App (derive a re) (Star re) -> a :: s =~ Star re *)
+      intros. inversion H. subst.
+      apply (MStarApp (a::s1)).
+      * apply IHre. apply H3.
+      * apply H4.
+Qed.
+
+
 (** [] *)
 
 (** We'll define the regex matcher using [derive]. However, the only
