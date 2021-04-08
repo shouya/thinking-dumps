@@ -218,17 +218,19 @@ Proof. reflexivity. Qed.
 (** (Some of the proofs require the functional extensionality axiom,
     which is discussed in the [Logic] chapter.) *)
 
-(** **** Exercise: 1 star, standard, optional (t_apply_empty) 
+(** **** Exercise: 1 star, standard, optional (t_apply_empty)
 
     First, the empty map returns its default element for all keys: *)
 
 Lemma t_apply_empty : forall (A : Type) (x : string) (v : A),
     (_ !-> v) x = v.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold t_empty. reflexivity.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (t_update_eq) 
+(** **** Exercise: 2 stars, standard, optional (t_update_eq)
 
     Next, if we update a map [m] at a key [x] with a new value [v]
     and then look up [x] in the map resulting from the [update], we
@@ -237,10 +239,13 @@ Proof.
 Lemma t_update_eq : forall (A : Type) (m : total_map A) x v,
     (x !-> v ; m) x = v.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold t_update.
+  rewrite <- eqb_string_refl.
+  reflexivity.
+Qed.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (t_update_neq) 
+(** **** Exercise: 2 stars, standard, optional (t_update_neq)
 
     On the other hand, if we update a map [m] at a key [x1] and then
     look up a _different_ key [x2] in the resulting map, we get the
@@ -250,10 +255,13 @@ Theorem t_update_neq : forall (A : Type) (m : total_map A) x1 x2 v,
     x1 <> x2 ->
     (x1 !-> v ; m) x2 = m x2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold t_update.
+  rewrite <- eqb_string_false_iff in H. rewrite H. reflexivity.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (t_update_shadow) 
+(** **** Exercise: 2 stars, standard, optional (t_update_shadow)
 
     If we update a map [m] at a key [x] with a value [v1] and then
     update again with the same key [x] and another value [v2], the
@@ -264,7 +272,20 @@ Proof.
 Lemma t_update_shadow : forall (A : Type) (m : total_map A) x v1 v2,
     (x !-> v2 ; x !-> v1 ; m) = (x !-> v2 ; m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold t_update.
+  apply functional_extensionality. intro.
+  destruct (string_dec x x0).
+  - (* x = x0 *)
+    apply eqb_string_true_iff in e.
+    rewrite e.
+    reflexivity.
+  - (* x <> x0 *)
+    apply eqb_string_false_iff in n.
+    rewrite n.
+    reflexivity.
+Qed.
+
 (** [] *)
 
 (** For the final two lemmas about total maps, it's convenient to use
@@ -272,7 +293,7 @@ Proof.
     by proving a fundamental _reflection lemma_ relating the equality
     proposition on strings with the boolean function [eqb_string]. *)
 
-(** **** Exercise: 2 stars, standard, optional (eqb_stringP) 
+(** **** Exercise: 2 stars, standard, optional (eqb_stringP)
 
     Use the proof of [eqbP] in chapter [IndProp] as a template to
     prove the following: *)
@@ -280,7 +301,15 @@ Proof.
 Lemma eqb_stringP : forall x y : string,
     reflect (x = y) (eqb_string x y).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply iff_reflect. split.
+  - (* -> *)
+    intro. subst. symmetry. apply eqb_string_refl.
+  - (* <- *)
+    intros. apply eqb_string_true_iff in H.
+    apply H.
+Qed.
+
 (** [] *)
 
 (** Now, given [string]s [x1] and [x2], we can use the tactic
@@ -289,7 +318,7 @@ Proof.
     hypotheses about the equality (in the sense of [=]) of [x1]
     and [x2]. *)
 
-(** **** Exercise: 2 stars, standard (t_update_same) 
+(** **** Exercise: 2 stars, standard (t_update_same)
 
     With the example in chapter [IndProp] as a template, use
     [eqb_stringP] to prove the following theorem, which states that
@@ -299,10 +328,18 @@ Proof.
 Theorem t_update_same : forall (A : Type) (m : total_map A) x,
     (x !-> m x ; m) = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply functional_extensionality. intro.
+  destruct (eqb_stringP x x0).
+  - (* x = x0 *)
+    subst. apply t_update_eq.
+  - (* x <> x0 *)
+    apply t_update_neq. apply n.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, especially useful (t_update_permute) 
+(** **** Exercise: 3 stars, standard, especially useful (t_update_permute)
 
     Use [eqb_stringP] to prove one final property of the [update]
     function: If we update a map [m] at two distinct keys, it doesn't
@@ -315,7 +352,33 @@ Theorem t_update_permute : forall (A : Type) (m : total_map A)
     =
     (x2 !-> v2 ; x1 !-> v1 ; m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply functional_extensionality.
+  intro.
+  destruct (eqb_stringP x x1); destruct (eqb_stringP x x2).
+  - (* x = x1; x = x2 contradiction *)
+    subst. exfalso. apply H. reflexivity.
+  - (* x = x1; x <> x2 *)
+    subst.
+    rewrite t_update_eq.
+    rewrite t_update_neq; try rewrite t_update_eq.
+    + reflexivity.
+    + apply H.
+  - (* x <> x1; x = x2 *)
+    subst.
+    rewrite t_update_eq.
+    rewrite t_update_neq; try rewrite t_update_eq.
+    + reflexivity.
+    + intro. subst. apply H. reflexivity.
+  - (* x <> x1; x <> x2 *)
+    repeat rewrite t_update_neq.
+    reflexivity.
+    (* simple inequality cases that can all be found in assumption.
+       can be solved by tactics. I'll skip them with auto.
+     *)
+    auto. auto. auto. auto.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -399,7 +462,7 @@ Qed.
 
 Definition inclusion {A : Type} (m m' : partial_map A) :=
   forall x v, m x = Some v -> m' x = Some v.
-  
+
 (** We show that map update preserves map inclusion, that is: *)
 
 Lemma inclusion_update : forall (A : Type) (m m': partial_map A)
@@ -411,7 +474,7 @@ Proof.
   intros A m m' x vx H.
   intros y vy.
   destruct (eqb_stringP x y) as [Hxy | Hxy].
-  - rewrite Hxy. 
+  - rewrite Hxy.
     rewrite update_eq. rewrite update_eq. intro H1. apply H1.
   - rewrite update_neq. rewrite update_neq.
     + apply H.
@@ -419,8 +482,8 @@ Proof.
     + apply Hxy.
 Qed.
 
-(** This property is useful for reasoning about the lambda-calculus, 
-where maps are used to keep track of which program variables are 
+(** This property is useful for reasoning about the lambda-calculus,
+where maps are used to keep track of which program variables are
 defined at a given point. *)
 
 (* 2020-09-09 20:51 *)
