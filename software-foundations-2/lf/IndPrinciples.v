@@ -43,6 +43,8 @@ Proof.
   - (* n = S n' *) simpl. intros n' IHn'. rewrite -> IHn'.
     reflexivity.  Qed.
 
+Print mult_0_r'.
+
 (** This proof is basically the same as the earlier one, but a
     few minor differences are worth noting.
 
@@ -65,14 +67,17 @@ Proof.
     important to realize that, modulo these bits of bookkeeping,
     applying [nat_ind] is what we are really doing. *)
 
-(** **** Exercise: 2 stars, standard (plus_one_r') 
+(** **** Exercise: 2 stars, standard (plus_one_r')
 
     Complete this proof without using the [induction] tactic. *)
 
 Theorem plus_one_r' : forall n:nat,
   n + 1 = S n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply nat_ind.
+  - reflexivity.
+  - simpl. intros. rewrite H. reflexivity.
+Qed.
 (** [] *)
 
 (** Coq generates induction principles for every datatype
@@ -109,7 +114,7 @@ Check time_ind :
     P night ->
     forall t : time, P t.
 
-(** **** Exercise: 1 star, standard, optional (rgb) 
+(** **** Exercise: 1 star, standard, optional (rgb)
 
     Write out the induction principle that Coq will generate for the
     following datatype.  Write down your answer on paper or type it
@@ -120,6 +125,12 @@ Inductive rgb : Type :=
   | green
   | blue.
 Check rgb_ind.
+Print rgb_ind.
+Print rgb_rec.
+
+Print nat_ind.
+
+
 (** [] *)
 
 (** Here's another example, this time with one of the constructors
@@ -171,9 +182,9 @@ Check natlist'_ind :
     (forall l : natlist', P l -> forall n : nat, P (nsnoc l n)) ->
     forall n : natlist', P n.
 
-(** **** Exercise: 1 star, standard (booltree_ind) 
+(** **** Exercise: 1 star, standard (booltree_ind)
 
-    In the comment below, Write out the induction principle that Coq 
+    In the comment below, Write out the induction principle that Coq
     will generate for the following datatype. *)
 
 Inductive booltree : Type :=
@@ -181,14 +192,20 @@ Inductive booltree : Type :=
  | bt_leaf (b : bool)
  | bt_branch (b : bool) (t1 t2 : booltree).
 
-(* FILL IN HERE:
-   ... *)
+
+Check booltree_ind :
+  forall P : booltree -> Prop,
+    P bt_empty ->
+    (forall b : bool, P (bt_leaf b)) ->
+    (forall (b : bool) (t1 : booltree),
+        P t1 -> (forall t2 : booltree, P t2 -> P (bt_branch b t1 t2))) ->
+    (forall bt : booltree, P bt).
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_booltree_ind : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 1 star, standard (toy_ind) 
+(** **** Exercise: 1 star, standard (toy_ind)
 
     Here is an induction principle for a toy type:
 
@@ -201,8 +218,16 @@ Definition manual_grade_for_booltree_ind : option (nat*string) := None.
     principle Coq generates is that given above: *)
 
 Inductive Toy : Type :=
-  (* FILL IN HERE *)
+  | con1 (b : bool)
+  | con2 (n : nat) (t : Toy)
 .
+
+
+Check Toy_ind :   forall P : Toy -> Prop,
+    (forall b : bool, P (con1 b)) ->
+    (forall (n : nat) (t : Toy), P t -> P (con2 n t)) ->
+    forall t : Toy, P t.
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_toy_ind : option (nat*string) := None.
 (** [] *)
@@ -238,7 +263,7 @@ Definition manual_grade_for_toy_ind : option (nat*string) := None.
     function that, when applied to a type [X], gives us back an
     induction principle specialized to the type [list X]. *)
 
-(** **** Exercise: 1 star, standard, optional (tree) 
+(** **** Exercise: 1 star, standard, optional (tree)
 
     Write out the induction principle that Coq will generate for
    the following datatype.  Compare your answer with what Coq
@@ -247,10 +272,15 @@ Definition manual_grade_for_toy_ind : option (nat*string) := None.
 Inductive tree (X:Type) : Type :=
   | leaf (x : X)
   | node (t1 t2 : tree X).
-Check tree_ind.
+
+Check tree_ind : forall (X : Type) (P : tree X -> Prop),
+    (forall x : X, P (@leaf X x)) ->
+    (forall t1 : tree X, P t1 -> forall t2, P t2 -> P (@node X t1 t2)) ->
+    (forall t : tree X, P t).
+
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (mytype) 
+(** **** Exercise: 1 star, standard, optional (mytype)
 
     Find an inductive definition that gives rise to the
     following induction principle:
@@ -262,10 +292,23 @@ Check tree_ind.
             (forall m : mytype X, P m ->
                forall n : nat, P (constr3 X m n)) ->
             forall m : mytype X, P m
-*) 
-(** [] *)
+ *)
 
-(** **** Exercise: 1 star, standard, optional (foo) 
+Inductive mytype (X : Type) :=
+  | constr1 (x : X)
+  | constr2 (n : nat)
+  | constr3 (m : mytype X) (n : nat).
+
+Check       mytype_ind :
+        forall (X : Type) (P : mytype X -> Prop),
+            (forall x : X, P (constr1 X x)) ->
+            (forall n : nat, P (constr2 X n)) ->
+            (forall m : mytype X, P m ->
+               forall n : nat, P (constr3 X m n)) ->
+            forall m : mytype X, P m.
+
+
+(** **** Exercise: 1 star, standard, optional (foo)
 
     Find an inductive definition that gives rise to the
     following induction principle:
@@ -277,10 +320,25 @@ Check tree_ind.
              (forall f1 : nat -> foo X Y,
                (forall n : nat, P (f1 n)) -> P (quux X Y f1)) ->
              forall f2 : foo X Y, P f2
-*) 
-(** [] *)
+ *)
 
-(** **** Exercise: 1 star, standard, optional (foo') 
+Inductive foo (X Y : Type) :=
+  | bar (x : X)
+  | baz (y : Y)
+  | quux (f1 : nat -> foo X Y)
+.
+
+Check       foo_ind :
+        forall (X Y : Type) (P : foo X Y -> Prop),
+             (forall x : X, P (bar X Y x)) ->
+             (forall y : Y, P (baz X Y y)) ->
+             (forall f1 : nat -> foo X Y,
+               (forall n : nat, P (f1 n)) -> P (quux X Y f1)) ->
+             forall f2 : foo X Y, P f2.
+
+
+
+(** **** Exercise: 1 star, standard, optional (foo')
 
     Consider the following inductive definition: *)
 
@@ -294,11 +352,20 @@ Inductive foo' (X:Type) : Type :=
      foo'_ind :
         forall (X : Type) (P : foo' X -> Prop),
               (forall (l : list X) (f : foo' X),
-                    _______________________ ->
-                    _______________________   ) ->
-             ___________________________________________ ->
-             forall f : foo' X, ________________________
-*)
+                    P f ->
+                    P (C1 X l f)  ) ->
+             P (C2 X) ->
+             forall f : foo' X, P f
+ *)
+
+Check foo'_ind :
+        forall (X : Type) (P : foo' X -> Prop),
+              (forall (l : list X) (f : foo' X),
+                    P f ->
+                    P (C1 X l f)  ) ->
+              P (C2 X) ->
+             forall f : foo' X, P f
+.
 
 (** [] *)
 
@@ -428,7 +495,7 @@ Proof.
   - (* m = S m' *) simpl. rewrite <- IHm'.
     rewrite <- plus_n_Sm. reflexivity.  Qed.
 
-(** **** Exercise: 1 star, standard, optional (plus_explicit_prop) 
+(** **** Exercise: 1 star, standard, optional (plus_explicit_prop)
 
     Rewrite both [plus_assoc'] and [plus_comm'] and their proofs in
     the same style as [mult_0_r''] above -- that is, for each theorem,
