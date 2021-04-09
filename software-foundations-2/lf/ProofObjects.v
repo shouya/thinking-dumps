@@ -157,8 +157,7 @@ Qed.
     (rather than [Theorem]) to give a global name directly to this
     evidence. *)
 
-Definition ev_4''' : ev 4 :=
-  ev_SS 2 (ev_SS 0 ev_0).
+Definition ev_4''' : ev 4 := ev_SS 2 (ev_SS 0 ev_0).
 
 (** All these different ways of building the proof lead to exactly the
     same evidence being saved in the global environment. *)
@@ -172,16 +171,20 @@ Print ev_4''.
 Print ev_4'''.
 (* ===> ev_4''' =   ev_SS 2 (ev_SS 0 ev_0) : ev 4 *)
 
-(** **** Exercise: 2 stars, standard (eight_is_even) 
+(** **** Exercise: 2 stars, standard (eight_is_even)
 
     Give a tactic proof and a proof object showing that [ev 8]. *)
 
 Theorem ev_8 : ev 8.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply ev_SS. apply ev_SS. apply ev_SS. apply ev_SS. apply ev_0.
+Qed.
 
-Definition ev_8' : ev 8
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition ev_8' : ev 8 := ev_SS _ (ev_SS _ (ev_SS _ (ev_SS _ ev_0))).
+
+Print ev_8.
+Print ev_8'.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -206,6 +209,8 @@ Proof.
   apply ev_SS.
   apply H.
 Qed.
+
+Print ev_plus4.
 
 (** What is the proof object corresponding to [ev_plus4]?
 
@@ -358,7 +363,11 @@ Print prod.
 Theorem proj1' : forall P Q,
     P /\ Q -> P.
 Proof.
-  intros P Q HPQ. destruct HPQ as [HP HQ]. apply HP.
+  intros P Q HPQ.
+  Show Proof.
+  destruct HPQ as [HP HQ].
+  Show Proof.
+  apply HP.
   Show Proof.
 Qed.
 
@@ -369,13 +378,30 @@ Qed.
 Lemma and_comm : forall P Q : Prop, P /\ Q <-> Q /\ P.
 Proof.
   intros P Q. split.
+  Show Proof.
   - intros [HP HQ]. split.
     + apply HQ.
     + apply HP.
   - intros [HQ HP]. split.
     + apply HP.
     + apply HQ.
+  Show Proof.
+  Check Logic.conj.
 Qed.
+
+(* The proof object looks like below.
+(fun P Q : Prop =>
+ Logic.conj (fun H : P /\ Q => match H with
+                               | conj HP HQ => conj HQ HP
+                               end)
+   (fun H : Q /\ P => match H with
+                      | conj HQ HP => conj HP HQ
+                      end))
+
+Note that it was because the type of and_comm is actually
+  (P /\ Q -> Q /\ P) /\ (Q /\ P -> P /\ Q)
+ *)
+
 
 End And.
 
@@ -391,12 +417,17 @@ Definition and_comm'_aux P Q (H : P /\ Q) : Q /\ P :=
 Definition and_comm' P Q : P /\ Q <-> Q /\ P :=
   conj (and_comm'_aux P Q) (and_comm'_aux Q P).
 
-(** **** Exercise: 2 stars, standard (conj_fact) 
+(** **** Exercise: 2 stars, standard (conj_fact)
 
     Construct a proof object for the following proposition. *)
 
-Definition conj_fact : forall P Q R, P /\ Q -> Q /\ R -> P /\ R
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition conj_fact : forall P Q R, P /\ Q -> Q /\ R -> P /\ R :=
+  (fun p q r H1 H2 => conj (proj1 _ _ H1) (proj2 _ _ H2)).
+
+(* full version *)
+Definition conj_fact' : forall P Q R, P /\ Q -> Q /\ R -> P /\ R :=
+  (fun p q r H1 H2 => conj (proj1 p q H1) (proj2 q r H2)).
+
 (** [] *)
 
 (* ================================================================= *)
@@ -431,6 +462,8 @@ Proof.
   intros P Q HP. left. apply HP.
 Qed.
 
+Print inj_l.
+
 Definition or_elim : forall (P Q R : Prop), (P \/ Q) -> (P -> R) -> (Q -> R) -> R :=
   fun P Q R HPQ HPR HQR =>
     match HPQ with
@@ -446,14 +479,20 @@ Proof.
   - apply HQR. apply HQ.
 Qed.
 
+Print or_elim'.
+
 End Or.
 
-(** **** Exercise: 2 stars, standard (or_commut') 
+(** **** Exercise: 2 stars, standard (or_commut')
 
     Construct a proof object for the following proposition. *)
 
-Definition or_commut' : forall P Q, P \/ Q -> Q \/ P
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition or_commut' : forall P Q, P \/ Q -> Q \/ P :=
+  fun P Q HPQ => match HPQ with
+              | or_introl P => or_intror P
+              | or_intror Q => or_introl Q
+              end.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -467,6 +506,14 @@ Module Ex.
 
 Inductive ex {A : Type} (P : A -> Prop) : Prop :=
 | ex_intro : forall x : A, P x -> ex P.
+
+Inductive ex' {A : Type} (P : A -> Prop) : Prop :=
+| ex_intro' (x : A) (H : P x) : ex' P.
+
+Definition some_nat_is_even'' : @ex' nat ev :=
+  @ex_intro' nat ev 4 (ev_SS 2 (ev_SS 0 ev_0)).
+
+Check ex_intro'.
 
 Notation "'exists' x , p" :=
   (ex (fun x => p))
@@ -494,12 +541,41 @@ Check ex (fun n => ev n) : Prop.
 Definition some_nat_is_even : exists n, ev n :=
   ex_intro ev 4 (ev_SS 2 (ev_SS 0 ev_0)).
 
-(** **** Exercise: 2 stars, standard (ex_ev_Sn) 
+Check ex_intro.
+(* forall (A : Type) (P : A -> Prop) (x : A), P x -> exists y, P y *)
+
+Check 4. (* nat *)
+Check ev. (* nat -> Prop *)
+Check (ev_SS 2 (ev_SS 0 ev_0)). (* ev 4 *)
+
+(* Note that (A: Type) is omitted because it was marked optional.
+   If we are to pass explicitly, we should put "nat" in there.
+ *)
+
+(** **** Exercise: 2 stars, standard (ex_ev_Sn)
 
     Construct a proof object for the following proposition. *)
 
-Definition ex_ev_Sn : ex (fun n => ev (S n))
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition ex_ev_Sn : ex (fun n => ev (S n)) :=
+  ex_intro (fun n => ev (S n)) 1 (ev_SS _ ev_0).
+Print ex_ev_Sn.
+
+(* ex_ev_Sn =
+ex_intro (fun n : nat => ev (S n)) 1 (ev_SS 0 ev_0)
+     : exists n : nat, ev (S n)
+ *)
+
+Definition ex_ev_Sn' : ex (fun n => ev (S n)).
+Proof.
+  exists 1. apply ev_SS. apply ev_0.
+Qed.
+Print ex_ev_Sn'.
+
+(* ex_ev_Sn' =
+ex_intro (fun n : nat => ev (S n)) 1 (ev_SS 0 ev_0)
+     : exists n : nat, ev (S n)
+ *)
+
 (** [] *)
 
 (* ================================================================= *)
@@ -513,12 +589,27 @@ Inductive True : Prop :=
 (** It has one constructor (so every proof of [True] is the same, so
     being given a proof of [True] is not informative.) *)
 
-(** **** Exercise: 1 star, standard (p_implies_true) 
+(** **** Exercise: 1 star, standard (p_implies_true)
 
     Construct a proof object for the following proposition. *)
 
-Definition p_implies_true : forall P, P -> True
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition p_implies_true : forall P, P -> True := (fun _P _HP => I).
+Print p_implies_true.
+
+(* p_implies_true = fun (_P : Type) (_ : _P) => I
+     : forall P : Type, P -> True
+ *)
+
+Definition p_implies_true' : forall P, P -> True.
+Proof.
+  intro P. intro HP. apply I.
+Qed.
+Print p_implies_true'.
+
+(* p_implies_true' = fun (P : Type) (_ : P) => I
+     : forall P : Type, P -> True
+ *)
+
 (** [] *)
 
 (** [False] is equally simple -- indeed, so simple it may look
@@ -548,12 +639,13 @@ Definition false_implies_zero_eq_one : False -> 0 = 1 :=
     because we can never construct a value of type [False] to pass to
     the function. *)
 
-(** **** Exercise: 1 star, standard (ex_falso_quodlibet') 
+(** **** Exercise: 1 star, standard (ex_falso_quodlibet')
 
     Construct a proof object for the following proposition. *)
 
-Definition ex_falso_quodlibet' : forall P, False -> P
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition ex_falso_quodlibet' : forall P, False -> P :=
+  fun p contra => match contra with end.
+
 (** [] *)
 
 End Props.
@@ -617,7 +709,7 @@ Definition four' : 2 + 2 == 1 + 3 :=
 Definition singleton : forall (X:Type) (x:X), []++[x] == x::[]  :=
   fun (X:Type) (x:X) => eq_refl [x].
 
-(** **** Exercise: 2 stars, standard (equality__leibniz_equality) 
+(** **** Exercise: 2 stars, standard (equality__leibniz_equality)
 
     The inductive definition of equality implies _Leibniz equality_:
     what we mean when we say "[x] and [y] are equal" is that every
@@ -626,10 +718,33 @@ Definition singleton : forall (X:Type) (x:X), []++[x] == x::[]  :=
 Lemma equality__leibniz_equality : forall (X : Type) (x y: X),
   x == y -> forall P:X->Prop, P x -> P y.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros. destruct H. apply H0.
+Qed.
+
+(* Trying to write a proof object for it *)
+
+Fail Definition equality__leibniz_equality' : forall (X : Type) (x y: X),
+    x == y -> forall P:X->Prop, P x -> P y :=
+  fun X x y Heq HP HPx => match Heq with
+                       | eq_refl x => _ (* I'm stuck *)
+                       end.
+
+Print equality__leibniz_equality.
+
+(*
+fun (X : Type) (x y : X) (H : x == y) (P : X -> Prop) (H0 : P x) =>
+match H in (y0 == y1) return (P y0 -> P y1) with
+| eq_refl x0 => fun H1 : P x0 => H1
+end H0
+
+ *)
+
+(* So it seems like it's done using some intricate syntax that I
+haven't learned yet. Let's move on anyway. *)
+
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (leibniz_equality__equality) 
+(** **** Exercise: 3 stars, standard, optional (leibniz_equality__equality)
 
     Show that, in fact, the inductive definition of equality is
     _equivalent_ to Leibniz equality.  Hint: the proof is quite short;
@@ -639,7 +754,20 @@ Proof.
 Lemma leibniz_equality__equality : forall (X : Type) (x y: X),
   (forall P:X->Prop, P x -> P y) -> x == y.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros.
+  assert (Himp: x == x -> x == y).
+  { apply H. }
+  apply Himp. apply eq_refl.
+Qed.
+
+
+Definition leibniz_equality__equality' : forall (X : Type) (x y: X),
+    (forall P:X->Prop, P x -> P y) -> x == y :=
+  (fun X (x y : X) (H : forall P: X -> Prop, P x -> P y) =>
+     (H (fun k => x == k)) (eq_refl x)
+  ).
+
+Print leibniz_equality__equality.
 
 (** [] *)
 
