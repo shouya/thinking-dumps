@@ -66,6 +66,7 @@ Check le : relation nat.
 Definition partial_function {X: Type} (R: relation X) :=
   forall x y1 y2 : X, R x y1 -> R x y2 -> y1 = y2.
 
+Check partial_function.
 (** For example, the [next_nat] relation defined earlier is a partial
     function. *)
 
@@ -98,23 +99,41 @@ Proof.
     - apply le_S. apply le_n. }
   discriminate Nonsense.   Qed.
 
-(** **** Exercise: 2 stars, standard, optional (total_relation_not_partial) 
+(** **** Exercise: 2 stars, standard, optional (total_relation_not_partial)
 
     Show that the [total_relation] defined in (an exercise in)
     [IndProp] is not a partial function. *)
 
-(* FILL IN HERE
+Theorem total_relation_not_a_partial_function :
+  ~ (partial_function total_relation).
+Proof.
+  intro. unfold partial_function in H.
+  assert (0 = 1) as Nonsense.
+  apply H with (x := 0).
+  {apply total.}
+  apply total.
+  discriminate Nonsense.
+Qed.
 
-    [] *)
+(*  [] *)
 
-(** **** Exercise: 2 stars, standard, optional (empty_relation_partial) 
+(** **** Exercise: 2 stars, standard, optional (empty_relation_partial)
 
     Show that the [empty_relation] defined in (an exercise in)
     [IndProp] is a partial function. *)
 
-(* FILL IN HERE
 
-    [] *)
+Theorem empty_relation_a_partial_function :
+  partial_function empty_relation.
+Proof.
+  unfold partial_function.
+  intros.
+  inversion H.
+Qed.
+
+Print empty_relation_a_partial_function.
+
+(*  [] *)
 
 (* ----------------------------------------------------------------- *)
 (** *** Reflexive Relations *)
@@ -157,7 +176,7 @@ Proof.
   apply Hnm.
   apply Hmo. Qed.
 
-(** **** Exercise: 2 stars, standard, optional (le_trans_hard_way) 
+(** **** Exercise: 2 stars, standard, optional (le_trans_hard_way)
 
     We can also prove [lt_trans] more laboriously by induction,
     without using [le_trans].  Do this. *)
@@ -169,10 +188,13 @@ Proof.
   unfold lt. unfold transitive.
   intros n m o Hnm Hmo.
   induction Hmo as [| m' Hm'o].
-    (* FILL IN HERE *) Admitted.
+  - apply le_S. apply Hnm.
+  - apply le_S. apply IHHm'o.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (lt_trans'') 
+(** **** Exercise: 2 stars, standard, optional (lt_trans'')
 
     Prove the same thing again by induction on [o]. *)
 
@@ -182,7 +204,12 @@ Proof.
   unfold lt. unfold transitive.
   intros n m o Hnm Hmo.
   induction o as [| o'].
-  (* FILL IN HERE *) Admitted.
+  - inversion Hmo.
+  - inversion Hmo.
+    + subst. apply le_S. apply Hnm.
+    + subst. apply le_S. apply IHo'. apply H0.
+Qed.
+
 (** [] *)
 
 (** The transitivity of [le], in turn, can be used to prove some facts
@@ -200,10 +227,19 @@ Qed.
 Theorem le_S_n : forall n m,
   (S n <= S m) -> (n <= m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  - apply le_reflexive.
+  - subst. apply le_trans with (S n).
+    + apply le_S. apply le_n.
+    + apply H1.
+Qed.
+
+Print le.
+
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (le_Sn_n_inf) 
+(** **** Exercise: 2 stars, standard, optional (le_Sn_n_inf)
 
     Provide an informal proof of the following theorem:
 
@@ -213,15 +249,40 @@ Proof.
     writing an informal proof without doing the formal proof first.
 
     Proof: *)
-    (* FILL IN HERE
 
-    [] *)
+(* Inductive le (n : nat) : nat -> Prop :=
+    le_n : n <= n | le_S : forall m : nat, n <= m -> n <= S m
+ *)
+
+(*
+We do induction on n.
+
+Case 1: when n := 0, we show 1 <= 0 is contradictory.
+  1 <= 0 is contradictory because:
+  - le_n : 1 = 0 is contradictory
+  - le_S : to unify n <= S m with 1 <= 0,
+           S m = 0 is contradictory
+
+Case 2: assume ~(S n <= n), we show that (S (S n) <= S n) is contradictory.
+
+  by Sn_le_Sm__n_le_m, to prove the goal, we now only need to show
+  (S n <= n) is contradictory, which is exactly the assumption.
+
+ *)
+
+    (* [] *)
 
 (** **** Exercise: 1 star, standard, optional (le_Sn_n)  *)
 Theorem le_Sn_n : forall n,
   ~ (S n <= n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. intro.
+  induction n.
+  - inversion H.
+  - apply IHn. apply Sn_le_Sm__n_le_m. apply H.
+Qed.
+
+
 (** [] *)
 
 (** Reflexivity and transitivity are the main concepts we'll need for
