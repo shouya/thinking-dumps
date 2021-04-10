@@ -413,6 +413,13 @@ Proof.
     intros n IHn.
     unfold P_m0r in IHn. unfold P_m0r. simpl. apply IHn. Qed.
 
+Print mult_0_r''.
+
+(* nat_ind P_m0r eq_refl (fun (n : nat) (IHn : P_m0r n) => IHn)
+     : forall n : nat, P_m0r n
+ *)
+
+
 (** This extra naming step isn't something that we do in
     normal proofs, but it is useful to do it explicitly for an example
     or two, because it allows us to see exactly what the induction
@@ -503,9 +510,50 @@ Proof.
     induction, and state the theorem and proof in terms of this
     defined proposition.  *)
 
-(* FILL IN HERE
+Definition P_plus_comm (n : nat) : nat -> Prop := fun (m : nat) => n + m = m + n.
 
-    [] *)
+Theorem plus_comm''' : forall n: nat, forall m,
+      (P_plus_comm n) m.
+Proof.
+  intros.
+  apply (nat_ind (P_plus_comm n)).
+  - unfold P_plus_comm. simpl. rewrite <- plus_n_O. reflexivity.
+  - intros. unfold P_plus_comm. unfold P_plus_comm in H. simpl.
+    rewrite <- plus_n_Sm. rewrite H. reflexivity.
+Qed.
+
+Print plus_comm'''.
+
+
+Definition P_plus_assoc (m p : nat) : nat -> Prop := fun n => n + (m + p) = (n + m) + p.
+
+Theorem plus_assoc''' : forall n m p,
+    P_plus_assoc m p n.
+Proof.
+  intros.
+  apply (nat_ind (P_plus_assoc m p)).
+  - unfold P_plus_assoc. simpl. reflexivity.
+  - unfold P_plus_assoc. intros. simpl. rewrite H. reflexivity.
+Qed.
+
+Print plus_assoc'''.
+
+
+(*
+plus_assoc''' =
+fun n m p : nat =>
+nat_ind (P_plus_assoc m p) eq_refl
+  (fun (n0 : nat) (H : n0 + (m + p) = n0 + m + p) =>
+   eq_ind_r (fun n1 : nat => S n1 = S (n0 + m + p)) eq_refl H) n
+     : forall n m p : nat, P_plus_assoc m p n
+
+
+ *)
+
+Check eq_ind_r
+     : forall (A : Type) (x : A) (P : A -> Prop), P x -> forall y : A, y = x -> P y.
+Check eq_ind
+     : forall (A : Type) (x : A) (P : A -> Prop), P x -> forall y : A, x = y -> P y.
 
 (* ################################################################# *)
 (** * Induction Principles for Propositions *)
