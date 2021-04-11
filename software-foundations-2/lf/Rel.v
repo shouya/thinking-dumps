@@ -301,7 +301,13 @@ Definition symmetric {X: Type} (R: relation X) :=
 Theorem le_not_symmetric :
   ~ (symmetric le).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold symmetric.
+  intro.
+  assert (1 <= 0).
+  { apply H. apply le_S. apply le_n. }
+  inversion H0.
+Qed.
+
 (** [] *)
 
 (** A relation [R] is _antisymmetric_ if [R a b] and [R b a] together
@@ -315,7 +321,21 @@ Definition antisymmetric {X: Type} (R: relation X) :=
 Theorem le_antisymmetric :
   antisymmetric le.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold antisymmetric.
+  intros.
+  generalize dependent b.
+  induction a.
+  - intros. destruct b.
+    + reflexivity.
+    + inversion H0.
+  - intros. destruct b.
+    + inversion H.
+    + apply Sn_le_Sm__n_le_m in H.
+      apply Sn_le_Sm__n_le_m in H0.
+      f_equal.
+      apply (IHa b H H0).
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (le_step)  *)
@@ -324,7 +344,14 @@ Theorem le_step : forall n m p,
   m <= S p ->
   n <= p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold lt.
+  intros.
+  inversion H.
+  - subst. apply (Sn_le_Sm__n_le_m _ _ H0).
+  - subst. apply Sn_le_Sm__n_le_m.
+    apply (le_trans _ (S m0) _ H H0).
+Qed.
+
 (** [] *)
 
 (* ----------------------------------------------------------------- *)
@@ -383,6 +410,23 @@ Inductive clos_refl_trans {A: Type} (R: relation A) : relation A :=
 Theorem next_nat_closure_is_le : forall n m,
   (n <= m) <-> ((clos_refl_trans next_nat) n m).
 Proof.
+  intros n m.
+  split.
+  - (* -> *) intro.
+    induction H.
+    + apply rt_refl.
+    + apply (rt_trans _ n m (S m)).
+      * apply IHle.
+      * apply rt_step. apply nn.
+  - (* <- *) intro.
+    induction H.
+    + inversion H. apply le_S. apply le_n.
+    + apply le_n.
+    + apply (le_trans x y z IHclos_refl_trans1 IHclos_refl_trans2).
+Qed.
+
+(* Proof given by the book - it's the same as mine.
+
   intros n m. split.
   - (* -> *)
     intro H. induction H.
@@ -398,6 +442,7 @@ Proof.
       apply le_trans with y.
       apply IHclos_refl_trans1.
       apply IHclos_refl_trans2. Qed.
+ *)
 
 (** The above definition of reflexive, transitive closure is natural:
     it says, explicitly, that the reflexive and transitive closure of
@@ -440,7 +485,14 @@ Lemma rsc_trans :
       clos_refl_trans_1n R y z ->
       clos_refl_trans_1n R x z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent z.
+  induction H.
+  - intros. apply H0.
+  - intros. apply (rt1n_trans _ _ y _).
+    apply Hxy. apply IHclos_refl_trans_1n. apply H0.
+Qed.
+
 (** [] *)
 
 (** Then we use these facts to prove that the two definitions of
@@ -452,7 +504,23 @@ Theorem rtc_rsc_coincide :
          forall (X:Type) (R: relation X) (x y : X),
   clos_refl_trans R x y <-> clos_refl_trans_1n R x y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  - (* -> *)
+    intros.
+    induction H.
+    + apply (rt1n_trans _ _ _ _ H).
+      apply rt1n_refl.
+    + apply rt1n_refl.
+    + apply (rsc_trans _ _ _ _ _ IHclos_refl_trans1 IHclos_refl_trans2).
+  - (* <- *)
+    intros.
+    induction H.
+    + apply rt_refl.
+    + apply (rt_trans _ x y z (rt_step R _ _ Hxy)).
+      apply IHclos_refl_trans_1n.
+Qed.
+
 (** [] *)
 
 (* 2020-09-09 20:51 *)
