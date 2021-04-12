@@ -437,7 +437,7 @@ Admitted.
     simply means that we have failed to construct a proof, not that we
     have constructed a wrong one. *)
 
-(** **** Exercise: 3 stars, standard (optimize_0plus_b_sound) 
+(** **** Exercise: 3 stars, standard (optimize_0plus_b_sound)
 
     Since the [optimize_0plus] transformation doesn't change the value
     of [aexp]s, we should be able to apply it to all the [aexp]s that
@@ -446,16 +446,36 @@ Admitted.
     it is sound.  Use the tacticals we've just seen to make the proof
     as elegant as possible. *)
 
-Fixpoint optimize_0plus_b (b : bexp) : bexp
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint optimize_0plus_b (b : bexp) : bexp :=
+  match b with
+  | BTrue => BTrue
+  | BFalse => BFalse
+  | BEq a1 a2 => BEq (optimize_0plus a1) (optimize_0plus a2)
+  | BLe a1 a2 => BLe (optimize_0plus a1) (optimize_0plus a2)
+  | BNot b => BNot (optimize_0plus_b b)
+  | BAnd b1 b2 => BAnd (optimize_0plus_b b1) (optimize_0plus_b b2)
+  end.
 
 Theorem optimize_0plus_b_sound : forall b,
   beval (optimize_0plus_b b) = beval b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction b;
+    (* every one needs an simplification first *)
+    try simpl;
+    (* for nested aexp, assert they evals to the same as unoptimized *)
+    repeat rewrite optimize_0plus_sound;
+    (* use IH *)
+    try rewrite IHb;
+    try rewrite IHb1;
+    try rewrite IHb2;
+    (* the result should be obvious now *)
+    try reflexivity.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 4 stars, standard, optional (optimize) 
+(** **** Exercise: 4 stars, standard, optional (optimize)
 
     _Design exercise_: The optimization implemented by our
     [optimize_0plus] function is only one of many possible
@@ -465,9 +485,131 @@ Proof.
     optimization and its correctness proof -- and build up to
     something more interesting incrementially.)  *)
 
-(* FILL IN HERE
+Fixpoint optimize_aexp (a:aexp) : aexp :=
+  match a with
+  | ANum n => ANum n
+  | APlus e1 e2 =>
+          match optimize_aexp e1, optimize_aexp e2 with
+          | ANum 0, e => e
+          | e, ANum 0 => e
+          | e1, e2 => APlus e1 e2
+          end
+  | AMinus e1 e2 =>
+           match optimize_aexp e1, optimize_aexp e2 with
+           | e, ANum 0 => e
+           | e1, e2 => AMinus e1 e2
+           end
+  | AMult e1 e2 =>
+          match optimize_aexp e1, optimize_aexp e2 with
+          | ANum 0, e => ANum 0
+          | ANum 1, e => e
+          | e, ANum 0 => ANum 0
+          | e, ANum 1 => e
+          | e1, e2 => AMult e1 e2
+          end
+  end.
 
-    [] *)
+(* This way to handle optimization is better than the style used in
+   optimize_0plus because it handles nested expression.
+*)
+
+Theorem optimize_aexp_sound : forall a, aeval (optimize_aexp a) = aeval a.
+Proof.
+  intros.
+  induction a;
+    simpl;
+    try reflexivity;
+    try destruct (optimize_aexp a1) eqn:Ha1;
+    try destruct (optimize_aexp a2) eqn:Ha2;
+    try destruct n;
+    try destruct n0;
+    simpl;
+    repeat rewrite IHa1;
+    repeat rewrite IHa2;
+    simpl;
+    try reflexivity;
+    repeat rewrite <- IHa1;
+    repeat rewrite <- IHa2;
+    simpl;
+    try reflexivity;
+    try destruct n;
+    try destruct n0;
+    simpl;
+    try reflexivity;
+    repeat (simpl;
+            try rewrite <- plus_n_O;
+            try rewrite <- minus_n_O;
+            try rewrite <- mult_n_O;
+            try rewrite <- mult_n_Sm;
+            try rewrite <- plus_n_Sm);
+    try reflexivity.
+Qed.
+
+Fixpoint optimize_bexp (b : bexp) : bexp :=
+  match b with
+  | BTrue => BTrue
+  | BFalse => BFalse
+  | BEq a1 a2 => match optimize_aexp a1, optimize_aexp a2 with
+                | ANum n1, ANum n2 => if n1 =? n2 then BTrue else BFalse
+                | e1, e2 => BEq e1 e2
+                end
+  | BLe a1 a2 => match optimize_aexp a1, optimize_aexp a2 with
+                | ANum n1, ANum n2 => if n1 <=? n2 then BTrue else BFalse
+                | e1, e2 => BLe e1 e2
+                end
+  | BNot b => match optimize_bexp b with
+             | BTrue => BFalse
+             | BFalse => BTrue
+             | e => BNot e
+             end
+  | BAnd b1 b2 => match optimize_bexp b1, optimize_bexp b2 with
+                 | BTrue, BTrue => BTrue
+                 | BTrue, BFalse => BFalse
+                 | BFalse, BTrue => BFalse
+                 | BFalse, BFalse => BFalse
+                 | e1, e2 => BAnd e1 e2
+                 end
+  end.
+
+Theorem optimize_bexp_sound : forall b,
+    beval (optimize_bexp b) = beval b.
+Proof.
+  intros.
+  induction b;
+    (* BTrue/BFalse: simple reflexivity. *)
+    try reflexivity;
+    (* BEq/BLe: needs arithmetic case analysis *)
+    simpl;
+    try destruct (optimize_aexp a1) eqn:Ha1;
+    try destruct (optimize_aexp a2) eqn:Ha2;
+    try destruct (n =? n0) eqn:Heq;
+    try destruct (n <=? n0) eqn:Hle;
+    try rewrite <- (optimize_aexp_sound a1);
+    try rewrite <- (optimize_aexp_sound a2);
+    try rewrite Ha1;
+    try rewrite Ha2;
+    simpl;
+    try rewrite Heq;
+    try rewrite Hle;
+    try reflexivity;
+    (* BNot/BAnd *)
+    try destruct (optimize_bexp b);
+    try destruct (optimize_bexp b1);
+    try destruct (optimize_bexp b2);
+    try rewrite <- IHb;
+    try rewrite <- IHb1;
+    try rewrite <- IHb2;
+    simpl;
+    try reflexivity.
+Qed.
+
+(* The proofs are so hilarious: numerous cases are generated and
+   automatically solved. *)
+
+Print optimize_bexp_sound.
+(* The generated function for the proof itself has more than 1000 lines! *)
+
+(* [] *)
 
 (* ================================================================= *)
 (** ** Defining New Tactic Notations *)
@@ -727,7 +869,7 @@ Inductive aevalR : aexp -> nat -> Prop :=
                          AMult e1 e2 ==> n1*n2
 *)
 
-(** **** Exercise: 1 star, standard, optional (beval_rules) 
+(** **** Exercise: 1 star, standard, optional (beval_rules)
 
     Here, again, is the Coq definition of the [beval] function:
 
@@ -806,7 +948,7 @@ Proof.
        try apply IHa1; try apply IHa2; reflexivity.
 Qed.
 
-(** **** Exercise: 3 stars, standard (bevalR) 
+(** **** Exercise: 3 stars, standard (bevalR)
 
     Write a relation [bevalR] in the same style as
     [aevalR], and prove that it is equivalent to [beval]. *)
@@ -1511,7 +1653,7 @@ Proof.
 Set Printing Implicit.
 Check @ceval_example2.
 
-(** **** Exercise: 3 stars, standard, optional (pup_to_n) 
+(** **** Exercise: 3 stars, standard, optional (pup_to_n)
 
     Write an Imp program that sums the numbers from [1] to [X]
     (inclusive: [1 + 2 + ... + X]) in the variable [Y].  Your program
@@ -1598,7 +1740,7 @@ Proof.
   inversion Heval. subst. clear Heval. simpl.
   apply t_update_eq.  Qed.
 
-(** **** Exercise: 3 stars, standard, optional (XtimesYinZ_spec) 
+(** **** Exercise: 3 stars, standard, optional (XtimesYinZ_spec)
 
     State and prove a specification of [XtimesYinZ]. *)
 
@@ -1624,7 +1766,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (no_whiles_eqv) 
+(** **** Exercise: 3 stars, standard (no_whiles_eqv)
 
     Consider the following function: *)
 
@@ -1657,7 +1799,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, standard (no_whiles_terminating) 
+(** **** Exercise: 4 stars, standard (no_whiles_terminating)
 
     Imp programs that don't involve while loops always terminate.
     State and prove a theorem [no_whiles_terminating] that says this.
@@ -1673,7 +1815,7 @@ Definition manual_grade_for_no_whiles_terminating : option (nat*string) := None.
 (* ################################################################# *)
 (** * Additional Exercises *)
 
-(** **** Exercise: 3 stars, standard (stack_compiler) 
+(** **** Exercise: 3 stars, standard (stack_compiler)
 
     Old HP Calculators, programming languages like Forth and Postscript,
     and abstract machines like the Java Virtual Machine all evaluate
@@ -1803,7 +1945,7 @@ Proof.
 
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (short_circuit) 
+(** **** Exercise: 3 stars, standard, optional (short_circuit)
 
     Most modern programming languages use a "short-circuit" evaluation
     rule for boolean [and]: to evaluate [BAnd b1 b2], first evaluate
@@ -1825,7 +1967,7 @@ Proof.
     [] *)
 
 Module BreakImp.
-(** **** Exercise: 4 stars, advanced (break_imp) 
+(** **** Exercise: 4 stars, advanced (break_imp)
 
     Imperative languages like C and Java often include a [break] or
     similar statement for interrupting the execution of loops. In this
@@ -1992,7 +2134,7 @@ Proof.
 (** [] *)
 End BreakImp.
 
-(** **** Exercise: 4 stars, standard, optional (add_for_loop) 
+(** **** Exercise: 4 stars, standard, optional (add_for_loop)
 
     Add C-style [for] loops to the language of commands, update the
     [ceval] definition to define the semantics of [for] loops, and add
