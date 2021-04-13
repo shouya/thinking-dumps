@@ -886,18 +886,7 @@ Inductive aevalR : aexp -> nat -> Prop :=
     Write out a corresponding definition of boolean evaluation as a
     relation (in inference rule notation). *)
 
-Inductive bevalR : bexp -> bool -> Prop :=
-  | E_BTrue : bevalR BTrue true
-  | E_BFalse : bevalR BFalse false
-  | E_BEq (a1 a2:aexp) (n1 n2:nat) (H1: aevalR a1 n1) (H2: aevalR a2 n2) :
-      bevalR (BEq a1 a2) (n1 =? n2)
-  | E_BLe (a1 a2:aexp) (n1 n2:nat) (H1: aevalR a1 n1) (H2: aevalR a2 n2) :
-      bevalR (BLe a1 a2) (n1 <=? n2)
-  | E_BNot (be:bexp) (b:bool) (H: bevalR be b) :
-      bevalR (BNot be) (negb b)
-  | E_BAnd (be1 be2:bexp) (b1 b2:bool) (H1: bevalR be1 b1) (H2: bevalR be2 b2):
-      bevalR (BAnd be1 be2) (andb b1 b2).
-
+(* moved my definition to a solution in a later exercise. *)
 
 
 (* Do not modify the following line: *)
@@ -968,15 +957,45 @@ Qed.
 
 Reserved Notation "e '==>b' b" (at level 90, left associativity).
 Inductive bevalR: bexp -> bool -> Prop :=
-(* FILL IN HERE *)
-where "e '==>b' b" := (bevalR e b) : type_scope
+  | E_BTrue : BTrue ==>b true
+  | E_BFalse : BFalse ==>b false
+  | E_BEq (a1 a2:aexp) (n1 n2:nat) (H1: a1 ==> n1) (H2: a2 ==> n2) :
+      (BEq a1 a2) ==>b (n1 =? n2)
+  | E_BLe (a1 a2:aexp) (n1 n2:nat) (H1: a1 ==> n1) (H2: a2 ==> n2) :
+      (BLe a1 a2) ==>b (n1 <=? n2)
+  | E_BNot (be:bexp) (b:bool) (H: be ==>b b) :
+      (BNot be) ==>b (negb b)
+  | E_BAnd (be1 be2:bexp) (b1 b2:bool) (H1: be1 ==>b b1) (H2: be2 ==>b b2):
+      (BAnd be1 be2) ==>b (andb b1 b2)
+  where "e '==>b' b" := (bevalR e b) : type_scope
 .
 
 Lemma beval_iff_bevalR : forall b bv,
   b ==>b bv <-> beval b = bv.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  split.
+  - (* -> *)
+    intro.
+    induction H;
+      simpl;
+      try reflexivity;
+      try rewrite aeval_iff_aevalR in H1;
+      try rewrite aeval_iff_aevalR in H2;
+      subst; reflexivity.
+  - (* <- *)
+    intros.
+    generalize dependent bv.
+    induction b;
+      intros;
+      subst;
+      try constructor;
+      try apply aeval_iff_aevalR;
+      try reflexivity;
+      try apply IHb;
+      try apply IHb1;
+      try apply IHb2;
+      try reflexivity.
+Qed.
 
 End AExp.
 
@@ -1660,7 +1679,12 @@ Example ceval_example2:
     Z := 2
   ]=> (Z !-> 2 ; Y !-> 1 ; X !-> 0).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply E_Seq with (X !-> 0).
+  constructor; reflexivity.
+  apply E_Seq with (Y !-> 1; X !-> 0).
+  constructor. reflexivity.
+  constructor. reflexivity.
+Qed.
 (** [] *)
 
 Set Printing Implicit.
@@ -1674,15 +1698,44 @@ Check @ceval_example2.
     which you can reverse-engineer to discover the program you should
     write.  The proof of that theorem will be somewhat lengthy. *)
 
-Definition pup_to_n : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition pup_to_n : com :=
+  <{ Y := 0;
+     while (1 <= X) do
+       Y := Y + X;
+       X := X - 1
+     end
+  }>.
 
 Theorem pup_to_2_ceval :
   (X !-> 2) =[
     pup_to_n
   ]=> (X !-> 0 ; Y !-> 3 ; X !-> 1 ; Y !-> 2 ; Y !-> 0 ; X !-> 2).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold pup_to_n.
+  (* Y := 0 *)
+  apply E_Seq with (Y !-> 0; X !-> 2).
+  - constructor. simpl. reflexivity.
+  - (* while ... (x = 2) *)
+    apply E_WhileTrue with (X !-> 1; Y !-> 2; Y !-> 0; X !-> 2).
+    + (* 1 <= X *)
+      reflexivity.
+    + (* Y := Y + X; X := X - 1 *)
+      apply E_Seq with (Y !-> 2; Y !-> 0; X !-> 2).
+      constructor; simpl; reflexivity.
+      constructor; simpl; reflexivity.
+    + (* while ... (x = 1) *)
+      apply E_WhileTrue with
+          (X !-> 0; Y !-> 3; X !-> 1; Y !-> 2; Y !-> 0; X !-> 2).
+      * (* 1 <= X *)
+        reflexivity.
+      * (* Y := Y + X; X := X - 1 *)
+        apply E_Seq with (Y !-> 3; X !-> 1; Y !-> 2; Y !-> 0; X !-> 2).
+        constructor; simpl; reflexivity.
+        constructor; simpl; reflexivity.
+      * (* while ... (x = 0) *)
+        apply E_WhileFalse.
+        reflexivity.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
