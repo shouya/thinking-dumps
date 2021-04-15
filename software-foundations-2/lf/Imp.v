@@ -1896,8 +1896,6 @@ Proof.
       rewrite IHno_whilesR1. rewrite IHno_whilesR2. split; reflexivity.
 Qed.
 
-
-
 (** [] *)
 
 (** **** Exercise: 4 stars, standard (no_whiles_terminating)
@@ -1907,7 +1905,28 @@ Qed.
 
     Use either [no_whiles] or [no_whilesR], as you prefer. *)
 
-(* FILL IN HERE *)
+Theorem imp_terminates: forall c st,
+    no_whilesR c ->
+    exists st', st =[ c ]=> st'.
+Proof.
+  intros.
+  generalize dependent st.
+  induction H; intros.
+  - (* skip *) exists st. constructor.
+  - (* := *) exists (x !-> aeval st e; st). constructor. reflexivity.
+  - (* seq *)
+    destruct (IHno_whilesR1 st) as [st' H1].
+    destruct (IHno_whilesR2 st') as [st'' H2].
+    exists st''. apply E_Seq with (st' := st'); assumption.
+  - (* if *)
+    destruct (IHno_whilesR1 st) as [st' H1].
+    destruct (IHno_whilesR2 st) as [st'' H2].
+    destruct (beval st b) eqn:Hb.
+    + (* if true *)
+      exists st'. constructor; assumption.
+    + (* if false *)
+      exists st''. constructor; assumption.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_no_whiles_terminating : option (nat*string) := None.
