@@ -1810,7 +1810,15 @@ Proof.
 
     State and prove a specification of [XtimesYinZ]. *)
 
-(* FILL IN HERE *)
+Theorem XtimesYinZ_spec : forall st x y st',
+    st X = x ->
+    st Y = y ->
+    st =[ XtimesYinZ ]=> st' ->
+    st' Z = x * y.
+Proof.
+  intros.
+  inversion H1. subst. clear H1. simpl. apply t_update_eq.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_XtimesYinZ_spec : option (nat*string) := None.
@@ -1821,15 +1829,20 @@ Theorem loop_never_stops : forall st st',
   ~(st =[ loop ]=> st').
 Proof.
   intros st st' contra. unfold loop in contra.
-  remember <{ while true do skip end }> as loopdef
-           eqn:Heqloopdef.
+  remember <{ while true do skip end }> as loopdef eqn:Heqloopdef.
 
   (** Proceed by induction on the assumed derivation showing that
       [loopdef] terminates.  Most of the cases are immediately
       contradictory (and so can be solved in one step with
       [discriminate]). *)
 
-  (* FILL IN HERE *) Admitted.
+  induction contra; try inversion Heqloopdef.
+  - (* while false *)
+    subst. inversion H.
+  - (* while true *)
+    subst. apply IHcontra2. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (no_whiles_eqv)
@@ -1856,13 +1869,35 @@ Fixpoint no_whiles (c : com) : bool :=
     while loops.  Then prove its equivalence with [no_whiles]. *)
 
 Inductive no_whilesR: com -> Prop :=
- (* FILL IN HERE *)
+  | NW_Skip : no_whilesR <{ skip }>
+  | NW_Ass x e : no_whilesR <{ x := e }>
+  | NW_Seq c1 c2 (H1: no_whilesR c1) (H2: no_whilesR c2) :
+      no_whilesR <{ c1; c2 }>
+  | NW_If b c1 c2 (H1: no_whilesR c1) (H2: no_whilesR c2) :
+      no_whilesR <{ if b then c1 else c2 end }>
 .
 
 Theorem no_whiles_eqv:
    forall c, no_whiles c = true <-> no_whilesR c.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  split.
+  - (* -> *)
+    induction c; intro; try constructor; simpl in H;
+      try (apply IHc1; apply andb_true_iff in H; destruct H; apply H);
+      try (apply IHc2; apply andb_true_iff in H; destruct H; apply H0);
+      try inversion H.
+  - (* <- *)
+    intros. induction H.
+    + (* skip *) reflexivity.
+    + (* := *) reflexivity.
+    + (* seq *) simpl. apply andb_true_iff.
+      rewrite IHno_whilesR1. rewrite IHno_whilesR2. split; reflexivity.
+    + (* if *) simpl. apply andb_true_iff.
+      rewrite IHno_whilesR1. rewrite IHno_whilesR2. split; reflexivity.
+Qed.
+
+
+
 (** [] *)
 
 (** **** Exercise: 4 stars, standard (no_whiles_terminating)
