@@ -1996,30 +1996,67 @@ Inductive sinstr : Type :=
     offending instruction and continue with the next one.  *)
 
 Fixpoint s_execute (st : state) (stack : list nat)
-                   (prog : list sinstr)
-                 : list nat
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+         (prog : list sinstr) : list nat :=
+  match prog with
+  | [] => stack
+  | (SPush n) :: prog => s_execute st (n :: stack) prog
+  | (SLoad a) :: prog => s_execute st (st a :: stack) prog
+  | SPlus :: prog =>
+    match stack with
+    | (x :: y :: stack) => s_execute st ((x + y) :: stack) prog
+    | stack => s_execute st stack prog
+    end
+  | SMinus :: prog =>
+    match stack with
+    | (x :: y :: stack) => s_execute st ((y - x) :: stack) prog
+    | stack => s_execute st stack prog
+    end
+  | SMult :: prog =>
+    match stack with
+    | (x :: y :: stack) => s_execute st ((x * y) :: stack) prog
+    | stack => s_execute st stack prog
+    end
+  end.
 
 Check s_execute.
 
 Example s_execute1 :
      s_execute empty_st []
        [SPush 5; SPush 3; SPush 1; SMinus]
-   = [2; 5].
-(* FILL IN HERE *) Admitted.
+     = [2; 5].
+Proof. simpl. reflexivity. Qed.
+
 
 Example s_execute2 :
      s_execute (X !-> 3) [3;4]
        [SPush 4; SLoad X; SMult; SPlus]
    = [15; 4].
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 
 (** Next, write a function that compiles an [aexp] into a stack
     machine program. The effect of running the program should be the
     same as pushing the value of the expression on the stack. *)
 
-Fixpoint s_compile (e : aexp) : list sinstr
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(*
+
+Inductive aexp : Type :=
+  | ANum (n : nat)
+  | AId (x : string)
+  | APlus (a1 a2 : aexp)
+  | AMinus (a1 a2 : aexp)
+  | AMult (a1 a2 : aexp).
+
+ *)
+
+Fixpoint s_compile (e : aexp) : list sinstr :=
+  match e with
+  | ANum n => [SPush n]
+  | AId x => [SLoad x]
+  | APlus a1 a2 => s_compile a1 ++ s_compile a2 ++ [SPlus]
+  | AMinus a1 a2 => s_compile a1 ++ s_compile a2 ++ [SMinus]
+  | AMult a1 a2 => s_compile a1 ++ s_compile a2 ++ [SMult]
+  end.
 
 (** After you've defined [s_compile], prove the following to test
     that it works. *)
@@ -2027,7 +2064,8 @@ Fixpoint s_compile (e : aexp) : list sinstr
 Example s_compile1 :
   s_compile <{ X - (2 * Y) }>
   = [SLoad X; SPush 2; SLoad Y; SMult; SMinus].
-(* FILL IN HERE *) Admitted.
+Proof. simpl. reflexivity. Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (execute_app)  *)
