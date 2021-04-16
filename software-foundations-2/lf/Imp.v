@@ -2003,7 +2003,7 @@ Fixpoint s_execute (st : state) (stack : list nat)
   | (SLoad a) :: prog => s_execute st (st a :: stack) prog
   | SPlus :: prog =>
     match stack with
-    | (x :: y :: stack) => s_execute st ((x + y) :: stack) prog
+    | (x :: y :: stack) => s_execute st ((y + x) :: stack) prog
     | stack => s_execute st stack prog
     end
   | SMinus :: prog =>
@@ -2013,7 +2013,7 @@ Fixpoint s_execute (st : state) (stack : list nat)
     end
   | SMult :: prog =>
     match stack with
-    | (x :: y :: stack) => s_execute st ((x * y) :: stack) prog
+    | (x :: y :: stack) => s_execute st ((y * x) :: stack) prog
     | stack => s_execute st stack prog
     end
   end.
@@ -2078,7 +2078,17 @@ Proof. simpl. reflexivity. Qed.
 Theorem execute_app : forall st p1 p2 stack,
     s_execute st stack (p1 ++ p2) = s_execute st (s_execute st stack p1) p2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction p1.
+  - (* p1 := [] *)
+    simpl. reflexivity.
+  - (* p1 := (a :: p1) *)
+    induction a;
+      (* push/load *)
+      try (simpl; intros; apply IHp1);
+      (* plus/minus/mult *)
+      try (simpl; intros; destruct stack; try destruct stack; try apply IHp1).
+Qed.
+
 
 (** [] *)
 
@@ -2092,15 +2102,25 @@ Proof.
 Lemma s_compile_correct_aux : forall st e stack,
   s_execute st stack (s_compile e) = aeval st e :: stack.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction e; intros;
+    (* anum/aload *)
+    try (simpl; reflexivity);
+    (* aplus/aminus/amult *)
+    try (simpl;
+         rewrite execute_app with (p1 := s_compile e1);
+         rewrite execute_app with (p1 := s_compile e2);
+         rewrite IHe1; rewrite IHe2; simpl; reflexivity
+        ).
+Qed.
 
 (** The main theorem should be a very easy corollary of that lemma. *)
 
 Theorem s_compile_correct : forall (st : state) (e : aexp),
   s_execute st [] (s_compile e) = [ aeval st e ].
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros.
+  apply (s_compile_correct_aux st e []).
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (short_circuit)
