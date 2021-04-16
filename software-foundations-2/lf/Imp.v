@@ -2140,9 +2140,29 @@ Qed.
     would _not_ be equivalent to the original, since it would make more
     programs terminate.) *)
 
-(* FILL IN HERE
+Fixpoint beval_ss (st : state) (b : bexp) : bool :=
+  match b with
+  | <{true}>      => true
+  | <{false}>     => false
+  | <{a1 = a2}>   => (aeval st a1) =? (aeval st a2)
+  | <{a1 <= a2}>  => (aeval st a1) <=? (aeval st a2)
+  | <{~ b1}>      => negb (beval st b1)
+  | <{b1 && b2}>  => match beval st b1 with
+                    | true => beval st b2
+                    | false => false
+                    end
+  end.
 
-    [] *)
+
+Theorem beval_ss_eqv_beval : forall st b,
+    beval_ss st b = beval st b.
+Proof.
+  intros.
+  induction b; simpl; try reflexivity.
+Qed.
+
+
+(* [] *)
 
 Module BreakImp.
 (** **** Exercise: 4 stars, advanced (break_imp)
