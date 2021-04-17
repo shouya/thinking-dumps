@@ -2310,7 +2310,7 @@ Inductive ceval : com -> state -> result -> state -> Prop :=
       beval st b = true ->
       st  =[ c ]=> st' / SContinue ->
       st' =[ while b do c end ]=> st'' / SContinue ->
-      st  =[ while b do c end ]=> st' / SContinue
+      st  =[ while b do c end ]=> st'' / SContinue
   | E_While_Break : forall st st' b c,
       beval st b = true ->
       st  =[ c ]=> st' / SBreak ->
@@ -2355,7 +2355,17 @@ Theorem while_break_true : forall b c st st',
   beval st' b = true ->
   exists st'', st'' =[ c ]=> st' / SBreak.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros.
+  remember (<{ while b do c end }>) as cmd.
+  induction H; try inversion Heqcmd; subst.
+  - (* E_While_Stop; contra *)
+    rewrite H0 in H. inversion H.
+  - (* E_While_Cont *)
+    apply IHceval2; try assumption; try reflexivity.
+  - (* E_While_Break *)
+    exists st. apply H1.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, optional (ceval_deterministic)  *)
@@ -2364,7 +2374,61 @@ Theorem ceval_deterministic: forall (c:com) st st1 st2 s1 s2,
      st =[ c ]=> st2 / s2 ->
      st1 = st2 /\ s1 = s2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent H0.
+  generalize dependent s2.
+  generalize dependent st2.
+  rename H into E1.
+  induction E1; intros st2 s2 E2.
+  - (* skip *)
+    inversion E2; auto.
+  - (* break *)
+    inversion E2; auto.
+  - (* ass *)
+    inversion E2; auto.
+  - (* seq_cont *)
+    rename st'' into st1.
+    rename s into s1.
+    inversion E2; subst.
+    + apply IHE1_2. apply IHE1_1 in H1. destruct H1. subst. apply H5.
+    + apply IHE1_1 in H4. destruct H4. inversion H0.
+  - (* seq_break *)
+    rename st' into st1.
+    inversion E2; subst.
+    + apply IHE1 in H1. destruct H1. inversion H0.
+    + apply IHE1. apply H4.
+  - (* if_true *)
+    rename st' into st1.
+    rename s into s1.
+    inversion E2; subst.
+    + apply IHE1. apply H7.
+    + rewrite H6 in H. inversion H.
+  - (* if_false *)
+    rename st' into st1.
+    rename s into s1.
+    inversion E2; subst.
+    + rewrite H6 in H. inversion H.
+    + apply IHE1. apply H7.
+  - (* while_stop *)
+    rename st into st1.
+    inversion E2; subst.
+    + split; reflexivity.
+    + rewrite H2 in H. inversion H.
+    + rewrite H2 in H. inversion H.
+  - (* while_cont *)
+    rename st'' into st1.
+    inversion E2; subst.
+    + rewrite H5 in H. inversion H.
+    + apply IHE1_2. apply IHE1_1 in H3. destruct H3. subst. apply H7.
+    + apply IHE1_1 in H6. destruct H6. inversion H1.
+  - (* while_break *)
+    rename st' into st1.
+    inversion E2; subst.
+    + rewrite H5 in H. inversion H.
+    + apply IHE1 in H3. destruct H3. inversion H1.
+    + apply IHE1 in H6. destruct H6. split; try assumption; try reflexivity.
+Qed.
+
 
 (** [] *)
 End BreakImp.
