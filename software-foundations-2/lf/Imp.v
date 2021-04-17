@@ -503,7 +503,7 @@ Fixpoint optimize_aexp (a:aexp) : aexp :=
           match optimize_aexp e1, optimize_aexp e2 with
           | ANum 0, e => ANum 0
           | ANum 1, e => e
-          | e, ANum 0 => ANum 0
+          | _, ANum 0 => ANum 0
           | e, ANum 1 => e
           | e1, e2 => AMult e1 e2
           end
@@ -2146,9 +2146,9 @@ Fixpoint beval_ss (st : state) (b : bexp) : bool :=
   | <{false}>     => false
   | <{a1 = a2}>   => (aeval st a1) =? (aeval st a2)
   | <{a1 <= a2}>  => (aeval st a1) <=? (aeval st a2)
-  | <{~ b1}>      => negb (beval st b1)
-  | <{b1 && b2}>  => match beval st b1 with
-                    | true => beval st b2
+  | <{~ b1}>      => negb (beval_ss st b1)
+  | <{b1 && b2}>  => match beval_ss st b1 with
+                    | true => beval_ss st b2
                     | false => false
                     end
   end.
