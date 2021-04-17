@@ -2448,8 +2448,116 @@ End BreakImp.
     about making up a concrete Notation for [for] loops, but feel free
     to play with this too if you like.) *)
 
-(* FILL IN HERE
+Module ForImp.
 
-    [] *)
+Inductive com : Type :=
+  | CSkip
+  | CAss (x : string) (a : aexp)
+  | CSeq (c1 c2 : com)
+  | CIf (b : bexp) (c1 c2 : com)
+  | CWhile (b : bexp) (c : com)
+  | CFor (cinit cincr cbody : com) (b : bexp).
+
+Notation "'skip'"  :=
+         CSkip (in custom com at level 0) : com_scope.
+Notation "x := y"  :=
+         (CAss x y)
+            (in custom com at level 0, x constr at level 0,
+             y at level 85, no associativity) : com_scope.
+Notation "x ; y" :=
+         (CSeq x y)
+           (in custom com at level 90, right associativity) : com_scope.
+Notation "'if' x 'then' y 'else' z 'end'" :=
+         (CIf x y z)
+           (in custom com at level 89, x at level 99,
+            y at level 99, z at level 99) : com_scope.
+Notation "'while' x 'do' y 'end'" :=
+         (CWhile x y)
+            (in custom com at level 89, x at level 99, y at level 99) : com_scope.
+
+Notation "'for' '(' cinit ';' b ';' cincr ')' 'do' cbody 'end'" :=
+         (CFor cinit cincr cbody b)
+           (in custom com at level 89,
+               cinit at level 89,
+               b at level 89,
+               cincr at level 89,
+               cbody at level 99
+           ) : com_scope.
+
+Reserved Notation "st '=[' c ']=>' st'"
+     (at level 40, c custom com at level 99, st' constr at next level).
+
+Inductive ceval : com -> state -> state -> Prop :=
+  | E_Skip : forall st,
+      st =[ CSkip ]=> st
+  | E_Ass : forall st x y,
+      st =[ x := y ]=> (x !-> aeval st y; st)
+  | E_Seq_Cont : forall st st' st'' c1 c2,
+      st =[ c1 ]=> st' ->
+      st' =[ c2 ]=> st'' ->
+      st =[ c1; c2 ]=> st''
+  | E_If_True : forall st st' b c1 c2,
+      beval st b = true ->
+      st =[ c1 ]=> st' ->
+      st =[ if b then c1 else c2 end ]=> st'
+  | E_If_False : forall st st' b c1 c2,
+      beval st b = false ->
+      st =[ c2 ]=> st' ->
+      st =[ if b then c1 else c2 end ]=> st'
+  | E_While_Stop : forall st b c,
+      beval st b = false ->
+      st =[ while b do c end ]=> st
+  | E_While_Cont : forall st st' st'' b c,
+      beval st b = true ->
+      st  =[ c ]=> st' ->
+      st' =[ while b do c end ]=> st'' ->
+      st  =[ while b do c end ]=> st''
+  | E_For : forall st st' b cinit cincr cbody,
+      st =[ cinit; while b do (cbody; cincr) end ]=> st' ->
+      st =[ for (cinit; b; cincr) do cbody end ]=> st'
+  where "st '=[' c ']=>' st'" := (ceval c st st').
+
+
+(* Just to extend a proof above *)
+
+Theorem ceval_deterministic: forall c st st1 st2,
+     st =[ c ]=> st1  ->
+     st =[ c ]=> st2 ->
+     st1 = st2.
+Proof.
+  intros c st st1 st2 E1 E2.
+  generalize dependent st2.
+  induction E1; intros st2 E2; inversion E2; subst.
+  - (* E_Skip *) reflexivity.
+  - (* E_Ass *) reflexivity.
+  - (* E_Seq *)
+    rewrite (IHE1_1 st'0 H1) in *.
+    apply IHE1_2. assumption.
+  - (* E_IfTrue, b evaluates to true *)
+      apply IHE1. assumption.
+  - (* E_IfTrue,  b evaluates to false (contradiction) *)
+      rewrite H in H5. discriminate.
+  - (* E_IfFalse, b evaluates to true (contradiction) *)
+      rewrite H in H5. discriminate.
+  - (* E_IfFalse, b evaluates to false *)
+      apply IHE1. assumption.
+  - (* E_WhileFalse, b evaluates to false *)
+    reflexivity.
+  - (* E_WhileFalse, b evaluates to true (contradiction) *)
+    rewrite H in H2. discriminate.
+  - (* E_WhileTrue, b evaluates to false (contradiction) *)
+    rewrite H in H4. discriminate.
+  - (* E_WhileTrue, b evaluates to true *)
+    rewrite (IHE1_1 st'0 H3) in *.
+    apply IHE1_2. assumption.
+  - (* E_For *)
+    apply IHE1 in H5. apply H5.
+Qed.
+
+
+End ForImp.
+
+
+(* [] *)
 
 (* 2020-09-09 20:51 *)
