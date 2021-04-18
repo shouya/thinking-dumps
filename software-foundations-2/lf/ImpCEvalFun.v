@@ -435,7 +435,37 @@ Theorem ceval__ceval_step: forall c st st',
 Proof.
   intros c st st' Hce.
   induction Hce.
-  (* FILL IN HERE *) Admitted.
+  - (* skip *)
+    exists 1. auto.
+  - (* x := a *)
+    exists 1. simpl. subst. auto.
+  - (* seq *)
+    destruct IHHce1 as [i0 H0].
+    destruct IHHce2 as [i1 H1].
+    exists (S (i0 + i1)). simpl.
+    rewrite (ceval_step_more i0 (i0+i1) st st');
+      try assumption; try lia.
+    rewrite (ceval_step_more i1 (i0+i1) st' st'');
+      try assumption; try lia.
+    reflexivity.
+  - (* if true *)
+    destruct IHHce as [i0 H0].
+    exists (S i0). simpl. rewrite H. assumption.
+  - (* if false  *)
+    destruct IHHce as [i0 H0].
+    exists (S i0). simpl. rewrite H. assumption.
+  - (* while stop *)
+    exists 1. simpl. rewrite H. reflexivity.
+  - (* while continue *)
+    destruct IHHce1 as [i0 H0].
+    destruct IHHce2 as [i1 H1].
+    exists (S (i0 + i1)). simpl. rewrite H.
+    rewrite (ceval_step_more i0 (i0+i1) st st');
+      try assumption; try lia.
+    rewrite (ceval_step_more i1 (i0+i1) st' st'');
+      try assumption; try lia.
+    reflexivity.
+Qed.
 (** [] *)
 
 Theorem ceval_and_ceval_step_coincide: forall c st st',
