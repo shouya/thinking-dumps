@@ -5,3 +5,7 @@ deps.*
 *.vos
 *.vok
 .lia.cache
+*.cmo
+*.mli
+impdriver
+*.cmi

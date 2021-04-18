@@ -206,7 +206,8 @@ Hint Unfold is_fortytwo : core.
 Example auto_example_7' : forall x,
   (x <= 42 /\ 42 <= x) -> is_fortytwo x.
 Proof.
-  auto. (* try also: info_auto. *)
+  info_auto.
+  (* auto. *) (* try also: info_auto. *)
 Qed.
 
 (** Let's take a first pass over [ceval_deterministic] to simplify the
@@ -219,7 +220,7 @@ Theorem ceval_deterministic': forall c st st1 st2,
 Proof.
   intros c st st1 st2 E1 E2.
   generalize dependent st2;
-       induction E1; intros st2 E2; inversion E2; subst; auto.
+  induction E1; intros st2 E2; inversion E2; subst; auto.
   - (* E_Seq *)
     rewrite (IHE1_1 st'0 H1) in *.
     auto.
@@ -335,9 +336,7 @@ Proof.
 
 Ltac find_rwd :=
   match goal with
-    H1: ?E = true,
-    H2: ?E = false
-    |- _ => rwd H1 H2
+    H1: ?E = true, H2: ?E = false |- _ => rwd H1 H2
   end.
 
 (** This [match goal] looks for two distinct hypotheses that
@@ -367,7 +366,7 @@ Proof.
 
 (** Let's see about the remaining cases. Each of them involves
     applying rewrting an hypothesis after feeding it with the required
-    condition. We can automate the task of finding the relevant 
+    condition. We can automate the task of finding the relevant
     hypotheses to rewrite with. *)
 
 Ltac find_eqn :=
@@ -376,6 +375,7 @@ Ltac find_eqn :=
     H2: ?P ?X
     |- _ => rewrite (H1 X H2) in *
   end.
+
 
 (** The pattern [forall x, ?P x -> ?L = ?R] matches any hypothesis of
     the form "for all [x], _some property of [x]_ implies _some
@@ -422,7 +422,7 @@ Inductive com : Type :=
 
 Notation "'repeat' x 'until' y 'end'" :=
          (CRepeat x y)
-            (in custom com at level 0, 
+            (in custom com at level 0,
              x at level 99, y at level 99).
 Notation "'skip'"  :=
          CSkip (in custom com at level 0).
@@ -710,7 +710,9 @@ Lemma silly2_eassumption : forall (P : nat -> nat -> Prop) (Q : nat -> Prop),
   (forall x y : nat, P x y -> Q x) ->
   Q 42.
 Proof.
-  intros P Q HP HQ. destruct HP as [y HP']. eapply HQ. eassumption.
+  intros P Q HP HQ. destruct HP as [y HP']. eapply HQ.
+
+  eassumption.
 Qed.
 
 (** The [eauto] tactic will use [eapply] and [eassumption], streamlining
