@@ -196,33 +196,54 @@ Definition test_ceval (st:state) (c:com) :=
    ====>
       Some (2, 0, 4)   *)
 
-(** **** Exercise: 2 stars, standard, especially useful (pup_to_n) 
+(** **** Exercise: 2 stars, standard, especially useful (pup_to_n)
 
     Write an Imp program that sums the numbers from [1] to
    [X] (inclusive: [1 + 2 + ... + X]) in the variable [Y].  Make sure
    your solution satisfies the test that follows. *)
 
-Definition pup_to_n : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-
-(* 
+Definition pup_to_n : com :=
+  <{ Y := 0;
+     while (1 <= X) do
+       Y := Y + X;
+       X := X - 1
+     end
+  }>.
 
 Example pup_to_n_1 :
   test_ceval (X !-> 5) pup_to_n
   = Some (0, 15, 0).
 Proof. reflexivity. Qed.
-*)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (peven) 
+(** **** Exercise: 2 stars, standard, optional (peven)
 
     Write an [Imp] program that sets [Z] to [0] if [X] is even and
     sets [Z] to [1] otherwise.  Use [test_ceval] to test your
     program. *)
 
-(* FILL IN HERE
+Definition peven : com :=
+  <{ while (1 <= X) do
+       X := X - 1;
+       if Z = 0 then
+         Z := 1
+       else
+         Z := 0
+       end
+     end
+  }>.
 
-    [] *)
+Example peven_10 :
+  test_ceval (X !-> 10) peven
+  = Some (0, 0, 0).
+Proof. reflexivity. Qed.
+
+Example peven_11 :
+  test_ceval (X !-> 11) peven
+  = Some (0, 0, 1).
+Proof. reflexivity. Qed.
+
+(* [] *)
 
 (* ################################################################# *)
 (** * Relational vs. Step-Indexed Evaluation *)
@@ -285,7 +306,7 @@ Proof.
           injection H1 as H2. rewrite <- H2.
           apply E_WhileFalse. apply Heqr. Qed.
 
-(** **** Exercise: 4 stars, standard (ceval_step__ceval_inf) 
+(** **** Exercise: 4 stars, standard (ceval_step__ceval_inf)
 
     Write an informal proof of [ceval_step__ceval], following the
     usual template.  (The template for case analysis on an inductively
@@ -294,7 +315,66 @@ Proof.
     the main ideas to a human reader; do not simply transcribe the
     steps of the formal proof. *)
 
-(* FILL IN HERE *)
+(*
+
+We want to prove that, given input state st, if a command terminates
+in i steps into state st', then we have relation st =[ c ]=> st'.
+
+We perform induction on the number of steps (i) to terminate for st to
+reach st'.
+
+Base case: For i = 0, the ceval expression is regarded not
+terminating, thus the hypothesis is contradictory.
+
+Induction case: Suppose c cevals to st' from st and terminates in i
+steps implies st =[ c ]=> st'.  We now show for some c that cevals to
+st'' that terminates in i+1 steps also implies st =[ c ]=> st''.
+
+We do this by performing case analysis of the command (c).
+
+- For "skip" and ":=", the result is obvious based on definition.
+
+- For "c1 ; c2", for c1 and c2, there are each two possibilities,
+  either ceval c1 or ceval c1 terminates in i steps or they they
+  don't.
+
+  + if either of them don't terminate in i steps, then by definition,
+    "c1 ; c2" will not terminate in i + 1 steps. Thus the hypothesis
+    is contradictory. Therefore they must all terminates in i steps.
+
+  Now by inductive hypothesis, st =[ c1 ]=> st' and st' =[ c2 ]=>
+  st''.  Thus st =[ c1; c2 ]=> st'' because the relation can be
+  constructed by E_Seq clause.
+
+- For "if b then c1 else c2 end". Either b bevals to true or false,
+  the proof is similar in these two branches. Without loss of
+  generality, we analyze beval b = true branch. In this case, c1 must
+  terminates in i steps because otherwise the whole if command will
+  not terminate in i + 1 step. The input and output state are
+  therefore determined by inductive hypothesis.
+
+- For "while b do c end". Either beval b = true or false.
+
+  + if beval b = false, then ceval c must terminate in i steps,
+    otherwise the expression will not terminate in i+1 steps. Thus by
+    inductive hypothesis st =[ while b do c end ]=> st' holds by
+    constructing with the E_WhileFalse clause.
+
+  + if beval b = true, then ceval c must also terminate in i steps,
+    otherwise it would contradict the hypothesis that "while b do c
+    end" terminates in i + 1 steps.
+
+    Therefore, by inductive hypothesis st =[ c ]=> st' holds.  Then
+    ceval "while ... end" st' must terminate in i steps with output
+    state st'' without leading to contradiction. By the same inductive
+    hypothesis, st' =[ while b do c end ]=> st''.
+
+    Based on above two facts, we can conclude that
+    st =[ while b do c end ]=> st'' based on E_Seq constructor.
+
+q.e.d.
+ *)
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_ceval_step__ceval_inf : option (nat*string) := None.
@@ -344,7 +424,7 @@ induction i1 as [|i1']; intros i2 st st' c Hle Hceval.
       * (* i1'o = None *)
         simpl in Hceval. discriminate Hceval.  Qed.
 
-(** **** Exercise: 3 stars, standard, especially useful (ceval__ceval_step) 
+(** **** Exercise: 3 stars, standard, especially useful (ceval__ceval_step)
 
     Finish the following proof.  You'll need [ceval_step_more] in a
     few places, as well as some basic facts about [<=] and [plus]. *)

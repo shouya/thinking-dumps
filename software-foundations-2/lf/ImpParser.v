@@ -340,6 +340,9 @@ Definition testParsing {X : Type}
   let t := tokenize s in
   p 100 t.
 
+Compute testParsing parseProductExp "x.y.(x.x).x".
+Compute testParsing parseConjunctionExp "~(x=x&&x*x<=(x*x)*x)&&x=x".
+
 (*
 Eval compute in
   testParsing parseProductExp "x.y.(x.x).x".
