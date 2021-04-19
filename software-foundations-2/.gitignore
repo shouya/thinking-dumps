@@ -9,3 +9,6 @@ deps.*
 *.mli
 impdriver
 *.cmi
+.Makefile.coq.d
+Makefile.coq
+Makefile.coq.conf

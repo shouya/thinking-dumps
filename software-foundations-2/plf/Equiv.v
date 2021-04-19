@@ -143,7 +143,7 @@ Proof.
     assumption.
 Qed.
 
-(** **** Exercise: 2 stars, standard (skip_right) 
+(** **** Exercise: 2 stars, standard (skip_right)
 
     Prove that adding a [skip] after a command results in an
     equivalent program *)
@@ -153,7 +153,14 @@ Theorem skip_right : forall c,
     <{ c ; skip }>
     c.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro. split; intro.
+  - (* -> *)
+    inversion H; subst. inversion H5; subst.
+    apply H2.
+  - (* <- *)
+    econstructor. apply H. constructor.
+Qed.
+
 (** [] *)
 
 (** Similarly, here is a simple transformation that optimizes [if]
@@ -234,6 +241,27 @@ Proof.
     unfold bequiv in Hb. simpl in Hb.
     apply Hb. Qed.
 
+(* stolen from http://poleiro.info/posts/2018-10-15-checking-for-constructors.html  *)
+Ltac head_constructor t :=
+  match type of t with
+  | ?T =>
+    let r := eval cbn fix in ((fix loop (t' : T) {struct t'} := tt) t) in
+    match r with tt => idtac end
+  end.
+
+Ltac inversion_ceval H :=
+  try (inversion_clear H;
+       subst;
+       repeat auto).
+
+Ltac try_solve_h H :=
+  simpl in H; try subst H; try rewrite H in *; repeat easy; repeat auto.
+
+Ltac unfold_equiv H :=
+  try (unfold bequiv in H);
+  try (unfold aequiv in H);
+  try_solve_h H.
+
 (** **** Exercise: 2 stars, standard, especially useful (if_false)  *)
 Theorem if_false : forall b c1 c2,
   bequiv b <{false}> ->
@@ -241,20 +269,41 @@ Theorem if_false : forall b c1 c2,
     <{ if b then c1 else c2 end }>
     c2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  split; intro.
+  - (* -> *)
+    inversion_ceval H0.
+    unfold_equiv H.
+  - (* <- *)
+    Search (_ =[ if _ then _ else _ end ]=> _).
+    apply E_IfFalse; unfold_equiv H.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (swap_if_branches) 
+(** **** Exercise: 3 stars, standard (swap_if_branches)
 
     Show that we can swap the branches of an [if] if we also negate its
     guard. *)
+Hint Constructors com : core.
+Hint Constructors ceval : core.
 
 Theorem swap_if_branches : forall b c1 c2,
   cequiv
     <{ if b then c1 else c2 end }>
     <{ if ~ b then c2 else c1 end }>.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro.
+  - (* -> *)
+    inversion_ceval H.
+    apply E_IfFalse. simpl. rewrite H0. reflexivity. assumption.
+    apply E_IfTrue. simpl. rewrite H0. reflexivity. assumption.
+  - (* <- *)
+    inversion_ceval H; unfold_equiv H0.
+    + apply negb_true_iff in H0. auto.
+    + apply negb_false_iff in H0. auto.
+Qed.
+
 (** [] *)
 
 (** For [while] loops, we can give a similar pair of theorems.  A loop
@@ -281,26 +330,40 @@ Proof.
     apply E_WhileFalse.
     apply Hb.  Qed.
 
-(** **** Exercise: 2 stars, advanced, optional (while_false_informal) 
+(** **** Exercise: 2 stars, advanced, optional (while_false_informal)
 
-    Write an informal proof of [while_false].
+    Write an informal proof of [while_false]. *)
 
-(* FILL IN HERE *)
+(* We first prove b <=> false -> (while b do c end => skip).
+
+There are two ways for [while b do c end] to hold:
+
+- E_WhileFalse: the st doesn't change so it's equivalent to skip
+
+- E_WhileTrue: it assumes the b = true, which contradicts the
+  assumption that b <=> false.
+
+We then prove b <=> false -> (skip => while b do c end)
+
+For skip, st = st'. Also beval b = false. Therefore we can conclude
+[while b do c end] holds by E_WhileFalse.
+
 *)
+
 (** [] *)
 
 (** To prove the second fact, we need an auxiliary lemma stating that
     [while] loops whose guards are equivalent to [true] never
     terminate. *)
 
-(** _Lemma_: If [b] is equivalent to [true], then it cannot be
-    the case that [st =[ while b do c end ]=> st'].
+(** _Lemma_: If [b] is equivalent to [true], then it cannot be the
+    case that [st =[ while b do c end ]=> st'].
 
     _Proof_: Suppose that [st =[ while b do c end ]=> st'].  We show,
     by induction on a derivation of [st =[ while b do c end ]=> st'],
     that this assumption leads to a contradiction. The only two cases
-    to consider are [E_WhileFalse] and [E_WhileTrue], the others
-    are contradictory.
+    to consider are [E_WhileFalse] and [E_WhileTrue], the others are
+    contradictory.
 
     - Suppose [st =[ while b do c end ]=> st'] is proved using rule
       [E_WhileFalse].  Then by assumption [beval st b = false].  But
@@ -310,11 +373,10 @@ Proof.
     - Suppose [st =[ while b do c end ]=> st'] is proved using rule
       [E_WhileTrue].  We must have that:
 
-      1. [beval st b = true],
-      2. there is some [st0] such that [st =[ c ]=> st0] and
-         [st0 =[ while b do c end ]=> st'],
-      3. and we are given the induction hypothesis that
-         [st0 =[ while b do c end ]=> st'] leads to a contradiction,
+      1. [beval st b = true], 2. there is some [st0] such that [st =[
+      c ]=> st0] and [st0 =[ while b do c end ]=> st'], 3. and we are
+      given the induction hypothesis that [st0 =[ while b do c end ]=>
+      st'] leads to a contradiction,
 
       We obtain a contradiction by 2 and 3. [] *)
 
@@ -337,18 +399,27 @@ Proof.
   - (* E_WhileTrue *) (* immediate from the IH *)
     apply IHceval2. reflexivity.  Qed.
 
-(** **** Exercise: 2 stars, standard, optional (while_true_nonterm_informal) 
+(** **** Exercise: 2 stars, standard, optional (while_true_nonterm_informal)
 
-    Explain what the lemma [while_true_nonterm] means in English.
+    Explain what the lemma [while_true_nonterm] means in English. *)
 
-(* FILL IN HERE *)
-*)
+(*
+If b evals to true for any state, then while b do c end never terminates.
+ *)
+
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (while_true) 
+(** **** Exercise: 2 stars, standard, especially useful (while_true)
 
     Prove the following theorem. _Hint_: You'll want to use
     [while_true_nonterm] here. *)
+
+Hint Unfold cequiv : core.
+Hint Unfold bequiv : core.
+
+Lemma bequiv_id : forall b,
+  bequiv b b.
+Proof. split. Qed.
 
 Theorem while_true : forall b c,
   bequiv b <{true}>  ->
@@ -356,7 +427,16 @@ Theorem while_true : forall b c,
     <{ while b do c end }>
     <{ while true do skip end }>.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; split; intro.
+  - inversion_ceval H0. unfold_equiv H.
+    eapply while_true_nonterm in H. exfalso. eapply H.
+    apply H3.
+  - exfalso.
+    eapply while_true_nonterm.
+    apply bequiv_id.
+    apply H0.
+Qed.
+
 (** [] *)
 
 (** A more interesting fact about [while] commands is that any number
@@ -387,14 +467,24 @@ Proof.
     + (* loop doesn't run *)
       inversion H5; subst. apply E_WhileFalse. assumption.  Qed.
 
-(** **** Exercise: 2 stars, standard, optional (seq_assoc) 
+(** **** Exercise: 2 stars, standard, optional (seq_assoc)
 
     _Note: Coq 8.12.0 has a printing bug that makes both sides of this
     theorem look the same in the Goals buffer. This should be fixed in
     8.12.1_. *)
 Theorem seq_assoc : forall c1 c2 c3,
   cequiv <{(c1;c2);c3}> <{c1;(c2;c3)}>.
-Proof.   (* FILL IN HERE *) Admitted.
+Proof.
+  split; intro.
+  - (* -> *)
+    inversion_ceval H. inversion_ceval H0.
+    econstructor. eassumption. econstructor. eassumption. assumption.
+
+  - (* <- *)
+    inversion_ceval H. inversion_ceval H1.
+    econstructor. econstructor. eassumption. eassumption. assumption.
+Qed.
+
 (** [] *)
 
 (** Proving program properties involving assignments is one place
@@ -424,7 +514,21 @@ Theorem assign_aequiv : forall (x : string) a,
   aequiv x a ->
   cequiv <{ skip }> <{ x := a }>.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split; intro.
+  - (* -> *)
+    inversion_ceval H0.
+    unfold_equiv H.
+    assert ((x !-> aeval st' a ; st') = st').
+    { rewrite <- H. apply t_update_same. }
+    rewrite <- H0 at 2. constructor. reflexivity.
+  - (* <- *)
+    inversion_ceval H0.
+    unfold_equiv H. rewrite <- H.
+    rewrite t_update_same. constructor.
+Qed.
+
+Print assign_aequiv.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (equiv_classes)  *)
@@ -444,7 +548,8 @@ Proof.
 Definition prog_a : com :=
   <{ while ~(X <= 0) do
        X := X + 1
-     end }>.
+       end }>.
+(* when X=0, terminates (st stays the same), otherwise not terminating *)
 
 Definition prog_b : com :=
   <{ if (X = 0) then
@@ -455,41 +560,58 @@ Definition prog_b : com :=
      end;
      X := X - Y;
      Y := 0 }>.
+(* terminates. when x=0, y=0; when x<>0, y=0.
+   in other words, x=x,y=0.
+*)
 
 Definition prog_c : com :=
   <{ skip }> .
+(* skip *)
 
 Definition prog_d : com :=
   <{ while ~(X = 0) do
        X := (X * Y) + 1
-     end }>.
+       end }>.
+(* x=0 terminates. otherwise not terminating. *)
 
 Definition prog_e : com :=
   <{ Y := 0 }>.
+(* y=0 *)
 
 Definition prog_f : com :=
   <{ Y := X + 1;
      while ~(X = Y) do
        Y := X + 1
      end }>.
+(* loop forever *)
+
 
 Definition prog_g : com :=
   <{ while true do
        skip
      end }>.
+(* loop forever *)
 
 Definition prog_h : com :=
   <{ while ~(X = X) do
        X := X + 1
      end }>.
+(* skip *)
+
 
 Definition prog_i : com :=
   <{ while ~(X = Y) do
        X := Y + 1
-     end }>.
+       end }>.
+(* when x=y terminates, otherwise loop forever *)
 
-Definition equiv_classes : list (list com)
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition equiv_classes : list (list com) :=
+  [ [prog_a; prog_d]; (* terminates when x=0, loop forever otherwise *)
+    [prog_b; prog_e]; (* y=0 *)
+    [prog_c; prog_h]; (* skip *)
+    [prog_f; prog_g]; (* loop forever *)
+    [prog_i]          (* terminates when x=y, loop forever otherwise *)
+  ].
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_equiv_classes : option (nat*string) := None.
@@ -721,7 +843,7 @@ Proof.
     + apply refl_cequiv.
 Qed.
 
-(** **** Exercise: 3 stars, advanced, optional (not_congr) 
+(** **** Exercise: 3 stars, advanced, optional (not_congr)
 
     We've shown that the [cequiv] relation is both an equivalence and
     a congruence on commands.  Can you think of a relation on commands
@@ -929,7 +1051,7 @@ Proof.
          destruct (fold_constants_aexp a2);
          rewrite IHa1; rewrite IHa2; reflexivity). Qed.
 
-(** **** Exercise: 3 stars, standard, optional (fold_bexp_Eq_informal) 
+(** **** Exercise: 3 stars, standard, optional (fold_bexp_Eq_informal)
 
     Here is an informal proof of the [BEq] case of the soundness
     argument for boolean expression constant folding.  Read it
@@ -1057,7 +1179,7 @@ Proof.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (fold_constants_com_sound) 
+(** **** Exercise: 3 stars, standard (fold_constants_com_sound)
 
     Complete the [while] case of the following proof. *)
 
@@ -1091,7 +1213,7 @@ Proof.
 (* ----------------------------------------------------------------- *)
 (** *** Soundness of (0 + n) Elimination, Redux *)
 
-(** **** Exercise: 4 stars, advanced, optional (optimize_0plus) 
+(** **** Exercise: 4 stars, advanced, optional (optimize_0plus)
 
     Recall the definition [optimize_0plus] from the [Imp] chapter
     of _Logical Foundations_:
@@ -1246,7 +1368,7 @@ Proof.
     by (rewrite Hcontra; reflexivity).
   subst. discriminate. Qed.
 
-(** **** Exercise: 4 stars, standard, optional (better_subst_equiv) 
+(** **** Exercise: 4 stars, standard, optional (better_subst_equiv)
 
     The equivalence we had in mind above was not complete nonsense --
     it was actually almost right.  To make it correct, we just need to
@@ -1282,7 +1404,7 @@ Proof.
 
     [] *)
 
-(** **** Exercise: 3 stars, standard (inequiv_exercise) 
+(** **** Exercise: 3 stars, standard (inequiv_exercise)
 
     Prove that an infinite loop is not equivalent to [skip] *)
 
@@ -1369,7 +1491,7 @@ Notation "'while' x 'do' y 'end'" :=
          (CWhile x y)
             (in custom com at level 89, x at level 99, y at level 99).
 
-(** **** Exercise: 2 stars, standard (himp_ceval) 
+(** **** Exercise: 2 stars, standard (himp_ceval)
 
     Now, we must extend the operational semantics. We have provided
    a template for the [ceval] relation below, specifying the big-step
@@ -1434,7 +1556,7 @@ Definition cequiv (c1 c2 : com) : Prop := forall st st' : state,
 (** Let's apply this definition to prove some nondeterministic
     programs equivalent / inequivalent. *)
 
-(** **** Exercise: 3 stars, standard (havoc_swap) 
+(** **** Exercise: 3 stars, standard (havoc_swap)
 
     Are the following two programs equivalent? *)
 
@@ -1453,7 +1575,7 @@ Theorem pXY_cequiv_pYX :
 Proof. (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, standard, optional (havoc_copy) 
+(** **** Exercise: 4 stars, standard, optional (havoc_copy)
 
     Are the following two programs equivalent? *)
 
@@ -1483,7 +1605,7 @@ Proof. (* FILL IN HERE *) Admitted.
     phenomenon.
 *)
 
-(** **** Exercise: 4 stars, advanced (p1_p2_term) 
+(** **** Exercise: 4 stars, advanced (p1_p2_term)
 
     Consider the following commands: *)
 
@@ -1513,7 +1635,7 @@ Proof.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced (p1_p2_equiv) 
+(** **** Exercise: 4 stars, advanced (p1_p2_equiv)
 
     Use these two lemmas to prove that [p1] and [p2] are actually
     equivalent. *)
@@ -1522,7 +1644,7 @@ Theorem p1_p2_equiv : cequiv p1 p2.
 Proof. (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced (p3_p4_inequiv) 
+(** **** Exercise: 4 stars, advanced (p3_p4_inequiv)
 
     Prove that the following programs are _not_ equivalent.  (Hint:
     What should the value of [Z] be when [p3] terminates?  What about
@@ -1543,7 +1665,7 @@ Theorem p3_p4_inequiv : ~ cequiv p3 p4.
 Proof. (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 5 stars, advanced, optional (p5_p6_equiv) 
+(** **** Exercise: 5 stars, advanced, optional (p5_p6_equiv)
 
     Prove that the following commands are equivalent.  (Hint: As
     mentioned above, our definition of [cequiv] for Himp only takes
@@ -1570,7 +1692,7 @@ End Himp.
 (* ################################################################# *)
 (** * Additional Exercises *)
 
-(** **** Exercise: 4 stars, standard, optional (for_while_equiv) 
+(** **** Exercise: 4 stars, standard, optional (for_while_equiv)
 
     This exercise extends the optional [add_for_loop] exercise from
     the [Imp] chapter, where you were asked to extend the language
@@ -1592,7 +1714,7 @@ End Himp.
 
     [] *)
 
-(** **** Exercise: 3 stars, standard, optional (swap_noninterfering_assignments) 
+(** **** Exercise: 3 stars, standard, optional (swap_noninterfering_assignments)
 
     (Hint: You'll need [functional_extensionality] for this one.) *)
 
@@ -1607,7 +1729,7 @@ Proof.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced, optional (capprox) 
+(** **** Exercise: 4 stars, advanced, optional (capprox)
 
     In this exercise we define an asymmetric variant of program
     equivalence we call _program approximation_. We say that a
