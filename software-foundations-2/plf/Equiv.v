@@ -1303,19 +1303,97 @@ Qed.
    - Prove that the optimizer is sound.  (This part should be _very_
      easy.)  *)
 
-Fixpoint optimize_0plus (a:aexp) : aexp :=
+Fixpoint optimize_0plus_aexp (a:aexp) : aexp :=
   match a with
-  | ANum n =>
-    ANum n
-  | <{ 0 + a2 }> =>
-    optimize_0plus a2
-  | <{ a1 + a2 }> =>
-    <{ (optimize_0plus a1) + (optimize_0plus a2) }>
-  | <{ a1 - a2 }> =>
-    <{ (optimize_0plus a1) - (optimize_0plus a2) }>
-  | <{ a1 * a2 }> =>
-    <{ (optimize_0plus a1) * (optimize_0plus a2) }>
+  | ANum n => ANum n
+  | AId x => AId x
+  | <{ 0 + a2 }> => optimize_0plus_aexp a2
+  | <{ a1 + a2 }> => <{ (optimize_0plus_aexp a1) + (optimize_0plus_aexp a2) }>
+  | <{ a1 - a2 }> => <{ (optimize_0plus_aexp a1) - (optimize_0plus_aexp a2) }>
+  | <{ a1 * a2 }> => <{ (optimize_0plus_aexp a1) * (optimize_0plus_aexp a2) }>
   end.
+
+Fixpoint optimize_0plus_bexp (b:bexp) : bexp :=
+  match b with
+  | <{true}>        => <{true}>
+  | <{false}>       => <{false}>
+  | <{ a1 = a2 }>  => <{ optimize_0plus_aexp a1 = optimize_0plus_aexp a2 }>
+  | <{ a1 <= a2 }>  => <{ optimize_0plus_aexp a1 <= optimize_0plus_aexp a2 }>
+  | <{ ~ b1 }>     => <{ ~ optimize_0plus_bexp b1 }>
+  | <{ b1 && b2 }>  => <{ optimize_0plus_bexp b1 && optimize_0plus_bexp b2 }>
+  end.
+
+Fixpoint optimize_0plus_com (c:com) : com :=
+  match c with
+  | <{ skip }> => <{ skip }>
+  | <{ x := a }> => <{ x := optimize_0plus_aexp a }>
+  | <{ c1; c2 }> => <{ optimize_0plus_com c1; optimize_0plus_com c2 }>
+  | <{ if b then c1 else c2 end }> =>
+    <{ if optimize_0plus_bexp b
+       then optimize_0plus_com c1
+       else optimize_0plus_com c2 end }>
+  | <{ while b do c end }> =>
+    <{ while optimize_0plus_bexp b do optimize_0plus_com c end }>
+  end.
+
+(* A meaningful example on how the optimization works  *)
+Example optimize_0plus_ex :
+  optimize_0plus_com <{ while (X <= 0 + X) do Y := 0 + Y end }> =
+  <{ while (X <= X) do Y := Y end }>.
+Proof. reflexivity. Qed.
+
+(* Prove that the optimizer is sound. *)
+Theorem optimize_0plus_aexp_sound : atrans_sound optimize_0plus_aexp.
+Proof.
+  unfold atrans_sound. intro.
+  induction a; simpl;
+    try apply refl_aequiv;
+    try (unfold aequiv in *;
+         simpl;
+         intro;
+         rewrite <- IHa1; rewrite <- IHa2;
+         reflexivity).
+  - (* the only interesting case is a1 + a2 *)
+    destruct a1; simpl;
+      try (unfold aequiv in *; simpl; intro;
+           rewrite <- IHa2; try (simpl in IHa1; rewrite <- IHa1);
+           reflexivity).
+    + (* the only interesting case is n + a2 *)
+      destruct n.
+      * (* n = 0 *)
+        unfold aequiv in *; simpl in *. assumption.
+      * (* n > 0 *)
+        unfold aequiv in *; simpl in *. intro. f_equal.
+        rewrite IHa2. reflexivity.
+Qed.
+
+(* that's not exactly simple as hinted in the problem... *)
+
+Theorem optimize_0plus_bexp_sound : btrans_sound optimize_0plus_bexp.
+Proof.
+  unfold btrans_sound; intro; induction b; simpl;
+    try apply refl_bequiv;
+    try (unfold bequiv; simpl; intro;
+         repeat rewrite <- optimize_0plus_aexp_sound;
+         try rewrite <- IHb;
+         try rewrite <- IHb1;
+         try rewrite <- IHb2;
+         reflexivity).
+Qed.
+
+Theorem optimize_0plus_com_sound : ctrans_sound optimize_0plus_com.
+Proof.
+  unfold ctrans_sound; intro; induction c; simpl;
+    try apply refl_cequiv;
+    try apply CAss_congruence;
+    try apply CSeq_congruence;
+    try apply CIf_congruence;
+    try apply CWhile_congruence;
+    try assumption;
+    repeat apply optimize_0plus_aexp_sound;
+    repeat apply optimize_0plus_bexp_sound.
+Qed.
+
 (* [] *)
 
 (* ################################################################# *)
