@@ -414,9 +414,6 @@ If b evals to true for any state, then while b do c end never terminates.
     Prove the following theorem. _Hint_: You'll want to use
     [while_true_nonterm] here. *)
 
-Hint Unfold cequiv : core.
-Hint Unfold bequiv : core.
-
 Lemma bequiv_id : forall b,
   bequiv b b.
 Proof. split. Qed.
@@ -800,7 +797,14 @@ Theorem CSeq_congruence : forall c1 c1' c2 c2',
   cequiv c1 c1' -> cequiv c2 c2' ->
   cequiv <{ c1;c2 }> <{ c1';c2' }>.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split; intro.
+  - (* c1;c2 -> c1';c2' *)
+    inversion_ceval H1. econstructor.
+    apply H. apply H2. apply H0. apply H3.
+  - (* c1';c2' -> c1;c2 *)
+    inversion_ceval H1. econstructor.
+    apply H. apply H2. apply H0. apply H3.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (CIf_congruence)  *)
@@ -809,7 +813,21 @@ Theorem CIf_congruence : forall b b' c1 c1' c2 c2',
   cequiv <{ if b then c1 else c2 end }>
          <{ if b' then c1' else c2' end }>.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split; intro.
+  - (* if b then c1 else c2 end -> if b' then c1' else c2' end *)
+    inversion_ceval H2.
+    + (* true *)
+      constructor. rewrite <- H. apply H3. apply H0. apply H4.
+    + (* false *)
+      apply E_IfFalse. rewrite <- H. apply H3. apply H1. apply H4.
+  - (* if b' then c1' else c2' end -> if b then c1 else c2 end *)
+    inversion_ceval H2.
+    + (* true *)
+      constructor. rewrite H. apply H3. apply H0. apply H4.
+    + (* false *)
+      apply E_IfFalse. rewrite H. apply H3. apply H1. apply H4.
+Qed.
+
 (** [] *)
 
 (** For example, here are two equivalent programs and a proof of their
@@ -849,9 +867,18 @@ Qed.
     a congruence on commands.  Can you think of a relation on commands
     that is an equivalence but _not_ a congruence? *)
 
-(* FILL IN HERE
+(* Here's one I come up with *)
+Definition fake_cequiv (c1 c2 : com) : Prop :=
+  forall (st st' : state),
+  st X = 0 -> (st =[ c1 ]=> st') <-> (st =[ c2 ]=> st').
 
-    [] *)
+(* It's obviously an equivalence relation, but it is not congruence because
+   c1 and c2 can behave differently as embedded program when the parent program
+   assign X values other than 0.
+  *)
+
+
+(* [] *)
 
 (* ################################################################# *)
 (** * Program Transformations *)
@@ -1165,7 +1192,17 @@ Proof.
        become constants after folding *)
       simpl. destruct (n =? n0); reflexivity.
   - (* BLe *)
-    (* FILL IN HERE *) admit.
+    simpl.
+    remember (fold_constants_aexp a1) as a1' eqn:Heqa1'.
+    remember (fold_constants_aexp a2) as a2' eqn:Heqa2'.
+    replace (aeval st a1) with (aeval st a1') by
+       (subst a1'; rewrite <- fold_constants_aexp_sound; reflexivity).
+    replace (aeval st a2) with (aeval st a2') by
+       (subst a2'; rewrite <- fold_constants_aexp_sound; reflexivity).
+    destruct a1'; destruct a2'; try reflexivity.
+    (* The only interesting case is when both a1 and a2
+       become constants after folding *)
+    simpl. destruct (n <=? n0); reflexivity.
   - (* BNot *)
     simpl. remember (fold_constants_bexp b) as b' eqn:Heqb'.
     rewrite IHb.
@@ -1176,7 +1213,8 @@ Proof.
     remember (fold_constants_bexp b2) as b2' eqn:Heqb2'.
     rewrite IHb1. rewrite IHb2.
     destruct b1'; destruct b2'; reflexivity.
-(* FILL IN HERE *) Admitted.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (fold_constants_com_sound)
@@ -1207,7 +1245,17 @@ Proof.
       apply trans_cequiv with c2; try assumption.
       apply if_false; assumption.
   - (* while *)
-    (* FILL IN HERE *) Admitted.
+    assert (bequiv b (fold_constants_bexp b)). {
+      apply fold_constants_bexp_sound. }
+    destruct (fold_constants_bexp b) eqn:Heqb;
+      try (apply CWhile_congruence; assumption).
+    + (* always true *)
+      apply while_true. apply H.
+    + (* always false *)
+      apply while_false. apply H.
+Qed.
+
+
 (** [] *)
 
 (* ----------------------------------------------------------------- *)
@@ -1255,9 +1303,20 @@ Proof.
    - Prove that the optimizer is sound.  (This part should be _very_
      easy.)  *)
 
-(* FILL IN HERE
-
-    [] *)
+Fixpoint optimize_0plus (a:aexp) : aexp :=
+  match a with
+  | ANum n =>
+    ANum n
+  | <{ 0 + a2 }> =>
+    optimize_0plus a2
+  | <{ a1 + a2 }> =>
+    <{ (optimize_0plus a1) + (optimize_0plus a2) }>
+  | <{ a1 - a2 }> =>
+    <{ (optimize_0plus a1) - (optimize_0plus a2) }>
+  | <{ a1 * a2 }> =>
+    <{ (optimize_0plus a1) * (optimize_0plus a2) }>
+  end.
+(* [] *)
 
 (* ################################################################# *)
 (** * Proving Inequivalence *)
