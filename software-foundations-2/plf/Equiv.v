@@ -1602,7 +1602,7 @@ Proof.
     + simpl. rewrite Hneq. reflexivity.
 Qed.
 
-Theorem subst_equiv :
+Theorem subst_equiv_property_correct :
   forall x1 x2 a1 a2,
   var_not_used_in_aexp x1 a1 ->
   cequiv <{ x1 := a1; x2 := a2 }>
@@ -1628,8 +1628,22 @@ Proof.
     reflexivity.
 Qed.
 
+(* This one is also true trivially. So I'll just prove it for fun. *)
+Theorem subst_equiv_trivial :
+  forall x1 x2 a1 a2,
+  var_not_used_in_aexp x1 a2 ->
+  cequiv <{ x1 := a1; x2 := a2 }>
+         <{ x1 := a1; x2 := subst_aexp x1 a1 a2 }>.
+Proof.
+  intros.
+  rewrite subst_aexp_noop by apply H.
+  apply refl_cequiv.
+Qed.
+
 (** Using [var_not_used_in_aexp], formalize and prove a correct version
     of [subst_equiv_property]. *)
+
+(* Already proved above: see subst_equiv_property_correct. *)
 
 (* [] *)
 
@@ -1640,7 +1654,15 @@ Qed.
 Theorem inequiv_exercise:
   ~ cequiv <{ while true do skip end }> <{ skip }>.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold cequiv. intro.
+  remember (t_empty 0 : state) as st.
+  assert (st =[ skip ]=> st) by constructor.
+  apply H in H0.
+  apply while_true_nonterm in H0.
+  - inversion H0.
+  - apply bequiv_id.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
