@@ -1441,6 +1441,13 @@ Proof. simpl. (* KK: For some reason this fails... Is it an associativity issue?
        Admitted.
        (* reflexivity.  Qed. *)
 
+(* Re: KK: The above failed because of implicit coercing from nat
+   (42+53) to aexp.  And here's a fix. *)
+Example subst_aexp_ex2 :
+  subst_aexp X <{42 + 53}> <{ Y + X}>
+  = <{ Y + (42 + 53)}>.
+Proof. simpl. reflexivity. Qed.
+
 (** And here is the property we are interested in, expressing the
     claim that commands [c1] and [c2] as described above are
     always equivalent.  *)
@@ -1532,14 +1539,99 @@ Lemma aeval_weakening : forall x st a ni,
   var_not_used_in_aexp x a ->
   aeval (x !-> ni ; st) a = aeval st a.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H; simpl;
+    try reflexivity;
+    try (rewrite IHvar_not_used_in_aexp1;
+         rewrite IHvar_not_used_in_aexp2;
+         reflexivity).
+  - (* only interesting case: VNUId *)
+    apply t_update_neq. apply H.
+Qed.
+
+Lemma subst_var_not_used: forall x a1 a2,
+  var_not_used_in_aexp x a1 ->
+  var_not_used_in_aexp x (subst_aexp x a1 a2).
+Proof.
+  intros.
+  induction a2; simpl; try constructor; try assumption.
+  - (* only interesting case: a2 = Id x *)
+    destruct (eqb_string x x0) eqn:Hneq.
+    + apply H.
+    + constructor. apply eqb_string_false_iff. apply Hneq.
+Qed.
+
+Lemma aeval_subst_aexp: forall x a1 a2 st,
+  aeval st (subst_aexp x a1 a2) = aeval (x !-> aeval st a1; st) a2.
+Proof.
+  intros.
+  induction a2; simpl;
+    try (rewrite IHa2_1; rewrite IHa2_2);
+    try reflexivity.
+  - (* only interesting case: a2 = Id x *)
+    destruct (eqb_string x x0) eqn:Hneq.
+    + apply eqb_string_true_iff in Hneq. subst.
+      rewrite t_update_eq. reflexivity.
+    + simpl. rewrite t_update_neq. reflexivity.
+      apply eqb_string_false_iff. apply Hneq.
+Qed.
+
+Lemma subst_aexp_noop: forall x a1 a2,
+  var_not_used_in_aexp x a2 ->
+  subst_aexp x a1 a2 = a2.
+Proof.
+  intros.
+  induction H; simpl;
+    try (rewrite IHvar_not_used_in_aexp1; rewrite IHvar_not_used_in_aexp2);
+    try reflexivity.
+  - (* only interesting case: a2 = Id x *)
+    apply eqb_string_false_iff in H. rewrite H. reflexivity.
+Qed.
+
+Lemma subst_aexp_idempotent: forall x a1 a2,
+  var_not_used_in_aexp x a1 ->
+  subst_aexp x a1 (subst_aexp x a1 a2) = subst_aexp x a1 a2.
+Proof.
+  intros.
+  induction a2; simpl;
+    try (rewrite IHa2_1; rewrite IHa2_2);
+    try reflexivity.
+  - (* only interesting case: a2 = Id x *)
+    destruct (eqb_string x x0) eqn:Hneq.
+    + apply subst_aexp_noop. apply H.
+    + simpl. rewrite Hneq. reflexivity.
+Qed.
+
+Theorem subst_equiv :
+  forall x1 x2 a1 a2,
+  var_not_used_in_aexp x1 a1 ->
+  cequiv <{ x1 := a1; x2 := a2 }>
+         <{ x1 := a1; x2 := subst_aexp x1 a1 a2 }>.
+Proof.
+  intros. unfold cequiv. intros. split; intro.
+  - (* -> *)
+    inversion_clear H0; subst.
+    inversion H1; subst. eapply E_Seq. apply H1.
+    inversion H2; subst. apply E_Ass.
+    rewrite aeval_weakening.
+    + apply aeval_subst_aexp.
+    + apply subst_var_not_used. apply H.
+  - (* <- *)
+    inversion_clear H0.
+    econstructor. apply H1.
+    inversion_clear H2. subst.
+    constructor.
+    inversion_clear H1; subst.
+    rewrite <- aeval_subst_aexp.
+    rewrite <- aeval_subst_aexp.
+    rewrite subst_aexp_idempotent by assumption.
+    reflexivity.
+Qed.
 
 (** Using [var_not_used_in_aexp], formalize and prove a correct version
     of [subst_equiv_property]. *)
 
-(* FILL IN HERE
-
-    [] *)
+(* [] *)
 
 (** **** Exercise: 3 stars, standard (inequiv_exercise)
 
