@@ -1779,21 +1779,21 @@ Inductive ceval : com -> state -> state -> Prop :=
       st  =[ c ]=> st' ->
       st' =[ while b do c end ]=> st'' ->
       st  =[ while b do c end ]=> st''
-(* FILL IN HERE *)
-
+  | E_Havoc : forall st x n,
+      st =[ havoc x ]=> (x !-> n; st)
   where "st =[ c ]=> st'" := (ceval c st st').
 
 (** As a sanity check, the following claims should be provable for
     your definition: *)
 
 Example havoc_example1 : empty_st =[ havoc X ]=> (X !-> 0).
-Proof.
-(* FILL IN HERE *) Admitted.
+Proof. constructor. Qed.
+
 
 Example havoc_example2 :
   empty_st =[ skip; havoc Z ]=> (Z !-> 42).
-Proof.
-(* FILL IN HERE *) Admitted.
+Proof. econstructor. constructor. constructor. Qed.
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_Check_rule_for_HAVOC : option (nat*string) := None.
@@ -1804,6 +1804,7 @@ Definition manual_grade_for_Check_rule_for_HAVOC : option (nat*string) := None.
 Definition cequiv (c1 c2 : com) : Prop := forall st st' : state,
   st =[ c1 ]=> st' <-> st =[ c2 ]=> st'.
 
+
 (** Let's apply this definition to prove some nondeterministic
     programs equivalent / inequivalent. *)
 
@@ -1813,7 +1814,7 @@ Definition cequiv (c1 c2 : com) : Prop := forall st st' : state,
 
 (* KK: The hack we did for variables bites back *)
 Definition pXY :=
-  <{ havoc X ; havoc Y }>.
+  <{ havoc X; havoc Y }>.
 
 Definition pYX :=
   <{ havoc Y; havoc X }>.
@@ -1821,9 +1822,29 @@ Definition pYX :=
 (** If you think they are equivalent, prove it. If you think they are
     not, prove that. *)
 
+Theorem pXY_cequiv_pYX_holds : cequiv pXY pYX.
+Proof.
+  unfold pXY. unfold pYX. unfold cequiv. intros; split; intro.
+  - (* -> *)
+    inversion_clear H.
+    inversion H0; subst.
+    inversion H1; subst.
+    rewrite t_update_permute by (intro; inversion H).
+    econstructor. constructor. constructor.
+  - (* <- *)
+    inversion_clear H.
+    inversion H0; subst.
+    inversion H1; subst.
+    rewrite t_update_permute by (intro; inversion H).
+    econstructor. constructor. constructor.
+Qed.
+
 Theorem pXY_cequiv_pYX :
   cequiv pXY pYX \/ ~cequiv pXY pYX.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  left.
+  apply pXY_cequiv_pYX_holds.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, standard, optional (havoc_copy)
@@ -1840,9 +1861,39 @@ Definition pcopy :=
     are not, then prove that.  (Hint: You may find the [assert] tactic
     useful.) *)
 
+Theorem ptwice_cequiv_pcopy_does_not_hold :
+  ~cequiv ptwice pcopy.
+Proof.
+  unfold cequiv.
+  intro.
+  remember (empty_st : state) as st. clear Heqst.
+  assert (st =[ ptwice ]=> (Y !-> 2; X !-> 1; st)).
+  { econstructor. econstructor. econstructor.
+  }
+  apply H in H0. inversion_clear H0.
+  inversion H2; subst. clear H2.
+  inversion H1; subst. clear H1.
+  simpl in H6. rewrite t_update_eq in H6.
+  assert ( (X !-> n; Y !-> n; st) X = (X !-> 1; Y !-> 2; st) X ).
+  { rewrite t_update_permute with (x1 := X) by (intro; discriminate).
+    rewrite t_update_permute with (x1 := X) by (intro; discriminate).
+    rewrite <- H6. reflexivity.
+  }
+  assert ( (Y !-> n; X !-> n; st) Y = (Y !-> 2; X !-> 1; st) Y ).
+  { rewrite <- H6. reflexivity.
+  }
+  repeat rewrite t_update_eq in H0.
+  repeat rewrite t_update_eq in H1.
+  subst. inversion H1.
+Qed.
+
+
 Theorem ptwice_cequiv_pcopy :
   cequiv ptwice pcopy \/ ~cequiv ptwice pcopy.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  right.
+  apply ptwice_cequiv_pcopy_does_not_hold.
+Qed.
 (** [] *)
 
 (** The definition of program equivalence we are using here has some
