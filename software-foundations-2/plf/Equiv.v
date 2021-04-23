@@ -249,17 +249,25 @@ Ltac head_constructor t :=
     match r with tt => idtac end
   end.
 
+Definition negb_true_simpl : forall b, negb b = true -> b = false.
+Proof. apply negb_true_iff. Qed.
+
+Definition negb_false_simpl : forall b, negb b = false -> b = true.
+Proof. apply negb_false_iff. Qed.
+
 Ltac inversion_ceval H :=
   try (inversion_clear H;
        subst;
        repeat auto).
 
 Ltac try_solve_h H :=
-  simpl in H; try subst H; try rewrite H in *; repeat easy; repeat auto.
+  simpl in H; try subst H; try rewrite H in *; repeat easy; try auto.
 
 Ltac unfold_equiv H :=
   try (unfold bequiv in H);
   try (unfold aequiv in H);
+  repeat (apply negb_true_simpl in H);
+  repeat (apply negb_false_simpl in H);
   try_solve_h H.
 
 (** **** Exercise: 2 stars, standard, especially useful (if_false)  *)
@@ -300,8 +308,6 @@ Proof.
     apply E_IfTrue. simpl. rewrite H0. reflexivity. assumption.
   - (* <- *)
     inversion_ceval H; unfold_equiv H0.
-    + apply negb_true_iff in H0. auto.
-    + apply negb_false_iff in H0. auto.
 Qed.
 
 (** [] *)
@@ -1927,14 +1933,56 @@ Definition p2 : com :=
     started in.  We can capture the termination behavior of [p1] and
     [p2] individually with these lemmas: *)
 
-Lemma p1_may_diverge : forall st st', st X <> 0 ->
+Lemma p1_may_diverge : forall st st' : state, st X <> 0 ->
   ~ st =[ p1 ]=> st'.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  unfold p1.
+  intros st st' H Heval.
+  remember <{ while ~ X = 0 do
+                havoc Y;
+                X := X + 1
+              end
+            }> as p.
+  induction Heval; inversion Heqp; subst.
+  - (* WhileFalse *)
+    inversion H0.
+    apply negb_false_iff in H2.
+    apply eqb_eq in H2. rewrite H2 in H.
+    apply H. reflexivity.
+  - (* WhileTrue *)
+    clear Heqp. clear H0.
+    inversion Heval1; subst. inversion H2; inversion H5; subst.
+    clear H2. clear H5.
+    simpl in *. rewrite t_update_eq in *.
+    rewrite t_update_neq in * by (intro; discriminate).
+    apply IHHeval2.
+    + (* st X + 1 <> 0 *)
+      lia.
+    + (*  *)
+      reflexivity.
+Qed.
 
-Lemma p2_may_diverge : forall st st', st X <> 0 ->
+Lemma p2_may_diverge : forall st st' : state, st X <> 0 ->
   ~ st =[ p2 ]=> st'.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros st st' H Heval.
+  remember p2 as p.
+  induction Heval; inversion Heqp; subst; clear Heqp.
+  - (* while false *)
+    inversion H0. apply negb_false_iff in H2.
+    apply eqb_eq in H2. rewrite H2 in H.
+    apply H. reflexivity.
+  - (* while true *)
+    clear H0.
+    inversion Heval1; subst. inversion_clear Heval1; subst.
+    apply IHHeval2.
+    + (* st X + 1 <> 0 *)
+      lia.
+    + (*  *)
+      reflexivity.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced (p1_p2_equiv)
@@ -1943,7 +1991,30 @@ Proof.
     equivalent. *)
 
 Theorem p1_p2_equiv : cequiv p1 p2.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  unfold cequiv.
+  intros.
+  destruct (eqb_spec (st X) 0).
+  - (* x = 0, always terminates immediately *)
+    split; intro.
+    + (* p1 -> p2 *)
+      inversion H; subst.
+      * (* while false *)
+        constructor. assumption.
+      * (* while true; contradiction *)
+        unfold_equiv H2; apply eqb_neq in H2. apply H2 in e. destruct e.
+    + (* p2 -> p1 *)
+      inversion H; subst.
+      * (* while false *)
+        constructor. assumption.
+      * (* while true; contradiction *)
+        unfold_equiv H2; apply eqb_neq in H2. apply H2 in e. destruct e.
+  - (* x <> 0, both non-terminating *)
+    split; intro.
+    apply (p1_may_diverge _ _ n) in H; inversion H.
+    apply (p2_may_diverge _ _ n) in H; inversion H.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced (p3_p4_inequiv)
@@ -1964,7 +2035,30 @@ Definition p4 : com :=
      Z := 1 }>.
 
 Theorem p3_p4_inequiv : ~ cequiv p3 p4.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  unfold cequiv.
+  remember ((X !-> 1) : state) as st.
+  intro.
+  assert (st =[ p3 ]=> (Z !-> 2; X !-> 0; st)).
+  { econstructor. constructor. constructor.
+    eapply E_WhileTrue. simpl. apply negb_true_iff. subst. auto.
+    econstructor. apply E_Havoc with (n := 0).
+    constructor. simpl.
+    rewrite t_update_permute with (x1 := X) by easy.
+    rewrite t_update_shadow. constructor.
+    simpl. reflexivity.
+  }
+  apply H in H0. clear H. clear Heqst.
+  inversion_clear H0. inversion H. inversion H1. clear H H1. subst.
+  rename H10 into Hcontra; simpl in Hcontra.
+  (* Hcontra : (Z !-> 1; X !-> 0; st) = (Z !-> 2; X !-> 0; st) *)
+  assert (2 = 1).
+  { replace 2 with ((Z !-> 2; X !-> 0; st) Z) by auto.
+    rewrite <- Hcontra. auto.
+  }
+  inversion H.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 5 stars, advanced, optional (p5_p6_equiv)
