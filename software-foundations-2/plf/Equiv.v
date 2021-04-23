@@ -2079,9 +2079,74 @@ Definition p5 : com :=
 Definition p6 : com :=
   <{ X := 1 }>.
 
+Lemma p5_term_if : forall st st',
+  st X <> 1 ->
+  st =[ p5 ]=> st' ->
+  st' = (X !-> 1; st).
+Proof.
+  intros st st' Hneq H.
+  remember p5 as p.
+  induction H; inversion Heqp; subst.
+  + (* while false: contradiction *)
+    simpl in H. apply negb_false_simpl in H.
+    apply eqb_eq in H. rewrite H in Hneq. exfalso. apply Hneq. reflexivity.
+  + (* while true *)
+    clear Heqp.
+    inversion H0; subst. clear H0.
+    rewrite t_update_shadow in IHceval2.
+    rewrite t_update_eq in *.
+    destruct (eqb_spec n 1).
+    * (* n = 1 *)
+      inversion H1; subst; clear H1.
+      reflexivity. inversion H3.
+    * (* n <> 1 *)
+      apply IHceval2 in n0.
+      apply n0.
+      reflexivity.
+Qed.
+
 Theorem p5_p6_equiv : cequiv p5 p6.
-Proof. (* FILL IN HERE *) Admitted.
-(** [] *)
+Proof.
+  unfold cequiv.
+  intros. split; intro.
+  - (* p5 -> p6 *)
+    destruct (eqb_spec (st X) 1).
+    + (* st X = 1 *)
+      inversion H; subst.
+      * (* while false *)
+        assert (st' =[ p6 ]=> (X !-> st' X; st'))
+          by (constructor; rewrite e; reflexivity).
+        rewrite t_update_same in H0. apply H0.
+      * (* while true; contradiction *)
+        unfold_equiv H2.
+        apply eqb_neq in H2. apply H2 in e. inversion e.
+    + (* st X <> 1 *)
+      apply (p5_term_if _ _ n) in H.
+      subst. constructor. reflexivity.
+  - (* p6 -> p5 *)
+    destruct (eqb_spec (st X) 1).
+    + (* st X = 1 *)
+      assert (st = st').
+      { inversion H. subst. simpl in H.
+        simpl. rewrite <- e.
+        rewrite t_update_same. reflexivity.
+      }
+      rewrite <- H0.
+      constructor. simpl. apply negb_false_iff. apply eqb_eq.
+      apply e.
+    + (* st X <> 1 *)
+      assert (st' = (X !-> 1; st)).
+      { inversion H. subst. simpl. reflexivity. }
+      subst.
+      eapply E_WhileTrue.
+      * (* show beval st ~(X = 1) = true *)
+        simpl. apply negb_true_iff. apply eqb_neq. apply n.
+      * (* show havoc X <=> X := 1 *)
+        apply E_Havoc with (n := 1).
+      * (* show  *)
+        apply E_WhileFalse.
+        simpl. reflexivity.
+Qed.
 
 End Himp.
 
