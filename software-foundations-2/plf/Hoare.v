@@ -97,7 +97,7 @@ Definition Assertion := state -> Prop.
 
     - [fun st => False] never holds. *)
 
-(** **** Exercise: 1 star, standard, optional (assertions) 
+(** **** Exercise: 1 star, standard, optional (assertions)
 
     Paraphrase the following assertions in English (or your favorite
     natural language). *)
@@ -263,7 +263,7 @@ End ExPrettyAssertions.
       It's even more descriptive of the exact behavior of that command than
       the previous example. *)
 
-(** **** Exercise: 1 star, standard, optional (triples) 
+(** **** Exercise: 1 star, standard, optional (triples)
 
     Paraphrase the following Hoare triples in English.
 
@@ -284,12 +284,46 @@ End ExPrettyAssertions.
           {{X = m}}
           c
           {{(Z * Z) <= m /\ ~ (((S Z) * (S Z)) <= m)}}
-*)
-(* FILL IN HERE
+ *)
 
-    [] *)
+(*
 
-(** **** Exercise: 1 star, standard, optional (valid_triples) 
+     1) {{True}} c {{X = 5}}
+
+     c results in 5 assigned in variable X.
+
+     2) forall m, {{X = m}} c {{X = m + 5)}}
+
+     c adds 5 to X.
+
+     3) {{X <= Y}} c {{Y <= X}}
+
+     if X <= Y, c results in Y <= X.
+
+     4) {{True}} c {{False}}
+
+     c never terminates.
+
+     5) forall m,
+          {{X = m}}
+          c
+          {{Y = real_fact m}}
+
+     c sets Y to real_fact X.
+
+     6) forall m,
+          {{X = m}}
+          c
+          {{(Z * Z) <= m /\ ~ (((S Z) * (S Z)) <= m)}}
+
+     when input with X = m, c converts the state into that
+     that (Z + 1) * (Z + 1) > m.
+ *)
+
+
+(* [] *)
+
+(** **** Exercise: 1 star, standard, optional (valid_triples)
 
     Which of the following Hoare triples are _valid_ -- i.e., the
     claimed relation between [P], [c], and [Q] is true?
@@ -315,10 +349,50 @@ End ExPrettyAssertions.
    9) {{X = 1}}
         while ~(X = 0) do X := X + 1 end
       {{X = 100}}
-*)
-(* FILL IN HERE
+ *)
 
-    [] *)
+(*
+   1) {{True}} X := 5 {{X = 5}}
+
+   valid
+
+   2) {{X = 2}} X := X + 1 {{X = 3}}
+
+   valid
+
+   3) {{True}} X := 5; Y := 0 {{X = 5}}
+
+   valid
+
+   4) {{X = 2 /\ X = 3}} X := 5 {{X = 0}}
+
+   invalid
+
+   5) {{True}} skip {{False}}
+
+   invalid
+
+   6) {{False}} skip {{True}}
+
+   valid
+
+   7) {{True}} while true do skip end {{False}}
+
+   valid
+
+   8) {{X = 0}}
+        while X = 0 do X := X + 1 end
+      {{X = 1}}
+
+   valid
+
+   9) {{X = 1}}
+        while ~(X = 0) do X := X + 1 end
+      {{X = 100}}
+
+   valid
+*)
+(* [] *)
 
 (* ################################################################# *)
 (** * Hoare Triples, Formally *)
@@ -346,7 +420,9 @@ Theorem hoare_post_true : forall (P Q : Assertion) c,
   (forall st, Q st) ->
   {{P}} c {{Q}}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros; intro; intros.
+  apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (hoare_pre_false)  *)
@@ -354,11 +430,15 @@ Proof.
 (** Prove that if [P] holds in no state, then any triple with [P] as
     its precondition is valid. *)
 
+Ltac intro_all := repeat intro.
+
 Theorem hoare_pre_false : forall (P Q : Assertion) c,
   (forall st, ~ (P st)) ->
   {{P}} c {{Q}}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro_all.
+  apply H in H1. inversion H1.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -571,7 +651,7 @@ Proof.
 
    We will see how to do so in the next section. *)
 
-(** **** Exercise: 2 stars, standard, optional (hoare_asgn_examples) 
+(** **** Exercise: 2 stars, standard, optional (hoare_asgn_examples)
 
     Complete these Hoare triples...
 
@@ -587,13 +667,22 @@ Proof.
    both with just [apply hoare_asgn]. If you find that tactic doesn't
    suffice, double check that you have completed the triple properly. *)
 
-(* FILL IN HERE *)
+Example hoare_asgn_example_1 :
+  {{ (X <= 10) [X |-> 2 * X] }} X := 2 * X {{ X <= 10 }}.
+Proof. apply hoare_asgn. Qed.
+
+Example hoare_asgn_example_2 :
+  {{ (0 <= X /\ X <= 5) [X |-> 3] }}
+    X := 3
+  {{ 0 <= X /\ X <= 5 }}.
+Proof. apply hoare_asgn. Qed.
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_hoare_asgn_examples : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, especially useful (hoare_asgn_wrong) 
+(** **** Exercise: 2 stars, standard, especially useful (hoare_asgn_wrong)
 
     The assignment rule looks backward to almost everyone the first
     time they see it.  If it still seems puzzling, it may help
@@ -609,13 +698,30 @@ Definition manual_grade_for_hoare_asgn_examples : option (nat*string) := None.
     [a], and your counterexample needs to exhibit an [a] for which
     the rule doesn't work.) *)
 
-(* FILL IN HERE *)
+Ltac pose_st name :=
+  remember (empty_st : state) as name eqn:H_st; clear H_st.
+
+Example hoare_asgn_wrong :
+  ~ ({{ True }} X := X + 1 {{ X = X + 1 }}).
+Proof.
+  intros.
+  intro.
+  pose_st st.
+  assert ((X !-> 0; st) =[ X := X + 1 ]=> (X !-> 1; st)).
+  { replace (X !-> 1; st) with (X !-> 1; X !-> 0; st) by
+        apply t_update_shadow.
+    constructor. easy.
+  }
+  assert (T: True) by auto.
+  apply H in H0. apply H0 in T. simpl in T.
+  rewrite t_update_eq in T. inversion T.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_hoare_asgn_wrong : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (hoare_asgn_fwd) 
+(** **** Exercise: 3 stars, advanced (hoare_asgn_fwd)
 
     However, by using a _parameter_ [m] (a Coq number) to remember the
     original value of [X] we can define a Hoare rule for assignment
@@ -640,10 +746,20 @@ Theorem hoare_asgn_fwd :
   {{fun st => P (X !-> m ; st)
            /\ st X = aeval (X !-> m ; st) a }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro_all.
+  inversion H; subst.
+  destruct H0.
+  rewrite t_update_shadow.
+  split.
+  - (* P (X !-> m; st) *)
+    subst. rewrite t_update_same. apply H0.
+  - (* X !-> aeval st a; st) X = aeval (X !-> m; st) a *)
+    subst. rewrite t_update_same. rewrite t_update_eq. reflexivity.
+Qed.
+
 (** [] *)
 
-(** **** Exercise: 2 stars, advanced, optional (hoare_asgn_fwd_exists) 
+(** **** Exercise: 2 stars, advanced, optional (hoare_asgn_fwd_exists)
 
     Another way to define a forward rule for assignment is to
     existentially quantify over the previous value of the assigned
@@ -984,7 +1100,7 @@ Qed.
     everything we could possibly want to know about assertions --
     there's no magic here! But it's good enough so far. *)
 
-(** **** Exercise: 2 stars, standard (hoare_asgn_examples_2) 
+(** **** Exercise: 2 stars, standard (hoare_asgn_examples_2)
 
     Prove these triples.  Try to make your proof scripts as nicely automated
     as those above. *)
@@ -1083,7 +1199,7 @@ Qed.
       {{ X = n }}
 *)
 
-(** **** Exercise: 2 stars, standard, especially useful (hoare_asgn_example4) 
+(** **** Exercise: 2 stars, standard, especially useful (hoare_asgn_example4)
 
     Translate this "decorated program" into a formal proof:
 
@@ -1111,7 +1227,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (swap_exercise) 
+(** **** Exercise: 3 stars, standard (swap_exercise)
 
     Write an Imp program [c] that swaps the values of [X] and [Y] and
     show that it satisfies the following specification:
@@ -1135,7 +1251,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, standard (invalid_triple) 
+(** **** Exercise: 4 stars, standard (invalid_triple)
 
     Show that
 
@@ -1350,7 +1466,7 @@ Ltac assn_auto'' :=
   try rewrite -> leb_le in *;  (* for inequalities *)
   auto; try lia.
 
-(** **** Exercise: 2 stars, standard (if_minus_plus) 
+(** **** Exercise: 2 stars, standard (if_minus_plus)
 
     Prove the theorem below using [hoare_if].  Do not use [unfold
     hoare_triple]. *)
@@ -1682,7 +1798,7 @@ Qed.
 (* ----------------------------------------------------------------- *)
 (** *** Exercise: [REPEAT] *)
 
-(** **** Exercise: 4 stars, advanced (hoare_repeat) 
+(** **** Exercise: 4 stars, advanced (hoare_repeat)
 
     In this exercise, we'll add a new command to our language of
     commands: [REPEAT] c [until] b [end]. You will write the
