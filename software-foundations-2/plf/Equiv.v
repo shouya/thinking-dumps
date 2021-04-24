@@ -2170,10 +2170,116 @@ End Himp.
          c3;
          c2
        end
-*)
-(* FILL IN HERE
+ *)
 
-    [] *)
+
+(* This module is copied from my solution in Imp.v from logical foundations;
+   I will extend it at the end.
+*)
+
+Module ForImp.
+
+
+Inductive com : Type :=
+  | CSkip
+  | CAss (x : string) (a : aexp)
+  | CSeq (c1 c2 : com)
+  | CIf (b : bexp) (c1 c2 : com)
+  | CWhile (b : bexp) (c : com)
+  | CFor (cinit cincr cbody : com) (b : bexp).
+
+Notation "'skip'"  :=
+         CSkip (in custom com at level 0) : com_scope.
+Notation "x := y"  :=
+         (CAss x y)
+            (in custom com at level 0, x constr at level 0,
+             y at level 85, no associativity) : com_scope.
+Notation "x ; y" :=
+         (CSeq x y)
+           (in custom com at level 90, right associativity) : com_scope.
+Notation "'if' x 'then' y 'else' z 'end'" :=
+         (CIf x y z)
+           (in custom com at level 89, x at level 99,
+            y at level 99, z at level 99) : com_scope.
+Notation "'while' x 'do' y 'end'" :=
+         (CWhile x y)
+            (in custom com at level 89, x at level 99, y at level 99) : com_scope.
+
+Notation "'for' '(' cinit ';' b ';' cincr ')' 'do' cbody 'end'" :=
+         (CFor cinit cincr cbody b)
+           (in custom com at level 89,
+               cinit at level 89,
+               b at level 89,
+               cincr at level 89,
+               cbody at level 99
+           ) : com_scope.
+
+Reserved Notation "st '=[' c ']=>' st'"
+     (at level 40, c custom com at level 99, st' constr at next level).
+
+Inductive ceval : com -> state -> state -> Prop :=
+  | E_Skip : forall st,
+      st =[ CSkip ]=> st
+  | E_Ass : forall st x y,
+      st =[ x := y ]=> (x !-> aeval st y; st)
+  | E_Seq_Cont : forall st st' st'' c1 c2,
+      st =[ c1 ]=> st' ->
+      st' =[ c2 ]=> st'' ->
+      st =[ c1; c2 ]=> st''
+  | E_If_True : forall st st' b c1 c2,
+      beval st b = true ->
+      st =[ c1 ]=> st' ->
+      st =[ if b then c1 else c2 end ]=> st'
+  | E_If_False : forall st st' b c1 c2,
+      beval st b = false ->
+      st =[ c2 ]=> st' ->
+      st =[ if b then c1 else c2 end ]=> st'
+  | E_While_Stop : forall st b c,
+      beval st b = false ->
+      st =[ while b do c end ]=> st
+  | E_While_Cont : forall st st' st'' b c,
+      beval st b = true ->
+      st  =[ c ]=> st' ->
+      st' =[ while b do c end ]=> st'' ->
+      st  =[ while b do c end ]=> st''
+  | E_For : forall st st' b cinit cincr cbody,
+      st =[ cinit; while b do (cbody; cincr) end ]=> st' ->
+      st =[ for (cinit; b; cincr) do cbody end ]=> st'
+  where "st '=[' c ']=>' st'" := (ceval c st st').
+
+Definition aequiv (a1 a2 : aexp) : Prop :=
+  forall (st : state),
+    aeval st a1 = aeval st a2.
+
+Definition bequiv (b1 b2 : bexp) : Prop :=
+  forall (st : state),
+    beval st b1 = beval st b2.
+
+Definition cequiv (c1 c2 : com) : Prop := forall st st' : state,
+  st =[ c1 ]=> st' <-> st =[ c2 ]=> st'.
+
+(* Just to extend a proof above *)
+
+(* From here on are my solution for prove "for" is equivalent to "while" *)
+(* Frankly this solution would be easy like cheating because I already defined
+   for in that way. *)
+
+
+Theorem for_while_equiv : forall c1 c2 c3 b,
+  cequiv <{ for ( c1; b; c2 ) do c3 end }>
+         <{ c1; while b do c3; c2 end }>.
+Proof.
+  split; intro.
+  - (* -> *)
+    inversion H; subst. assumption.
+  - (* <- *)
+    constructor. apply H.
+Qed.
+
+End ForImp.
+
+
+(* [] *)
 
 (** **** Exercise: 3 stars, standard, optional (swap_noninterfering_assignments)
 
@@ -2187,7 +2293,19 @@ Theorem swap_noninterfering_assignments: forall l1 l2 a1 a2,
     <{ l1 := a1; l2 := a2 }>
     <{ l2 := a2; l1 := a1 }>.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros.
+  (* will be used by t_update_permute in another direction *)
+  assert (l2 <> l1) by auto.
+
+  split; intro;
+    inversion H3; inversion H6; inversion H9; subst;
+    rewrite aeval_weakening by assumption;
+    rewrite t_update_permute by assumption;
+    repeat econstructor;
+    rewrite aeval_weakening by assumption;
+    reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, optional (capprox)
@@ -2216,31 +2334,70 @@ Definition capprox (c1 c2 : com) : Prop := forall (st st' : state),
 (** Find two programs [c3] and [c4] such that neither approximates
     the other. *)
 
-Definition c3 : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-Definition c4 : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition c3 : com := <{ X := 3 }>.
+Definition c4 : com := <{ X := 4 }>.
+
+
+Lemma t_neq_false : forall x (a1 a2 : nat) st,
+  a1 <> a2 ->
+  (x !-> a1; st) <> (x !-> a2; st).
+Proof.
+  intros.
+  intro.
+  assert (a1 = a2).
+  replace a2 with ((x !-> a1; st) x).
+  rewrite t_update_eq; reflexivity.
+  now (rewrite H0; rewrite t_update_eq).
+  easy.
+Qed.
 
 Theorem c3_c4_different : ~ capprox c3 c4 /\ ~ capprox c4 c3.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  unfold capprox.
+  remember (empty_st : state) as st; clear Heqst.
+  remember ((X !-> 3; st) : state) as st3.
+  remember ((X !-> 4; st) : state) as st4.
+  assert (Hc3: st =[ c3 ]=> st3) by (subst; constructor; easy).
+  assert (Hc4: st =[ c4 ]=> st4) by (subst; constructor; easy).
+  split.
+  - (* c3 -> c4 *)
+    intro.
+    apply H in Hc3. inversion Hc3; subst. inversion H3.
+    now apply t_neq_false in H1.
+  - (* c4 -> c3 *)
+    intro.
+    apply H in Hc4. inversion Hc4; subst. inversion H3.
+    now apply t_neq_false in H1.
+Qed.
+
 
 (** Find a program [cmin] that approximates every other program. *)
 
-Definition cmin : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition cmin : com := <{ while true do skip end }>.
 
 Theorem cmin_minimal : forall c, capprox cmin c.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  unfold capprox.
+  intros.
+  apply loop_never_stops in H. destruct H.
+Qed.
 
 (** Finally, find a non-trivial property which is preserved by
     program approximation (when going from left to right). *)
-
-Definition zprop (c : com) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition zprop (c : com) : Prop :=
+  (* c terminates *)
+  forall st, exists st', st =[ c ]=> st'.
 
 Theorem zprop_preserving : forall c c',
   zprop c -> capprox c c' -> zprop c'.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  unfold zprop. unfold capprox.
+  intros.
+  assert (He: exists st': state, st =[ c ]=> st') by easy.
+  destruct He as [st' He].
+  exists st'. now apply H0.
+Qed.
+
 (** [] *)
 
 (* 2020-09-09 21:08 *)
