@@ -1223,8 +1223,14 @@ Example hoare_asgn_example4 :
   {{ X = 1 /\ Y = 2 }}.
 Proof.
   apply hoare_seq with (Q := (X = 1)%assertion).
-  (* The annotation [%assertion] is needed here to help Coq parse correctly. *)
-  (* FILL IN HERE *) Admitted.
+  - eapply hoare_asgn with (X := Y) (a := 2).
+    + econstructor. simpl. reflexivity.
+    + simpl. intro_all. inversion H; subst. simpl. unfold t_update.
+      simpl. auto.
+  - eapply hoare_consequence_pre.
+    +
+    + assn_auto.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (swap_exercise)
