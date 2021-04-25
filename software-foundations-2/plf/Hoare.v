@@ -779,7 +779,15 @@ Theorem hoare_asgn_fwd_exists :
   {{fun st => exists m, P (X !-> m ; st) /\
                 st X = aeval (X !-> m ; st) a }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro_all.
+  inversion H; subst.
+  exists (st X).
+  split.
+  - rewrite t_update_shadow. rewrite t_update_same. apply H0.
+  - rewrite t_update_shadow. rewrite t_update_same. rewrite t_update_eq.
+    reflexivity.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -1110,14 +1118,20 @@ Example assn_sub_ex1' :
   X := 2 * X
   {{ X <= 10 }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply hoare_consequence_pre.
+  - apply hoare_asgn.
+  - assn_auto.
+Qed.
 
 Example assn_sub_ex2' :
   {{ 0 <= 3 /\ 3 <= 5 }}
   X := 3
   {{ 0 <= X /\ X <= 5 }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply hoare_consequence_pre.
+  - apply hoare_asgn.
+  - assn_auto.
+Qed.
 
 (** [] *)
 
