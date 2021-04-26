@@ -1316,8 +1316,34 @@ Theorem invalid_triple : ~ forall (a : aexp) (n : nat),
     {{ Y = n }}.
 Proof.
   unfold hoare_triple.
-  intros H.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  (* take a := X and n := 0 *)
+  specialize H with (a := X) (n := 0).
+  pose_st st.
+  remember ((X !-> 0; st) : state) as st1.
+  remember ((Y !-> 3; X !-> 3; st) : state) as st2.
+
+  specialize H with (st := st1) (st' := st2).
+  subst.
+
+  simpl in H. repeat rewrite t_update_eq in H.
+  assert (~  (X !-> 0; st) =[ X := 3; Y := X ]=> (Y !-> 3; X !-> 3; st)).
+  { intro. apply H in H0. inversion H0. auto.
+  }
+
+  (* now we prove (X !-> 0; st) =[ X := 3; Y := X ]=> (Y !-> 3; X !-> 3; st) *)
+  apply H0.
+  econstructor.
+  econstructor.
+  auto.
+  simpl.
+  rewrite t_update_shadow.
+  econstructor.
+  auto.
+Qed.
+
+
+
 (** [] *)
 
 (* ================================================================= *)
