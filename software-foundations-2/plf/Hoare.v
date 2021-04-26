@@ -1237,13 +1237,14 @@ Example hoare_asgn_example4 :
   {{ X = 1 /\ Y = 2 }}.
 Proof.
   apply hoare_seq with (Q := (X = 1)%assertion).
-  - eapply hoare_asgn with (X := Y) (a := 2).
-    + econstructor. simpl. reflexivity.
-    + simpl. intro_all. inversion H; subst. simpl. unfold t_update.
-      simpl. auto.
-  - eapply hoare_consequence_pre.
-    +
-    + assn_auto.
+  - intro_all.
+    eapply hoare_asgn.
+    + apply H.
+    + inversion H; subst. assn_auto.
+  - intro_all.
+    eapply hoare_asgn.
+    + apply H.
+    + inversion H; subst. assn_auto.
 Qed.
 (** [] *)
 
@@ -1260,15 +1261,30 @@ Qed.
     your proof will want to start at the end and work back to the
     beginning of your program.)  *)
 
-Definition swap_program : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition swap_program : com :=
+  <{
+    Z := X;
+    X := Y;
+    Y := Z
+  }>.
 
 Theorem swap_exercise :
   {{X <= Y}}
   swap_program
   {{Y <= X}}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  pose_st st.
+  eapply hoare_seq.
+  - eapply hoare_seq.
+    + apply hoare_asgn.
+    + apply hoare_asgn.
+  - simpl.
+    eapply hoare_consequence_pre.
+    apply hoare_asgn.
+    auto.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 4 stars, standard (invalid_triple)
