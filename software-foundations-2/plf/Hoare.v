@@ -1976,8 +1976,15 @@ Inductive ceval : state -> com -> state -> Prop :=
       st  =[ c ]=> st' ->
       st' =[ while b do c end ]=> st'' ->
       st  =[ while b do c end ]=> st''
-(* FILL IN HERE *)
-
+  | E_RepeatTrue : forall b st st' c,
+      st =[ c ]=> st' ->
+      beval st' b = true ->
+      st =[ repeat c until b end ]=> st'
+  | E_RepeatFalse : forall st st' st'' b c,
+      st  =[ c ]=> st' ->
+      beval st' b = true ->
+      st' =[ repeat c until b end ]=> st'' ->
+      st  =[ repeat c until b end ]=> st''
 where "st '=[' c ']=>' st'" := (ceval st c st').
 
 (** A couple of definitions from above, copied here so they use the
