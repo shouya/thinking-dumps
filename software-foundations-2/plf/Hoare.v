@@ -1541,7 +1541,15 @@ Theorem if_minus_plus :
   end
   {{Y = X + Z}}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply hoare_if.
+  - eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assn_auto''.
+  - eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assn_auto''.
+Qed.
+
 (** [] *)
 
 (* ----------------------------------------------------------------- *)
@@ -1626,8 +1634,18 @@ Inductive ceval : com -> state -> state -> Prop :=
       st  =[ c ]=> st' ->
       st' =[ while b do c end ]=> st'' ->
       st  =[ while b do c end ]=> st''
-(* FILL IN HERE *)
-
+  (* Cheating version: *)
+  (* | E_If1 : forall st st' b c, *)
+  (*     st =[ if b then c else skip end ]=> st' -> *)
+  (*     st =[ if1 b then c end ]=> st' *)
+(* No I will come up with a genuine one *)
+  | E_If1True : forall st st' b c,
+      beval st b = true ->
+      st =[ c ]=> st' ->
+      st =[ if1 b then c end ]=> st'
+  | E_If1False : forall st b c,
+      beval st b = false ->
+      st =[ if1 b then c end ]=> st
 where "st '=[' c ']=>' st'" := (ceval c st st').
 
 Hint Constructors ceval : core.
@@ -1637,11 +1655,11 @@ Hint Constructors ceval : core.
 
 Example if1true_test :
   empty_st =[ if1 X = 0 then X := 1 end ]=> (X !-> 1).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. auto. Qed.
 
 Example if1false_test :
   (X !-> 2) =[ if1 X = 0 then X := 1 end ]=> (X !-> 2).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. auto. Qed.
 
 (** [] *)
 
@@ -1677,7 +1695,15 @@ Notation "{{ P }}  c  {{ Q }}" := (hoare_triple P c Q)
     be in the assertion scope.  For example, if you want [e] to be
     parsed as an assertion, write it as [(e)%assertion]. *)
 
-(* FILL IN HERE *)
+Theorem hoare_if1 : forall (b:bexp) c P Q,
+    {{ P /\  b }} c {{ Q }} ->
+    (( P /\ ~b )%assertion ->> Q) ->
+    {{ P }} if1 b then c end {{ Q }}.
+Proof.
+  intros.
+  intro_all.
+  inversion H1; subst; eauto.
+Qed.
 
 (** For full credit, prove formally [hoare_if1_good] that your rule is
     precise enough to show the following valid Hoare triple:
@@ -1687,7 +1713,54 @@ Notation "{{ P }}  c  {{ Q }}" := (hoare_triple P c Q)
     X := X + Y
   end
   {{ X = Z }}
-*)
+ *)
+
+(* I have to copy these two theores from the global scope because they
+applied only to Imp.ceval and I need them to work with my new ceval as
+well. *)
+Theorem hoare_consequence_pre : forall (P P' Q : Assertion) c,
+  {{P'}} c {{Q}} ->
+  P ->> P' ->
+  {{P}} c {{Q}}.
+Proof.
+  unfold hoare_triple, "->>".
+  intros P P' Q c Hhoare Himp st st' Heval Hpre.
+  apply Hhoare with (st := st).
+  - assumption.
+  - apply Himp. assumption.
+Qed.
+
+Theorem hoare_asgn : forall Q X a,
+  {{Q [X |-> a]}} X := a {{Q}}.
+Proof.
+  unfold hoare_triple.
+  intros Q X a st st' HE HQ.
+  inversion HE. subst.
+  unfold assn_sub in HQ. assumption.  Qed.
+
+(* So here goes the solution *)
+Example haore_if_example:
+  {{ X + Y = Z }}
+  if1 ~(Y = 0) then
+    X := X + Y
+  end
+  {{ X = Z }}.
+Proof.
+  apply hoare_if1.
+  - (* if1 true case *)
+    eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assn_auto.
+  - (* if1 false case *)
+    assn_auto''.
+    destruct H.
+    rewrite negb_true_iff in H0.
+    destruct (eqb_spec (st Y) 0).
+    + lia.
+    + congruence.
+Qed.
+
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_hoare_if1 : option (nat*string) := None.
 (** [] *)
