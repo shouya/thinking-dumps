@@ -1715,52 +1715,6 @@ Qed.
   {{ X = Z }}
  *)
 
-(* I have to copy these two theores from the global scope because they
-applied only to Imp.ceval and I need them to work with my new ceval as
-well. *)
-Theorem hoare_consequence_pre : forall (P P' Q : Assertion) c,
-  {{P'}} c {{Q}} ->
-  P ->> P' ->
-  {{P}} c {{Q}}.
-Proof.
-  unfold hoare_triple, "->>".
-  intros P P' Q c Hhoare Himp st st' Heval Hpre.
-  apply Hhoare with (st := st).
-  - assumption.
-  - apply Himp. assumption.
-Qed.
-
-Theorem hoare_asgn : forall Q X a,
-  {{Q [X |-> a]}} X := a {{Q}}.
-Proof.
-  unfold hoare_triple.
-  intros Q X a st st' HE HQ.
-  inversion HE. subst.
-  unfold assn_sub in HQ. assumption.  Qed.
-
-(* So here goes the solution *)
-Example haore_if_example:
-  {{ X + Y = Z }}
-  if1 ~(Y = 0) then
-    X := X + Y
-  end
-  {{ X = Z }}.
-Proof.
-  apply hoare_if1.
-  - (* if1 true case *)
-    eapply hoare_consequence_pre.
-    + apply hoare_asgn.
-    + assn_auto.
-  - (* if1 false case *)
-    assn_auto''.
-    destruct H.
-    rewrite negb_true_iff in H0.
-    destruct (eqb_spec (st Y) 0).
-    + lia.
-    + congruence.
-Qed.
-
-
 (* Do not modify the following line: *)
 Definition manual_grade_for_hoare_if1 : option (nat*string) := None.
 (** [] *)
@@ -1800,7 +1754,20 @@ Lemma hoare_if1_good :
     X := X + Y
   end
   {{ X = Z }}.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  apply hoare_if1.
+  - (* if1 true case *)
+    eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + assn_auto.
+  - (* if1 false case *)
+    assn_auto''.
+    destruct H.
+    rewrite negb_true_iff in H0.
+    destruct (eqb_spec (st Y) 0).
+    + lia.
+    + congruence.
+Qed.
 
 (** [] *)
 
