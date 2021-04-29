@@ -1982,7 +1982,7 @@ Inductive ceval : state -> com -> state -> Prop :=
       st =[ repeat c until b end ]=> st'
   | E_RepeatFalse : forall st st' st'' b c,
       st  =[ c ]=> st' ->
-      beval st' b = true ->
+      beval st' b = false ->
       st' =[ repeat c until b end ]=> st'' ->
       st  =[ repeat c until b end ]=> st''
 where "st '=[' c ']=>' st'" := (ceval st c st').
@@ -2009,13 +2009,60 @@ Definition ex1_repeat :=
 Theorem ex1_repeat_works :
   empty_st =[ ex1_repeat ]=> (Y !-> 1 ; X !-> 1).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  constructor.
+  econstructor.
+  - constructor. simpl. reflexivity.
+  - constructor. simpl. reflexivity.
+  - simpl. reflexivity.
+Qed.
 
 (** Now state and prove a theorem, [hoare_repeat], that expresses an
     appropriate proof rule for [repeat] commands.  Use [hoare_while]
     as a model, and try to make your rule as precise as possible. *)
 
-(* FILL IN HERE *)
+Theorem hoare_repeat: forall P c (b: bexp),
+  {{ P }} c {{ P }} ->
+  {{ P }} repeat c until b end {{ P /\ b }}.
+Proof.
+  unfold hoare_triple.
+  intro_all.
+  remember <{ repeat c until b end }> as prog.
+  induction H0; inversion Heqprog; subst; clear Heqprog.
+  - (* repeat true *)
+    simpl in H.
+    specialize H with (st := st) (st' := st').
+    apply (H H0) in H1.
+    split; assumption.
+  - (* repeat false *)
+    simpl.
+    apply (H st st' H0_) in H1.
+    apply IHceval2; try reflexivity.
+    apply H1.
+Qed.
+
+Theorem hoare_repeat': forall P Q c (b: bexp),
+  {{ P }} c {{ (P /\ ~b) \/ (Q /\ b) }} ->
+  {{ P }} repeat c until b end {{ Q /\ b }}.
+Proof.
+  unfold hoare_triple.
+  intro_all.
+  remember <{ repeat c until b end }> as prog.
+  induction H0; inversion Heqprog; subst; clear Heqprog.
+  - (* repeat true *)
+    simpl in H.
+    specialize H with (st := st) (st' := st').
+    apply (H H0) in H1.
+    destruct H1.
+    + destruct H1. congruence.
+    + destruct H1; split; assumption.
+  - (* repeat false *)
+    simpl.
+    apply (H st st' H0_) in H1.
+    destruct H1.
+    + apply IHceval2; try reflexivity.
+      apply H1.
+    + destruct H1. congruence.
+Qed.
 
 (** For full credit, make sure (informally) that your rule can be used
     to prove the following valid Hoare triple:
@@ -2026,7 +2073,82 @@ Proof.
     X := X - 1
   until X = 0 end
   {{ X = 0 /\ Y > 0 }}
-*)
+ *)
+Theorem hoare_consequence_post : forall (P Q Q' : Assertion) c,
+  {{P}} c {{Q'}} ->
+  Q' ->> Q ->
+  {{P}} c {{Q}}.
+Proof.
+  unfold hoare_triple, "->>".
+  intros P Q Q' c Hhoare Himp st st' Heval Hpre.
+  apply Himp.
+  apply Hhoare with (st := st).
+  - assumption.
+  - assumption.
+Qed.
+
+Theorem hoare_consequence_pre : forall (P P' Q : Assertion) c,
+  {{P'}} c {{Q}} ->
+  P ->> P' ->
+  {{P}} c {{Q}}.
+Proof.
+  unfold hoare_triple, "->>".
+  intros P P' Q c Hhoare Himp st st' Heval Hpre.
+  apply Hhoare with (st := st).
+  - assumption.
+  - apply Himp. assumption.
+Qed.
+
+Theorem hoare_consequence : forall (P P' Q Q' : Assertion) c,
+  {{P'}} c {{Q'}} ->
+  P ->> P' ->
+  Q' ->> Q ->
+  {{P}} c {{Q}}.
+Proof.
+  intros P P' Q Q' c Htriple Hpre Hpost.
+  apply hoare_consequence_pre with (P' := P').
+  - apply hoare_consequence_post with (Q' := Q').
+    + assumption.
+    + assumption.
+  - assumption.
+Qed.
+
+Theorem hoare_asgn : forall Q X a,
+  {{Q [X |-> a]}} (X := a) {{Q}}.
+Proof.
+  intros Q X a st st' Heval HQ.
+  inversion Heval; subst.
+  auto.
+Qed.
+
+Theorem hoare_seq : forall P Q R c1 c2,
+     {{Q}} c2 {{R}} ->
+     {{P}} c1 {{Q}} ->
+     {{P}} c1; c2 {{R}}.
+Proof.
+  unfold hoare_triple.
+  intros P Q R c1 c2 H1 H2 st st' H12 Pre.
+  inversion H12; subst.
+  eauto.
+Qed.
+
+Example hoare_repeat_example_1:
+  {{ X > 0 }}
+  repeat
+    Y := X;
+    X := X - 1
+  until X = 0 end
+  {{ X = 0 /\ Y > 0 }}.
+Proof.
+  eapply hoare_consequence_post.
+  - apply hoare_repeat' with (Q := (Y > 0)%assertion).
+    eapply hoare_seq.
+    + apply hoare_asgn.
+    + eapply hoare_consequence_pre.
+      * apply hoare_asgn.
+      * assn_auto''.
+  - assn_auto''.
+Qed.
 
 End RepeatExercise.
 
