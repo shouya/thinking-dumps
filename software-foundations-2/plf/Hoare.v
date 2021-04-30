@@ -2292,13 +2292,33 @@ Proof. eauto. Qed.
 (** Complete the Hoare rule for [HAVOC] commands below by defining
     [havoc_pre], and prove that the resulting rule is correct. *)
 
-Definition havoc_pre (X : string) (Q : Assertion) (st : total_map nat) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(* Let me first try out some examples *)
+Example hoare_havoc_example_1:
+  {{ Y = 1 }} havoc X {{ Y = 1 }}.
+Proof. intro_all. inversion H; subst. assn_auto''. Qed.
+
+Example hoare_havoc_example_2:
+  {{ False }} havoc X {{ X = 1 }}.
+Proof. intro_all. inversion H; subst. assn_auto''. Qed.
+
+Example hoare_havoc_example_3:
+  {{ True }} havoc X {{ X >= 0 }}.
+Proof. intro_all. inversion H; subst. assn_auto''. Qed.
+
+Definition havoc_pre (X : string) (Q : Assertion) (st : total_map nat) : Prop :=
+  forall n, Q (X !-> n; st).
 
 Theorem hoare_havoc : forall (Q : Assertion) (X : string),
   {{ havoc_pre X Q }} havoc X {{ Q }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold havoc_pre.
+  intro_all.
+  (* destruct H0 as [n0 H0]. *)
+  inversion H; subst; clear H.
+  (* destruct (eqb_spec n0 n). *)
+  specialize H0 with n.
+  apply H0.
+Qed.
 
 (** [] *)
 
@@ -2317,7 +2337,13 @@ Theorem havoc_post : forall (P : Assertion) (X : string),
 Proof.
   intros P X. eapply hoare_consequence_pre.
   - apply hoare_havoc.
-  - (* FILL IN HERE *) Admitted.
+  - unfold havoc_pre, "->>", assn_sub, bassn. simpl.
+    intros.
+    exists (st X).
+    rewrite t_update_shadow.
+    rewrite t_update_same.
+    apply H.
+Qed.
 
 (** [] *)
 
