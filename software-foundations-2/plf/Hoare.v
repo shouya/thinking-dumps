@@ -2481,15 +2481,38 @@ Notation "{{ P }}  c  {{ Q }}" :=
     triple for [assert] also works for [ASSUME]. *)
 
 Theorem assert_assume_differ : exists (P:Assertion) b (Q:Assertion),
-       ({{P}} assume b {{Q}})
-  /\ ~ ({{P}} assert b {{Q}}).
-(* FILL IN HERE *) Admitted.
+       ({{P}} assume b {{Q}}) /\ ~ ({{P}} assert b {{Q}}).
+Proof.
+  exists (True%assertion).
+  exists <{ 0 = 1 }>.
+  exists (True%assertion).
+  split.
+  - intro_all.
+    inversion H; subst; clear H. simpl in H2. inversion H2.
+  - intro_all.
+    unfold hoare_triple in H.
+    pose_st st.
+    specialize H with (st:=st) (r:=RError).
+    assert (st =[ assert (0 = 1) ]=> RError) by now constructor.
+    assert (True%assertion) by auto.
+    apply (H H0) in H1.
+    destruct H1 as [st' [H1 H2]].
+    inversion H1.
+Qed.
 
 Theorem assert_implies_assume : forall P b Q,
      ({{P}} assert b {{Q}})
   -> ({{P}} assume b {{Q}}).
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold hoare_triple.
+  intro_all.
+  inversion H0; subst.
+  exists st. split; try reflexivity.
+  specialize H with st (RNormal st).
+  assert (st =[ assert b ]=> RNormal st) by now constructor.
+  apply (H H2) in H1. destruct H1. destruct H1.
+  inversion H1; subst. apply H4.
+Qed.
 
 (** Your task is now to state Hoare rules for [assert] and [assume],
     and use them to prove a simple program correct.  Name your hoare
@@ -2552,7 +2575,24 @@ Qed.
 (** State and prove your hoare rules, [hoare_assert] and
     [hoare_assume], below. *)
 
-(* FILL IN HERE *)
+Theorem hoare_assert : forall P (b : bexp),
+    {{ P /\ b }} assert b {{ P }}.
+Proof.
+  intro_all.
+  inversion H; subst; clear H.
+  - (* Assert true *)
+    exists st. easy.
+  - (* Assert false *)
+    destruct H0. congruence.
+Qed.
+
+Theorem hoare_assume : forall P (b : bexp),
+    {{ P }} assume b {{ P /\ b }}.
+Proof.
+  intro_all.
+  inversion H; subst; clear H.
+  exists st. easy.
+Qed.
 
 (** Here are the other proof rules (sanity check) *)
 (* NOTATION : IY -- Do we want <{ }> to be printing in here? *)
@@ -2617,7 +2657,16 @@ Example assert_assume_example:
   assert (X = 2)
   {{True}}.
 Proof.
-(* FILL IN HERE *) Admitted.
+  eapply hoare_seq.
+  - (* {{?Q}} X := X + 1; assert (X = 2) {{True}} *)
+    eapply hoare_seq.
+    + apply hoare_assert.
+    + apply hoare_asgn.
+  - (* {{True}} assume (X = 1) {{(fun st : state => True st /\ <{ X = 2 }> st) [X |-> X + 1]}} *)
+    eapply hoare_consequence_post.
+    + apply hoare_assume.
+    + assn_auto''.
+Qed.
 
 End HoareAssertAssume.
 (** [] *)
