@@ -257,21 +257,21 @@ These decorations were constructed as follows:
     arbitrary natural numbers [n] and [m] (for example, [3 - 5 + 5 =
     5]). *)
 
-(** **** Exercise: 2 stars, standard (if_minus_plus_reloaded) 
+(** **** Exercise: 2 stars, standard (if_minus_plus_reloaded)
 
     Fill in valid decorations for the following program:
 
        {{ True }}
       if X <= Y then
-          {{                         }} ->>
-          {{                         }}
+          {{ True /\ X <= Y          }} ->> because (Y - X) > 0
+          {{ Z = (Y - X) + Z         }}
         Z := Y - X
-          {{                         }}
+          {{ Y = X + Z               }}
       else
-          {{                         }} ->>
-          {{                         }}
+          {{ True /\ X > Y           }} ->> because refl
+          {{ X + Z = X + Z           }}
         Y := X + Z
-          {{                         }}
+          {{ Y = X + Z               }}
       end
         {{ Y = X + Z }}
 
@@ -661,7 +661,7 @@ Qed.
 (* ================================================================= *)
 (** ** Exercise: Slow Assignment *)
 
-(** **** Exercise: 2 stars, standard (slow_assignment) 
+(** **** Exercise: 2 stars, standard (slow_assignment)
 
     A roundabout way of assigning a number currently stored in [X] to
     the variable [Y] is to start [Y] at [0], then decrement [X] until
@@ -679,7 +679,45 @@ Qed.
     Write an informal decorated program showing that this procedure
     is correct, and justify each use of [->>]. *)
 
-(* FILL IN HERE *)
+(*
+We need to find a loop invariant Inv that satisfies the conditions:
+
+        {{ X = m }}
+      Y := 0;
+        {{ X = m /\ Y = 0 }} ->> (a)
+        {{ Inv }}
+      while ~(X = 0) do
+        {{ Inv /\ ~(X = 0) }} ->> (c)
+        {{ Inv [Y |-> Y + 1] [X |-> X - 1] }}
+        X := X - 1;
+        {{ Inv [Y |-> Y + 1] }}
+        Y := Y + 1
+        {{ Inv }}
+      end
+        {{ Inv /\ X = 0 }} ->> (b)
+        {{ Y = m }}
+
+ Let Inv be {{ X + Y = 0 }}, then complete the program.
+
+        {{ X = m }}
+      Y := 0;
+        {{ X = m /\ Y = 0 }} ->> (a)
+        {{ X + Y = m }}
+      while ~(X = 0) do
+        {{ X + Y = m /\ ~(X = 0) }} ->> (c)
+        {{ (X - 1) + (Y + 1) = m }}
+        X := X - 1;
+        {{ X + (Y + 1) = m }}
+        Y := Y + 1
+        {{ X + Y = m }}
+      end
+        {{ X + Y = m /\ X = 0 }} ->> (b)
+        {{ Y = m }}
+
+ The each decoration can be reasoned directly from the hoare logic
+ of each command. (a), (b), and (c) are all obvious.
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_decorations_in_slow_assignment : option (nat*string) := None.
@@ -688,7 +726,7 @@ Definition manual_grade_for_decorations_in_slow_assignment : option (nat*string)
 (* ================================================================= *)
 (** ** Exercise: Slow Addition *)
 
-(** **** Exercise: 3 stars, standard, optional (add_slowly_decoration) 
+(** **** Exercise: 3 stars, standard, optional (add_slowly_decoration)
 
     The following program adds the variable X into the variable Z
     by repeatedly decrementing X and incrementing Z.
@@ -703,9 +741,31 @@ Definition manual_grade_for_decorations_in_slow_assignment : option (nat*string)
     specification of [add_slowly]; then (informally) decorate the
     program accordingly, and justify each use of [->>]. *)
 
-(* FILL IN HERE
+(*
+      {{ X = m /\ Z = n }} ->> (a)
+      {{ Z + X = n + m }}
+      while ~(X = 0) do
+         {{ Z + X = n + m /\ X <> 0 }} ->> (c)
+         {{ (Z + 1) + (X - 1) = n + m }}
+         Z := Z + 1;
+         {{ Z + (X - 1) = n + m }}
+         X := X - 1
+         {{ Z + X = n + m }}
+      end
+      {{ X = 0 /\ Z + X = n + m }} ->> (b)
+      {{ X = 0 /\ Z = n + m }}
 
-    [] *)
+Justification:
+
+(a): {{ X = m /\ Z = n }} ->> {{ Z + X = n + m }}
+     lia.
+(b): {{ X = 0 /\ Z + X = n + m }} ->> {{ X = 0 /\ Z = n + m }}
+     lia.
+(c): {{ Z + X = n + m /\ X <> 0 }} ->> {{ (Z + 1) + (X - 1) = n + m }}
+     lia :)
+ *)
+
+(* [] *)
 
 (* ================================================================= *)
 (** ** Example: Parity *)
@@ -756,7 +816,7 @@ Fixpoint parity x :=
     [parity]).  For verifying (c), we observe that, when [2 <= X], we
     have [parity X = parity (X-2)]. *)
 
-(** **** Exercise: 3 stars, standard, optional (parity_formal) 
+(** **** Exercise: 3 stars, standard, optional (parity_formal)
 
     Translate the above informal decorated program into a formal proof
     in Coq. Your proof should use the Hoare logic rules and should not
@@ -945,7 +1005,7 @@ Proof.
 (* ================================================================= *)
 (** ** Exercise: Factorial *)
 
-(** **** Exercise: 3 stars, standard (factorial) 
+(** **** Exercise: 3 stars, standard (factorial)
 
     Recall that [n!] denotes the factorial of [n] (i.e., [n! =
     1*2*...*n]).  Here is an Imp program that calculates the factorial
@@ -1034,7 +1094,7 @@ Definition manual_grade_for_decorations_in_factorial : option (nat*string) := No
 Definition manual_grade_for_decorations_in_Min_Hoare : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (two_loops) 
+(** **** Exercise: 3 stars, standard (two_loops)
 
     Here is a very inefficient way of adding 3 numbers:
 
@@ -1090,7 +1150,7 @@ Definition manual_grade_for_decorations_in_two_loops : option (nat*string) := No
 (* ================================================================= *)
 (** ** Exercise: Power Series *)
 
-(** **** Exercise: 4 stars, standard, optional (dpow2_down) 
+(** **** Exercise: 4 stars, standard, optional (dpow2_down)
 
     Here is a program that computes the series:
     [1 + 2 + 2^2 + ... + 2^m = 2^(m+1) - 1]
@@ -1163,7 +1223,7 @@ Definition is_wp P c Q :=
   {{P}} c {{Q}} /\
   forall P', {{P'}} c {{Q}} -> (P' ->> P).
 
-(** **** Exercise: 1 star, standard, optional (wp) 
+(** **** Exercise: 1 star, standard, optional (wp)
 
     What are weakest preconditions of the following commands
     for the following postconditions?
@@ -1190,7 +1250,7 @@ Definition is_wp P c Q :=
 
     [] *)
 
-(** **** Exercise: 3 stars, advanced, optional (is_wp_formal) 
+(** **** Exercise: 3 stars, advanced, optional (is_wp_formal)
 
     Prove formally, using the definition of [hoare_triple], that [Y <= 4]
     is indeed a weakest precondition of [X ::= Y + 1] with respect to
@@ -1202,7 +1262,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, advanced, optional (hoare_asgn_weakest) 
+(** **** Exercise: 2 stars, advanced, optional (hoare_asgn_weakest)
 
     Show that the precondition in the rule [hoare_asgn] is in fact the
     weakest precondition. *)
@@ -1213,7 +1273,7 @@ Proof.
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, advanced, optional (hoare_havoc_weakest) 
+(** **** Exercise: 2 stars, advanced, optional (hoare_havoc_weakest)
 
     Show that your [havoc_pre] function from the [himp_hoare] exercise
     in the [Hoare] chapter returns a weakest precondition. *)
@@ -2006,7 +2066,7 @@ Qed.
 (* ================================================================= *)
 (** ** Further Exercises *)
 
-(** **** Exercise: 3 stars, advanced (slow_assignment_dec) 
+(** **** Exercise: 3 stars, advanced (slow_assignment_dec)
 
     Transform the informal decorated program your wrote for
     [slow_assignment] into a formal decorated program.  If all goes
@@ -2039,7 +2099,7 @@ Proof. (* FILL IN HERE *) Admitted.
 Definition manual_grade_for_check_defn_of_slow_assignment_dec : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced (factorial_dec)  
+(** **** Exercise: 4 stars, advanced (factorial_dec)
 
     The factorial function is defined recursively in the Coq standard
     library in a way that is equivalent to the following:
@@ -2076,7 +2136,7 @@ Compute fact 5. (* ==> 120 *)
 Definition manual_grade_for_factorial_dec : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, advanced, optional (fib_eqn) 
+(** **** Exercise: 2 stars, advanced, optional (fib_eqn)
 
     The Fibonacci function is usually written like this:
 
@@ -2109,7 +2169,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced, optional (fib) 
+(** **** Exercise: 4 stars, advanced, optional (fib)
 
     The following Imp program leaves the value of [fib n] in the
     variable [Y] when it terminates:
@@ -2143,7 +2203,7 @@ Theorem dfib_correct : forall n,
 (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 5 stars, advanced, optional (improve_dcom) 
+(** **** Exercise: 5 stars, advanced, optional (improve_dcom)
 
     The formal decorated programs defined in this section are intended
     to look as similar as possible to the informal ones defined earlier
