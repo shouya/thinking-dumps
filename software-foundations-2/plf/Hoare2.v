@@ -1128,8 +1128,9 @@ Justification:
 
 - (a): 0 + min a b = min a b. reflexivity.
 - (b): ~(~(X = 0) /\ ~(Y = 0)) -> X = 0 \/ Y = 0 by de-morgan's law. We can use
-       de-morgan's law in constructive logic context because nat
-       we have previously proved eqb_spec :: forall x y, reflect (x = y) (x =? y).
+       de-morgan's law in constructive logic context because
+       we have previously proved eqb_spec :: forall x y, reflect (x = y) (x =? y),
+       and we can use de-morgan's law on bool.
 
        For either X = 0 or Y = 0, min X Y = 0. Therefore we have
 
@@ -1146,8 +1147,6 @@ Justification:
        (Z + 1) + (min (X - 1) (Y - 1)) = min a b
 
 *)
-eqb_spec
-
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_decorations_in_Min_Hoare : option (nat*string) := None.
