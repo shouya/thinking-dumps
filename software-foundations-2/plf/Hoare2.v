@@ -860,7 +860,27 @@ Theorem parity_correct : forall (m:nat),
   end
   {{  X = parity m }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  eapply hoare_consequence with
+      (P' := (fun st => parity (st X) = parity m)).
+   (* (Q' := (fun st => parity (st X) = parity m /\ ~2 <= st X )). *)
+  - (* while *)
+    apply hoare_while.
+    eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + verify_assn. destruct (st X) as [|[]]; inversion H0.
+      rewrite parity_ge_2 by lia. apply H.
+  - (* P -> P' *)
+    auto.
+  - (* Q' -> Q *)
+    repeat intro. destruct H.
+    rewrite <- H. symmetry.
+    apply parity_lt_2. simpl in *. intro.
+    destruct (st X) as [|[]]. inversion H1. inversion H1. inversion H3.
+    congruence.
+Qed.
+
+
 (** [] *)
 
 (* ================================================================= *)
@@ -1026,22 +1046,37 @@ Proof.
     and subtraction can behave differently than with real numbers.
     Excluding both operations from your loop invariant is advisable.
 
-    {{ X = m }} ->>
-    {{                                      }}
+
+The invariant I found is: X! * Y = m!
+
+
+    {{ X = m }} ->> (a)
+    {{ X! * 1 = m!                          }}
   Y := 1;
-    {{                                      }}
+    {{ X! * Y = m!                          }}
   while ~(X = 0)
-  do   {{                                      }} ->>
-       {{                                      }}
+  do   {{ X! * Y = m! /\ ~(X = 0)                    }} ->> (c)
+       {{ (X - 1)! * (Y * X) = m!                    }}
      Y := Y * X;
-       {{                                      }}
+       {{ (X - 1)! * Y = m!                    }}
      X := X - 1
-       {{                                      }}
+       {{ X! * Y = m!                          }}
   end
-    {{                                      }} ->>
+    {{ X! * Y = m! /\ ~(~(X = 0))              }} ->> (b)
     {{ Y = m! }}
 
     Briefly justify each use of [->>].
+
+Justifications:
+
+- (a): forall n, n * 1 = n. Therefore X! * 1 = m!.
+
+- (b): ~~(X=0) -> X=0 double negation works for nat as nat is an inductive type.
+       then substitute X=0 into X!*Y=m! to get 1*Y=m!, thus Y=m!.
+
+- (c): By definition, X! = X*(X-1)! (for X>0), thus the precondition can be rewritten
+       as X * (X-1)! * Y = m!. Rearranging the terms using mult_comm and mult_assoc
+       yields the expected result.
 *)
 
 (* Do not modify the following line: *)
@@ -1068,27 +1103,51 @@ Definition manual_grade_for_decorations_in_factorial : option (nat*string) := No
 
 (**
 
-  {{ True }} ->>
-  {{                    }}
+  {{ True }} ->> (a)
+  {{ 0 + min a b = min a b  }}
   X := a;
-  {{                       }}
+  {{ 0 + min X b = min a b  }}
   Y := b;
-  {{                       }}
+  {{ 0 + min X Y = min a b  }}
   Z := 0;
-  {{                       }}
+  {{ Z + min X Y = min a b  }}
   while ~(X = 0) && ~(Y = 0) do
-    {{                                     }} ->>
-    {{                                }}
+    {{ Z + min X Y = min a b /\ X <> 0 /\ Y <> 0  }} ->> (c)
+    {{ (Z+1) + min (X-1) (Y-1) = min a b   }}
     X := X - 1;
-    {{                            }}
+    {{ (Z+1) + min X (Y-1) = min a b       }}
     Y := Y - 1;
-    {{                        }}
+    {{ (Z+1) + min X Y = min a b           }}
     Z := Z + 1
-    {{                       }}
+    {{ Z + min X Y = min a b               }}
   end
-  {{                            }} ->>
+  {{ Z + min X Y = min a b /\ ~(~(X = 0) /\ ~(Y = 0))  }} ->> (b)
   {{ Z = min a b }}
+
+Justification:
+
+- (a): 0 + min a b = min a b. reflexivity.
+- (b): ~(~(X = 0) /\ ~(Y = 0)) -> X = 0 \/ Y = 0 by de-morgan's law. We can use
+       de-morgan's law in constructive logic context because nat
+       we have previously proved eqb_spec :: forall x y, reflect (x = y) (x =? y).
+
+       For either X = 0 or Y = 0, min X Y = 0. Therefore we have
+
+       Z + min X Y = min a b -> Z + 0 = min a b, because plus_n_O, we can replace
+       Z + 0 with Z. Thus the conclusion.
+
+- (c): Z + min X Y = min a b /\ X <> 0 /\ Y <> 0
+       ->> (by lemma1, X <> 0 /\ Y <> 0 -> min X Y <> 0;
+            thus (min X Y - 1) + 1 = min X Y)
+       Z + (min X Y - 1) + 1 = min a b
+       ->> (by lemma2)
+       Z + (min (X - 1) (Y - 1)) + 1 = min a b
+       ->> (by rearrangement)
+       (Z + 1) + (min (X - 1) (Y - 1)) = min a b
+
 *)
+eqb_spec
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_decorations_in_Min_Hoare : option (nat*string) := None.
@@ -1166,9 +1225,19 @@ Definition manual_grade_for_decorations_in_two_loops : option (nat*string) := No
 
     Write a decorated program for this, and justify each use of [->>]. *)
 
-(* FILL IN HERE
+(*
+    X := 0;
+    Y := 1;
+    Z := 1;
+    while ~(X = m) do
+      Z := 2 * Z;
+      Y := Y + Z;
+      X := X + 1
+    end
 
-    [] *)
+ *)
+
+(* [] *)
 
 (* ################################################################# *)
 (** * Weakest Preconditions (Optional) *)
