@@ -1171,34 +1171,61 @@ Definition manual_grade_for_decorations_in_Min_Hoare : option (nat*string) := No
     Show that it does what it should by filling in the blanks in the
     following decorated program.
 
-      {{ True }} ->>
-      {{                                        }}
+      {{ True }} ->> (a)
+      {{ c = c + 0 /\ 0 = 0                       }}
     X := 0;
-      {{                                        }}
+      {{ c = c + X /\ 0 = 0                       }}
     Y := 0;
-      {{                                        }}
+      {{ c = c + X /\ Y = 0                       }}
     Z := c;
-      {{                                        }}
+      {{ Z = c + X /\ Y = 0                       }}
     while ~(X = a) do
-        {{                                        }} ->>
-        {{                                        }}
+        {{ Z = c + X /\ Y = 0 /\ ~(X = a)         }} ->> (b)
+        {{ (Z + 1) = c + (X + 1) /\ Y = 0         }}
       X := X + 1;
-        {{                                        }}
+        {{ (Z + 1) = c + X /\ Y = 0               }}
       Z := Z + 1
-        {{                                        }}
+        {{ Z = c + X /\ Y = 0                     }}
     end;
-      {{                                        }} ->>
-      {{                                        }}
+      {{ Z = c + X /\ Y = 0 /\ ~~(X = a)          }} ->> (c)
+      {{ Z = c + a + Y                            }}
     while ~(Y = b) do
-        {{                                        }} ->>
-        {{                                        }}
+        {{ Z = c + a + Y /\ ~(Y = b)              }} ->> (d)
+        {{ Z + 1 = c + a + (Y + 1)                }}
       Y := Y + 1;
-        {{                                        }}
+        {{ Z + 1 = c + a + Y                      }}
       Z := Z + 1
-        {{                                        }}
+        {{ Z = c + a + Y                          }}
     end
-      {{                                        }} ->>
+      {{ Z = c + a + Y /\ ~~(Y = b)   }} ->> (e)
       {{ Z = a + b + c }}
+
+Justifications:
+
+- (a): {{ True }} ->> {{ c = c + 0 /\ 0 = 0 }}
+       too obvious, no explanation needed.
+
+- (b):  {{ Z = c + X /\ Y = 0 /\ ~(X = a)         }} ->> drop ~(X=a) term
+        {{ Z = c + X /\ Y = 0                     }} ->> add 1 on both sides of the equation
+        {{ Z + 1 = c + X + 1 /\ Y = 0             }} ->> rearrange with plus_assoc
+        {{ (Z + 1) = c + (X + 1) /\ Y = 0         }}
+
+- (c):  {{ Z = c + X /\ Y = 0 /\ ~~(X = a)        }} ->> double_neg_elim by eqb_spec
+        {{ Z = c + X /\ Y = 0 /\ X = a            }} ->> substitute X with a
+        {{ Z = c + a /\ Y = 0                     }} ->> add zero to the equation
+        {{ Z = c + a + 0 /\ Y = 0                 }} ->> substitute 0 with Y
+        {{ Z = c + a + Y                          }}
+
+- (d):  {{ Z = c + a + Y /\ ~(Y = b)              }} ->> drop ~(X=b) term
+        {{ Z = c + a + Y                          }} ->> plus 1 on both side
+        {{ Z + 1 = c + a + Y + 1                  }} ->> rearrange
+        {{ Z + 1 = c + a + (Y + 1)                }}
+
+- (e):  {{ Z = c + a + Y /\ ~~(Y = b)             }} ->> double neg elim
+        {{ Z = c + a + Y /\ Y = b                 }} ->> substitute Y with b
+        {{ Z = c + a + b                          }} ->> rearrange
+        {{ Z = a + b + c }}
+
 *)
 
 (* Do not modify the following line: *)
