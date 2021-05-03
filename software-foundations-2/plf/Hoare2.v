@@ -1302,7 +1302,6 @@ Justification:
        (Y+1)+(Z*2) = 2^(X+1+1) /\ Z = 2^X -> drop unnecessary term
        (Y+1)+(Z*2) = 2^(X+1+1) -> rearrange (Y+1)+(Z*2)
        (Y+2*Z)+1 = 2^(X+1+1).
-
  *)
 
 (* [] *)
@@ -1365,27 +1364,104 @@ Definition is_wp P c Q :=
     What are weakest preconditions of the following commands
     for the following postconditions?
 
-  1) {{ ? }}  skip  {{ X = 5 }}
+  1) {{ X = 5 }}  skip  {{ X = 5 }}
 
-  2) {{ ? }}  X := Y + Z {{ X = 5 }}
+  2) {{ Y + Z = 5 }}  X := Y + Z {{ X = 5 }}
 
-  3) {{ ? }}  X := Y  {{ X = Y }}
+  3) {{ True }}  X := Y  {{ X = Y }}
 
-  4) {{ ? }}
+  4) {{ (X = 0 /\ 5 = Z + 1) \/ (X <> 0 /\ 5 = W + 2) }}
      if X = 0 then Y := Z + 1 else Y := W + 2 end
      {{ Y = 5 }}
 
-  5) {{ ? }}
+  5) {{ False }}
      X := 5
      {{ X = 0 }}
 
-  6) {{ ? }}
+  6) {{ True }}
      while true do X := 0 end
      {{ X = 0 }}
-*)
-(* FILL IN HERE
+ *)
 
-    [] *)
+Ltac unfold_all := unfold is_wp, hoare_triple, "->>".
+Ltac intro_all := repeat intro.
+
+Example is_wp_example_1 : is_wp (X = 5) <{skip}> (X = 5).
+Proof.
+  unfold_all. split.
+  - apply hoare_skip.
+  - intros. eapply H. constructor. apply H0.
+Qed.
+
+Example is_wp_example_2 : is_wp (Y + Z = 5) <{ X := Y + Z }> (X = 5).
+Proof.
+  unfold_all. split.
+  - verify_assn. inversion H; subst. verify_assn.
+  - intro_all. simpl in *.
+    specialize H with (st := st) (st' := (X !-> aeval st <{Y + Z}>; st)).
+    apply H in H0.
+    + verify_assn.
+    + constructor. reflexivity.
+Qed.
+
+Example is_wp_example_3 :
+  is_wp True <{ X := Y }> (X = Y).
+Proof.
+  unfold_all. split; intros.
+  - inversion H. verify_assn.
+  - eapply H in H0. Focus 2. constructor. reflexivity.
+    verify_assn.
+Qed.
+
+Example is_wp_example_4 :
+  is_wp ((X = 0 /\ 5 = Z + 1) \/ (X <> 0 /\ 5 = W + 2))
+        <{ if X = 0 then Y := Z + 1 else Y := W + 2 end }>
+        (Y = 5).
+Proof.
+  unfold_all. split.
+  - apply hoare_if.
+    + simpl. intro_all. destruct H0. inversion H; subst. verify_assn.
+    + simpl. intro_all. inversion H; subst. verify_assn.
+  - intro_all. simpl in *. destruct (eqb_spec (st X) 0).
+    + (* eq *) left. split; try easy.
+      eapply H in H0. Focus 2.
+      apply E_IfTrue. verify_assn. constructor. reflexivity. verify_assn.
+    + (* neq *) right. split; try easy.
+      eapply H in H0. Focus 2.
+      apply E_IfFalse. verify_assn. constructor. reflexivity. verify_assn.
+Qed.
+
+
+(*   5) {{ False }}
+     X := 5
+     {{ X = 0 }}
+
+  6) {{ True }}
+     while true do X := 0 end
+     {{ X = 0 }}
+ *)
+
+Example is_wp_example_5 :
+  is_wp False <{ X := 5 }> (X = 0).
+Proof.
+  split.
+  - intro_all. inversion H0.
+  - intro_all. eapply H in H0. Focus 2.
+    + constructor. reflexivity.
+    + inversion H0.
+Qed.
+
+Example is_wp_example_6 :
+  is_wp True <{ while true do X := 0 end }> (X = 0).
+Proof.
+  split.
+  - eapply hoare_consequence_post. apply hoare_while.
+    + verify_assn.
+    + verify_assn.
+  - intro_all. simpl. apply I.
+Qed.
+
+(* [] *)
 
 (** **** Exercise: 3 stars, advanced, optional (is_wp_formal)
 
@@ -1396,7 +1472,13 @@ Definition is_wp P c Q :=
 Theorem is_wp_example :
   is_wp (Y <= 4) <{X := Y + 1}> (X <= 5).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold_all. split; intros.
+  - inversion H; subst. verify_assn.
+  - eapply H in H0. Focus 2.
+    + constructor. reflexivity.
+    + verify_assn. rewrite t_update_eq in H0. lia.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced, optional (hoare_asgn_weakest)
