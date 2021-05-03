@@ -1252,14 +1252,56 @@ Definition manual_grade_for_decorations_in_two_loops : option (nat*string) := No
     Write a decorated program for this, and justify each use of [->>]. *)
 
 (*
+
+Let the loop invariant be {{ Y + 1 = 2^(X + 1) /\ Z = 2^X }}
+
+    {{ True }}
     X := 0;
+    {{ X = 0 }}
     Y := 1;
+    {{ X = 0 /\ Y = 1 }}
     Z := 1;
+    {{ X = 0 /\ Y = 1 /\ Z = 1 }} ->> (a)
+    {{ Y + 1 = 2^(X+1) /\ Z = 2^X }}
     while ~(X = m) do
+      {{ Y + 1 = 2^(X+1) /\ Z = 2^X /\ ~(X = m) }} ->> (c)
+      {{ (Y+2*Z) + 1 = 2^(X+1+1) /\ 2*Z = 2^(X+1) }}
       Z := 2 * Z;
+      {{ (Y+Z) + 1 = 2^(X+1+1) /\ Z = 2^(X+1) }}
       Y := Y + Z;
+      {{ Y + 1 = 2^(X+1+1) /\ Z = 2^(X+1) }}
       X := X + 1
+      {{ Y + 1 = 2^(X+1) /\ Z = 2^X }}
     end
+    {{ Y + 1 = 2^(X+1) /\ ~~(X = m)}} ->> (b)
+    {{ Y = 2^(m+1)-1 }}
+
+Justification:
+
+- (a): substituting the value for X, Y, and Z into the equation, we get
+       1+1 = 2^1 /\ 1 = 2^0. Which holds obviously.
+
+- (b): ~~(X = m) -> X = m by eqb_spec. Then replace X with M in Y + 1 = 2^(X+1),
+       we get Y + 1 = 2^(m+1). Now we prove 2^(m+1) >= 1.
+       For any (m: nat), (m+1) >= 1, and therefore 2^(m+1) >= 2. Therefore,
+       Y + 1 = 2^(m+1) -> Y = 2^(m+1) - 1
+
+- (c): {{ Y + 1 = 2^(X+1) /\ Z = 2^X /\ ~(X = m) }} ->>
+       {{ (Y+2*Z) + 1 = 2^(X+1+1) /\ 2*Z = 2^(X+1) }}
+       (~(X = m)) term is irrelevant and can be dropped.
+       Z = 2^X -> 2*Z = 2^(X+1) is obvious.
+       Now we need to prove Y+1 = 2^(X+1) /\ Z = 2^X -> (Y+2*Z)+1 = 2^(X+1+1).
+       I will prove it step by step.
+       Y+1 = 2^(X+1) /\ Z = 2^X -> (duplicate Y+1 = 2^(X+1))
+       Y+1 = 2^(X+1) /\ Y+1 = 2^(X+1) /\ Z = 2^X -> (multiply both sides by 2)
+       (Y+1)*2 = 2^(X+1)*2 /\ Y+1 = 2^(X+1) /\ Z = 2^X -> (expand (Y+1)*2)
+       (Y+1)+(Y+1) = 2^(X+1+1) /\ Y+1 = 2^(X+1) /\ Z = 2^X -> (substitute Y+1 with 2^(X+1))
+       (Y+1)+(2^(X+1)) = 2^(X+1+1) /\ Y+1 = 2^(X+1) /\ Z = 2^X -> drop unnecessary term
+       (Y+1)+(2^(X+1)) = 2^(X+1+1) /\ Z = 2^X -> expand 2^(X+1)
+       (Y+1)+(2^X*2) = 2^(X+1+1) /\ Z = 2^X -> substitute 2^X with Z
+       (Y+1)+(Z*2) = 2^(X+1+1) /\ Z = 2^X -> drop unnecessary term
+       (Y+1)+(Z*2) = 2^(X+1+1) -> rearrange (Y+1)+(Z*2)
+       (Y+2*Z)+1 = 2^(X+1+1).
 
  *)
 
