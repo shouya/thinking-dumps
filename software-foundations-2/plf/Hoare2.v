@@ -2323,15 +2323,55 @@ becomes
     {{ X = m /\ Y = 0 }} ;;
 *)
 
-Example slow_assignment_dec (m : nat) : decorated
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+(*  Here was my solution for slow_assignment:
+
+ Let Inv be {{ X + Y = 0 }}, then complete the program.
+
+        {{ X = m }}
+      Y := 0;
+        {{ X = m /\ Y = 0 }} ->> (a)
+        {{ X + Y = m }}
+      while ~(X = 0) do
+        {{ X + Y = m /\ ~(X = 0) }} ->> (c)
+        {{ (X - 1) + (Y + 1) = m }}
+        X := X - 1;
+        {{ X + (Y + 1) = m }}
+        Y := Y + 1
+        {{ X + Y = m }}
+      end
+        {{ X + Y = m /\ X = 0 }} ->> (b)
+        {{ Y = m }}
+
+ The each decoration can be reasoned directly from the hoare logic
+ of each command. (a), (b), and (c) are all obvious.
+
+ *)
+
+Example slow_assignment_dec (m : nat) : decorated :=
+  <{
+  {{ X = m }}
+  Y := 0
+  {{ X = m /\ Y = 0 }} ->>
+  {{ X + Y = m }};
+  while ~(X = 0) do
+    {{ X + Y = m /\ ~(X = 0) }} ->>
+    {{ (X - 1) + (Y + 1) = m }}
+    X := X - 1
+    {{ X + (Y + 1) = m }};
+    Y := Y + 1
+    {{ X + Y = m }}
+  end
+  {{ X + Y = m /\ X = 0 }} ->>
+  {{ Y = m }}
+  }>.
 
 (** Now prove the correctness of your decorated program.  If all goes well,
     you will need only [verify]. *)
 
 Theorem slow_assignment_dec_correct : forall m,
   dec_correct (slow_assignment_dec m).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. verify. Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_check_defn_of_slow_assignment_dec : option (nat*string) := None.
@@ -2368,7 +2408,73 @@ Compute fact 5. (* ==> 120 *)
     For example, recall that [1 + ...] is easier to work with than
     [... + 1]. *)
 
-(* FILL IN HERE *)
+
+(*  Here's my previous solution for factorial:
+
+    {{ X = m }} ->> (a)
+    {{ X! * 1 = m!                          }}
+  Y := 1;
+    {{ X! * Y = m!                          }}
+  while ~(X = 0)
+  do   {{ X! * Y = m! /\ ~(X = 0)                    }} ->> (c)
+       {{ (X - 1)! * (Y * X) = m!                    }}
+     Y := Y * X;
+       {{ (X - 1)! * Y = m!                    }}
+     X := X - 1
+       {{ X! * Y = m!                          }}
+  end
+    {{ X! * Y = m! /\ ~(~(X = 0))              }} ->> (b)
+    {{ Y = m! }}
+
+
+ *)
+
+Definition factorial_dec (m: nat) : decorated :=
+  <{
+    {{ X = m }} ->>
+    {{ ap fact X * 1 = ap fact m                          }}
+  Y := 1
+    {{ ap fact X * Y = ap fact m                          }};
+  while ~(X = 0)
+  do   {{ ap fact X * Y = ap fact m /\ ~(X = 0)            }} ->>
+       {{ ap fact (X - 1) * (Y * X) = ap fact m           }}
+     Y := Y * X
+       {{ ap fact (X - 1) * Y = ap fact m                 }};
+     X := X - 1
+       {{ ap fact X * Y = ap fact m                       }}
+  end
+    {{ ap fact X * Y = ap fact m /\ ~(~(X = 0))            }} ->>
+    {{ Y = ap fact m }}
+  }>.
+
+Theorem double_neg_nat : forall (n : nat) (m : nat),
+  ~~(n = m) -> n = m.
+Proof.
+  intros.
+  destruct (eqb_spec n m).
+  - assumption.
+  - unfold not in *. apply H in n0. inversion n0.
+Qed.
+
+Theorem factorial_dec_correct : forall m,
+    dec_correct (factorial_dec m).
+Proof.
+  verify.
+  (* There are two goals left to prove *)
+  - (* fact (st X) * st Y = fact m /\ X <> 0 ->>
+       fact (st X - 1) * (st Y * st X) = fact m *)
+    assert (fact (st X - 1) * st X * st Y = fact m).
+    { destruct (st X); try congruence. simpl in H. simpl.
+      rewrite <- minus_n_O. lia.
+    }
+    (* then it's just term rearrangements *)
+    lia.
+
+  - (* fact (st X) * st Y = fact m /\ ~ st X <> 0 ->>
+       st Y = fact m *)
+    apply double_neg_nat in H0. rewrite H0 in H. simpl in *.
+    lia.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_factorial_dec : option (nat*string) := None.
