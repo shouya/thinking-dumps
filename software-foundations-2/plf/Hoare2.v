@@ -1409,7 +1409,7 @@ Example is_wp_example_3 :
 Proof.
   unfold_all. split; intros.
   - inversion H. verify_assn.
-  - eapply H in H0. Focus 2. constructor. reflexivity.
+  - eapply H in H0. 2: {constructor. reflexivity.}
     verify_assn.
 Qed.
 
@@ -1424,11 +1424,14 @@ Proof.
     + simpl. intro_all. inversion H; subst. verify_assn.
   - intro_all. simpl in *. destruct (eqb_spec (st X) 0).
     + (* eq *) left. split; try easy.
-      eapply H in H0. Focus 2.
-      apply E_IfTrue. verify_assn. constructor. reflexivity. verify_assn.
+      eapply H in H0.
+      2: {apply E_IfTrue. verify_assn. constructor. reflexivity.}
+      verify_assn.
+
     + (* neq *) right. split; try easy.
-      eapply H in H0. Focus 2.
-      apply E_IfFalse. verify_assn. constructor. reflexivity. verify_assn.
+      eapply H in H0.
+      2: {apply E_IfFalse. verify_assn. constructor. reflexivity.}
+      verify_assn.
 Qed.
 
 
@@ -1446,9 +1449,9 @@ Example is_wp_example_5 :
 Proof.
   split.
   - intro_all. inversion H0.
-  - intro_all. eapply H in H0. Focus 2.
-    + constructor. reflexivity.
-    + inversion H0.
+  - intro_all. eapply H in H0.
+    2: { constructor. reflexivity. }
+    inversion H0.
 Qed.
 
 Example is_wp_example_6 :
@@ -1474,9 +1477,9 @@ Theorem is_wp_example :
 Proof.
   unfold_all. split; intros.
   - inversion H; subst. verify_assn.
-  - eapply H in H0. Focus 2.
-    + constructor. reflexivity.
-    + verify_assn. rewrite t_update_eq in H0. lia.
+  - eapply H in H0.
+    2: { constructor. reflexivity. }
+    verify_assn. rewrite t_update_eq in H0. lia.
 Qed.
 
 (** [] *)
@@ -1489,7 +1492,12 @@ Qed.
 Theorem hoare_asgn_weakest : forall Q X a,
   is_wp (Q [X |-> a]) <{ X := a }> Q.
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold_all. split.
+  - apply hoare_asgn.
+  - intros. eapply H in H0.
+    2: { constructor. reflexivity. }
+    verify_assn.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced, optional (hoare_havoc_weakest)
@@ -1499,11 +1507,22 @@ Proof.
 Module Himp2.
 Import Himp.
 
+(* I have to copy the definition here because otherwise it wouldn't
+unfold because it was deemed "opaque" *)
+Definition havoc_pre (X : string) (Q : Assertion) (st : total_map nat) : Prop :=
+  forall n, Q (X !-> n; st).
+
 Lemma hoare_havoc_weakest : forall (P Q : Assertion) (X : string),
   {{ P }} havoc X {{ Q }} ->
   P ->> havoc_pre X Q.
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold_all. unfold hoare_triple, havoc_pre.
+  intro_all.
+  eapply H in H0.
+  2: { constructor. }
+  apply H0.
+Qed.
+
 End Himp2.
 (** [] *)
 
