@@ -2596,8 +2596,202 @@ Proof. verify. Qed.
     rest of the formal development leading up to the [verification_correct]
     theorem. *)
 
-(* FILL IN HERE
+Module improved_dcom.
 
-    [] *)
+Inductive dcom : Type :=
+| DCSkip
+  (* skip  *)
+| DCSeq (d1 d2 : dcom)
+  (* d1 ;; d2 *)
+| DCAsgn (X : string) (a : aexp)
+  (* X := a *)
+| DCIf (b : bexp) (d1 : dcom) (d2 : dcom)
+  (* if b then d1 else d2 end *)
+| DCWhile (Ainv : Assertion) (b : bexp) (d : dcom)
+  (* only need to specify the invariant *)
+  (* while b do {{ Pinv }} d end *)
+.
+
+Inductive decorated : Type :=
+  | Decorated (Apre : Assertion) (Apost : Assertion): dcom -> decorated.
+
+Declare Scope improved_dcom_scope.
+Declare Custom Entry dcom.
+
+Notation "'skip'"
+      := DCSkip
+      (in custom dcom at level 0) : improved_dcom_scope.
+Notation "l ':=' a"
+      := (DCAsgn l a)
+      (in custom dcom at level 0, l constr at level 0,
+          a custom com at level 85, no associativity) : improved_dcom_scope.
+Notation "'while' b 'do' d {{ Pinv }} 'end'"
+      := (DCWhile Pinv b d)
+         (in custom dcom at level 87, b custom com at level 99,
+           Pinv constr) : improved_dcom_scope.
+Notation "'if' b 'then' d 'else' d' 'end'"
+      := (DCIf b d d')
+           (in custom dcom at level 89,
+               b custom com at level 99,
+               d custom dcom at level 99,
+               d' custom dcom at level 99
+           ) : improved_dcom_scope.
+Notation " d ; d' "
+      := (DCSeq d d')
+         (in custom dcom at level 90, right associativity) : improved_dcom_scope.
+
+Notation "{{ P }} d {{ Q }}"
+      := (Decorated P Q d)
+         (in custom com at level 99,
+             d custom dcom at level 90,
+             P constr,
+             Q constr
+         ) : improved_dcom_scope.
+
+Close Scope dcom_scope.
+Open Scope improved_dcom_scope.
+
+Print Visibility.
+Print Custom Grammar dcom.
+
+Example dec_skip : decorated :=
+  <{
+  {{ True }}
+  skip
+  {{ X = 0 }}
+  }>.
+
+Example dec_while : decorated :=
+  <{
+  {{ True }}
+  while ~(X = 0) do
+    X := X - 1
+    {{ True }}
+  end
+  {{ X = 0 }}
+  }>.
+Set Printing All.
+Print dec_skip.
+Print dec_while.
+Unset Printing All.
+
+Fixpoint extract (d : dcom) : com :=
+  match d with
+  | DCSkip           => CSkip
+  | DCSeq d1 d2        => CSeq (extract d1) (extract d2)
+  | DCAsgn X a       => CAss X a
+  | DCIf b d1 d2 => CIf b (extract d1) (extract d2)
+  | DCWhile _ b d    => CWhile b (extract d)
+  end.
+
+Definition extract_dec (dec : decorated) : com :=
+  match dec with
+  | Decorated P Q d => extract d
+  end.
+
+Example extract_while_ex :
+  extract_dec dec_while = <{while ~ X = 0 do X := X - 1 end}>.
+Proof.
+  unfold dec_while.
+  reflexivity.
+Qed.
+
+(** It is straightforward to extract the precondition and
+    postcondition from a decorated program. *)
+
+Definition pre_dec (dec : decorated) : Assertion :=
+  match dec with
+  | Decorated P Q d => P
+  end.
+
+Definition post_dec (dec : decorated) : Assertion :=
+  match dec with
+  | Decorated P Q d => Q
+  end.
+
+Example pre_dec_while : pre_dec dec_while = True.
+Proof. reflexivity. Qed.
+
+Example post_dec_while : post_dec dec_while = (X = 0)%assertion.
+Proof. reflexivity. Qed.
+
+(** We can express what it means for a decorated program to be
+    correct as follows: *)
+
+Definition dec_correct (dec : decorated) :=
+  {{pre_dec dec}} extract_dec dec {{post_dec dec}}.
+
+Example dec_while_triple_correct :
+  dec_correct dec_while
+ = {{ True }}
+   while ~(X = 0) do X := X - 1 end
+   {{ X = 0 }}.
+Proof. reflexivity. Qed.
+
+Fixpoint verification_conditions
+         (P : Assertion) (d : dcom) (Q : Assertion) : Prop :=
+  match d with
+  | DCSkip => (P ->> Q)
+  | DCSeq d1 d2 =>
+    exists R, verification_conditions P d1 R /\ verification_conditions R d2 Q
+  | DCAsgn X a => (P ->> Q [X |-> a])
+  | DCIf b d1 d2 =>
+    verification_conditions (P /\ b) d1 Q
+    /\ verification_conditions (P /\ ~b) d2 Q
+  | DCWhile Pinv b d =>
+    (* Ainv is the loop invariant and the initial precondition *)
+    P ->> Pinv
+    /\ verification_conditions (Pinv /\ b) d Pinv
+    /\ ((Pinv /\ ~b) ->> Q)%assertion
+  end.
+
+(** And now the key theorem, stating that [verification_conditions]
+    does its job correctly.  Not surprisingly, we need to use each of
+    the Hoare Logic rules at some point in the proof. *)
+
+Theorem verification_correct : forall d P Q,
+  verification_conditions P d Q -> {{P}} extract d {{Q}}.
+Proof.
+  induction d; intros; simpl in *.
+  - (* Skip *)
+    eapply hoare_consequence_pre.
+      + apply hoare_skip.
+      + assumption.
+  - (* Seq *)
+    destruct H as [R [H1 H2]].
+    eapply hoare_seq.
+      + apply IHd2. apply H2.
+      + apply IHd1. apply H1.
+  - (* Asgn *)
+    eapply hoare_consequence_pre.
+      + apply hoare_asgn.
+      + assumption.
+  - (* If *)
+    destruct H as [HThen HElse].
+    apply IHd1 in HThen. clear IHd1.
+    apply IHd2 in HElse. clear IHd2.
+    apply hoare_if.
+      + eapply hoare_consequence; eauto.
+      + eapply hoare_consequence; eauto.
+  - (* While *)
+    destruct H as [Hpre [Hbody1 Hpost1] ].
+    eapply hoare_consequence; eauto.
+    apply hoare_while.
+    eapply hoare_consequence_pre; eauto.
+Qed.
+
+
+Definition verification_conditions_dec (dec : decorated) : Prop :=
+  match dec with
+  | Decorated P Q d => verification_conditions P d Q
+  end.
+
+Corollary verification_correct_dec : forall dec,
+  verification_conditions_dec dec -> dec_correct dec.
+Proof.
+  intros [P d]. apply verification_correct.
+Qed.
+
+End improved_dcom.
 
 (* 2020-09-09 21:08 *)
