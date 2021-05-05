@@ -2510,7 +2510,12 @@ Lemma fib_eqn : forall n,
   n > 0 ->
   fib n + fib (pred n) = fib (1 + n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  - (* n = 1 *) reflexivity.
+  - (* n = S m *) simpl. lia.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, optional (fib)
@@ -2539,12 +2544,45 @@ Proof.
 
 Definition T : string := "T".
 
-Definition dfib (n : nat) : decorated
-(* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(* The invariant is:
+
+      {{ Z = fib X /\ fib (1+X) = Y + Z }}
+
+ *)
+
+Definition dfib (n : nat) : decorated :=
+  <{
+
+  {{ True }} ->>
+    {{ 1 = ap fib 1 /\ ap fib (1+1) = 1 + 1 }}
+    X := 1
+    {{ 1 = ap fib X /\ ap fib (1+X) = 1 + 1 }};
+    Y := 1
+    {{ 1 = ap fib X /\ ap fib (1+X) = Y + 1 }};
+    Z := 1
+    {{ Z = ap fib X /\ ap fib (1+X) = Y + Z }};
+    while ~(X = 1 + n) do
+      {{ Z = ap fib X /\ ap fib (1+X) = Y + Z /\ ~(X = 1 + n)}} ->>
+      {{ (Z+Y) = ap fib (1+X) /\ ap fib (1+(1+X)) = Z + (Z+Y) }}
+      T := Z
+      {{ (Z+Y) = ap fib (1+X) /\ ap fib (1+(1+X)) = T + (Z+Y) }};
+      Z := Z + Y
+      {{ Z = ap fib (1+X) /\ ap fib (1+(1+X)) = T + Z }};
+      Y := T
+      {{ Z = ap fib (1+X) /\ ap fib (1+(1+X)) = Y + Z }};
+      X := 1 + X
+      {{ Z = ap fib X /\ ap fib (1+X) = Y + Z }}
+    end
+  {{ Z = ap fib X /\ ap fib (1+X) = Y + Z /\ (X = 1+n) }} ->>
+  {{ Y = ap fib n }}
+
+  }>.
+
 
 Theorem dfib_correct : forall n,
   dec_correct (dfib n).
-(* FILL IN HERE *) Admitted.
+Proof. verify. Qed.
+
 (** [] *)
 
 (** **** Exercise: 5 stars, advanced, optional (improve_dcom)
