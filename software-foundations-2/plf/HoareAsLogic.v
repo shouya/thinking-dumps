@@ -326,7 +326,15 @@ Qed.
 Theorem hoare_sound : forall P c Q,
   derivable P c Q -> valid P c Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction X.
+  - apply hoare_skip.
+  - apply hoare_asgn.
+  - eapply hoare_seq; eassumption.
+  - eapply hoare_if; eassumption.
+  - eapply hoare_while; eassumption.
+  - eapply hoare_consequence; eassumption.
+Qed.
 (** [] *)
 
 (** The proof of completeness is more challenging.  To carry out the
