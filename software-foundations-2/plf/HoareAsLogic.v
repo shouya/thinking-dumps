@@ -238,7 +238,22 @@ Qed.
 Theorem provable_true_post : forall c P,
     derivable P c True.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent P.
+  induction c; intros.
+  - (* skip *)
+    eapply H_Consequence_post; constructor; auto.
+  - (* ass *)
+    eapply H_Consequence_pre; constructor; auto.
+  - (* seq *)
+    econstructor. apply IHc1. apply IHc2.
+  - (* if *)
+    eapply H_Consequence_post; constructor; auto.
+  - (* while *)
+    eapply H_Consequence.
+    econstructor. apply IHc.
+    auto. auto.
+Qed.
 
 (** [] *)
 
@@ -250,7 +265,30 @@ Proof.
 Theorem provable_false_pre : forall c Q,
     derivable False c Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent Q.
+  induction c; intros.
+  - (* skip *)
+    eapply H_Consequence_pre; try contradiction.
+    constructor; auto.
+  - (* ass *)
+    eapply H_Consequence_pre; try contradiction.
+    constructor.
+  - (* seq *)
+    eapply H_Consequence_pre; try contradiction.
+    econstructor. apply IHc1. apply IHc2.
+  - (* if *)
+    eapply H_Consequence_post; try contradiction.
+    constructor.
+    + eapply H_Consequence_pre. apply IHc1. intros. destruct H. contradiction.
+    + eapply H_Consequence_pre. apply IHc2. intros. destruct H. contradiction.
+    + intros. apply H.
+  - (* while *)
+    eapply H_Consequence_post; try contradiction.
+    + constructor. eapply H_Consequence_pre. apply IHc.
+      intros. destruct H. contradiction.
+    + intros. simpl in H. destruct H. contradiction.
+Qed.
 
 (** [] *)
 
