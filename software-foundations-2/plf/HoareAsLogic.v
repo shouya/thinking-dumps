@@ -377,9 +377,17 @@ Proof. eauto. Qed.
     suffices as such an assertion. *)
 
 Lemma wp_seq : forall P Q c1 c2,
-    derivable P c1 (wp c2 Q) -> derivable (wp c2 Q) c2 Q -> derivable P <{c1; c2}> Q.
+    derivable P c1 (wp c2 Q) ->
+    derivable (wp c2 Q) c2 Q ->
+    derivable P <{c1; c2}> Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  econstructor.
+  apply X.
+  assumption.
+Qed.
+
+
 
 (** [] *)
 
@@ -392,7 +400,12 @@ Proof.
 Lemma wp_invariant : forall b c Q,
     valid (wp <{while b do c end}> Q /\ b) c (wp <{while b do c end}> Q).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold valid.
+  intros.
+  destruct H0.
+  unfold wp.
+  info_eauto.
+Qed.
 
 (** [] *)
 
@@ -409,13 +422,43 @@ Proof.
       https://www.ps.uni-saarland.de/courses/sem-ws11/script/Hoare.html
 *)
 
+Hint Constructors derivable : core.
+Hint Resolve H_Consequence_pre : core.
+Hint Resolve H_Consequence_post : core.
+
 Theorem hoare_complete: forall P c Q,
   valid P c Q -> derivable P c Q.
 Proof.
   unfold valid. intros P c. generalize dependent P.
   induction c; intros P Q HT.
-  (* FILL IN HERE *) Admitted.
-
+  - (* skip *)
+    eauto.
+  - (* ass *)
+    eauto.
+  - (* seq *)
+    apply wp_seq; eauto.
+  - (* if *)
+    constructor.
+    + (* if true *)
+      apply IHc1. intros. eapply HT.
+      apply E_IfTrue.
+      apply H0. apply H. apply H0.
+    + (* if false *)
+      apply IHc2. intros. eapply HT.
+      apply E_IfFalse. simpl in H0. rewrite Bool.not_true_iff_false in H0.
+      apply H0. apply H. apply H0.
+  - (* while *)
+    eapply H_Consequence.
+    + apply H_While. apply IHc. apply wp_invariant.
+    + (* precondition *)
+      intros. unfold wp. intros st' HH. eapply HT. apply HH. apply H.
+    + (* postcondition *)
+      simpl. intros.
+      rewrite Bool.not_true_iff_false in H.
+      destruct H.
+      unfold wp in H.
+      apply H. apply E_WhileFalse. apply H0.
+Qed.
 (** [] *)
 
 
