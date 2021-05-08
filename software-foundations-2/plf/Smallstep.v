@@ -124,7 +124,7 @@ Module SimpleArith1.
 
 (** Now, here is the corresponding _small-step_ evaluation relation.
 
-    
+
                      -------------------------------        (ST_PlusConstConst)
                      P (C n1) (C n2) --> C (n1 + n2)
 
@@ -180,7 +180,7 @@ Example test_step_1 :
 Proof.
   apply ST_Plus1. apply ST_PlusConstConst.  Qed.
 
-(** **** Exercise: 1 star, standard (test_step_2) 
+(** **** Exercise: 1 star, standard (test_step_2)
 
     Right-hand sides of sums can take a step only when the
     left-hand side is finished: if [t2] can take a step to [t2'],
@@ -199,7 +199,9 @@ Example test_step_2 :
           (C 2)
           (C 4)).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  constructor. constructor. constructor.
+Qed.
+
 (** [] *)
 
 End SimpleArith1.
@@ -386,7 +388,7 @@ Inductive value : tm -> Prop :=
     definition of the [-->] relation to write [ST_Plus2] rule in a
     slightly more elegant way: *)
 
-(** 
+(**
                      -------------------------------        (ST_PlusConstConst)
                      P (C n1) (C n2) --> C (n1 + n2)
 
@@ -426,7 +428,7 @@ Inductive step : tm -> tm -> Prop :=
 
   where " t '-->' t' " := (step t t').
 
-(** **** Exercise: 3 stars, standard, especially useful (redo_determinism) 
+(** **** Exercise: 3 stars, standard, especially useful (redo_determinism)
 
     As a sanity check on this change, let's re-verify determinism.
     Here's an informal proof:
@@ -459,7 +461,18 @@ Inductive step : tm -> tm -> Prop :=
 Theorem step_deterministic :
   deterministic step.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold deterministic. intros x y1 y2 Hy1 Hy2.
+  generalize dependent y2. induction Hy1; subst; intros y2 Hy2.
+  - inversion Hy2; subst; try solve_by_invert.
+    reflexivity.
+  - inversion Hy2; subst; try solve_by_invert.
+    + apply IHHy1 in H2. subst. reflexivity.
+    + inversion H1; subst. solve_by_invert.
+  - inversion Hy2; subst; try solve_by_invert.
+    + inversion H3; subst; try solve_by_invert.
+    + apply IHHy1 in H4. subst. reflexivity.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -577,7 +590,7 @@ Qed.
 (** Indeed, we could easily have written the definitions (incorrectly)
     so that they would _not_ coincide. *)
 
-(** **** Exercise: 3 stars, standard, optional (value_not_same_as_normal_form1) 
+(** **** Exercise: 3 stars, standard, optional (value_not_same_as_normal_form1)
 
     We might, for example, define [value] so that it
     includes some terms that are not finished reducing.
@@ -610,12 +623,19 @@ Inductive step : tm -> tm -> Prop :=
 Lemma value_not_same_as_normal_form :
   exists v, value v /\ ~ normal_form step v.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists (P (C 0) (C 2)).
+  split.
+  - constructor.
+  - intro. unfold normal_form in H. apply H.
+    exists (C 2).
+    constructor.
+Qed.
+
 End Temp1.
 
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (value_not_same_as_normal_form2) 
+(** **** Exercise: 2 stars, standard, optional (value_not_same_as_normal_form2)
 
     Or we might (again, wrongly) define [step] so that it permits
     something designated as a value to reduce further. *)
@@ -645,12 +665,17 @@ Inductive step : tm -> tm -> Prop :=
 Lemma value_not_same_as_normal_form :
   exists v, value v /\ ~ normal_form step v.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists (C 0). split.
+  - constructor.
+  - unfold normal_form. intro.
+    apply H.
+    exists (P (C 0) (C 0)). constructor.
+Qed.
 
 End Temp2.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (value_not_same_as_normal_form3) 
+(** **** Exercise: 3 stars, standard, optional (value_not_same_as_normal_form3)
 
     Finally, we might define [value] and [step] so that there is some
     term that is not a value but that cannot take a step in the [step]
@@ -680,7 +705,12 @@ Inductive step : tm -> tm -> Prop :=
 Lemma value_not_same_as_normal_form :
   exists t, ~ value t /\ normal_form step t.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists (P (C 0) (P (C 1) (C 2))). split.
+  - intro. inversion H.
+  - unfold normal_form. intro.
+    destruct H as [t' H].
+    inversion H; subst. inversion H3.
+Qed.
 
 End Temp3.
 (** [] *)
@@ -716,7 +746,7 @@ Inductive step : tm -> tm -> Prop :=
 
   where " t '-->' t' " := (step t t').
 
-(** **** Exercise: 1 star, standard (smallstep_bools) 
+(** **** Exercise: 1 star, standard (smallstep_bools)
 
     Which of the following propositions are provable?  (This is just a
     thought exercise, but for an extra challenge feel free to prove
@@ -725,7 +755,7 @@ Inductive step : tm -> tm -> Prop :=
 Definition bool_step_prop1 :=
   fls --> fls.
 
-(* FILL IN HERE *)
+(* not provable because fls is normal form *)
 
 Definition bool_step_prop2 :=
      test
@@ -735,7 +765,7 @@ Definition bool_step_prop2 :=
   -->
      tru.
 
-(* FILL IN HERE *)
+(* not provable because it takes more than one step to reach tru *)
 
 Definition bool_step_prop3 :=
      test
@@ -748,13 +778,18 @@ Definition bool_step_prop3 :=
        (test tru tru tru)
        fls.
 
-(* FILL IN HERE *)
+(* provable because (test tru tru tru) --> tru *)
+
+Theorem bool_step_prop3_provable : bool_step_prop3.
+Proof.
+  constructor. constructor.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_smallstep_bools : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (progress_bool) 
+(** **** Exercise: 3 stars, standard, optional (progress_bool)
 
     Just as we proved a progress theorem for plus expressions, we can
     do so for boolean expressions, as well. *)
@@ -774,7 +809,7 @@ Proof.
 
 Module Temp5.
 
-(** **** Exercise: 2 stars, standard (smallstep_bool_shortcut) 
+(** **** Exercise: 2 stars, standard (smallstep_bool_shortcut)
 
     Suppose we want to add a "short circuit" to the step relation for
     boolean expressions, so that it can recognize when the [then] and
@@ -823,7 +858,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (properties_of_altered_step) 
+(** **** Exercise: 3 stars, standard, optional (properties_of_altered_step)
 
     It can be shown that the determinism and strong progress theorems
     for the step relation in the lecture notes also hold for the
@@ -1199,7 +1234,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (eval__multistep_inf) 
+(** **** Exercise: 3 stars, advanced (eval__multistep_inf)
 
     Write a detailed informal version of the proof of [eval__multistep].
 
@@ -1242,7 +1277,7 @@ Proof.
 (* ================================================================= *)
 (** ** Additional Exercises *)
 
-(** **** Exercise: 3 stars, standard, optional (interp_tm) 
+(** **** Exercise: 3 stars, standard, optional (interp_tm)
 
     Remember that we also defined big-step evaluation of terms as a
     function [evalF].  Prove that it is equivalent to the existing
@@ -1256,7 +1291,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 4 stars, standard (combined_properties) 
+(** **** Exercise: 4 stars, standard (combined_properties)
 
     We've considered arithmetic and conditional expressions
     separately.  This exercise explores how the two interact. *)
@@ -1708,7 +1743,7 @@ Qed.
 
 Definition stack_multistep st := multi (stack_step st).
 
-(** **** Exercise: 3 stars, advanced (compiler_is_correct) 
+(** **** Exercise: 3 stars, advanced (compiler_is_correct)
 
     Remember the definition of [compile] for [aexp] given in the
     [Imp] chapter of _Logical Foundations_. We want now to
@@ -1818,7 +1853,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (normalize_ex') 
+(** **** Exercise: 1 star, standard, optional (normalize_ex')
 
     For comparison, prove it using [apply] instead of [eapply]. *)
 
