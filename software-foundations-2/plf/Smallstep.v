@@ -1101,7 +1101,8 @@ Qed.
 Lemma test_multistep_2:
   C 3 -->* C 3.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply multi_refl.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (test_multistep_3)  *)
@@ -1110,7 +1111,8 @@ Lemma test_multistep_3:
    -->*
       P (C 0) (C 3).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply multi_refl.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (test_multistep_4)  *)
@@ -1125,7 +1127,15 @@ Lemma test_multistep_4:
         (C 0)
         (C (2 + (0 + 3))).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply multi_step.
+  { apply ST_Plus2. apply v_const. apply ST_Plus2. apply v_const.
+    apply ST_PlusConstConst.
+  }
+  eapply multi_step.
+  { apply ST_Plus2. apply v_const. apply ST_PlusConstConst.
+  }
+  apply multi_refl.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
