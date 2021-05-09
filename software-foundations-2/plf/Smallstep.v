@@ -797,14 +797,33 @@ Definition manual_grade_for_smallstep_bools : option (nat*string) := None.
 Theorem strong_progress : forall t,
   value t \/ (exists t', t --> t').
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  induction t.
+  - left. apply v_tru.
+  - left. apply v_fls.
+  - right. destruct IHt1.
+    + inversion H.
+      * exists t2. constructor.
+      * exists t3. constructor.
+    + destruct H as [t' H].
+      exists (test t' t2 t3).
+      constructor. apply H.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (step_deterministic)  *)
 Theorem step_deterministic :
   deterministic step.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold deterministic.
+  intros x y1 y2 Hy1 Hy2.
+  generalize dependent y2.
+  induction Hy1; intros y2 Hy2; inversion Hy2; subst; clear Hy2; try easy.
+  (* only one case left *)
+  apply IHHy1 in H3. subst. auto.
+Qed.
+
 (** [] *)
 
 Module Temp5.
@@ -840,8 +859,8 @@ Inductive step : tm -> tm -> Prop :=
   | ST_If : forall t1 t1' t2 t3,
       t1 --> t1' ->
       test t1 t2 t3 --> test t1' t2 t3
-  (* FILL IN HERE *)
-
+  | ST_IfShortcut : forall t1 t2,
+      test t1 t2 t2 --> t2
   where " t '-->' t' " := (step t t').
 
 Definition bool_step_prop4 :=
@@ -854,8 +873,7 @@ Definition bool_step_prop4 :=
 
 Example bool_step_prop4_holds :
   bool_step_prop4.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. constructor. Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (properties_of_altered_step)
@@ -870,21 +888,74 @@ Proof.
 
       Optional: prove your answer correct in Coq. *)
 
-(* FILL IN HERE
+(* My answer: no. The following program has two next steps.
+
+test (test tru fls fls) fls fls can be reduced to:
+
+- test fls fls fls by ST_If, or
+- fls by ST_IfShortcut
+
+Here's the proof with this exact example.
+ *)
+
+Theorem step_non_deterministic :
+  ~deterministic step.
+Proof.
+  unfold deterministic. intro.
+  specialize H with
+            (x := test (test tru fls fls) fls fls)
+            (y1 := test fls fls fls)
+            (y2 := fls).
+  assert (test (test tru fls fls) fls fls --> test fls fls fls)
+    by repeat constructor.
+  assert (test (test tru fls fls) fls fls --> fls)
+    by constructor.
+  apply (H H0) in H1.
+  inversion H1.
+Qed.
+
+(*
    - Does a strong progress theorem hold? Write yes or no and
      briefly (1 sentence) explain your answer.
 
      Optional: prove your answer correct in Coq.
+ *)
+
+(* My answer: yes. We are only adding a new clause.
+   It doesn't introduce a term that is not a value nor can be reduced further.
+   The previous proof for strong_progress should work here without changing.
+
+   Here's my proof. It is identical to the previous one.
 *)
 
-(* FILL IN HERE
+Theorem strong_progress : forall t,
+    value t \/ (exists t', t --> t').
+Proof.
+  intro.
+  induction t.
+  - left. apply v_tru.
+  - left. apply v_fls.
+  - right. destruct IHt1.
+    + inversion H.
+      * exists t2. constructor.
+      * exists t3. constructor.
+    + destruct H as [t' H].
+      exists (test t' t2 t3).
+      constructor. apply H.
+Qed.
+
+(*
    - In general, is there any way we could cause strong progress to
      fail if we took away one or more constructors from the original
      step relation? Write yes or no and briefly (1 sentence) explain
      your answer.
+ *)
 
-(* FILL IN HERE *)
-*)
+(* My answer: yes. If we take away some step constructor, then some
+   expression may have no way to reduce to a value. In that case,
+   this expression will be neither a value nor a reducible expression.
+ *)
+
 (** [] *)
 
 End Temp5.
