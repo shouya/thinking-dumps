@@ -1166,7 +1166,21 @@ Proof.
   destruct P1 as [P11 P12].
   destruct P2 as [P21 P22].
   generalize dependent y2.
-  (* FILL IN HERE *) Admitted.
+  unfold step_normal_form, normal_form in *.
+  induction P11; intros.
+  - (* multi_refl *)
+    inversion P21; subst; clear P21; try reflexivity.
+    exfalso. apply P12. exists y. apply H.
+  - (* multi_step *)
+    inversion P21; subst; clear P21.
+    + exfalso. apply P22. exists y. apply H.
+    + apply IHP11; try assumption.
+      (* Hypo: x --> y; x --> y0; y0 -->* y2, Goal: y -->* y2 *)
+      assert (y = y0).
+      { apply (step_deterministic x); assumption. }
+      subst. assumption.
+Qed.
+
 (** [] *)
 
 (** Indeed, something stronger is true for this language (though not
@@ -1204,7 +1218,18 @@ Lemma multistep_congr_2 : forall t1 t2 t2',
      t2 -->* t2' ->
      P t1 t2 -->* P t1 t2'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros t1 t2 t2'.
+  intros Hv H.
+  induction H.
+  - (* multi_refl *)
+    apply multi_refl.
+  - (* multi_step *)
+    apply multi_step with (P t1 y).
+    { apply ST_Plus2. apply Hv. apply H.
+    }
+    apply IHmulti.
+Qed.
+
 (** [] *)
 
 (** With these lemmas in hand, the main proof is a straightforward
@@ -1312,7 +1337,36 @@ Theorem eval__multistep : forall t n,
     includes [-->]. *)
 
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H.
+  - apply multi_refl.
+  - inversion IHeval1; inversion IHeval2; subst; clear IHeval1; clear IHeval2.
+    + (* P (C n1) (C n2) -->* C (n1 + n2) *)
+      eapply multi_step. constructor. apply multi_refl.
+    + (* P (C n1) t2 -->* C (n1 + n2) *)
+      eapply multi_step.
+      apply ST_Plus2; try constructor. apply H3.
+      apply multi_trans with (P (C n1) (C n2)).
+      apply multistep_congr_2; easy.
+      eapply multi_step. constructor. apply multi_refl.
+    + (* P t1 (C n2) -->* C (n1 + n2) *)
+      eapply multi_step.
+      apply ST_Plus1; try constructor. apply H1.
+      apply multi_trans with (P (C n1) (C n2)).
+      apply multistep_congr_1; easy.
+      eapply multi_step. constructor. apply multi_refl.
+    + (* P t1 t2 -->* C (n1 + n2) *)
+      apply multi_trans with (P (C n1) (C n2)).
+      * apply multi_trans with (P (C n1) t2).
+        -- apply multi_step with (P y t2).
+           apply ST_Plus1. apply H1.
+           apply multistep_congr_1. apply H2.
+        -- apply multistep_congr_2. constructor.
+           eapply multi_step. apply H5. apply H6.
+      * eapply multi_step.
+        apply ST_PlusConstConst.
+        apply multi_refl.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (eval__multistep_inf)
