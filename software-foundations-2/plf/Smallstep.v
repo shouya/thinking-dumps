@@ -1402,7 +1402,15 @@ Lemma step__eval : forall t t' n,
      t  ==> n.
 Proof.
   intros t t' n Hs. generalize dependent n.
-  (* FILL IN HERE *) Admitted.
+  induction Hs; intros; inversion H; subst; clear H.
+  - repeat constructor.
+  - constructor.
+    + apply IHHs. apply H2.
+    + apply H4.
+  - inversion H0; subst; clear H0. constructor.
+    + apply H2.
+    + apply IHHs. apply H4.
+Qed.
 (** [] *)
 
 (** The fact that small-step reduction implies big-step evaluation is now
@@ -1418,7 +1426,22 @@ Proof.
 Theorem multistep__eval : forall t t',
   normal_form_of t t' -> exists n, t' = C n /\ t ==> n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H; unfold step_normal_form in H0.
+  induction H.
+  - assert (value x \/ (exists t', x --> t')) by apply strong_progress.
+    destruct H.
+    + inversion H. exists n. split. reflexivity. constructor.
+    + exfalso. apply H0. apply H.
+  - assert (value z \/ (exists t', z --> t')) by apply strong_progress.
+    destruct H2.
+    + inversion H2. subst. apply IHmulti in H0.
+      destruct H0. destruct H0. inversion H0; subst.
+      exists x0. split.
+      * reflexivity.
+      * eapply step__eval. apply H. apply H3.
+    + exfalso. apply H0. apply H2.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1435,7 +1458,21 @@ Proof.
 Theorem evalF_eval : forall t n,
   evalF t = n <-> t ==> n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  induction t.
+  - split; intro.
+    + simpl in H. subst. constructor.
+    + inversion H; subst. reflexivity.
+  - split; intro.
+    + simpl in H. subst.
+      constructor.
+      apply IHt1; reflexivity.
+      apply IHt2; reflexivity.
+    + inversion H; subst; clear H. simpl.
+      apply IHt1 in H2. apply IHt2 in H4.
+      subst. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars, standard (combined_properties)
