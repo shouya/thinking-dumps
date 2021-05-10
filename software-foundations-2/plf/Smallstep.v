@@ -1340,32 +1340,16 @@ Proof.
   intros.
   induction H.
   - apply multi_refl.
-  - inversion IHeval1; inversion IHeval2; subst; clear IHeval1; clear IHeval2.
-    + (* P (C n1) (C n2) -->* C (n1 + n2) *)
-      eapply multi_step. constructor. apply multi_refl.
-    + (* P (C n1) t2 -->* C (n1 + n2) *)
-      eapply multi_step.
-      apply ST_Plus2; try constructor. apply H3.
-      apply multi_trans with (P (C n1) (C n2)).
+  - inversion IHeval1; subst; clear IHeval1.
+    + apply multi_trans with (P (C n1) (C n2)).
       apply multistep_congr_2; easy.
       eapply multi_step. constructor. apply multi_refl.
-    + (* P t1 (C n2) -->* C (n1 + n2) *)
-      eapply multi_step.
-      apply ST_Plus1; try constructor. apply H1.
-      apply multi_trans with (P (C n1) (C n2)).
-      apply multistep_congr_1; easy.
-      eapply multi_step. constructor. apply multi_refl.
-    + (* P t1 t2 -->* C (n1 + n2) *)
-      apply multi_trans with (P (C n1) (C n2)).
-      * apply multi_trans with (P (C n1) t2).
-        -- apply multi_step with (P y t2).
-           apply ST_Plus1. apply H1.
-           apply multistep_congr_1. apply H2.
-        -- apply multistep_congr_2. constructor.
-           eapply multi_step. apply H5. apply H6.
-      * eapply multi_step.
-        apply ST_PlusConstConst.
-        apply multi_refl.
+    + apply multi_trans with (P (C n1) t2).
+      apply multistep_congr_1.
+      * eapply multi_step. apply H1. apply H2.
+      * apply multi_trans with (P (C n1) (C n2)).
+        -- apply multistep_congr_2; easy.
+        -- eapply multi_step. constructor. apply multi_refl.
 Qed.
 (** [] *)
 
@@ -1373,8 +1357,36 @@ Qed.
 
     Write a detailed informal version of the proof of [eval__multistep].
 
-(* FILL IN HERE *)
-*)
+Proof:
+  Suppose t ==> n, I need to prove t -->* C n. To do this, I will
+  perform induction on t ==> n. There are two cases:
+
+  - E_Const: in this case, t = C n. C n -->* C n can be proven by multi_refl.
+  - E_Plus: in this case, t = P t1 t2, t1 ==> n1 and t2 ==> n2.
+    I also get inductive hypotheses that t1 -->* C n1 and t2 -->* C n2.
+    The goal is to prove that P t1 t2 -->* C (n1 + n2).
+
+    For induction hypothesis t1 -->* C n1, there are two possible cases: either
+    multi_refl where (t1 = C n1) or multi_step where (t1 -> y and y -->* C n1).
+    I will analyze these two cases:
+
+    + Case 1: t1 = C n1. Goal: P (C n1) t2 -->* C (n1 + n2).
+      We can use multi_trans to convert the goal into two separate goals:
+      - P (C n1) t2 -->* P (C n1) (C n2): I can prove this using
+        multistep_congr_2.
+      - P (C n1) (C n2) -->* C (n1 + n2): I can prove it because the result
+        is a single step of (-->).
+
+    + Case 2: we have t1 -> y and y -->* C n1. By multi_trans, we can convert
+      it into three goals:
+      - P t1 t2 -->* P (C n1) t2: I can prove this using multistep_congr_1.
+      - P (C n1) t2 -->* P (C n1) (C n2): this is proven in same way as in case 1.
+      - P (C n1) (C n2) -->* C (n1 + n2): this is proven in same way as in case 1.
+
+Qed.
+
+ *)
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_eval__multistep_inf : option (nat*string) := None.
