@@ -1527,7 +1527,39 @@ Inductive step : tm -> tm -> Prop :=
     language.  (That is, state a theorem saying that the property
     holds or does not hold, and prove your theorem.) *)
 
-(* FILL IN HERE *)
+(*
+My answer:
+
+1. step will still be deterministic.
+2. strong progress lemma doesn't hold. Here's a counter example:
+  test (C 0) tru tru
+
+Below are the proofs:
+ *)
+
+Theorem step_deterministic :
+  deterministic step.
+Proof.
+  unfold deterministic.
+  intros. generalize dependent y2.
+  induction H; intros y2 Hy2; inversion Hy2; subst; clear Hy2;
+    try auto; try easy.
+  - f_equal. auto.
+  - inversion H2; subst; clear H2; inversion H.
+  - inversion H; subst; clear H; inversion H4.
+  - f_equal. auto.
+  - f_equal. apply IHstep. apply H4.
+Qed.
+
+Theorem strong_progress_does_not_hold:
+    ~(forall t, value t \/ (exists t', t --> t')).
+Proof.
+  intros. intro.
+  specialize H with (test (C 0) tru tru).
+  destruct H.
+  - inversion H.
+  - inversion H. inversion H0. inversion H5.
+Qed.
 
 End Combined.
 
