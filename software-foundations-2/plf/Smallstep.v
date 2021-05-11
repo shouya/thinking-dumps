@@ -1886,7 +1886,34 @@ Lemma par_body_n__Sn : forall n st,
   st X = n /\ st Y = 0 ->
   par_loop / st -->* par_loop / (X !-> S n ; st).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H as [Hx Hy].
+  unfold par_loop.
+  eapply multi_step.
+  apply CS_Par2.
+  apply CS_While.
+
+  eapply multi_step. apply CS_Par2. apply CS_IfStep. apply BS_Eq1. apply AS_Id.
+  rewrite Hy.
+
+  eapply multi_step. apply CS_Par2. apply CS_IfStep. apply BS_Eq.
+
+  eapply multi_step. apply CS_Par2. apply CS_IfTrue.
+
+  eapply multi_step. apply CS_Par2. apply CS_SeqStep. apply CS_AssStep.
+  apply AS_Plus1. apply AS_Id.
+
+  eapply multi_step. apply CS_Par2. rewrite Hx. apply CS_SeqStep.
+  apply CS_AssStep. apply AS_Plus.
+
+  eapply multi_step. apply CS_Par2. apply CS_SeqStep. apply CS_Ass.
+  rewrite plus_comm. simpl.
+
+  eapply multi_step. apply CS_Par2. apply CS_SeqFinish.
+
+  eapply multi_refl.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (par_body_n)  *)
@@ -1895,7 +1922,22 @@ Lemma par_body_n : forall n st,
   exists st',
     par_loop / st -->*  par_loop / st' /\ st' X = n /\ st' Y = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H as [Hx Hy].
+  unfold par_loop.
+  induction n.
+  - eapply ex_intro. split.
+    + apply multi_refl.
+    + easy.
+  - destruct IHn as [st' [IHn [Hx' Hy']]].
+    eapply ex_intro.
+    split.
+    + eapply multi_trans.
+      * apply IHn.
+      * apply par_body_n__Sn.
+        auto.
+    + unfold t_update. simpl. auto.
+Qed.
 (** [] *)
 
 (** ... the above loop can exit with [X] having any value
