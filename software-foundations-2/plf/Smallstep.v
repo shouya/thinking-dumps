@@ -2012,13 +2012,59 @@ Definition stack_multistep st := multi (stack_step st).
     stack machine small step semantics, and then prove it. *)
 
 (* Copy your definition of s_compile here *)
+Fixpoint s_compile (e : aexp) : list sinstr :=
+  match e with
+  | ANum n => [SPush n]
+  | AId x => [SLoad x]
+  | APlus a1 a2 => s_compile a1 ++ s_compile a2 ++ [SPlus]
+  | AMinus a1 a2 => s_compile a1 ++ s_compile a2 ++ [SMinus]
+  | AMult a1 a2 => s_compile a1 ++ s_compile a2 ++ [SMult]
+  end.
 
-Definition compiler_is_correct_statement : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+
+Definition compiler_is_correct_statement : Prop := forall st e n stk,
+    aeval st e = n ->
+    stack_multistep st (s_compile e, stk) ([], n :: stk).
+
+Hint Constructors multi : core.
+Hint Resolve multi_trans : core.
+
+Hint Constructors stack_step : core.
+Hint Unfold stack_multistep : core.
+
+
+Theorem stack_execute_app : forall st p1 p2 stk stk' stk'',
+    stack_multistep st (p1, stk) ([], stk') ->
+    stack_multistep st (p2, stk') ([], stk'') ->
+    stack_multistep st ((p1 ++ p2), stk) ([], stk'').
+Proof.
+  unfold stack_multistep.
+  intros.
+  generalize dependent stk'.
+  generalize dependent stk''.
+  generalize dependent stk.
+  induction p1; simpl; intros.
+  - inversion H; subst; clear H.
+    + apply H0.
+    + inversion H1.
+  - destruct a;
+      inversion H; subst; clear H;
+      inversion H1; subst; clear H1;
+      eauto.
+Qed.
 
 Theorem compiler_is_correct : compiler_is_correct_statement.
 Proof.
-(* FILL IN HERE *) Admitted.
+  unfold compiler_is_correct_statement.
+  intros.
+  generalize dependent n.
+  generalize dependent stk.
+  induction e; intros; simpl in *; subst;
+    (* ANum, AId *)
+    try eauto;
+    (* APlus, AMinus, AMult *)
+    try eauto 7 using stack_execute_app.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
