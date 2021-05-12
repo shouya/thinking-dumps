@@ -2154,7 +2154,12 @@ Theorem normalize_ex : exists e',
   (P (C 3) (P (C 2) (C 1)))
   -->* e' /\ value e'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  eexists.
+  split.
+  - normalize.
+  - auto.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (normalize_ex')
@@ -2165,7 +2170,17 @@ Theorem normalize_ex' : exists e',
   (P (C 3) (P (C 2) (C 1)))
   -->* e' /\ value e'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  exists (C 6).
+  split.
+  - apply multi_step with (P (C 3) (C 3)).
+    + constructor. constructor. constructor.
+    + apply multi_step with (C 6).
+      * replace 6 with (3 + 3) by auto.
+        constructor.
+      * apply multi_refl.
+  - constructor.
+Qed.
 (** [] *)
 
 (* 2020-09-09 21:08 *)
