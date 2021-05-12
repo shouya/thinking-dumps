@@ -180,7 +180,13 @@ Hint Unfold stuck : core.
 Example some_term_is_stuck :
   exists t, stuck t.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists (test zro zro zro). split.
+  - (* normal form *)
+    intro. inversion H. inversion H0. inversion H5.
+  - (* not value *)
+    intro. inversion H. inversion H0. inversion H0.
+Qed.
+
 (** [] *)
 
 (** However, although values and normal forms are _not_ the same in
@@ -192,7 +198,16 @@ Proof.
 Lemma value_is_nf : forall t,
   value t -> step_normal_form t.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold value, step_normal_form.
+  intros. intro.
+  destruct H0.
+  destruct H.
+  - inversion H; subst; inversion H0.
+  - generalize dependent x. induction H; subst.
+    + intros. inversion H0.
+    + intros. inversion H0; subst.
+      apply IHnvalue in H2. inversion H2.
+Qed.
 
 (** (Hint: You will reach a point in this proof where you need to
     use an induction to reason about a term that is known to be a
@@ -203,8 +218,20 @@ Proof.
     exercise, try to complete the proof both ways.)
 
     [] *)
+Lemma value_is_nf' : forall t,
+  value t -> step_normal_form t.
+Proof.
+  unfold value, step_normal_form.
+  intros.
+  intros. intro.
+  destruct H0.
+  destruct H.
+  - inversion H; subst; inversion H0.
+  - induction H0; subst; inversion H; subst.
+    apply IHstep; apply H2.
+Qed.
 
-(** **** Exercise: 3 stars, standard, optional (step_deterministic) 
+(** **** Exercise: 3 stars, standard, optional (step_deterministic)
 
     Use [value_is_nf] to show that the [step] relation is also
     deterministic. *)
@@ -212,7 +239,23 @@ Proof.
 Theorem step_deterministic:
   deterministic step.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold deterministic.
+  intros x y1 y2 Hy1 Hy2.
+  generalize dependent y2.
+  induction Hy1; intros; inversion Hy2; clear Hy2; subst;
+         try reflexivity;
+         try (inversion H3; fail);
+         try (inversion H0; fail);
+         try (inversion Hy1; fail).
+  apply IHHy1 in H3; subst; auto.
+  apply IHHy1 in H0; subst; auto.
+
+Qed.
+
+
+
+
+
 (** [] *)
 
 (* ================================================================= *)
@@ -236,7 +279,7 @@ Inductive ty : Type :=
     written to the left of the turnstile.  For the moment, the context
     is always empty.
 
-    
+
                            ---------------                     (T_Tru)
                            |- tru \in Bool
 
@@ -382,7 +425,7 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (finish_progress_informal) 
+(** **** Exercise: 3 stars, advanced (finish_progress_informal)
 
     Complete the corresponding informal proof: *)
 
@@ -451,7 +494,7 @@ Proof.
     (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 3 stars, advanced (finish_preservation_informal) 
+(** **** Exercise: 3 stars, advanced (finish_preservation_informal)
 
     Complete the following informal proof: *)
 
@@ -485,7 +528,7 @@ Proof.
 Definition manual_grade_for_finish_preservation_informal : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard (preservation_alternate_proof) 
+(** **** Exercise: 3 stars, standard (preservation_alternate_proof)
 
     Now prove the same property again by induction on the
     _evaluation_ derivation instead of on the typing derivation.
@@ -532,7 +575,7 @@ Qed.
 (* ================================================================= *)
 (** ** Additional Exercises *)
 
-(** **** Exercise: 2 stars, standard, especially useful (subject_expansion) 
+(** **** Exercise: 2 stars, standard, especially useful (subject_expansion)
 
     Having seen the subject reduction property, one might
     wonder whether the opposity property -- subject _expansion_ --
@@ -547,7 +590,7 @@ Qed.
 Definition manual_grade_for_subject_expansion : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (variation1) 
+(** **** Exercise: 2 stars, standard (variation1)
 
     Suppose that we add this new rule to the typing relation:
 
@@ -570,7 +613,7 @@ Definition manual_grade_for_subject_expansion : option (nat*string) := None.
 Definition manual_grade_for_variation1 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (variation2) 
+(** **** Exercise: 2 stars, standard (variation2)
 
     Suppose, instead, that we add this new rule to the [step] relation:
 
@@ -585,7 +628,7 @@ Definition manual_grade_for_variation1 : option (nat*string) := None.
 Definition manual_grade_for_variation2 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (variation3) 
+(** **** Exercise: 2 stars, standard, optional (variation3)
 
     Suppose instead that we add this rule:
 
@@ -599,7 +642,7 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (variation4) 
+(** **** Exercise: 2 stars, standard, optional (variation4)
 
     Suppose instead that we add this rule:
 
@@ -612,7 +655,7 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (variation5) 
+(** **** Exercise: 2 stars, standard, optional (variation5)
 
     Suppose instead that we add this rule:
 
@@ -625,7 +668,7 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (variation6) 
+(** **** Exercise: 2 stars, standard, optional (variation6)
 
     Suppose instead that we add this rule:
 
@@ -638,7 +681,7 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (more_variations) 
+(** **** Exercise: 3 stars, standard, optional (more_variations)
 
     Make up some exercises of your own along the same lines as
     the ones above.  Try to find ways of selectively breaking
@@ -649,7 +692,7 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 
     [] *)
 
-(** **** Exercise: 1 star, standard (remove_prdzro) 
+(** **** Exercise: 1 star, standard (remove_prdzro)
 
     The reduction rule [ST_PrdZro] is a bit counter-intuitive: we
     might feel that it makes more sense for the predecessor of [zro] to
@@ -663,7 +706,7 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 Definition manual_grade_for_remove_predzro : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 4 stars, advanced (prog_pres_bigstep) 
+(** **** Exercise: 4 stars, advanced (prog_pres_bigstep)
 
     Suppose our evaluation relation is defined in the big-step style.
     State appropriate analogs of the progress and preservation
