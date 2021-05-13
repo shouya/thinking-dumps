@@ -246,15 +246,17 @@ Proof with eauto.
          try reflexivity;
          try (inversion H3; fail);
          try (inversion H0; fail);
-         try (inversion Hy1; fail).
-  apply IHHy1 in H3; subst; auto.
-  apply IHHy1 in H0; subst; auto.
-
+         try (inversion Hy1; fail);
+         try (f_equal; eauto; fail).
+  - assert (Hv: value (scc v)) by auto; apply value_is_nf in Hv.
+    unfold step_normal_form in Hv. exfalso. apply Hv. eexists. apply H1.
+  - assert (Hv: value (scc y2)) by auto; apply value_is_nf in Hv.
+    unfold step_normal_form in Hv. exfalso. apply Hv. eexists. apply Hy1.
+  - assert (Hv: value (scc v)) by auto; apply value_is_nf in Hv.
+    unfold step_normal_form in Hv. exfalso. apply Hv. eexists. apply H1.
+  - assert (Hv: value (scc v)) by auto; apply value_is_nf in Hv.
+    unfold step_normal_form in Hv. exfalso. apply Hv. eexists. apply Hy1.
 Qed.
-
-
-
-
 
 (** [] *)
 
