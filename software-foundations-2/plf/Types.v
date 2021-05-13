@@ -363,8 +363,8 @@ Proof.
 Example scc_hastype_nat__hastype_nat : forall t,
   |- scc t \in Nat ->
   |- t \in Nat.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. inversion H. auto. Qed.
+
 (** [] *)
 
 (* ----------------------------------------------------------------- *)
@@ -424,7 +424,29 @@ Proof.
     + (* t1 can take a step *)
       destruct H as [t1' H1].
       exists (test t1' t2 t3). auto.
-  (* FILL IN HERE *) Admitted.
+  - (* |- t1 in Nat -> suc *)
+    destruct IHHT.
+    + left. right.
+      apply (nat_canonical t1 HT) in H.
+      constructor. apply H.
+    + right. inversion H as [t'].
+      eexists. constructor. apply H0.
+  - (* |- t1 in Nat -> prd *)
+    destruct IHHT.
+    + apply (nat_canonical t1 HT) in H.
+      inversion H; subst; clear H.
+      * right. eexists. constructor.
+      * right. eexists. constructor. apply H0.
+    + right. inversion H as [t'].
+      eexists. constructor. apply H0.
+  - (* |- t in Nat -> iszro *)
+    destruct IHHT.
+    + apply (nat_canonical t1 HT) in H.
+      right. inversion H; subst; clear H.
+      * eexists. constructor.
+      * eexists. constructor. apply H0.
+    + destruct H. right. eexists. constructor.  apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (finish_progress_informal)
@@ -452,7 +474,41 @@ Proof.
       - If [t1] itself can take a step, then, by [ST_Test], so can
         [t].
 
-    - (* FILL IN HERE *)
+    - If the last rule in the derivation is [T_Scc], then [t = scc t1],
+      with [|- t1 \in Nat]. By the IH, either [t1] is a value or else [t1] can
+      step to some [t1'].
+
+      - If [t1] is a value, then by the canonical forms lemmas and the fact
+        that [|- t1 \in Nat] we have that t1 is a nvalue.
+        Therefore [scc t1] is also an nvalue by nv_scc.
+        Therefore [scc t1] is a value.
+      - If [t1 --> t1'], then by ST_Scc we can conclude
+        that [scc t1 --> scc t1] based on [t1 --> t']
+
+    - If the last rule is [T_Prd], then [t = prd t1], with [|- t1 \in Nat].
+      By IH, either [t1] is a value or [t1] can step to some [t1'].
+
+      - If [t1] is a value, then by the canonical forms lemmas and the fact
+        that [|- t1 \in Nat] we have that [t1] is a nvalue. Therefore,
+        either [t1 = zro] or [t1 = scc x].
+        - if [t1 = zro], we can show that [prd zro] steps to [zro] by ST_PrdZro.
+        - if [t1 = scc x], we can show that [prd (scc x)]
+          steps to [x] by ST_PrdScc.
+
+      - If [t1] can step to [t1']. We can show that [prd t1] steps to [prd t1']
+        by ST_Prd.
+
+    - If the last rule is [T_IsZro], then [t = iszro t1], with [|- t1 \in Nat].
+      By IH, either [t1] is a value or [t1] can step to some [t1'].
+
+      - If [t1] is a value, it must be either [zro] or [scc x].
+        * If [t1 = zro], we can show [iszro zro] can step to [tru] by ST_IszroZro.
+        * If [t1 = scc x], we can show [iszro (scc x)] steps to [fls] by
+          ST_IszroScc.
+
+      - If [t1] can step into [t1']. We can use ST_Iszro to claim that
+        [iszro t1] can step to [iszro t1'].
+Qed.
  *)
 (* Do not modify the following line: *)
 Definition manual_grade_for_finish_progress_informal : option (nat*string) := None.
