@@ -549,7 +549,16 @@ Proof.
       + (* ST_TestFls *) assumption.
       + (* ST_Test *) apply T_Test; try assumption.
         apply IHHT1; assumption.
-    (* FILL IN HERE *) Admitted.
+    - inversion HE; subst. constructor. apply IHHT. apply H0.
+    - inversion HE; subst.
+      + apply HT.
+      + inversion HT. apply H1.
+      + constructor. apply IHHT in H0. apply H0.
+    - inversion HE; subst; clear HE.
+      + constructor.
+      + constructor.
+      + constructor. apply IHHT. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (finish_preservation_informal)
@@ -580,7 +589,37 @@ Proof.
         by the IH, [|- t1' \in Bool].  The [T_Test] rule then gives us
         [|- test t1' then t2 else t3 \in T], as required.
 
-    - (* FILL IN HERE *)
+    - If the last rule in the derivation is [T_Scc], then [t = scc t1].
+      with [|- t1 \in Nat] and [scc t1 --> t']. By ST_Scc on [scc t1 --> t'],
+      [t' = scc x] for some x such that [t1 --> x]. By IH this implies
+      [x \in Nat], which in turn implies [t' = scc x \in Nat] by T_Scc.
+
+    - If the last rule in the derivation is [T_Prd], then [t = prd t1].
+      with [|- t1 \in Nat] and [prd t1 --> t']. There are three cases where
+      [prd t1 --> t'] can hold, we will do a case analysis.
+
+      - [t1 = zro], thus [prd zro --> zro = t']. And we have [|- zro \in Nat]
+        by T_Zro.
+      - [t1 = scc t1'] for some t1', thus [prd (scc t1') --> t1' = t'].
+        And we have [|- zro \in Nat] by T_Zro.
+        Because [|- suc t' \in Nat] we have [|- t' \in Nat] by T_Scc.
+      - [prd t1 --> prd t1'] and [t1 --> t1']. We need to prove [|- prd t1' \in Nat].
+        Apply the IH to [t1 --> t1'], we get [t' \in Nat]. Then by T_Prd,
+        we can show that [prd t1' \in Nat].
+    - If the last rule is [T_IsZro],  Then [t = iszro t1], with
+      [|- t1 \in Nat] and [iszro t1 --> t']. There are three ways for
+      [iszro t1 --> t'] to hold, we will do a case analysis.
+
+      - [t1 = zro] and [t' = tru]. It's trivial to prove [|- tru \in Bool] by
+        T_Tru.
+      - [t1 = scc x] for some x and [t' = fls]. It's trivial to prove
+        [|- fls \in Bool] by T_Fls.
+      - [t1 --> t1'] for some [t1']. We need to prove [|- iszro t1' \in Bool].
+        apply IH, we get [|- t1' \in Nat]. Then by T_IsZro we can show
+        [|- iszro t1' \in Bool]
+
+Qed.
+
 *)
 (* Do not modify the following line: *)
 Definition manual_grade_for_finish_preservation_informal : option (nat*string) := None.
@@ -600,7 +639,15 @@ Theorem preservation' : forall t t' T,
   t --> t' ->
   |- t' \in T.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent t'.
+  induction H; intros t' Ht;
+         try (inversion Ht; fail);
+         try (inversion Ht; subst; auto; fail).
+  inversion Ht; subst; auto.
+  inversion H. auto.
+Qed.
+
 (** [] *)
 
 (** The preservation theorem is often called _subject reduction_,
@@ -622,6 +669,7 @@ Corollary soundness : forall t t' T,
   |- t \in T ->
   t -->* t' ->
   ~(stuck t').
+Print stuck. (* stuck = fun t : tm => step_normal_form t /\ ~ value t : tm -> Prop *)
 Proof.
   intros t t' T HT P. induction P; intros [R S].
   - apply progress in HT. destruct HT; auto.
@@ -642,8 +690,54 @@ Qed.
     not, give a counter-example.  (You do not need to prove your
     counter-example in Coq, but feel free to do so.)
 
-    (* FILL IN HERE *)
-*)
+My original answer: yes of course why not, lemme prove that.
+
+(I changed my answer after failed attempt - see below)
+
+ *)
+
+Definition subject_expansion := forall t t' T,
+  t --> t' ->
+  |- t' \in T ->
+  |- t \in T.
+
+Theorem subject_expansion_attempt : subject_expansion.
+Proof.
+  unfold subject_expansion.
+  intros.
+  generalize dependent t.
+  induction H0; intros; try auto;
+         try (inversion H; auto; fail).
+  - inversion H; subst; eauto.
+    + constructor. auto. auto. auto.
+
+      (*
+  So I was supposed to prove this but I can't! t2 doesn't have to be Bool at all.
+
+  H : test tru tru t2 --> tru
+  ============================
+  |- t2 \in Bool
+
+ So this is a counterexample, I'll now turn to prove the opposite.
+ *)
+Abort.
+
+Theorem subject_expansion_does_not_hold : ~subject_expansion.
+Proof.
+  unfold subject_expansion.
+  intro.
+  specialize H with
+      (t := test tru tru zro)
+      (t' := tru)
+      (T := Bool).
+  assert (test tru tru zro --> tru) by auto.
+  apply H in H0; clear H.
+  (* prove for contradiction in: |- test tru tru zro \in Bool *)
+  inversion H0; subst. inversion H6.
+  (* prove for |- tru \in Bool *)
+  auto.
+Qed.
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_subject_expansion : option (nat*string) := None.
 (** [] *)
