@@ -755,12 +755,28 @@ Definition manual_grade_for_subject_expansion : option (nat*string) := None.
    else "becomes false." If a property becomes false, give a
    counterexample.
       - Determinism of [step]
-            (* FILL IN HERE *)
+        remains true, because we are not changing the stepping rule.
+
       - Progress
-            (* FILL IN HERE *)
+        becomes false.
+        counterexample: (scc fls)
+        justification:
+
+        - |- scc fls \in Bool by T_SccBool
+        - scc fls is not a value
+        - scc fls cannot be stepped further
+
       - Preservation
-            (* FILL IN HERE *)
-*)
+        remains true.
+        justification:
+
+        This rule adds a new type of well-typed expression that's irreducible
+        (not step further). But all reducible expression and well-typed
+        expression remains the same. The condition of preservation only applies
+        to those that are both well-typed (|- t \in T) and reducible (t --> t').
+        Therefore this new rule doesn't affect preservation rule.
+ *)
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_variation1 : option (nat*string) := None.
 (** [] *)
@@ -774,7 +790,30 @@ Definition manual_grade_for_variation1 : option (nat*string) := None.
 
    Which of the above properties become false in the presence of
    this rule?  For each one that does, give a counter-example.
-            (* FILL IN HERE *)
+
+      - Determinism of [step]
+        becomes false. counterexample: [test tru tru fls]
+
+        It can step into [tru] by ST_TestTru, or
+        step into [fls] by ST_Funny1.
+
+      - Progress
+        remains true.
+        justification:
+
+        This rule is an addition to reduce some expression further.
+        Thus it's only making the progress property weaker.
+        Therefore progress property should remain true.
+
+      - Preservation
+        remains true.
+        justification:
+
+        A  [|- test tru t2 t3 \in T] expression requires both [|- t2 \in T]
+        and [|- t3 \in T]. Therefore, the two derivation of
+        [test tru t2 t3], which are [t2] (ST_TestTru) and [t3] (ST_Funny1)
+        will still both [\in T].
+
 *)
 (* Do not modify the following line: *)
 Definition manual_grade_for_variation2 : option (nat*string) := None.
