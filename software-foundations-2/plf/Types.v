@@ -829,7 +829,30 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 
    Which of the above properties become false in the presence of
    this rule?  For each one that does, give a counter-example.
-            (* FILL IN HERE *)
+
+      - Determinism of [step]
+        becomes false.
+
+        test fls (iszro zro) fls can be reduced in two ways:
+        - fls (by ST_TestFls)
+        - test fls tru fls (by ST_Funny2)
+
+      - Progress
+        remains true.
+        justification:
+
+        This rule is an addition to reduce some expression further.
+        Thus it's only making the progress property weaker.
+        Therefore progress property should remain true.
+
+      - Preservation
+        remains true.
+        justification:
+
+        [|- test t1 t2 t3 \in T] requires [|- t1 \in Bool] and
+        [|- t2, t3 \in T]. Therefore, the new derivation (ST_Funny1) of
+        [test t1 t2 t3], which is [test t2' t3], will still be
+        of type [\in T].
 *)
 (** [] *)
 
@@ -842,7 +865,21 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 
    Which of the above properties become false in the presence of
    this rule?  For each one that does, give a counter-example.
-(* FILL IN HERE *)
+
+      - Determinism of [step]
+        remains true. Because ST_Funny3 doesn't introduce
+        any new way to step an existing step-able expression.
+
+      - Progress
+        remains true.
+        justification:
+
+        [prd fls] is not well-typed based on existing
+        typing rules. Therefore it doesn't satisfy the progress's typing
+        condition.
+
+      - Preservation
+        remains true, because [prd fls] is not well-typed.
 *)
 (** [] *)
 
@@ -855,8 +892,71 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 
    Which of the above properties become false in the presence of
    this rule?  For each one that does, give a counter-example.
-(* FILL IN HERE *)
-*)
+
+      - Determinism of [step]
+        remains true. Because adding a typing rule doesn't change
+        anything about stepping.
+
+      - Progress
+        becomes false. [test zro tru fls] is well-typed but irreducible.
+
+      - Preservation
+        remains true. It looks like it's true because I can't seem to find
+        a counterexample. but I also isn't very sure of this. So I'll
+        try formally prove it.
+ *)
+Module variation5.
+
+Reserved Notation "'|-' t '\in' T" (at level 40).
+
+Inductive has_type : tm -> ty -> Prop :=
+  | T_Tru :
+       |- tru \in Bool
+  | T_Fls :
+       |- fls \in Bool
+  | T_Test : forall t1 t2 t3 T,
+       |- t1 \in Bool ->
+       |- t2 \in T ->
+       |- t3 \in T ->
+       |- test t1 t2 t3 \in T
+  | T_Zro :
+       |- zro \in Nat
+  | T_Scc : forall t1,
+       |- t1 \in Nat ->
+       |- scc t1 \in Nat
+  | T_Prd : forall t1,
+       |- t1 \in Nat ->
+       |- prd t1 \in Nat
+  | T_Iszro : forall t1,
+       |- t1 \in Nat ->
+       |- iszro t1 \in Bool
+  | T_Funny4 : |- zro \in Bool
+
+where "'|-' t '\in' T" := (has_type t T).
+
+Theorem preservation' : forall t t' T,
+  |- t \in T ->
+  t --> t' ->
+  |- t' \in T.
+Proof with eauto.
+  intros.
+  generalize dependent t'.
+  induction H; intros t' Ht;
+         try (inversion Ht; fail);
+         try (inversion Ht; subst; auto; fail).
+  - inversion Ht; subst; auto. constructor; auto.
+  - inversion Ht; subst; constructor; apply IHhas_type; apply H1; subst.
+  - inversion Ht; subst; try constructor.
+    + inversion H1. constructor. subst.
+      inversion H; subst. apply H3.
+    + apply IHhas_type. apply H1.
+  - inversion Ht; subst; constructor.
+    apply IHhas_type. apply H1.
+Qed.
+
+(* it seems that preservation indeed remains true. *)
+End variation5.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (variation6)
@@ -868,7 +968,20 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
 
    Which of the above properties become false in the presence of
    this rule?  For each one that does, give a counter-example.
-(* FILL IN HERE *)
+
+      - Determinism of [step]
+        remains true. Because adding a typing rule doesn't change
+        anything about stepping.
+
+      - Progress
+        remains true. Because even though [prd zro]
+        can now be of both \Nat and \Bool type, it can always step to
+        zro.
+
+      - Preservation
+        becomes false. [|- test (prd zro) zro zro \in Nat] is well typed,
+        but it's derivation [test zro zro zro] is not well typed.
+
 *)
 (** [] *)
 
@@ -878,10 +991,20 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
     the ones above.  Try to find ways of selectively breaking
     properties -- i.e., ways of changing the definitions that
     break just one of the properties and leave the others alone.
-*)
-(* FILL IN HERE
 
-    [] *)
+    Break determinism only:
+
+    | ST_Funny : test tru tru tru --> fls.
+
+    Break progress only:
+
+    | T_Funny : forall t1 t2, |- test zro t1 t2 \in Nat
+
+    Break preservation only:
+
+    | T_Funny : |- scc (prd zro) \in Bool
+
+*)
 
 (** **** Exercise: 1 star, standard (remove_prdzro)
 
@@ -891,8 +1014,12 @@ Definition manual_grade_for_variation2 : option (nat*string) := None.
     achieve this simply by removing the rule from the definition of
     [step]?  Would doing so create any problems elsewhere?
 
-(* FILL IN HERE *)
-*)
+- determinism: remains true.
+- progress: becomes false. now (prd zro) is neither a value nor steppable.
+- preservation: remains true.
+
+ *)
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_remove_predzro : option (nat*string) := None.
 (** [] *)
@@ -907,8 +1034,114 @@ Definition manual_grade_for_remove_predzro : option (nat*string) := None.
     allow for nonterminating commands?  Why might we prefer the
     small-step semantics for stating preservation and progress?
 
-(* FILL IN HERE *)
-*)
+ *)
+
+Module bigstep.
+
+
+Inductive big_step : tm -> tm -> Prop :=
+  | BST_Id : forall t,
+    value t -> t ==> t
+  | BST_TestTru : forall t1 t2 t3 t2',
+    t1 ==> tru ->
+    t2 ==> t2' ->
+    (test t1 t2 t3) ==> t2'
+  | BST_TestFls : forall t1 t2 t3 t3',
+    t1 ==> fls ->
+    t3 ==> t3' ->
+    (test t1 t2 t3) ==> t3'
+  | BST_Scc : forall t1 t1',
+      t1 ==> t1' ->
+      (* this condition is necessary, or else we would allow non-nat expression
+         to reduce *)
+      nvalue t1' ->
+      scc t1 ==> scc t1'
+  | BST_PrdZro :
+      (prd zro) ==> zro
+  | BST_PrdScc : forall t t',
+      t ==> t' ->
+      (prd (scc t)) ==> t'
+  | BST_IszroZro : forall t,
+      t ==> zro ->
+      (iszro t) ==> tru
+  | BST_IszroScc : forall t n,
+      t ==> scc n ->
+      (iszro (scc n)) ==> fls
+where "t '==>' t'" := (big_step t t').
+
+Hint Constructors big_step : core.
+
+Definition bigstep_always_value: forall t t',
+  t ==> t' -> value t'.
+Proof.
+  intros.
+  induction H; auto.
+Qed.
+
+Definition bigstep_progress: forall t T,
+  |- t \in T -> value t \/ (exists t', t ==> t').
+Proof.
+  intros.
+  induction H; subst; auto.
+
+  - right. destruct IHhas_type1.
+    + apply (bool_canonical t1 H) in H2. inversion H2; subst; clear H2.
+      * inversion IHhas_type2; subst.
+        -- exists t2. auto.
+        -- inversion H2. exists x. auto.
+      * inversion IHhas_type3; subst.
+        -- exists t3. auto.
+        -- inversion H2. exists x. auto.
+    + inversion H2. assert (t1 ==> x) by auto.
+      apply (bigstep_always_value t1 x) in H3.
+
+
+      (*
+
+Here I'm stuck:
+
+
+  t1, t2, t3 : tm
+  T : ty
+  H : |- t1 \in Bool
+  H0 : |- t2 \in T
+  H1 : |- t3 \in T
+  H2 : exists t' : tm, t1 ==> t'
+  IHhas_type2 : value t2 \/ (exists t' : tm, t2 ==> t')
+  IHhas_type3 : value t3 \/ (exists t' : tm, t3 ==> t')
+  x : tm
+  H3 : value x
+  H4 : t1 ==> x
+  ============================
+  exists t' : tm, test t1 t2 t3 ==> t'
+
+
+I need a rule to state that [|- x \in Bool] (so I can use canonical form of bool
+to assert it as bvalue). From the context I only have two related hypothesis:
+
+-   H : |- t1 \in Bool
+-   H4 : t1 ==> x
+
+So this means it ends up requiring the preservation property to prove the
+progress property.
+
+Of course, here I may not need a full version of preservation property to
+continue the progress proof, only proving preservation property
+for some specific terms may already work.
+
+I haven't tried proving the preservation properties first, but I guess
+it may end up having circular dependency to progress as well.
+
+
+As of the concern to "nonterminating" command in the problem, I think it is
+easy to tackle and have tackled it in my definition for bigstep. The key is to
+only allow values to step into themselves, ie. [value t ==> t]. Then we can
+assert bigstep always terminates at a value.
+
+ *)
+Aborted.
+End bigstep.
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_prog_pres_bigstep : option (nat*string) := None.
 (** [] *)
