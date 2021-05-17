@@ -397,7 +397,7 @@ Check <{[x:=true] x}>.
 
 (** _Technical note_: Substitution becomes trickier to define if we
     consider the case where [s], the term being substituted for a
-    variable in some other term, may itself contain free variables. 
+    variable in some other term, may itself contain free variables.
     Since we are only interested here in defining the [step] relation
     on _closed_ terms (i.e., terms like [\x:Bool, x] that include
     binders for all of the variables they mention), we can sidestep this
@@ -421,7 +421,7 @@ Check <{[x:=true] x}>.
 (** See, for example, [Aydemir 2008] (in Bib.v) for further discussion
     of this issue. *)
 
-(** **** Exercise: 3 stars, standard (substi_correct) 
+(** **** Exercise: 3 stars, standard (substi_correct)
 
     The definition that we gave above uses Coq's [Fixpoint] facility
     to define substitution as a _function_.  Suppose, instead, we
@@ -431,18 +431,76 @@ Check <{[x:=true] x}>.
     constructors and prove that the relation you've defined coincides
     with the function given above. *)
 
+(*   | tm_var y => *)
+(*       if eqb_string x y then s else t *)
+(*   | <{\y:T, t1}> => *)
+(*       if eqb_string x y then t else <{\y:T, [x:=s] t1}> *)
+(*   | <{t1 t2}> => *)
+(*       <{([x:=s] t1) ([x:=s] t2)}> *)
+(*   | <{true}> => *)
+(*       <{true}> *)
+(*   | <{false}> => *)
+(*       <{false}> *)
+(*   | <{if t1 then t2 else t3}> => *)
+(*       <{if ([x:=s] t1) then ([x:=s] t2) else ([x:=s] t3)}> *)
+(* end *)
+
 Inductive substi (s : tm) (x : string) : tm -> tm -> Prop :=
-  | s_var1 :
-      substi s x (tm_var x) s
-  (* FILL IN HERE *)
+  | s_var_same : substi s x (tm_var x) s
+  | s_var_diff y (Hneq: x <> y) : substi s x (tm_var y) (tm_var y)
+  | s_app t1 t2 t1' t2'
+          (Hrtor: substi s x t1 t1')
+          (Hrand: substi s x t2 t2') :
+      substi s x <{t1 t2}> <{t1' t2'}>
+  | s_abs_bound T t : substi s x <{\x:T, t}> <{\x:T, t}>
+  | s_abs_free y T t t'
+               (Hfree : x <> y)
+               (H: substi s x t t') :
+      substi s x <{\y:T, t}> <{\y:T, t'}>
+  | s_true : substi s x <{true}> <{true}>
+  | s_false : substi s x <{false}> <{false}>
+  | s_if t1 t2 t3 t1' t2' t3'
+              (Hcond: substi s x t1 t1')
+              (Hthen: substi s x t2 t2')
+              (Helse: substi s x t3 t3') :
+      substi s x <{if t1 then t2 else t3}> <{if t1' then t2' else t3'}>
 .
 
 Hint Constructors substi : core.
 
+(* just to make future proofs more handy *)
+Hint Resolve <- eqb_string_false_iff.
+Hint Resolve eqb_string_false_iff.
+Hint Resolve <- eqb_string_true_iff.
+Hint Resolve eqb_string_true_iff.
+
 Theorem substi_correct : forall s x t t',
   <{ [x:=s]t }> = t' <-> substi s x t t'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros s x t t'.
+  split; intro.
+  - (* -> *)
+    generalize dependent t'.
+    induction t; intros; inversion H; subst; try clear H; auto; try (constructor; auto).
+    + (* variable *)
+      rename s0 into x'.
+      destruct (eqb_stringP x x'); subst; simpl;
+        [rewrite <- eqb_string_refl; auto |
+         try rewrite (proj2 (eqb_string_false_iff _ _) n); auto].
+    + (* abstraction *)
+      rename s0 into x'.
+      destruct (eqb_stringP x x'); subst; simpl;
+        [try rewrite <- eqb_string_refl; auto |
+         try rewrite (proj2 (eqb_string_false_iff _ _) n); auto].
+  - (* <- *)
+    induction H; simpl;
+      try rewrite <- eqb_string_refl;
+      try rewrite (proj2 (eqb_string_false_iff _ _) Hneq);
+      try rewrite (proj2 (eqb_string_false_iff _ _) Hfree);
+      subst;
+      auto.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -461,7 +519,7 @@ Proof.
 
     is traditionally called _beta-reduction_. *)
 
-(** 
+(**
                                value v2
                      ---------------------------                     (ST_AppAbs)
                      (\x:T2,t1) v2 --> [x:=v2]t1
@@ -627,7 +685,7 @@ Lemma step_example4' :
   <{idBB (notB true)}> -->* <{false}>.
 Proof. normalize.  Qed.
 
-(** **** Exercise: 2 stars, standard (step_example5) 
+(** **** Exercise: 2 stars, standard (step_example5)
 
     Try to do this one both with and without [normalize]. *)
 
@@ -673,7 +731,7 @@ Definition context := partial_map ty.
 (* ================================================================= *)
 (** ** Typing Relation *)
 
-(** 
+(**
                               Gamma x = T1
                             -----------------                            (T_Var)
                             Gamma |- x \in T1
@@ -763,7 +821,7 @@ Proof.
   apply T_Var. apply update_neq. intros Contra. discriminate.
 Qed.
 
-(** **** Exercise: 2 stars, standard, optional (typing_example_2_full) 
+(** **** Exercise: 2 stars, standard, optional (typing_example_2_full)
 
     Prove the same result without using [auto], [eauto], or
     [eapply] (or [...]). *)
@@ -778,11 +836,11 @@ Proof.
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (typing_example_3) 
+(** **** Exercise: 2 stars, standard (typing_example_3)
 
     Formally prove the following typing derivation holds:
 
-    
+
        empty |- \x:Bool->B, \y:Bool->Bool, \z:Bool,
                    y (x z)
              \in T.
@@ -826,7 +884,7 @@ Proof.
   discriminate H1.
 Qed.
 
-(** **** Exercise: 3 stars, standard, optional (typing_nonexample_3) 
+(** **** Exercise: 3 stars, standard, optional (typing_nonexample_3)
 
     Another nonexample:
 
