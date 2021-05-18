@@ -130,7 +130,7 @@ Proof with eauto.
       destruct H as [t1' Hstp]. exists <{if t1' then t2 else t3}>...
 Qed.
 
-(** **** Exercise: 3 stars, advanced (progress_from_term_ind) 
+(** **** Exercise: 3 stars, advanced (progress_from_term_ind)
 
     Show that progress can also be proved by induction on terms
     instead of induction on typing derivations. *)
@@ -141,7 +141,37 @@ Theorem progress' : forall t T,
 Proof.
   intros t.
   induction t; intros T Ht; auto.
-  (* FILL IN HERE *) Admitted.
+  - (* variable *)
+    inversion Ht; subst; clear Ht. inversion H1.
+  - (* application *)
+    right.
+    inversion Ht; subst; clear Ht.
+    assert (Ht1: value t1 \/ (exists t' : tm, t1 --> t')) by eauto.
+    assert (Ht2: value t2 \/ (exists t' : tm, t2 --> t')) by eauto.
+    clear IHt1 IHt2.
+    destruct Ht2; destruct Ht1.
+    (* case 1: t1 is value (lambda), t2 is value *)
+    + apply (canonical_forms_fun _ _ _ H2) in H0.
+      destruct H0 as [x [t1']]; subst.
+      eauto.
+    + (* case 2: t1 -> t', t2 is value *)
+      destruct H0. eauto.
+    + (* case 3: t1 is value, t2 -> t' *)
+      destruct H. eauto.
+    + (* case 3: t1 -> t', t2 -> t' *)
+      destruct H0; destruct H; eauto.
+  - (* if *)
+    right.
+    inversion Ht; subst; clear Ht.
+    (* duplicate H3 *)
+    assert (empty |- t1 \in Bool) by assumption.
+    apply IHt1 in H3. destruct H3.
+    + (* t1 is value *)
+      apply (canonical_forms_bool _ H) in H0. destruct H0; subst; eauto.
+    + (* t1 -> t' *)
+      destruct H0. eauto.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -188,7 +218,7 @@ Lemma weakening : forall Gamma Gamma' t T,
      Gamma  |- t \in T  ->
      Gamma' |- t \in T.
 Proof.
-  intros Gamma Gamma' t T H Ht. 
+  intros Gamma Gamma' t T H Ht.
   generalize dependent Gamma'.
   induction Ht; eauto using inclusion_update.
 Qed.
@@ -314,7 +344,7 @@ Qed.
     Fortunately, closed terms are all we need!)
  *)
 
-(** **** Exercise: 3 stars, advanced (substitution_preserves_typing_from_typing_ind) 
+(** **** Exercise: 3 stars, advanced (substitution_preserves_typing_from_typing_ind)
 
     Show that substitution_preserves_typing can also be
     proved by induction on typing derivations instead
@@ -401,7 +431,7 @@ Proof with eauto.
       inversion HT1...
 Qed.
 
-(** **** Exercise: 2 stars, standard, especially useful (subject_expansion_stlc) 
+(** **** Exercise: 2 stars, standard, especially useful (subject_expansion_stlc)
 
     An exercise in the [Types] chapter asked about the _subject
     expansion_ property for the simple language of arithmetic and
@@ -423,7 +453,7 @@ Definition manual_grade_for_subject_expansion_stlc : option (nat*string) := None
 (* ################################################################# *)
 (** * Type Soundness *)
 
-(** **** Exercise: 2 stars, standard, optional (type_soundness) 
+(** **** Exercise: 2 stars, standard, optional (type_soundness)
 
     Put progress and preservation together and show that a well-typed
     term can _never_ reach a stuck state.  *)
@@ -445,7 +475,7 @@ Proof.
 (* ################################################################# *)
 (** * Uniqueness of Types *)
 
-(** **** Exercise: 3 stars, standard (unique_types) 
+(** **** Exercise: 3 stars, standard (unique_types)
 
     Another nice property of the STLC is that types are unique: a
     given term (in a given context) has at most one type. *)
@@ -517,7 +547,7 @@ Definition closed (t:tm) :=
     term is an open term; the closed terms are a subset of the open ones.
     "Open" precisely means "possibly containing free variables.") *)
 
-(** **** Exercise: 1 star, standard (afi) 
+(** **** Exercise: 1 star, standard (afi)
 
     In the space below, write out the rules of the [appears_free_in]
     relation in informal inference-rule notation.  (Use whatever
@@ -571,7 +601,7 @@ Lemma free_in_context : forall x t T Gamma,
       type to [x], we appeal to lemma [update_neq], noting that [x]
       and [y] are different variables. *)
 
-(** **** Exercise: 2 stars, standard (free_in_context) 
+(** **** Exercise: 2 stars, standard (free_in_context)
 
     Complete the following proof. *)
 
@@ -647,7 +677,7 @@ Lemma context_invariance : forall Gamma Gamma' t T,
       [t1 t2], and similarly for [t2]; hence the desired result
       follows from the induction hypotheses. *)
 
-(** **** Exercise: 3 stars, standard, optional (context_invariance) 
+(** **** Exercise: 3 stars, standard, optional (context_invariance)
 
     Complete the following proof. *)
 Proof.
@@ -660,7 +690,7 @@ Proof.
 (* ################################################################# *)
 (** * Additional Exercises *)
 
-(** **** Exercise: 1 star, standard (progress_preservation_statement) 
+(** **** Exercise: 1 star, standard (progress_preservation_statement)
 
     Without peeking at their statements above, write down the progress
     and preservation theorems for the simply typed lambda-calculus (as
@@ -673,7 +703,7 @@ Proof.
 Definition manual_grade_for_progress_preservation_statement : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (stlc_variation1) 
+(** **** Exercise: 2 stars, standard (stlc_variation1)
 
     Suppose we add a new term [zap] with the following reduction rule
 
@@ -702,7 +732,7 @@ and the following typing rule:
 Definition manual_grade_for_stlc_variation1 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (stlc_variation2) 
+(** **** Exercise: 2 stars, standard (stlc_variation2)
 
     Suppose instead that we add a new term [foo] with the following
     reduction rules:
@@ -730,7 +760,7 @@ Definition manual_grade_for_stlc_variation1 : option (nat*string) := None.
 Definition manual_grade_for_stlc_variation2 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (stlc_variation3) 
+(** **** Exercise: 2 stars, standard (stlc_variation3)
 
     Suppose instead that we remove the rule [ST_App1] from the [step]
     relation. Which of the following properties of the STLC remain
@@ -750,7 +780,7 @@ Definition manual_grade_for_stlc_variation2 : option (nat*string) := None.
 Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (stlc_variation4) 
+(** **** Exercise: 2 stars, standard, optional (stlc_variation4)
 
     Suppose instead that we add the following new rule to the
     reduction relation:
@@ -772,7 +802,7 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (stlc_variation5) 
+(** **** Exercise: 2 stars, standard, optional (stlc_variation5)
 
     Suppose instead that we add the following new rule to the typing
     relation:
@@ -796,7 +826,7 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (stlc_variation6) 
+(** **** Exercise: 2 stars, standard, optional (stlc_variation6)
 
     Suppose instead that we add the following new rule to the typing
     relation:
@@ -820,7 +850,7 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
 *)
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (stlc_variation7) 
+(** **** Exercise: 2 stars, standard, optional (stlc_variation7)
 
     Suppose we add the following new rule to the typing relation
     of the STLC:
@@ -906,7 +936,7 @@ Notation "'if0' x 'then' y 'else' z" :=
                     left associativity).
 Coercion tm_const : nat >-> tm.
 
-(** **** Exercise: 5 stars, standard (stlc_arith) 
+(** **** Exercise: 5 stars, standard (stlc_arith)
 
     Finish formalizing the definition and properties of the STLC
     extended with arithmetic. This is a longer exercise. Specifically:
