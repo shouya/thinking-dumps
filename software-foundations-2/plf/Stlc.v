@@ -693,13 +693,20 @@ Lemma step_example5 :
        <{idBBBB idBB idB}>
   -->* idB.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply multi_step.
+  constructor. constructor.
+  constructor. simpl.
+
+  eapply multi_step.
+  constructor. constructor. simpl.
+
+  eapply multi_refl.
+Qed.
 
 Lemma step_example5_with_normalize :
        <{idBBBB idBB idB}>
   -->* idB.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. normalize. Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -833,7 +840,17 @@ Example typing_example_2_full :
           (y (y x)) \in
     (Bool -> (Bool -> Bool) -> Bool).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply T_Abs. apply T_Abs.
+  apply T_App with (T2 := <{Bool}>).
+
+  apply T_Var. apply update_eq.
+
+  apply T_App with (T2 := <{Bool}>).
+  apply T_Var. apply update_eq.
+
+  apply T_Var. rewrite update_permute. apply update_eq.
+  intro. inversion H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (typing_example_3)
@@ -855,7 +872,18 @@ Example typing_example_3 :
                (y (x z)) \in
       T.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists <{(Bool -> Bool) -> (Bool -> Bool) -> Bool -> Bool}>.
+  apply T_Abs. apply T_Abs. apply T_Abs.
+
+  apply T_App with (T2 := <{Bool}>).
+  apply T_Var. unfold update. unfold t_update. simpl. reflexivity.
+
+  apply T_App with (T2 := <{Bool}>).
+  apply T_Var. unfold update. unfold t_update. simpl. reflexivity.
+
+  apply T_Var. unfold update. unfold t_update. simpl. reflexivity.
+Qed.
+
 (** [] *)
 
 (** We can also show that some terms are _not_ typable.  For example,
@@ -897,7 +925,22 @@ Example typing_nonexample_3 :
         empty |-
           \x:S, x x \in T).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  destruct H as [S [T]].
+  inversion H; subst; clear H.
+  inversion H5; subst; clear H5.
+  inversion H2; subst; clear H2.
+  inversion H4; subst; clear H4.
+  rewrite H1 in H2.
+  inversion H2; clear H1 H2.
+
+  (* <{ T2 -> T1 }> = T2 *)
+  induction T2.
+  - inversion H0.
+  - inversion H0; subst; clear H0.
+    apply IHT2_1. apply H1.
+Qed.
+
 (** [] *)
 
 End STLC.
