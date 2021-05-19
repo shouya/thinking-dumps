@@ -213,6 +213,15 @@ Qed.
 (** Typing is preserved under "extensions" to the context [Gamma].
     (Recall the definition of "inclusion" from Maps.v.) *)
 
+Print inclusion.
+(*
+
+inclusion =
+fun (A : Type) (m m' : partial_map A) =>
+forall (x : string) (v : A), m x = Some v -> m' x = Some v
+     : forall A : Type, partial_map A -> partial_map A -> Prop
+
+ *)
 Lemma weakening : forall Gamma Gamma' t T,
      inclusion Gamma Gamma' ->
      Gamma  |- t \in T  ->
@@ -357,8 +366,24 @@ Proof.
   intros Gamma x U t v T Ht Hv.
   remember (x |-> U; Gamma) as Gamma'.
   generalize dependent Gamma.
-  induction Ht; intros Gamma' G; simpl; eauto.
- (* FILL IN HERE *) Admitted.
+  induction Ht; intros Gamma' G; simpl; eauto;
+  unfold update in *.
+
+
+  - destruct (eqb_stringP x x0); subst.
+    + rewrite t_update_eq in H. inversion H; subst.
+      apply weakening_empty. apply Hv.
+    + rewrite t_update_neq in H by auto.
+      apply T_Var. apply H.
+
+  - destruct (eqb_stringP x x0); subst.
+    + rewrite t_update_shadow in *.
+      constructor. apply Ht.
+    + constructor. apply IHHt. unfold update in *.
+      rewrite t_update_permute by auto.
+      reflexivity.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -444,7 +469,27 @@ Qed.
     You can state your counterexample informally in words, with a brief
     explanation. *)
 
-(* FILL IN HERE *)
+(* Here's a counter example:
+
+[if true then true else (\x : Bool, x)].
+
+
+Let me prove it. *)
+
+Lemma subject_expansion_stlc_does_not_hold :
+  ~(forall t t' T, t --> t' -> empty |- t' \in T -> empty |- t \in T).
+Proof.
+  intro.
+  specialize H with
+      (t  := <{ if true then true else (\x : Bool, x) }>)
+      (t' := <{ true }>)
+      (T  := <{ Bool }>).
+  assert (<{ if true then true else \ x : Bool, x }> --> <{ true }>) by auto.
+  assert (empty |- true \in Bool) by auto.
+  apply (H H0) in H1; clear H; clear H0; rename H1 into H.
+  inversion H; subst.
+  inversion H7.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_subject_expansion_stlc : option (nat*string) := None.
@@ -469,7 +514,12 @@ Proof.
   intros t t' T Hhas_type Hmulti. unfold stuck.
   intros [Hnf Hnot_val]. unfold normal_form in Hnf.
   induction Hmulti.
-  (* FILL IN HERE *) Admitted.
+  - (* multi_refl *)
+    apply progress in Hhas_type. destruct Hhas_type; congruence.
+  - (* multi_step *)
+    apply IHHmulti; auto.
+    eapply preservation. apply Hhas_type. apply H.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -485,7 +535,18 @@ Theorem unique_types : forall Gamma e T T',
   Gamma |- e \in T' ->
   T = T'.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros Gamma e T T' HT HT'.
+  generalize dependent T'.
+  induction HT; intros T HT'; inversion HT'; subst; clear HT'; auto.
+  - rewrite H in H2. inversion H2. reflexivity.
+  - specialize IHHT with (T' := T0).
+    apply IHHT in H4. subst. auto.
+  - specialize IHHT2 with (T' := T3).
+    apply IHHT2 in H4. subst. clear IHHT2.
+    specialize IHHT1 with (T' := <{T3 -> T}>).
+    apply IHHT1 in H2. inversion H2; subst; clear H2; clear IHHT1.
+    reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
