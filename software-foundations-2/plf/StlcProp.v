@@ -618,6 +618,19 @@ Definition closed (t:tm) :=
     understanding it is crucial to understanding substitution and its
     properties, which are really the crux of the lambda-calculus. *)
 
+(*
+
+Here it is:
+
+|- free x x
+free x t1 |- free x (t1 t2)
+free x t2 |- free x (t1 t2)
+free x t, x <> y |- free x (\y, t)
+free x t1 |- free x (if t1 then t2 else t3)
+free x t2 |- free x (if t1 then t2 else t3)
+free x t3 |- free x (if t1 then t2 else t3)
+
+ *)
 (* FILL IN HERE *)
 
 (* Do not modify the following line: *)
@@ -669,9 +682,14 @@ Lemma free_in_context : forall x t T Gamma,
 Proof.
   intros x t T Gamma H H0. generalize dependent Gamma.
   generalize dependent T.
-  induction H;
-         intros; try solve [inversion H0; eauto].
-  (* FILL IN HERE *) Admitted.
+  induction H; intros; try solve [inversion H0; eauto].
+
+  inversion H1; subst; clear H1.
+  apply IHappears_free_in in H7. destruct H7 as [T2]; subst.
+  unfold update in H1. rewrite (t_update_neq _ _ _ _ _ H) in H1.
+  eauto.
+Qed.
+
 (** [] *)
 
 (** From the [free_in_context] lemma, it immediately follows that any
@@ -683,7 +701,10 @@ Corollary typable_empty__closed : forall t T,
     empty |- t \in T  ->
     closed t.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. intro. intro. rename x0 into x.
+  eapply (free_in_context x t T empty H0) in H.
+  destruct H as [T']. inversion H.
+Qed.
 (** [] *)
 
 (** Next, we establish _context_invariance_.
