@@ -631,7 +631,6 @@ free x t2 |- free x (if t1 then t2 else t3)
 free x t3 |- free x (if t1 then t2 else t3)
 
  *)
-(* FILL IN HERE *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_afi : option (nat*string) := None.
@@ -766,7 +765,22 @@ Proof.
   intros.
   generalize dependent Gamma'.
   induction H; intros; auto.
-  (* FILL IN HERE *) Admitted.
+
+  - (* variable *)
+    constructor; rewrite <- H; symmetry; apply H0; constructor.
+  - (* abstraction *)
+    constructor; apply IHhas_type; intros.
+    destruct (eqb_stringP x0 x1).
+    + (* x0 = x1 *)
+      subst. unfold update. rewrite t_update_eq. rewrite t_update_eq.
+      reflexivity.
+    + (* x0 <> x1 *)
+      unfold update.
+      rewrite t_update_neq by auto. rewrite t_update_neq by auto.
+      apply H0. constructor; auto.
+  - (* application *)
+    econstructor; auto.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
