@@ -793,7 +793,128 @@ Qed.
     Coq theorems).
     You can write [Admitted] for the proofs. *)
 
-(* FILL IN HERE *)
+Lemma stlc_progress: forall t Gamma T,
+  (Gamma |- t \in T) ->
+  (value t \/ exists t', t --> t').
+Admitted.
+
+Lemma stlc_preservation: forall t t' Gamma T,
+  (Gamma |- t \in T) ->
+  t --> t' ->
+  (Gamma |- t' \in T).
+Admitted.
+
+
+(* checking my answer against the statement above. There is one
+mismatch.
+
+I wrote here any Gamma can be the context whereas the actual lemma
+uses empty.
+
+For stlc_progress I am wrong. t needs to be closed to be steppable or
+value.  Counter example: Gamma = (x |-> Bool), then Gamma |- x \in
+Bool. But x being a variable has no way to step further, it is not a
+value either.
+
+For stlc_preservation, I am not sure. I cannot find any counterexample
+intuitively, but let me try proving it.
+
+ *)
+
+Lemma substitution_preserves_typing_from_typing_ind' : ~forall Gamma x U t v T,
+  x |-> U ; Gamma |- t \in T ->
+  Gamma |- v \in U   ->
+  Gamma |- [x:=v]t \in T.
+Proof.
+  intro.
+  specialize H with
+      (Gamma := x |-> <{Bool}>)
+      (x := x)
+      (U := <{Bool -> Bool}>)
+      (t := <{\y: Bool, x}>)
+      (v := <{\y: Bool, x}>)
+      (T := <{Bool -> Bool}>)
+  .
+
+
+  Fail apply (H H0) in H1; clear H H0.
+  Fail inversion H1; subst; clear H1.
+
+Abort.
+
+Lemma substitution_preserves_typing_from_typing_ind' : forall Gamma x U t v T,
+  x |-> U ; Gamma |- t \in T ->
+  Gamma |- v \in U   ->
+  Gamma |- [x:=v]t \in T.
+Proof.
+  intros Gamma x U t v T Ht Hv.
+  remember (x |-> U; Gamma) as Gamma'.
+  generalize dependent Gamma.
+  generalize dependent v.
+  generalize dependent x.
+  induction Ht; intros x1 v Gamma' Gt Gv; try (simpl; eauto; fail);
+  unfold update in *.
+
+  - simpl. destruct (eqb_stringP x1 x0); subst.
+    + rewrite t_update_eq in H. inversion H. subst. auto.
+    + rewrite t_update_neq in H by auto. constructor. assumption.
+
+  - simpl. destruct (eqb_stringP x1 x0); subst.
+    + constructor. rewrite t_update_shadow in *. assumption.
+    + constructor. unfold update in *.
+      apply IHHt. rewrite t_update_permute by auto. reflexivity.
+
+      eapply context_invariance.
+      * apply IHHt. rewrite t_update_permute by auto.
+        reflexivity.
+
+
+
+  - destruct (eqb_stringP x x0); subst.
+    + rewrite t_update_shadow in *.
+      constructor. apply Ht.
+    + constructor. apply IHHt.
+      * unfold update in *. rewrite t_update_permute by auto. reflexivity.
+      * unfold update in *. eapply context_invariance.
+        apply Hv. intros. destruct (eqb_stringP x1 x0); subst.
+        -- rewrite t_update_eq.
+
+
+        specialize IHHt with (Gamma := (x0 !-> Some T2; Gamma')).
+        assert ((x !-> Some U; x0 !-> Some T2; Gamma') = (x !-> Some U; x0 !-> Some T2; Gamma'))
+          by auto.
+        apply IHHt in H. clear IHHt.
+
+
+Qed.
+
+Lemma stlc_preservation': forall t t' Gamma T,
+  (Gamma |- t \in T) ->
+  t --> t' ->
+  (Gamma |- t' \in T).
+Proof with eauto.
+  intros t t' Gamma T HT. generalize dependent t'.
+  induction HT;
+       intros t' HE; subst;
+       try solve [inversion HE; subst; auto].
+  - (* T_App *)
+    inversion HE; subst...
+    (* Most of the cases are immediate by induction,
+       and [eauto] takes care of them *)
+    + (* ST_AppAbs *)
+      apply substitution_preserves_typing with T2...
+      inversion HT1...
+      inversion H2; subst; clear H2;
+      inversion HT2; subst; clear HT2;
+      auto. constructor. unfold update.
+
+Lemma substitution_preserves_typing' : forall Gamma x U t v T,
+  x |-> U ; Gamma |- t \in T ->
+  Gamma |- v \in U   ->
+  Gamma |- [x:=v]t \in T.
+
+Qed.
+
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_progress_preservation_statement : option (nat*string) := None.
