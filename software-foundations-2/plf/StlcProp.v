@@ -821,28 +821,7 @@ intuitively, but let me try proving it.
 
  *)
 
-Lemma substitution_preserves_typing_from_typing_ind' : ~forall Gamma x U t v T,
-  x |-> U ; Gamma |- t \in T ->
-  Gamma |- v \in U   ->
-  Gamma |- [x:=v]t \in T.
-Proof.
-  intro.
-  specialize H with
-      (Gamma := x |-> <{Bool}>)
-      (x := x)
-      (U := <{Bool -> Bool}>)
-      (t := <{\y: Bool, x}>)
-      (v := <{\y: Bool, x}>)
-      (T := <{Bool -> Bool}>)
-  .
-
-
-  Fail apply (H H0) in H1; clear H H0.
-  Fail inversion H1; subst; clear H1.
-
-Abort.
-
-Lemma substitution_preserves_typing_from_typing_ind' : forall Gamma x U t v T,
+Lemma substitution_preserves_typing_for_any_context : forall Gamma x U t v T,
   x |-> U ; Gamma |- t \in T ->
   Gamma |- v \in U   ->
   Gamma |- [x:=v]t \in T.
@@ -863,29 +842,34 @@ Proof.
     + constructor. rewrite t_update_shadow in *. assumption.
     + constructor. unfold update in *.
       apply IHHt. rewrite t_update_permute by auto. reflexivity.
-
-      eapply context_invariance.
-      * apply IHHt. rewrite t_update_permute by auto.
-        reflexivity.
-
-
-
-  - destruct (eqb_stringP x x0); subst.
-    + rewrite t_update_shadow in *.
-      constructor. apply Ht.
-    + constructor. apply IHHt.
-      * unfold update in *. rewrite t_update_permute by auto. reflexivity.
-      * unfold update in *. eapply context_invariance.
-        apply Hv. intros. destruct (eqb_stringP x1 x0); subst.
-        -- rewrite t_update_eq.
+      (* Here I'm stuck. There is no way to prove this theorem.
+         But I am lucky to find the way to construct a counterexample to
+         disprove it - check it out below. *)
+Abort.
 
 
-        specialize IHHt with (Gamma := (x0 !-> Some T2; Gamma')).
-        assert ((x !-> Some U; x0 !-> Some T2; Gamma') = (x !-> Some U; x0 !-> Some T2; Gamma'))
-          by auto.
-        apply IHHt in H. clear IHHt.
+Lemma substitution_does_not_preserves_typing_when_not_closed :
+~forall Gamma x U t v T,
+  x |-> U ; Gamma |- t \in T ->
+  Gamma |- v \in U   ->
+  Gamma |- [x:=v]t \in T.
+Proof.
+  intro.
+  specialize H with
+      (Gamma := y |-> <{Bool -> Bool}>)
+      (x := x)
+      (U := <{Bool -> Bool}>)
+      (t := <{\y: Bool, x}>)
+      (v := <{y}>)
+      (T := <{Bool -> Bool -> Bool}>)
+  .
 
-
+  (* Asserting Gamma |- [x:=v]t \in T. *)
+  assert (y |-> <{ Bool -> Bool }> |- [x := y] (\ y : Bool, x) \in (Bool -> Bool -> Bool)).
+  apply H; auto; fail. clear H.
+  inversion H0; subst; clear H0.
+  inversion H2; subst; clear H2.
+  inversion H1; subst; clear H1.
 Qed.
 
 Lemma stlc_preservation': forall t t' Gamma T,
@@ -907,12 +891,39 @@ Proof with eauto.
       inversion H2; subst; clear H2;
       inversion HT2; subst; clear HT2;
       auto. constructor. unfold update.
+      (* By above reasoning, this theorem is not true.
+         Let me give a counterexample. *)
+Abort.
 
-Lemma substitution_preserves_typing' : forall Gamma x U t v T,
-  x |-> U ; Gamma |- t \in T ->
-  Gamma |- v \in U   ->
-  Gamma |- [x:=v]t \in T.
-
+Lemma stlc_preservation_does_not_hold_with_context : ~forall t t' Gamma T,
+  (Gamma |- t \in T) ->
+  t --> t' ->
+  (Gamma |- t' \in T).
+Proof.
+  intro.
+  specialize H with
+      (t  := <{(\x:Bool->Bool, \y:Bool, x) (\x: Bool, y true)}>)
+      (t' := <{\y:Bool, \x: Bool, y true}>)
+      (Gamma := y |-> <{Bool -> Bool}>)
+      (T := <{Bool -> (Bool -> Bool)}>).
+  assert (y |-> <{ Bool -> Bool }>
+       |- (\ x : Bool -> Bool, \ y : Bool, x) (\ x : Bool, y true) \in
+             (Bool -> Bool -> Bool)).
+  { eapply T_App; auto. eapply T_Abs. eapply T_App; auto.
+    unfold update. rewrite t_update_permute. auto. easy.
+  }
+  assert (<{ (\ x : Bool -> Bool, \ y : Bool, x) (\ x : Bool, y true) }> -->
+          <{ \ y : Bool, \x: Bool, y true }>).
+  { apply ST_AppAbs. auto.
+  }
+  apply (H H0) in H1; clear H H0.
+  inversion H1; subst; clear H1.
+  inversion H2; subst; clear H2.
+  inversion H1; subst; clear H1.
+  inversion H3; subst; clear H3.
+  unfold update in *.
+  rewrite t_update_permute in H1 by easy.
+  rewrite t_update_eq in H1. inversion H1.
 Qed.
 
 
