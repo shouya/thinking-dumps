@@ -949,11 +949,14 @@ and the following typing rule:
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+      becomes false. any reducible term can reduce normally or reduce to zap.
+
       - Progress
-(* FILL IN HERE *)
+      remains true. now every term can reduce to zap.
+
       - Preservation
-(* FILL IN HERE *)
+      remains true.
+      any typed expression can reduce to zap, which can have any type.
 *)
 
 (* Do not modify the following line: *)
@@ -977,11 +980,16 @@ Definition manual_grade_for_stlc_variation1 : option (nat*string) := None.
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+        remains true. we didn't add any other way to reduce already reducible
+        expression. (\x:A, x) is a value, thus not reducible.
+
       - Progress
-(* FILL IN HERE *)
+        remains true. (\x:A, x) is a typed expression which both can reduce
+        further and is a value.
+
       - Preservation
-(* FILL IN HERE *)
+        becomes false. (\x:A, x) is well typed, but it's reduced form [foo]
+        is not well typed.
 *)
 
 (* Do not modify the following line: *)
@@ -997,11 +1005,17 @@ Definition manual_grade_for_stlc_variation2 : option (nat*string) := None.
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+        remains true. we didn't add any other way to reduce already reducible
+        expression.
+
       - Progress
-(* FILL IN HERE *)
+        becomes false. now some expression is irreducible. counter example:
+        ((if true then (\x:Bool, x) (\x:Bool, x)) true) is well typed
+        (T = Bool), but is not reducible nor is a value.
+
       - Preservation
-(* FILL IN HERE *)
+        remains true. we didn't introduce extra non-typable or ill-typed terms.
+
 *)
 
 (* Do not modify the following line: *)
@@ -1022,11 +1036,17 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+        becomes false. (if true then false else true) now can reduce to
+        both true and false.
+
       - Progress
-(* FILL IN HERE *)
+        remains true. it's only making some expression more reducible.
+
       - Preservation
-(* FILL IN HERE *)
+        becomes false. couterexample:
+        (if true then (\x:Bool, x) (\x: Bool, x))  has type (Bool -> Bool)
+        but it's reduction (true) has type Bool instead.
+
 *)
 (** [] *)
 
@@ -1046,11 +1066,16 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+        remains true. adding a typing rule doesn't affect step.
+
       - Progress
-(* FILL IN HERE *)
+        becomes false. if ((\x, \y, x) true) then true else true is
+        well typed but cannot reduce further nor is a value.
+
       - Preservation
-(* FILL IN HERE *)
+        becomes false. ((\x, \y, x) true) has type Bool, but it's reduction
+        (\y, true) has type (Bool->Bool)
+
 *)
 (** [] *)
 
