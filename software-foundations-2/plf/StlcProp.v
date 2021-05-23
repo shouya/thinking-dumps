@@ -1095,12 +1095,16 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+        remains true. Adding typing rule doesn't affect reducibility.
+
       - Progress
-(* FILL IN HERE *)
+        becomes false. counterexample: true true.
+
       - Preservation
-(* FILL IN HERE *)
-*)
+        remains true. unlike variant 5, it doesn't introduce any
+        ill-typed extra reducible terms. true X and false Y are not reducible.
+ *)
+
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (stlc_variation7)
@@ -1117,12 +1121,125 @@ Definition manual_grade_for_stlc_variation3 : option (nat*string) := None.
     false, give a counterexample.
 
       - Determinism of [step]
-(* FILL IN HERE *)
+        remains true. Adding typing rule doesn't affect reducibility.
+
       - Progress
-(* FILL IN HERE *)
+        becomes false. counterexample: [if (\x:Bool, true) then true else true]
+        is neither a value nor reducible.
+
       - Preservation
-(* FILL IN HERE *)
-*)
+        remains true. I'm not sure about this one but I can't find a
+        counterexample either. (I may as well just prove it.)
+
+        Proved that preservation indeed remains true. That's funny -
+        both expected and unexpected :)
+ *)
+
+Module variant7.
+
+Reserved Notation "Gamma '|-' t '\in' T" (at level 101,
+                                          t custom stlc, T custom stlc at level 0).
+
+Inductive has_type : context -> tm -> ty -> Prop :=
+  | T_Var : forall Gamma x T1,
+      Gamma x = Some T1 ->
+      Gamma |- x \in T1
+  | T_Abs : forall Gamma x T1 T2 t1,
+      x |-> T2 ; Gamma |- t1 \in T1 ->
+      Gamma |- \x:T2, t1 \in (T2 -> T1)
+  | T_App : forall T1 T2 Gamma t1 t2,
+      Gamma |- t1 \in (T2 -> T1) ->
+      Gamma |- t2 \in T2 ->
+      Gamma |- t1 t2 \in T1
+  | T_True : forall Gamma,
+       Gamma |- true \in Bool
+  | T_False : forall Gamma,
+       Gamma |- false \in Bool
+  | T_If : forall t1 t2 t3 T1 Gamma,
+       Gamma |- t1 \in Bool ->
+       Gamma |- t2 \in T1 ->
+       Gamma |- t3 \in T1 ->
+       Gamma |- if t1 then t2 else t3 \in T1
+  | T_FunnyAbs : forall x t Gamma,
+    Gamma |- \x:Bool, t \in Bool (* <-- NEW *)
+
+where "Gamma '|-' t '\in' T" := (has_type Gamma t T).
+
+Hint Constructors has_type : core.
+
+Lemma weakening : forall Gamma Gamma' t T,
+     inclusion Gamma Gamma' ->
+     Gamma  |- t \in T  ->
+     Gamma' |- t \in T.
+Proof.
+  intros Gamma Gamma' t T H Ht.
+  generalize dependent Gamma'.
+  induction Ht; eauto using inclusion_update.
+Qed.
+
+Lemma weakening_empty : forall Gamma t T,
+     empty |- t \in T  ->
+     Gamma |- t \in T.
+Proof.
+  intros Gamma t T.
+  eapply weakening.
+  discriminate.
+Qed.
+
+
+Lemma substitution_preserves_typing : forall Gamma x U t v T,
+  x |-> U ; Gamma |- t \in T ->
+  empty |- v \in U   ->
+  Gamma |- [x:=v]t \in T.
+Proof.
+  intros Gamma x U t v T Ht Hv.
+  generalize dependent Gamma. generalize dependent T.
+  induction t; intros T Gamma H;
+  (* in each case, we'll want to get at the derivation of H *)
+    inversion H; clear H; subst; simpl; eauto.
+  - (* var *)
+    rename s into y. destruct (eqb_stringP x y); subst.
+    + (* x=y *)
+      rewrite update_eq in H2.
+      injection H2 as H2; subst.
+      apply weakening_empty. assumption.
+    + (* x<>y *)
+      apply T_Var. rewrite update_neq in H2; auto.
+  - (* abs *)
+    rename s into y, t into S.
+    destruct (eqb_stringP x y); subst; apply T_Abs.
+    + (* x=y *)
+      rewrite update_shadow in H5. assumption.
+    + (* x<>y *)
+      apply IHt.
+      rewrite update_permute; auto.
+  - rename s into y, t0 into t.
+    destruct (eqb_stringP x y); subst.
+    + apply T_FunnyAbs.
+    + apply T_FunnyAbs.
+Qed.
+
+Theorem preservation : forall t t' T,
+  empty |- t \in T  ->
+  t --> t'  ->
+  empty |- t' \in T.
+Proof with eauto.
+  intros t t' T HT. generalize dependent t'.
+  remember empty as Gamma.
+  induction HT;
+       intros t' HE; subst;
+       try solve [inversion HE; subst; auto].
+  - (* T_App *)
+    inversion HE; subst...
+    (* Most of the cases are immediate by induction,
+       and [eauto] takes care of them *)
+    + (* ST_AppAbs *)
+      apply substitution_preserves_typing with T2...
+      inversion HT1...
+Qed.
+
+End variant7.
+
 (** [] *)
 
 End STLCProp.
