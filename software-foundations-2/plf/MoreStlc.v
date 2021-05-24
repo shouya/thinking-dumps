@@ -692,19 +692,13 @@ test 1=0 then 0 else 1 + (fix F (pred (pred 2)))
 --> ST_Plus2+ST_FixAbs+ST_App1
 1 + ((\x. test x=0 then 0 else test (pred x)=0 then 0 else 1 + (fix F (pred (pred x))))
      (pred (pred 2)))
+--> ST_Plus2+ST_FixAbs+ST_App2+ST_Pred1+ST_PredNat
+1 + ((\x. test x=0 then 0 else test (pred x)=0 then 0 else 1 + (fix F (pred (pred x))))
+     (pred 1))
+--> ST_Plus2+ST_FixAbs+ST_App2+ST_PredNat
+1 + ((\x. test x=0 then 0 else test (pred x)=0 then 0 else 1 + (fix F (pred (pred x))))
+     0)
 --> ST_Plus2+ST_AppAbs
-1 + (test (pred (pred 2))=0
-     then 0
-     else test (pred (pred (pred 2)))=0
-          then 0
-          else 1 + (fix F (pred (pred (pred (pred 2))))))
---> ST_Plus2+ST_Test0+ST_Pred+ST_PredNat
-1 + (test (pred 1))=0
-     then 0
-     else test (pred (pred (pred 2)))=0
-          then 0
-          else 1 + (fix F (pred (pred (pred (pred 2))))))
---> ST_Plus2+ST_Test0+ST_PredNat
 1 + (test 0=0
      then 0
      else test (pred (pred (pred 2)))=0
