@@ -1353,12 +1353,12 @@ Fixpoint subst (x : string) (s : tm) (t : tm) : tm :=
       if eqb_string x y then t else <{\y:T, [x:=s] t1}>
   | <{t1 t2}> =>
       <{([x:=s] t1) ([x:=s] t2)}>
-  | <{true}> =>
-      <{true}>
-  | <{false}> =>
-      <{false}>
-  | <{if t1 then t2 else t3}> =>
-      <{if ([x:=s] t1) then ([x:=s] t2) else ([x:=s] t3)}>
+  | tm_const n => tm_const n
+  | <{ succ t }> => <{succ [x:=s]t}>
+  | <{ pred t }> => <{pred [x:=s]t}>
+  | <{ t1*t2 }> => <{([x:=s]t1) * ([x:=s]t2)}>
+  | <{if0 t1 then t2 else t3}> =>
+      <{if0 ([x:=s] t1) then ([x:=s] t2) else ([x:=s] t3)}>
   end
 
 where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc).
@@ -1366,11 +1366,10 @@ where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc).
 Inductive value : tm -> Prop :=
   | v_abs : forall x T2 t1,
       value <{\x:T2, t1}>
-  | v_true :
-      value <{true}>
-  | v_false :
-      value <{false}>.
+  | v_const : forall n:nat,
+      value <{ n }>.
 
+Hint Constructors value : core.
 
 Reserved Notation "t '-->' t'" (at level 40).
 
@@ -1385,20 +1384,39 @@ Inductive step : tm -> tm -> Prop :=
          value v1 ->
          t2 --> t2' ->
          <{v1 t2}> --> <{v1  t2'}>
-  | ST_IfTrue : forall t1 t2,
-      <{if true then t1 else t2}> --> t1
-  | ST_IfFalse : forall t1 t2,
-      <{if false then t1 else t2}> --> t2
+  | ST_SuccConst : forall (n : nat),
+    <{succ n}> --> tm_const (S n)
+  | ST_Succ : forall t t',
+    t --> t' ->
+    <{succ t}> --> <{succ t'}>
+  | ST_PredConst : forall (n : nat),
+    <{pred n}> --> tm_const (PeanoNat.Nat.pred n)
+  | ST_Pred : forall t t',
+    t --> t' ->
+    <{pred t}> --> <{pred t'}>
+  | ST_MultConst : forall (a b : nat),
+    <{a * b}> --> tm_const (a * b)
+  | ST_Mult1 : forall t2 t1 t1',
+    t1 --> t1' ->
+    <{t1 * t2}> --> <{t1' * t2}>
+  | ST_Mult2 : forall (a : nat) t t',
+    t --> t' ->
+    <{a * t}> --> <{a * t'}>
+  | ST_If0 : forall t1 t2,
+      <{if0 0 then t1 else t2}> --> t1
+  | ST_IfNon0 : forall (n : nat) t1 t2,
+      n <> 0 ->
+      <{if0 n then t1 else t2}> --> t2
   | ST_If : forall t1 t1' t2 t3,
       t1 --> t1' ->
-      <{if t1 then t2 else t3}> --> <{if t1' then t2 else t3}>
-
+      <{if0 t1 then t2 else t3}> --> <{if0 t1' then t2 else t3}>
 where "t '-->' t'" := (step t t').
 
 Hint Constructors step : core.
 
-Reserved Notation "Gamma '|-' t '\in' T" (at level 101,
-                                          t custom stlc, T custom stlc at level 0).
+Definition context := partial_map ty.
+Reserved Notation "Gamma '|-' t '\in' T"
+         (at level 101, t custom stlc, T custom stlc at level 0).
 
 Inductive has_type : context -> tm -> ty -> Prop :=
   | T_Var : forall Gamma x T1,
@@ -1411,15 +1429,23 @@ Inductive has_type : context -> tm -> ty -> Prop :=
       Gamma |- t1 \in (T2 -> T1) ->
       Gamma |- t2 \in T2 ->
       Gamma |- t1 t2 \in T1
-  | T_True : forall Gamma,
-       Gamma |- true \in Bool
-  | T_False : forall Gamma,
-       Gamma |- false \in Bool
-  | T_If : forall t1 t2 t3 T1 Gamma,
-       Gamma |- t1 \in Bool ->
+  | T_Const : forall Gamma (n : nat),
+    Gamma |- n \in Nat
+  | T_Succ : forall Gamma t,
+    (Gamma |- t \in Nat) ->
+    (Gamma |- succ t \in Nat)
+  | T_Pred : forall Gamma t,
+    (Gamma |- t \in Nat) ->
+    (Gamma |- pred t \in Nat)
+  | T_Mult : forall Gamma t t',
+    (Gamma |- t \in Nat) ->
+    (Gamma |- t' \in Nat) ->
+    (Gamma |- t * t' \in Nat)
+  | T_If0 : forall t1 t2 t3 T1 Gamma,
+       Gamma |- t1 \in Nat ->
        Gamma |- t2 \in T1 ->
        Gamma |- t3 \in T1 ->
-       Gamma |- if t1 then t2 else t3 \in T1
+       Gamma |- if0 t1 then t2 else t3 \in T1
 
 where "Gamma '|-' t '\in' T" := (has_type Gamma t T).
 
@@ -1439,13 +1465,26 @@ Inductive appears_free_in (x : string) : tm -> Prop :=
       appears_free_in x <{\y:T1, t1}>
   | afi_if1 : forall t1 t2 t3,
       appears_free_in x t1 ->
-      appears_free_in x <{if t1 then t2 else t3}>
+      appears_free_in x <{if0 t1 then t2 else t3}>
   | afi_if2 : forall t1 t2 t3,
       appears_free_in x t2 ->
-      appears_free_in x <{if t1 then t2 else t3}>
+      appears_free_in x <{if0 t1 then t2 else t3}>
   | afi_if3 : forall t1 t2 t3,
       appears_free_in x t3 ->
-      appears_free_in x <{if t1 then t2 else t3}>.
+      appears_free_in x <{if0 t1 then t2 else t3}>
+  | afi_succ : forall t,
+    appears_free_in x t ->
+    appears_free_in x <{succ t}>
+  | afi_pred : forall t,
+    appears_free_in x t ->
+    appears_free_in x <{pred t}>
+  | afi_mult1 : forall t t',
+    appears_free_in x t ->
+    appears_free_in x <{t * t'}>
+  | afi_mult2 : forall t t',
+    appears_free_in x t' ->
+    appears_free_in x <{t * t'}>
+  .
 
 Hint Constructors appears_free_in : core.
 
@@ -1495,10 +1534,6 @@ Proof.
     + (* x<>y *)
       apply IHt.
       rewrite update_permute; auto.
-  - rename s into y, t0 into t.
-    destruct (eqb_stringP x y); subst.
-    + apply T_FunnyAbs.
-    + apply T_FunnyAbs.
 Qed.
 
 Theorem preservation : forall t t' T,
@@ -1509,7 +1544,7 @@ Proof with eauto.
   intros t t' T HT. generalize dependent t'.
   remember empty as Gamma.
   induction HT;
-       intros t' HE; subst;
+       intros t'' HE; subst;
        try solve [inversion HE; subst; auto].
   - (* T_App *)
     inversion HE; subst...
@@ -1518,6 +1553,26 @@ Proof with eauto.
     + (* ST_AppAbs *)
       apply substitution_preserves_typing with T2...
       inversion HT1...
+Qed.
+
+Lemma canonical_forms_nat : forall t,
+  empty |- t \in Nat ->
+  value t ->
+  exists n, t = tm_const n.
+Proof.
+  intros t HT HVal.
+  destruct HVal; eauto.
+  inversion HT.
+Qed.
+
+Lemma canonical_forms_fun : forall t T1 T2,
+  empty |- t \in (T1 -> T2) ->
+  value t ->
+  exists x u, t = <{\x:T1, u}>.
+Proof.
+  intros t T1 T2 HT HVal.
+  destruct HVal; inversion HT; subst.
+  exists x0, t1. reflexivity.
 Qed.
 
 Theorem progress : forall t T,
@@ -1549,14 +1604,38 @@ Proof with eauto.
     + (* t1 steps *)
       destruct H as [t1' Hstp]. exists (<{t1' t2}>)...
 
+  - (* T_Succ *)
+    destruct IHHt; auto.
+    + apply canonical_forms_nat in Ht; auto. inversion Ht; subst; clear Ht.
+      eauto.
+    + right. destruct H. eauto.
+
+  - (* T_Pred *)
+    destruct IHHt; auto.
+    + apply canonical_forms_nat in Ht; auto. inversion Ht; subst; clear Ht.
+      eauto.
+    + right. destruct H. eauto.
+
+  - (* T_Mult *)
+    destruct IHHt1; destruct IHHt2; auto.
+    + apply canonical_forms_nat in H; auto;
+      apply canonical_forms_nat in H0; auto.
+      destruct H; destruct H0; subst.
+      eauto.
+    + apply canonical_forms_nat in H; auto.
+      destruct H; destruct H0; subst.
+      eauto.
+    + destruct H. eauto.
+    + destruct H. destruct H0. eauto.
+
   - (* T_If *)
     right. destruct IHHt1...
 
     + (* t1 is a value *)
-      destruct (canonical_forms_bool t1); subst; eauto.
-
+      destruct (canonical_forms_nat t1 Ht1); auto; subst.
+      destruct x0; eauto.
     + (* t1 also steps *)
-      destruct H as [t1' Hstp]. exists <{if t1' then t2 else t3}>...
+      destruct H as [t1' Hstp]. exists <{if0 t1' then t2 else t3}>...
 Qed.
 
 (* Do not modify the following line: *)
