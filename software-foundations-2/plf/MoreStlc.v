@@ -656,7 +656,12 @@ From PLF Require Import Stlc.
            else test (pred x)=0 then 0
            else 1 + (halve (pred (pred x)))
 
-(* FILL IN HERE *)
+ halve = fix \f:(Nat -> Nat),
+             \x:Nat -> test x = 0
+                       then 0
+                       else test (pred x) = 0
+                            then 0
+                            else 1 + f (pred (pred x))
 *)
 (** [] *)
 
@@ -666,7 +671,49 @@ From PLF Require Import Stlc.
     through to reduce to a normal form (assuming the usual reduction
     rules for arithmetic operations).
 
-    (* FILL IN HERE *)
+There seems to be an issue with the problem - fact 1 is an intermediate step in the example.
+I'm guessing it will ask me to deduce it for halve_fix function. Let me do it for
+[halve 2].
+
+Let F = ... (The body part of the definition of halve)
+so that halve = fix F
+
+fix F 2
+--> ST_FixAbs + ST_App1
+(\x. test x=0 then 0 else test (pred x)=0 then 0 else 1 + (fix F (pred (pred x)))) 2
+--> ST_AppAbs
+test 2=0 then 0 else test (pred 2)=0 then 0 else 1 + (fix F (pred (pred 2)))
+--> ST_TestNonzero
+test (pred 2)=0 then 0 else 1 + (fix F (pred (pred 2)))
+--> ST_Test0 + ST_PredNat
+test 1=0 then 0 else 1 + (fix F (pred (pred 2)))
+--> ST_TestNonzero
+1 + (fix F (pred (pred 2)))
+--> ST_Plus2+ST_FixAbs+ST_App1
+1 + ((\x. test x=0 then 0 else test (pred x)=0 then 0 else 1 + (fix F (pred (pred x))))
+     (pred (pred 2)))
+--> ST_Plus2+ST_AppAbs
+1 + (test (pred (pred 2))=0
+     then 0
+     else test (pred (pred (pred 2)))=0
+          then 0
+          else 1 + (fix F (pred (pred (pred (pred 2))))))
+--> ST_Plus2+ST_Test0+ST_Pred+ST_PredNat
+1 + (test (pred 1))=0
+     then 0
+     else test (pred (pred (pred 2)))=0
+          then 0
+          else 1 + (fix F (pred (pred (pred (pred 2))))))
+--> ST_Plus2+ST_Test0+ST_PredNat
+1 + (test 0=0
+     then 0
+     else test (pred (pred (pred 2)))=0
+          then 0
+          else 1 + (fix F (pred (pred (pred (pred 2))))))
+--> ST_Plus2+ST_TestZero
+1 + 0
+--> ST_PlusConstConst
+1
 *)
 (** [] *)
 
