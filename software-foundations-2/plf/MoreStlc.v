@@ -646,7 +646,7 @@ From PLF Require Import Stlc.
     definitions in Coq, there is nothing to prevent functions defined
     using [fix] from diverging. *)
 
-(** **** Exercise: 1 star, standard, optional (halve_fix) 
+(** **** Exercise: 1 star, standard, optional (halve_fix)
 
     Translate this informal recursive definition into one using [fix]:
 
@@ -660,7 +660,7 @@ From PLF Require Import Stlc.
 *)
 (** [] *)
 
-(** **** Exercise: 1 star, standard, optional (fact_steps) 
+(** **** Exercise: 1 star, standard, optional (fact_steps)
 
     Write down the sequence of steps that the term [fact 1] goes
     through to reduce to a normal form (assuming the usual reduction
@@ -900,7 +900,7 @@ From PLF Require Import Stlc.
 
 Module STLCExtended.
 
-(** **** Exercise: 3 stars, standard (STLCE_definitions) 
+(** **** Exercise: 3 stars, standard (STLCE_definitions)
 
     In this series of exercises, you will formalize some of the
     extensions described in this chapter.  We've provided the
@@ -1129,12 +1129,14 @@ Fixpoint subst (x : string) (s : tm) (t : tm) : tm :=
   (* Complete the following cases. *)
 
   (* pairs *)
-  (* FILL IN HERE *)
+  | <{(t1, t2)}> => <{([x:=s]t1, [x:=s]t2)}>
   (* let *)
-  (* FILL IN HERE *)
+  | <{let y = t in t'}> =>
+    if eqb_string x y
+    then <{let y = [x:=s]t in t'}>
+    else <{let y = [x:=s]t in [x:=s]t'}>
   (* fix *)
-  (* FILL IN HERE *)
-  | _ => t  (* ... and delete this line when you finish the exercise *)
+  | <{fix t}> => <{fix [x:=s]t}>
   end
 
 where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc).
@@ -1356,7 +1358,7 @@ Definition manual_grade_for_extensions_definition : option (nat*string) := None.
 (* ================================================================= *)
 (** ** Examples *)
 
-(** **** Exercise: 3 stars, standard (STLCE_examples) 
+(** **** Exercise: 3 stars, standard (STLCE_examples)
 
     This section presents formalized versions of the examples from
     above (plus several more).
@@ -1450,7 +1452,7 @@ Proof.
 Example numtest_reduces :
   test -->* 5.
 Proof.
-(* 
+(*
   unfold test. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1474,7 +1476,7 @@ Proof. unfold test. eauto 15. (* FILL IN HERE *) Admitted.
 Example reduces :
   test -->* 6.
 Proof.
-(* 
+(*
   unfold test. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1500,7 +1502,7 @@ Proof. unfold test. eauto 15. (* FILL IN HERE *) Admitted.
 Example reduces :
   test -->* 6.
 Proof.
-(* 
+(*
   unfold test. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1529,7 +1531,7 @@ Proof. unfold test. eauto 15. (* FILL IN HERE *) Admitted.
 Example reduces :
   test -->* 5.
 Proof.
-(* 
+(*
   unfold test. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1560,7 +1562,7 @@ Proof. unfold test. eauto 15. (* FILL IN HERE *) Admitted.
 Example reduces :
   test -->* <{(5, 0)}>.
 Proof.
-(* 
+(*
   unfold test. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1590,7 +1592,7 @@ Proof. unfold test. eauto 20. (* FILL IN HERE *) Admitted.
 Example reduces :
   test -->* 25.
 Proof.
-(* 
+(*
   unfold test. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1623,7 +1625,7 @@ Proof. unfold fact. auto 10. (* FILL IN HERE *) Admitted.
 Example reduces :
   <{fact 4}> -->* 24.
 Proof.
-(* 
+(*
   unfold fact. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1660,7 +1662,7 @@ Example reduces :
   <{map (\a:Nat, succ a) (1 :: 2 :: (nil Nat))}>
   -->* <{2 :: 3 :: (nil Nat)}>.
 Proof.
-(* 
+(*
   unfold map. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1695,7 +1697,7 @@ Proof. unfold equal. auto 10. (* FILL IN HERE *) Admitted.
 Example reduces :
   <{equal 4 4}> -->* 1.
 Proof.
-(* 
+(*
   unfold equal. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1704,7 +1706,7 @@ Proof.
 Example reduces2 :
   <{equal 4 5}> -->* 0.
 Proof.
-(* 
+(*
   unfold equal. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1742,7 +1744,7 @@ Proof. unfold eotest. eauto 30. (* FILL IN HERE *) Admitted.
 Example reduces :
   eotest -->* <{(0, 1)}>.
 Proof.
-(* 
+(*
   unfold eotest. normalize.
 *)
 (* FILL IN HERE *) Admitted.
@@ -1763,7 +1765,7 @@ End Examples.
 (* ----------------------------------------------------------------- *)
 (** *** Progress *)
 
-(** **** Exercise: 3 stars, standard (STLCE_progress) 
+(** **** Exercise: 3 stars, standard (STLCE_progress)
 
     Complete the proof of [progress].
 
@@ -1956,7 +1958,7 @@ Qed.
 (* ----------------------------------------------------------------- *)
 (** *** Substitution *)
 
-(** **** Exercise: 2 stars, standard (STLCE_subst_preserves_typing) 
+(** **** Exercise: 2 stars, standard (STLCE_subst_preserves_typing)
 
     Complete the proof of [substitution_preserves_typing]. *)
 
@@ -2045,7 +2047,7 @@ Definition manual_grade_for_substitution_preserves_typing : option (nat*string) 
 (* ----------------------------------------------------------------- *)
 (** *** Preservation *)
 
-(** **** Exercise: 3 stars, standard (STLCE_preservation) 
+(** **** Exercise: 3 stars, standard (STLCE_preservation)
 
     Complete the proof of [preservation]. *)
 
