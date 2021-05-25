@@ -336,7 +336,7 @@ From PLF Require Import MoreStlc.
       depth subtyping or no arrow subtyping, depending how you look at
       it). *)
 
-(** **** Exercise: 2 stars, standard, especially useful (arrow_sub_wrong) 
+(** **** Exercise: 2 stars, standard, especially useful (arrow_sub_wrong)
 
     Suppose we had incorrectly defined subtyping as covariant on both
     the right and the left of arrow types:
@@ -355,7 +355,16 @@ From PLF Require Import MoreStlc.
     execution.  (Use informal syntax.  No need to prove formally that
     the application gets stuck.)
 
-*)
+ *)
+
+(*  Here is my answer:
+
+Let: f := \s. s.gpa
+     g := \f. f (Person {name := "bob", age := 10})
+
+Then (g f) will pass type check but stuck when execution.
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_arrow_sub_wrong : option (nat*string) := None.
@@ -428,7 +437,7 @@ Definition manual_grade_for_arrow_sub_wrong : option (nat*string) := None.
 (* ================================================================= *)
 (** ** Exercises *)
 
-(** **** Exercise: 1 star, standard, optional (subtype_instances_tf_1) 
+(** **** Exercise: 1 star, standard, optional (subtype_instances_tf_1)
 
     Suppose we have types [S], [T], [U], and [V] with [S <: T]
     and [U <: V].  Which of the following subtyping assertions
@@ -451,7 +460,40 @@ Definition manual_grade_for_arrow_sub_wrong : option (nat*string) := None.
 
     [] *)
 
-(** **** Exercise: 2 stars, standard (subtype_order) 
+(*
+My answer:
+
+    - [T->S <: T->S]
+
+      true.
+
+    - [Top->U <: S->Top]
+
+      true
+
+    - [(C->C) -> (A*B)  <:  (C->C) -> (Top*B)]
+
+      true
+
+    - [T->T->U <: S->S->V]
+
+      true.
+
+    - [(T->T)->U <: (S->S)->V]
+
+      false.
+
+    - [((T->S)->T)->U <: ((S->T)->S)->V]
+
+      true.
+
+    - [S*V <: T*U]
+
+      false.
+
+ *)
+
+(** **** Exercise: 2 stars, standard (subtype_order)
 
     The following types happen to form a linear order with respect to subtyping:
     - [Top]
@@ -464,14 +506,24 @@ Write these types in order from the most specific to the most general.
 
 Where does the type [Top->Top->Student] fit into this order?
 That is, state how [Top -> (Top -> Student)] compares with each
-of the five types above. It may be unrelated to some of them.  
-*)
+of the five types above. It may be unrelated to some of them.
+ *)
+
+(*
+My answer (ordered by <:):
+
+    - [Top -> Student]
+    - [Person -> Student]
+    - [Student -> Person]
+    - [Student -> Top]
+    - [Top]
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_subtype_order : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 1 star, standard (subtype_instances_tf_2) 
+(** **** Exercise: 1 star, standard (subtype_instances_tf_2)
 
     Which of the following statements are true?  Write _true_ or
     _false_ after each one.
@@ -488,25 +540,67 @@ Definition manual_grade_for_subtype_order : option (nat*string) := None.
       forall S T1 T2,
            (S <: T1 -> T2) ->
            exists S1 S2,
-              S = S1 -> S2  /\  T1 <: S1  /\  S2 <: T2 
+              S = S1 -> S2  /\  T1 <: S1  /\  S2 <: T2
 
       exists S,
-           S <: S->S 
+           S <: S->S
 
       exists S,
-           S->S <: S  
+           S->S <: S
 
       forall S T1 T2,
            S <: T1*T2 ->
            exists S1 S2,
-              S = S1*S2  /\  S1 <: T1  /\  S2 <: T2  
+              S = S1*S2  /\  S1 <: T1  /\  S2 <: T2
+ *)
+
+(* My asnwers:
+
+      forall S T,
+          S <: T  ->
+          S->S   <:  T->T
+
+      false.
+
+
+      forall S,
+           S <: A->A ->
+           exists T,
+              S = T->T  /\  T <: A
+
+      true. let T:=A.
+
+      forall S T1 T2,
+           (S <: T1 -> T2) ->
+           exists S1 S2,
+              S = S1 -> S2  /\  T1 <: S1  /\  S2 <: T2
+
+      true. let S1 := T1, S2 := T2
+
+      exists S,
+           S <: S->S
+
+      false. (unless we have Bottom type)
+
+      exists S,
+           S->S <: S
+
+      true. S := Top.
+
+      forall S T1 T2,
+           S <: T1*T2 ->
+           exists S1 S2,
+              S = S1*S2  /\  S1 <: T1  /\  S2 <: T2
+
+      true. S1 := T1, S2 := T2.
+
 *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_subtype_instances_tf_2 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 1 star, standard (subtype_concepts_tf) 
+(** **** Exercise: 1 star, standard (subtype_concepts_tf)
 
     Which of the following statements are true, and which are false?
     - There exists a type that is a supertype of every other type.
@@ -535,13 +629,52 @@ Definition manual_grade_for_subtype_instances_tf_2 : option (nat*string) := None
       [S0], [S1], etc., such that all the [Si]'s are different and
       each [S(i+1)] is a supertype of [Si].
 
-*)
+ *)
+
+(* My answers:
+
+    - There exists a type that is a supertype of every other type.
+      yes. Top
+
+    - There exists a type that is a subtype of every other type.
+      no. (unless we have Bottom type)
+
+    - There exists a pair type that is a supertype of every other
+      pair type.
+      yes. (Top, Top)
+
+    - There exists a pair type that is a subtype of every other
+      pair type.
+      no.
+
+    - There exists an arrow type that is a supertype of every other
+      arrow type.
+      no.
+
+    - There exists an arrow type that is a subtype of every other
+      arrow type.
+      no.
+
+    - There is an infinite descending chain of distinct types in the
+      subtype relation---that is, an infinite sequence of types
+      [S0], [S1], etc., such that all the [Si]'s are different and
+      each [S(i+1)] is a subtype of [Si].
+      yes. [Top, T->Top, T->Top->Top, ...]
+
+    - There is an infinite _ascending_ chain of distinct types in
+      the subtype relation---that is, an infinite sequence of types
+      [S0], [S1], etc., such that all the [Si]'s are different and
+      each [S(i+1)] is a supertype of [Si].
+      yes. [Top->T, (T->Top)->T, (T->Top->Top)->T, ...]
+
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_subtype_concepts_tf : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (proper_subtypes) 
+(** **** Exercise: 2 stars, standard (proper_subtypes)
 
     Is the following statement true or false?  Briefly explain your
     answer.  (Here [Base n] stands for a base type, where [n] is
@@ -552,13 +685,21 @@ Definition manual_grade_for_subtype_concepts_tf : option (nat*string) := None.
          ~(T = Bool \/ exists n, T = Base n) ->
          exists S,
             S <: T  /\  S <> T
-*)
+ *)
+
+(*
+
+I don't think so. Let's say a system has Top, tuple type, function
+type, Bool, and base type T1, T2. Then (T1, T2) doesn't have a proper
+subtype.
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_proper_subtypes : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (small_large_1) 
+(** **** Exercise: 2 stars, standard (small_large_1)
    - What is the _smallest_ type [T] ("smallest" in the subtype
      relation) that makes the following assertion true?  (Assume we
      have [Unit] among the base types and [unit] as a constant of this
@@ -567,14 +708,17 @@ Definition manual_grade_for_proper_subtypes : option (nat*string) := None.
        empty |- (\p:T*Top. p.fst) ((\z:A.z), unit) \in A->A
 
    - What is the _largest_ type [T] that makes the same assertion true?
+ *)
 
-*)
+(*
+  T := A -> A
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_small_large_1 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (small_large_2) 
+(** **** Exercise: 2 stars, standard (small_large_2)
    - What is the _smallest_ type [T] that makes the following
      assertion true?
 
@@ -582,13 +726,17 @@ Definition manual_grade_for_small_large_1 : option (nat*string) := None.
 
    - What is the _largest_ type [T] that makes the same assertion true?
 
-*)
+ *)
+
+(*
+ T := Top
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_small_large_2 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard, optional (small_large_3) 
+(** **** Exercise: 2 stars, standard, optional (small_large_3)
    - What is the _smallest_ type [T] that makes the following
      assertion true?
 
@@ -598,7 +746,7 @@ Definition manual_grade_for_small_large_2 : option (nat*string) := None.
 
     [] *)
 
-(** **** Exercise: 2 stars, standard (small_large_4) 
+(** **** Exercise: 2 stars, standard (small_large_4)
    - What is the _smallest_ type [T] (if one exists) that makes the
      following assertion true?
 
@@ -614,7 +762,7 @@ Definition manual_grade_for_small_large_2 : option (nat*string) := None.
 Definition manual_grade_for_small_large_4 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (smallest_1) 
+(** **** Exercise: 2 stars, standard (smallest_1)
 
     What is the _smallest_ type [T] (if one exists) that makes
     the following assertion true?
@@ -627,7 +775,7 @@ Definition manual_grade_for_small_large_4 : option (nat*string) := None.
 Definition manual_grade_for_smallest_1 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 2 stars, standard (smallest_2) 
+(** **** Exercise: 2 stars, standard (smallest_2)
 
     What is the _smallest_ type [T] that makes the following
     assertion true?
@@ -639,7 +787,7 @@ Definition manual_grade_for_smallest_1 : option (nat*string) := None.
 Definition manual_grade_for_smallest_2 : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 3 stars, standard, optional (count_supertypes) 
+(** **** Exercise: 3 stars, standard, optional (count_supertypes)
 
     How many supertypes does the record type [{x:A, y:C->C}] have?  That is,
     how many different types [T] are there such that [{x:A, y:C->C} <:
@@ -649,7 +797,7 @@ Definition manual_grade_for_smallest_2 : option (nat*string) := None.
 
     [] *)
 
-(** **** Exercise: 2 stars, standard (pair_permutation) 
+(** **** Exercise: 2 stars, standard (pair_permutation)
 
     The subtyping rule for product types
 
@@ -710,7 +858,7 @@ Inductive tm : Type :=
   | tm_true : tm
   | tm_false : tm
   | tm_if : tm -> tm -> tm -> tm
-  | tm_unit : tm 
+  | tm_unit : tm
 .
 
 Declare Custom Entry stlc.
@@ -770,7 +918,7 @@ Fixpoint subst (x : string) (s : tm) (t : tm) : tm :=
   | <{if t1 then t2 else t3}> =>
       <{if ([x:=s] t1) then ([x:=s] t2) else ([x:=s] t3)}>
   | <{unit}> =>
-      <{unit}> 
+      <{unit}>
   end
 where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc).
 
@@ -868,7 +1016,7 @@ Example subtyping_example_0 :
   <{C->Bool}> <: <{C->Top}>.
 Proof. auto. Qed.
 
-(** **** Exercise: 2 stars, standard, optional (subtyping_judgements) 
+(** **** Exercise: 2 stars, standard, optional (subtyping_judgements)
 
     (Leave this exercise [Admitted] until after you have finished adding product
     types to the language -- see exercise [products] -- at least up to
@@ -1186,7 +1334,7 @@ Proof with eauto.
     + (* t1 is a value *) eauto.
     + apply canonical_forms_of_Bool in Ht1; [|assumption].
       destruct Ht1; subst...
-    + destruct H. rename x into t1'. eauto. 
+    + destruct H. rename x into t1'. eauto.
 Qed.
 
 (* ================================================================= *)
@@ -1403,7 +1551,7 @@ Proof with eauto.
        and [eauto] takes care of them *)
     + (* ST_AppAbs *)
       destruct (abs_arrow _ _ _ _ _ HT1) as [HA1 HA2].
-      apply substitution_preserves_typing with T0... 
+      apply substitution_preserves_typing with T0...
 Qed.
 
 (* ================================================================= *)
@@ -1436,7 +1584,7 @@ Qed.
 (* ================================================================= *)
 (** ** Exercises *)
 
-(** **** Exercise: 2 stars, standard (variations) 
+(** **** Exercise: 2 stars, standard (variations)
 
     Each part of this problem suggests a different way of changing the
     definition of the STLC with Unit and subtyping.  (These changes
@@ -1495,7 +1643,7 @@ Definition manual_grade_for_variations : option (nat*string) := None.
 (* ################################################################# *)
 (** * Exercise: Adding Products *)
 
-(** **** Exercise: 5 stars, standard (products) 
+(** **** Exercise: 5 stars, standard (products)
 
     Adding pairs, projections, and product types to the system we have
     defined is a relatively straightforward matter.  Carry out this
