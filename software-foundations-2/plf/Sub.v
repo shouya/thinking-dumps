@@ -730,6 +730,8 @@ Definition manual_grade_for_small_large_1 : option (nat*string) := None.
 
 (*
  T := Top
+
+because Top is always largest.
  *)
 
 (* Do not modify the following line: *)
@@ -746,6 +748,11 @@ Definition manual_grade_for_small_large_2 : option (nat*string) := None.
 
     [] *)
 
+(*
+
+T := A -> A
+ *)
+
 (** **** Exercise: 2 stars, standard (small_large_4)
    - What is the _smallest_ type [T] (if one exists) that makes the
      following assertion true?
@@ -756,7 +763,11 @@ Definition manual_grade_for_small_large_2 : option (nat*string) := None.
    - What is the _largest_ type [T] that makes the same
      assertion true?
 
-*)
+ *)
+(*
+
+T := A -> Top
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_small_large_4 : option (nat*string) := None.
@@ -769,7 +780,13 @@ Definition manual_grade_for_small_large_4 : option (nat*string) := None.
 
       exists S t,
         empty |- (\x:T. x x) t \in S
-*)
+ *)
+
+(*
+
+T := (A -> A) -> (A -> A)
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_smallest_1 : option (nat*string) := None.
@@ -781,7 +798,13 @@ Definition manual_grade_for_smallest_1 : option (nat*string) := None.
     assertion true?
 
       empty |- (\x:Top. x) ((\z:A.z) , (\z:B.z)) \in T
-*)
+ *)
+
+(*
+
+T := (A->A,B->B)
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_smallest_2 : option (nat*string) := None.
@@ -794,6 +817,29 @@ Definition manual_grade_for_smallest_2 : option (nat*string) := None.
     T]?  (We consider two types to be different if they are written
     differently, even if each is a subtype of the other.  For example,
     [{x:A,y:B}] and [{y:B,x:A}] are different.)
+
+(*
+- {x: A, y: C->C}
+- {y: C->C, x: A}
+- {y: C->C}
+- {x: A}
+- {}
+- Top
+- {x: Top, y: C->C}
+- {y: C->C, x: Top}
+- {x: Top}
+- {x: A, y: C->Top}
+- {y: C->Top, x: A}
+- {y: C->Top}
+- {x: A, y: Top}
+- {y: Top, x: A}
+- {y: Top}
+- {x: Top, y: C->Top}
+- {y: C->Top, x: Top}
+- {y: C->Top}
+- {x: Top, y: Top}
+- {y: Top, x: Top}
+ *)
 
     [] *)
 
@@ -812,6 +858,21 @@ Definition manual_grade_for_smallest_2 : option (nat*string) := None.
                                    T1*T2 <: T2*T1
 
     for products.  Is this a good idea? Briefly explain why or why not.
+
+ *)
+
+(*
+
+Not a good idea. This will create situation where a term is well-typed
+but not steppable (i.e. breaking progress).
+
+Here's an example:
+
+x:A |- (\x:(A->A)*A, (x.fst) (x.snd)) (x, (\x,x)) \in A
+
+Note that (x, (\x,x)) is fed to the first lambda. Although it doesn't
+make sense, it is well-typed because we can always feed a value of
+type that is a subtype of the argument type to the argument.
 
 *)
 
