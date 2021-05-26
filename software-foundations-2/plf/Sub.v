@@ -921,6 +921,8 @@ Inductive tm : Type :=
   | tm_false : tm
   | tm_if : tm -> tm -> tm -> tm
   | tm_pair : tm -> tm -> tm
+  | tm_fst : tm -> tm
+  | tm_snd : tm -> tm
   | tm_unit : tm
 .
 
@@ -929,6 +931,8 @@ Declare Custom Entry stlc.
 Notation "<{ e }>" := e (e custom stlc at level 99).
 Notation "( x )" := x (in custom stlc, x at level 99).
 Notation "( x , y )" := (tm_pair x y) (in custom stlc at level 0, x at level 99, y at level 99).
+Notation "x '.fst'" := (tm_fst x) (in custom stlc at level 10).
+Notation "x '.snd'" := (tm_snd x) (in custom stlc at level 10).
 Notation "x" := x (in custom stlc at level 0, x constr at level 0).
 Notation "S -> T" := (Ty_Arrow S T) (in custom stlc at level 50, right associativity).
 Notation "T1 * T2" :=
@@ -987,6 +991,10 @@ Fixpoint subst (x : string) (s : tm) (t : tm) : tm :=
     <{unit}>
   | <{(a, b)}> =>
     <{([x:=s]a, [x:=s]b)}>
+  | <{t.fst}> =>
+    <{([x:=s]t).fst}>
+  | <{t.snd}> =>
+    <{([x:=s]t).snd}>
   end
 where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc).
 
@@ -1004,6 +1012,8 @@ Inductive value : tm -> Prop :=
       value <{false}>
   | v_unit :
       value <{unit}>
+  | v_pair : forall t1 t2,
+      value t1 -> value t2 -> value <{(t1, t2)}>
 .
 
 Hint Constructors value : core.
@@ -1028,6 +1038,20 @@ Inductive step : tm -> tm -> Prop :=
   | ST_If : forall t1 t1' t2 t3,
       t1 --> t1' ->
       <{if t1 then t2 else t3}> --> <{if t1' then t2 else t3}>
+  | ST_Pair : forall t1 t1' t2 t2',
+      t1 --> t1' ->
+      t2 --> t2' ->
+      <{(t1, t2)}> --> <{(t1', t2')}>
+  | ST_FstConst : forall t1 t2,
+      <{(t1, t2).fst}> --> <{t1}>
+  | ST_SndConst : forall t1 t2,
+      <{(t1, t2).snd}> --> <{t2}>
+  | ST_Fst : forall t t',
+      t --> t' ->
+      <{t.fst}> --> <{t'.fst}>
+  | ST_Snd : forall t t',
+      <{t.snd}> --> <{t'.snd}>
+
 where "t '-->' t'" := (step t t').
 
 Hint Constructors step : core.
@@ -1186,6 +1210,16 @@ Inductive has_type : context -> tm -> ty -> Prop :=
       Gamma |- t1 \in T1 ->
       T1 <: T2 ->
       Gamma |- t1 \in T2
+  | T_Pair : forall Gamma t1 t2 T1 T2,
+      (Gamma |- t1 \in T1) ->
+      (Gamma |- t2 \in T2) ->
+      Gamma |- (t1, t2) \in (T1 * T2)
+  | T_Fst : forall Gamma t T1 T2,
+      (Gamma |- t \in (T1 * T2)) ->
+      Gamma |- t.fst \in T1
+  | T_Snd : forall Gamma t T1 T2,
+      (Gamma |- t \in (T1 * T2)) ->
+      Gamma |- t.snd \in T2
 
 where "Gamma '|-' t '\in' T" := (has_type Gamma t T).
 
@@ -1201,24 +1235,36 @@ Import Examples.
 (** **** Exercise: 1 star, standard, optional (typing_example_0)  *)
 (* empty |- ((\z:A.z), (\z:B.z))
          \in (A->A * B->B) *)
-(* FILL IN HERE
 
-    [] *)
+Hint Resolve t_update_eq : core.
+
+Example typing_example_0:
+  empty |- ((\z:A,z), (\z:B,z)) \in (A->A * B->B).
+Proof. auto 10. Qed.
+(* [] *)
 
 (** **** Exercise: 2 stars, standard, optional (typing_example_1)  *)
 (* empty |- (\x:(Top * B->B). x.snd) ((\z:A.z), (\z:B.z))
          \in B->B *)
-(* FILL IN HERE
-
-    [] *)
+(* [] *)
+Example typing_example_1:
+  empty |- (\x:(Top * B->B), x.snd) ((\z:A,z), (\z:B,z)) \in (B->B).
+Proof.
+  econstructor; eauto 10.
+Qed.
 
 (** **** Exercise: 2 stars, standard, optional (typing_example_2)  *)
 (* empty |- (\z:(C->C)->(Top * B->B). (z (\x:C.x)).snd)
               (\z:C->C. ((\z:A.z), (\z:B.z)))
          \in B->B *)
-(* FILL IN HERE
-
-    [] *)
+Example typing_example_2:
+empty |- (\z:(C->C)->(Top * B->B), (z (\x:C,x)).snd)
+              (\z:C->C, ((\z:A,z), (\z:B,z)))
+         \in (B->B).
+Proof.
+  econstructor; eauto 10.
+Qed.
+(* [] *)
 
 End Examples2.
 
@@ -1256,7 +1302,10 @@ Lemma sub_inversion_Bool : forall U,
 Proof with auto.
   intros U Hs.
   remember <{Bool}> as V.
-  (* FILL IN HERE *) Admitted.
+  induction Hs; inversion HeqV; subst; auto.
+  - rewrite IHHs2 in IHHs1; auto.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (sub_inversion_arrow)  *)
