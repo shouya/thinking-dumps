@@ -909,6 +909,7 @@ Inductive ty : Type :=
   | Ty_Bool  : ty
   | Ty_Base  : string -> ty
   | Ty_Arrow : ty -> ty -> ty
+  | Ty_Prod : ty -> ty -> ty
   | Ty_Unit  : ty
 .
 
@@ -919,6 +920,7 @@ Inductive tm : Type :=
   | tm_true : tm
   | tm_false : tm
   | tm_if : tm -> tm -> tm -> tm
+  | tm_pair : tm -> tm -> tm
   | tm_unit : tm
 .
 
@@ -926,8 +928,11 @@ Declare Custom Entry stlc.
 
 Notation "<{ e }>" := e (e custom stlc at level 99).
 Notation "( x )" := x (in custom stlc, x at level 99).
+Notation "( x , y )" := (tm_pair x y) (in custom stlc at level 0, x at level 99, y at level 99).
 Notation "x" := x (in custom stlc at level 0, x constr at level 0).
 Notation "S -> T" := (Ty_Arrow S T) (in custom stlc at level 50, right associativity).
+Notation "T1 * T2" :=
+  (Ty_Prod T1 T2) (in custom stlc at level 60, right associativity).
 Notation "x y" := (tm_app x y) (in custom stlc at level 1, left associativity).
 Notation "\ x : t , y" :=
   (tm_abs x t y) (in custom stlc at level 90, x at level 99,
@@ -979,7 +984,9 @@ Fixpoint subst (x : string) (s : tm) (t : tm) : tm :=
   | <{if t1 then t2 else t3}> =>
       <{if ([x:=s] t1) then ([x:=s] t2) else ([x:=s] t3)}>
   | <{unit}> =>
-      <{unit}>
+    <{unit}>
+  | <{(a, b)}> =>
+    <{([x:=s]a, [x:=s]b)}>
   end
 where "'[' x ':=' s ']' t" := (subst x s t) (in custom stlc).
 
@@ -1050,6 +1057,10 @@ Inductive subtype : ty -> ty -> Prop :=
       T1 <: S1 ->
       S2 <: T2 ->
       <{S1->S2}> <: <{T1->T2}>
+  | S_Pair : forall S1 S2 T1 T2,
+      S1 <: T1 ->
+      S2 <: T2 ->
+      <{S1 * S2}> <: <{T1 * T2}>
 where "T '<:' U" := (subtype T U).
 
 (** Note that we don't need any special rules for base types ([Bool]
@@ -1092,24 +1103,23 @@ Proof. auto. Qed.
     Student := { name : String ; gpa : Float }
     Employee := { name : String ; ssn : Integer }
 *)
-Definition Person : ty
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-Definition Student : ty
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
-Definition Employee : ty
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition Person : ty := <{String * Top * Top}>.
+Definition Student : ty := <{String * Float * Top}>.
+Definition Employee : ty := <{String * Top * Integer}>.
+
 
 (** Now use the definition of the subtype relation to prove the following: *)
 
 Example sub_student_person :
   Student <: Person.
-Proof.
-(* FILL IN HERE *) Admitted.
+Proof. unfold Person, Student. auto. Qed.
+
 
 Example sub_employee_person :
   Employee <: Person.
 Proof.
-(* FILL IN HERE *) Admitted.
+Proof. unfold Employee, Person. auto. Qed.
+
 (** [] *)
 
 (** The following facts are mostly easy to prove in Coq.  To get
@@ -1120,14 +1130,18 @@ Proof.
 Example subtyping_example_1 :
   <{Top->Student}> <:  <{(C->C)->Person}>.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold Student, Employee, Person...
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (subtyping_example_2)  *)
 Example subtyping_example_2 :
   <{Top->Person}> <: <{Person->Top}>.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold Student, Employee, Person...
+Qed.
+
 (** [] *)
 
 End Examples.
