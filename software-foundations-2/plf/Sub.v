@@ -1317,7 +1317,16 @@ Proof with eauto.
   intros U V1 V2 Hs.
   remember <{V1->V2}> as V.
   generalize dependent V2. generalize dependent V1.
-  (* FILL IN HERE *) Admitted.
+  induction Hs; intros; try inversion HeqV; subst; eauto.
+  (* only one case left *)
+  clear H. specialize IHHs2 with V1 V2.
+  assert (<{ V1 -> V2 }> = <{ V1 -> V2 }>) by reflexivity.
+  apply IHHs2 in H; clear IHHs2.
+  destruct H as [U1 [U2 [H1 [H2 H3]]]].
+  apply IHHs1 in H1.
+  destruct H1 as [U1' [U2' [H1' [H2' H3']]]].
+  eauto 10.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1354,7 +1363,18 @@ Lemma canonical_forms_of_arrow_types : forall Gamma s T1 T2,
   exists x S1 s2,
      s = <{\x:S1,s2}>.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  remember <{T1 -> T2}> as V. generalize dependent HeqV. generalize dependent H0.
+  induction H; intros; try solve_by_invert; eauto.
+  - (* T_Sub *)
+    subst. apply sub_inversion_arrow in H0.
+    apply IHhas_type; auto.
+    destruct H0. destruct H0. destruct H0.
+
+
+
+
+Qed.
 (** [] *)
 
 (** Similarly, the canonical forms of type [Bool] are the constants
