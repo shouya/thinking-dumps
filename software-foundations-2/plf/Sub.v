@@ -1364,16 +1364,14 @@ Lemma canonical_forms_of_arrow_types : forall Gamma s T1 T2,
      s = <{\x:S1,s2}>.
 Proof with eauto.
   intros.
-  remember <{T1 -> T2}> as V. generalize dependent HeqV. generalize dependent H0.
-  induction H; intros; try solve_by_invert; eauto.
+  remember <{T1 -> T2}> as V.
+  generalize dependent T1. generalize dependent T2.
+  induction H; intros; eauto; try solve_by_invert.
+
   - (* T_Sub *)
-    subst. apply sub_inversion_arrow in H0.
-    apply IHhas_type; auto.
-    destruct H0. destruct H0. destruct H0.
-
-
-
-
+    subst. apply sub_inversion_arrow in H1.
+    destruct H1 as [U1 [U2 [HT [H1 H2]]]].
+    eauto.
 Qed.
 (** [] *)
 
