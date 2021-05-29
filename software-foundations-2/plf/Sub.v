@@ -1038,6 +1038,14 @@ Inductive step : tm -> tm -> Prop :=
   | ST_If : forall t1 t1' t2 t3,
       t1 --> t1' ->
       <{if t1 then t2 else t3}> --> <{if t1' then t2 else t3}>
+  | ST_PairLeft : forall t1 t1' t2,
+      t1 --> t1' ->
+      value t2 ->
+      <{(t1, t2)}> --> <{(t1', t2)}>
+  | ST_PairRight : forall t1 t2 t2',
+      value t1 ->
+      t2 --> t2' ->
+      <{(t1, t2)}> --> <{(t1, t2')}>
   | ST_Pair : forall t1 t1' t2 t2',
       t1 --> t1' ->
       t2 --> t2' ->
@@ -1390,6 +1398,41 @@ Proof with eauto.
     subst. apply sub_inversion_Bool in H. subst...
 Qed.
 
+(* Let me define an additional lemma for the canonical forms for pairs *)
+Lemma sub_inversion_Pair: forall U T1 T2,
+    (U <: <{T1 * T2}>) ->
+    exists S1 S2, U = <{S1 * S2}> /\ S1 <: T1 /\ S2 <: T2.
+Proof.
+  intros.
+  remember <{T1 * T2}> as V.
+  generalize dependent T2.
+  generalize dependent T1.
+  induction H; intros; try inversion HeqV; subst; eauto.
+  apply IHsubtype2 in H1. destruct H1 as [S1 [S2 [HeqS H1]]].
+  apply IHsubtype1 in HeqS. destruct HeqS as [S3 [S4 [HeqS HS]]].
+  exists S3. exists S4. split; auto. destruct HS. destruct H1. split; eauto.
+Qed.
+
+
+Lemma canonical_forms_of_Pair : forall Gamma s T1 T2,
+    (Gamma |- s \in (T1 * T2)) ->
+    value s ->
+    exists a b, s = <{(a, b)}>.
+Proof with eauto.
+  intros.
+  remember <{T1 * T2}> as T.
+  generalize dependent T1.
+  generalize dependent T2.
+  induction H; intros; try solve_by_invert...
+
+  - (* T_Sub *)
+    subst.
+    apply sub_inversion_Pair in H1.
+    destruct H1 as [S1 [S2 [HeqT1 [HS1 HS2]]]].
+    eapply IHhas_type; eauto.
+Qed.
+
+
 (* ================================================================= *)
 (** ** Progress *)
 
@@ -1477,6 +1520,27 @@ Proof with eauto.
     + apply canonical_forms_of_Bool in Ht1; [|assumption].
       destruct Ht1; subst...
     + destruct H. rename x into t1'. eauto.
+
+  (* Below are my work because in the original version Product is not defined. *)
+  - (* T_Pair *)
+    destruct IHHt2; eauto; destruct IHHt1; eauto.
+    + right. destruct H0. eauto.
+    + right. destruct H. eauto.
+    + right. destruct H. destruct H0. eauto.
+  - (* T_Fst *)
+    right.
+    destruct IHHt; auto.
+    + apply canonical_forms_of_Pair in Ht; auto.
+      destruct Ht as [a [b Ht]].
+      subst. exists a. auto.
+    + destruct H. eauto.
+  - (* T_Snd *)
+    right.
+    destruct IHHt; auto.
+    + apply canonical_forms_of_Pair in Ht; auto.
+      destruct Ht as [a [b Ht]].
+      subst. exists b. auto.
+    + destruct H. exists <{x.snd}>. auto.
 Qed.
 
 (* ================================================================= *)
