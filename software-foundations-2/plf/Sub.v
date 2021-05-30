@@ -1058,6 +1058,7 @@ Inductive step : tm -> tm -> Prop :=
       t --> t' ->
       <{t.fst}> --> <{t'.fst}>
   | ST_Snd : forall t t',
+      t --> t' ->
       <{t.snd}> --> <{t'.snd}>
 
 where "t '-->' t'" := (step t t').
@@ -1599,7 +1600,7 @@ Proof with eauto.
     exists T1...
   - (* T_Sub *)
     destruct IHhas_type as [S2 [Hsub Hty]]...
-  Qed.
+Qed.
 
 (** **** Exercise: 3 stars, standard, optional (typing_inversion_var)  *)
 Lemma typing_inversion_var : forall Gamma (x:string) T,
@@ -1607,7 +1608,17 @@ Lemma typing_inversion_var : forall Gamma (x:string) T,
   exists S,
     Gamma x = Some S /\ S <: T.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  remember (tm_var x) as t.
+  induction H; inversion Heqt.
+  - (* T_Var *)
+    subst. eauto.
+  - (* T_Sub *)
+    apply IHhas_type in H1.
+    destruct H1 as [S [HGamma HSub]].
+    eauto.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (typing_inversion_app)  *)
@@ -1617,7 +1628,15 @@ Lemma typing_inversion_app : forall Gamma t1 t2 T2,
     Gamma |- t1 \in (T1->T2) /\
     Gamma |- t2 \in T1.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  remember <{t1 t2}> as t.
+  induction H; inversion Heqt; subst.
+  - (* T_App *)
+    eauto.
+  - apply IHhas_type in H1.
+    destruct H1 as [T2' [HGamma HSub]].
+    eauto.
+Qed.
 (** [] *)
 
 (** The inversion lemmas for typing and for subtyping between arrow
@@ -1674,12 +1693,26 @@ Lemma substitution_preserves_typing : forall Gamma x U t v T,
    empty |- v \in U   ->
    Gamma |- [x:=v]t \in T.
 Proof.
-Proof.
   intros Gamma x U t v T Ht Hv.
   remember (x |-> U; Gamma) as Gamma'.
   generalize dependent Gamma.
   induction Ht; intros Gamma' G; simpl; eauto.
- (* FILL IN HERE *) Admitted.
+  - (* T_Var *)
+    destruct (eqb_stringP x x0); subst; unfold update in *.
+    + (* x = x0 *)
+      rewrite t_update_eq in H. inversion H; subst.
+      apply weakening_empty. auto.
+    + (* x <> x0 *)
+      rewrite t_update_neq in H; auto.
+  - (* T_Abs *)
+    destruct (eqb_stringP x x0); subst; unfold update in *.
+    + (* x = x0 *)
+      rewrite t_update_shadow in Ht.
+      constructor. apply Ht.
+    + (* x <> x0 *)
+      constructor. apply IHHt.
+      rewrite t_update_permute; auto.
+Qed.
 
 (* ================================================================= *)
 (** ** Preservation *)
@@ -1741,6 +1774,26 @@ Proof.
        result is immediate by the induction hypothesis for the typing
        subderivation and an application of [T_Sub].  [] *)
 
+(* My addition: to prove preservation for T_Fst and T_Snd, I need a
+lemma first... *)
+
+Lemma pair_typing : forall t1 t2 T1 T2,
+    (empty |- (t1, t2) \in (T1 * T2)) ->
+    empty |- t1 \in T1 /\ empty |- t2 \in T2.
+Proof.
+  intros.
+  remember <{(t1, t2)}> as t.
+  remember <{T1 * T2}> as T.
+  generalize dependent T2; generalize dependent T1.
+  induction H; intros; subst; try inversion Heqt; try inversion HeqT; subst.
+  - apply sub_inversion_Pair in H0.
+    destruct H0 as [S1 [S2 [HT [HS1 HS2]]]]. subst.
+    assert (<{ (t1, t2) }> = <{ (t1, t2) }>) by reflexivity.
+    eapply IHhas_type in H0; try reflexivity.
+    destruct H0; split; eauto.
+  - clear Heqt HeqT. split; auto.
+Qed.
+
 Theorem preservation : forall t t' T,
      empty |- t \in T  ->
      t --> t'  ->
@@ -1758,6 +1811,12 @@ Proof with eauto.
     + (* ST_AppAbs *)
       destruct (abs_arrow _ _ _ _ _ HT1) as [HA1 HA2].
       apply substitution_preserves_typing with T0...
+  - (* T_Fst *)
+    inversion HE; subst; clear HE...
+    apply pair_typing in HT; destruct HT; auto.
+  - (* T_Snd *)
+    inversion HE; subst; clear HE...
+    apply pair_typing in HT; destruct HT; auto.
 Qed.
 
 (* ================================================================= *)
