@@ -1867,7 +1867,7 @@ Qed.
 
     - Suppose we add the following reduction rule:
 
-                             --------------------         (ST_Funny21)
+                             --------------------         (ST_Funny2)
                              unit --> (\x:Top. x)
 
     - Suppose we add the following subtyping rule:
@@ -1899,7 +1899,91 @@ Qed.
                           -----------------              (S_Arrow')
                           S1->S2 <: T1->T2
 
-*)
+ *)
+
+(* My answers:
+
+    - Suppose we add the following typing rule:
+
+                           Gamma |- t \in S1->S2
+                    S1 <: T1     T1 <: S1      S2 <: T2
+                    -----------------------------------    (T_Funny1)
+                           Gamma |- t \in T1->T2
+
+      neither becomes false. This rule is the same as (by sub_antisymmetry):
+
+      Gamma |- t \in S1->S2 -> S2 <: T2 -> Gamma |- t \in S1->T2
+
+      which is implied by S_Arrow. I will prove
+      sub_antisymmetry: forall S T, S <: T -> T <: S -> T = S.
+ *)
+
+Lemma sub_antisymmetry : forall S T,
+    S <: T -> T <: S -> T = S.
+Proof.
+  intros S T H1 H2.
+  induction H1; auto.
+  - (* Sub *)
+    assert (T <: S) by assumption.
+    apply (S_Trans _ _ _ H1_0) in H2. apply IHsubtype1 in H2. subst. auto.
+  - (* Top *)
+    remember <{Top}> as T.
+    induction H2; inversion HeqT; subst; auto. rewrite IHsubtype1; auto.
+    apply IHsubtype2. symmetry. apply IHsubtype1. reflexivity.
+  - (* Arrow *)
+    apply sub_inversion_arrow in H2.
+    destruct H2 as [U1 [U2 [Heq [HU1 HU2]]]].
+    inversion Heq. subst.
+    rewrite IHsubtype1; auto.
+    rewrite IHsubtype2; auto.
+  - (* Pair *)
+    apply sub_inversion_Pair in H2.
+    destruct H2 as [U1 [U2 [Heq [HU1 HU2]]]].
+    inversion Heq. subst.
+    rewrite IHsubtype1; auto.
+    rewrite IHsubtype2; auto.
+Qed.
+
+(*
+
+    - Suppose we add the following reduction rule:
+
+                             --------------------         (ST_Funny2)
+                             unit --> (\x:Top. x)
+
+
+
+    - Suppose we add the following subtyping rule:
+
+                               ----------------          (S_Funny3)
+                               Unit <: Top->Top
+
+    - Suppose we add the following subtyping rule:
+
+                               ----------------          (S_Funny4)
+                               Top->Top <: Unit
+
+    - Suppose we add the following reduction rule:
+
+                             ---------------------      (ST_Funny5)
+                             (unit t) --> (t unit)
+
+    - Suppose we add the same reduction rule _and_ a new typing rule:
+
+                             ---------------------       (ST_Funny5)
+                             (unit t) --> (t unit)
+
+                           --------------------------    (T_Funny6)
+                           empty |- unit \in Top->Top
+
+    - Suppose we _change_ the arrow subtyping rule to:
+
+                          S1 <: T1 S2 <: T2
+                          -----------------              (S_Arrow')
+                          S1->S2 <: T1->T2
+
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_variations : option (nat*string) := None.
