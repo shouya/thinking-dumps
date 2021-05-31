@@ -1090,7 +1090,7 @@ Inductive subtype : ty -> ty -> Prop :=
       T1 <: S1 ->
       S2 <: T2 ->
       <{S1->S2}> <: <{T1->T2}>
-  | S_Pair : forall S1 S2 T1 T2,
+  | S_Prod : forall S1 S2 T1 T2,
       S1 <: T1 ->
       S2 <: T2 ->
       <{S1 * S2}> <: <{T1 * T2}>
@@ -2060,7 +2060,7 @@ Definition manual_grade_for_variations : option (nat*string) := None.
     Notation "t '.snd'" := (tm_snd t) (in custom stlc at level 0).
 *)
 
-(* FILL IN HERE *)
+(* already done above *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_products : option (nat*string) := None.
