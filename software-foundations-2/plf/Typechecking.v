@@ -146,10 +146,7 @@ Import STLCTypes.
 Fixpoint type_check (Gamma : context) (t : tm) : option ty :=
   match t with
   | tm_var x =>
-      match Gamma x with
-      | Some T => return T
-      | None   => fail
-      end
+    T <- Gamma x ;; return T
   | <{\x:T2, t1}> =>
       T1 <- type_check (x |-> T2 ; Gamma) t1 ;;
       return <{T2->T1}>
@@ -244,7 +241,7 @@ End STLCChecker.
 (* ################################################################# *)
 (** * Exercises *)
 
-(** **** Exercise: 5 stars, standard (typechecker_extensions) 
+(** **** Exercise: 5 stars, standard (typechecker_extensions)
 
     In this exercise we'll extend the typechecker to deal with the
     extended features discussed in chapter [MoreStlc].  Your job
@@ -333,6 +330,16 @@ Fixpoint type_check (Gamma : context) (t : tm) : option ty :=
       | <{{Nat}}>, <{{Nat}}> => return <{{Nat}}>
       | _,_        => fail
       end
+  | <{ t.fst }> =>
+    match type_check Gamma t with
+    | Some <{{T1 * T2}}> => return T1
+    | _ => fail
+    end
+  | <{ t.snd }> =>
+    match type_check Gamma t with
+    | Some <{{T1 * T2}}> => return T2
+    | _ => fail
+    end
   | <{ if0 guard then t else f }> =>
       Tguard <- type_check Gamma guard ;;
       T1 <- type_check Gamma t ;;
@@ -343,11 +350,32 @@ Fixpoint type_check (Gamma : context) (t : tm) : option ty :=
       end
 
   (* Complete the following cases. *)
-  
+
   (* sums *)
-  (* FILL IN HERE *)
+  | <{ inl T2 t }> =>
+    T1 <- type_check Gamma t ;;
+    return <{{T1 + T2}}>
+  | <{ inr T1 t }> =>
+    T2 <- type_check Gamma t ;;
+    return <{{T1 + T2}}>
+  | <{ case t of | inl x1 => t1 | inr x2 => t2 }> =>
+    match type_check Gamma t with
+    | Some <{{T1 + T2}}> =>
+      T3  <- type_check (x1 |-> T1; Gamma) t1 ;;
+      T3' <- type_check (x2 |-> T2; Gamma) t2 ;;
+      if eqb_ty T3 T3' then return T3 else fail
+    | _ => fail
+    end
+
+
   (* lists (the [tlcase] is given for free) *)
-  (* FILL IN HERE *)
+  | <{ nil T }> => return <{{List T}}>
+  | <{ h :: t }> =>
+    Th <- type_check Gamma h ;;
+    match type_check Gamma t with
+    | Some <{{List T}}> => if eqb_ty T Th then return <{{List T}}> else fail
+    | _ => fail
+    end
   | <{ case t0 of | nil => t1 | x21 :: x22 => t2 }> =>
       match type_check Gamma t0 with
       | Some <{{List T}}> =>
@@ -360,14 +388,22 @@ Fixpoint type_check (Gamma : context) (t : tm) : option ty :=
       | _ => None
       end
   (* unit *)
-  (* FILL IN HERE *)
+  | <{ unit }> => return <{{Unit}}>
   (* pairs *)
-  (* FILL IN HERE *)
+  | <{(t1,t2)}> =>
+    T1 <- type_check Gamma t1 ;;
+    T2 <- type_check Gamma t2 ;;
+    return <{{T1 * T2}}>
   (* let *)
-  (* FILL IN HERE *)
+  | <{let x=v in t}> =>
+    Tv <- type_check Gamma v ;;
+    type_check (x |-> Tv ; Gamma) t
   (* fix *)
-  (* FILL IN HERE *)
-  | _ => None  (* ... and delete this line when you complete the exercise. *)
+  | <{ fix t }> =>
+    match type_check Gamma t with
+    | Some <{{T -> T'}}> => if eqb_ty T T' then return T else fail
+    | _ => fail
+    end
   end.
 
 (** Just for fun, we'll do the soundness proof with just a bit more
@@ -455,13 +491,13 @@ Proof.
     eauto.
     - destruct (Gamma x0); [assumption| solve_by_invert].
       Admitted. (* ... and delete this line *)
-(* 
+(*
 Qed. (* ... and uncomment this one *)
 *)
 End TypecheckerExtensions.
 (** [] *)
 
-(** **** Exercise: 5 stars, standard, optional (stlc_step_function) 
+(** **** Exercise: 5 stars, standard, optional (stlc_step_function)
 
     Above, we showed how to write a typechecking function and prove it
     sound and complete for the typing relation.  Do the same for the
@@ -490,7 +526,7 @@ Proof. (* FILL IN HERE *) Admitted.
 End StepFunction.
 (** [] *)
 
-(** **** Exercise: 5 stars, standard, optional (stlc_impl) 
+(** **** Exercise: 5 stars, standard, optional (stlc_impl)
 
     Using the Imp parser described in the [ImpParser] chapter
     of _Logical Foundations_ as a guide, build a parser for extended
