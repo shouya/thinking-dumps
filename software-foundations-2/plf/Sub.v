@@ -1951,6 +1951,9 @@ Qed.
                              --------------------         (ST_Funny2)
                              unit --> (\x:Top. x)
 
+      progress remains true.
+      preservation becomes false. unit steps into (\x:Top, x), but the type
+      changed from Unit to Top->Top.
 
 
     - Suppose we add the following subtyping rule:
@@ -1958,15 +1961,27 @@ Qed.
                                ----------------          (S_Funny3)
                                Unit <: Top->Top
 
+      progress becomes false. [|- unit unit \in Top] but cannot progress.
+                              (first [unit] has type Unit <: Top->Top)
+                              (second [unit] has type Unit <: Top).
+      preservation remains true.
+
+
     - Suppose we add the following subtyping rule:
 
                                ----------------          (S_Funny4)
                                Top->Top <: Unit
 
+      progress remains true.
+      preservation not sure.
+
     - Suppose we add the following reduction rule:
 
                              ---------------------      (ST_Funny5)
                              (unit t) --> (t unit)
+
+      progress remains true. because [unit t] is never well-typed.
+      preservation remains true. because [unit t] is never well-typed.
 
     - Suppose we add the same reduction rule _and_ a new typing rule:
 
@@ -1976,12 +1991,23 @@ Qed.
                            --------------------------    (T_Funny6)
                            empty |- unit \in Top->Top
 
+      progress becomes false. [unit unit] is now well-typed (has type Top),
+      but cannot step into anything.
+
+      preservation becomes false. [unit true] has type [Top] and can step into
+      [true unit] which is not well-typed.
+
     - Suppose we _change_ the arrow subtyping rule to:
 
                           S1 <: T1 S2 <: T2
                           -----------------              (S_Arrow')
                           S1->S2 <: T1->T2
 
+      progress remains true.
+
+      preservation becomes false. [(\x:Bool, if x then true else true) unit] is well
+      typed because the lhs has type [Top -> Top] and rhs has type [Top]. But
+      would step into [if unit then true else true] which is not well-typed.
 
  *)
 
