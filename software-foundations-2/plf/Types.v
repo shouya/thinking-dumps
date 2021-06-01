@@ -1139,7 +1139,7 @@ only allow values to step into themselves, ie. [value t ==> t]. Then we can
 assert bigstep always terminates at a value.
 
  *)
-Aborted.
+Abort.
 End bigstep.
 
 (* Do not modify the following line: *)

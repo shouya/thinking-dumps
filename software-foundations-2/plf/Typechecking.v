@@ -463,7 +463,27 @@ Proof with eauto.
     invert_typecheck Gamma t3 T3.
     destruct T1; try solve_by_invert.
     case_equality T2 T3.
-  (* FILL IN HERE *)
+  - (* inl *)
+    rename t into T2.
+    invert_typecheck Gamma t0 T1.
+  - (* inr *)
+    rename t into T1.
+    invert_typecheck Gamma t0 T2.
+  - (* sum case *)
+    invert_typecheck Gamma t1 T12.
+    analyze T12 T1 T2.
+    rename s into x1. rename s0 into x2.
+    rename t1 into t0. rename t2 into t1. rename t3 into t2.
+    invert_typecheck (x1 |-> T1; Gamma) t1 HT3.
+    invert_typecheck (x2 |-> T2; Gamma) t2 HT3'.
+    case_equality HT3 HT3'.
+  - (* nil *)
+    subst...
+  - (* cons *)
+    invert_typecheck Gamma t1 T1.
+    invert_typecheck Gamma t2 T2.
+    analyze T2 T2' T2''.
+    case_equality T2' T1.
   - (* tlcase *)
     rename s into x31, s0 into x32.
     fully_invert_typecheck Gamma t1 T1 T11 T12.
@@ -471,7 +491,25 @@ Proof with eauto.
     remember (x31 |-> T11 ; x32 |-> <{{List T11}}> ; Gamma) as Gamma'2.
     invert_typecheck Gamma'2 t3 T3.
     case_equality T2 T3.
-  (* FILL IN HERE *)
+  - (* unit *)
+    eauto.
+  - (* pair *)
+    invert_typecheck Gamma t1 T1.
+    invert_typecheck Gamma t2 T2.
+  - (* fst *)
+    invert_typecheck Gamma t T'.
+    analyze T' T'1 T'2.
+    inversion H0. subst. eauto.
+  - (* snd *)
+    invert_typecheck Gamma t T'.
+    analyze T' T'1 T'2.
+    inversion H0. subst. eauto.
+  - (* let *)
+    invert_typecheck Gamma t1 T'.
+  - (* fix *)
+    invert_typecheck Gamma t T'.
+    analyze T' T'1 T'2.
+    case_equality T'1 T'2.
 Qed.
 
 Theorem type_checking_complete : forall Gamma t T,
@@ -489,11 +527,10 @@ Proof.
     try (rewrite (eqb_ty_refl T2));
     try (rewrite (eqb_ty_refl T3));
     eauto.
-    - destruct (Gamma x0); [assumption| solve_by_invert].
-      Admitted. (* ... and delete this line *)
-(*
-Qed. (* ... and uncomment this one *)
-*)
+  - destruct (Gamma x0); [assumption| solve_by_invert].
+  - rewrite eqb_ty_refl.  reflexivity.
+Qed.
+
 End TypecheckerExtensions.
 (** [] *)
 

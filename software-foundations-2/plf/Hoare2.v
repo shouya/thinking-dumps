@@ -1409,7 +1409,7 @@ Example is_wp_example_3 :
 Proof.
   unfold_all. split; intros.
   - inversion H. verify_assn.
-  - eapply H in H0. 2: {constructor. reflexivity.}
+  - eapply H in H0. 2: {constructor. reflexivity. }
     verify_assn.
 Qed.
 
@@ -1425,12 +1425,12 @@ Proof.
   - intro_all. simpl in *. destruct (eqb_spec (st X) 0).
     + (* eq *) left. split; try easy.
       eapply H in H0.
-      2: {apply E_IfTrue. verify_assn. constructor. reflexivity.}
+      2: {apply E_IfTrue. verify_assn. constructor. reflexivity. }
       verify_assn.
 
     + (* neq *) right. split; try easy.
       eapply H in H0.
-      2: {apply E_IfFalse. verify_assn. constructor. reflexivity.}
+      2: {apply E_IfFalse. verify_assn. constructor. reflexivity. }
       verify_assn.
 Qed.
 
