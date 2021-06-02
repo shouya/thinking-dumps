@@ -546,15 +546,140 @@ Module StepFunction.
 Import MoreStlc.
 Import STLCExtended.
 
+Fixpoint valueb (t : tm) : bool :=
+  match t with
+  | <{\x:T2, t1}> => true
+  | tm_const _ => true
+  | <{inl _ v}> => valueb v
+  | <{inr _ v}> => valueb v
+  | <{nil _}> => true
+  | <{x :: xs}> => valueb x && valueb xs
+  | <{unit}> => true
+  | <{(a,b)}> => valueb a && valueb b
+  | _ => false
+  end.
+
 (* Operational semantics as a Coq function. *)
-Fixpoint stepf (t : tm) : option tm
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint stepf (t : tm) : option tm :=
+  match t with
+  | tm_var x => fail
+  | <{ \ x1 : T1, t2 }> => fail
+  | <{ t1 t2 }> =>
+    match t1, valueb t2 with
+    | <{\x1 : T1, t1'}>, true => Some <{ [x1:=t2]t1' }>
+    | <{\x1 : T1, t1'}>, false =>
+      t2' <- stepf t2 ;; Some <{ (\x1 : T1, t1') t2' }>
+    | t1, _ =>
+      t1' <- stepf t1 ;; Some <{ t1' t2 }>
+    end
+  | tm_const _ => fail
+  | <{ succ t1 }> =>
+    match t1 with
+    | tm_const n => Some (tm_const (S n))
+    | _ => t1' <- stepf t1 ;; Some <{ succ t1' }>
+    end
+  | <{ pred t1 }> =>
+    match t1 with
+    | tm_const n => Some (tm_const (n - 1))
+    | _ => t1' <- stepf t1 ;; Some <{ pred t1' }>
+    end
+  | <{ t1 * t2 }> =>
+    match t1, t2 with
+    | tm_const n1, tm_const n2 => Some (tm_const (n1 * n2))
+    | tm_const _, t2 => t2' <- stepf t2 ;; Some <{ t1 * t2' }>
+    | t1, t2 => t1' <- stepf t1 ;; Some <{ t1' * t2 }>
+    end
+  | <{(t1,t2)}> =>
+    match valueb t1, valueb t2 with
+    | false, _ => t1' <- stepf t1 ;; Some <{(t1', t2)}>
+    | true, false => t2' <- stepf t2 ;; Some <{(t1, t2')}>
+    | _, _ => fail
+    end
+  | <{ t.fst }> =>
+    match t with
+    | <{(t1,t2)}> => Some t1
+    | t' => t'' <- stepf t' ;; Some <{ t''.fst }>
+    end
+  | <{ t.snd }> =>
+    match t with
+    | <{(t1,t2)}> => Some t2
+    | t' => t'' <- stepf t' ;; Some <{ t''.snd }>
+    end
+  | <{ if0 guard then t else f }> =>
+    match guard with
+    | tm_const 0 => Some t
+    | tm_const _ => Some f
+    | g => g' <- stepf g ;; Some <{ if0 g' then t else f }>
+    end
+  | <{ inl T2 t }> => t' <- stepf t ;; Some <{ inl T2 t' }>
+  | <{ inr T1 t }> => t' <- stepf t ;; Some <{ inr T1 t' }>
+  | <{ case t of | inl x1 => t1 | inr x2 => t2 }> =>
+    match t with
+    | <{ inl T2 t' }> => Some <{[x1:=t']t1}>
+    | <{ inr T1 t' }> => Some <{[x2:=t']t2}>
+    | _ => t' <- stepf t ;; Some <{ t' }>
+    end
+  | <{ nil T }> => fail
+  | <{ h :: t }> =>
+    match valueb h, valueb t with
+    | false, _ => h' <- stepf h ;; Some <{ h' :: t }>
+    | true, false => t' <- stepf t ;; Some <{ h :: t' }>
+    | _, _ => fail
+    end
+  | <{ case t0 of | nil => t1 | x21 :: x22 => t2 }> =>
+    match t0 with
+    | <{ nil _ }> => Some t1
+    | <{ h :: t }> => Some <{[x22 := t]([x21 := h]t2)}>
+    | _ => t0' <- stepf t0 ;; Some <{ case t0' of | nil => t1 | x21 :: x22 => t2 }>
+    end
+  | <{ unit }> => fail
+  | <{let x=v in t}> =>
+    match valueb v with
+    | true => Some <{[x:=v]t}>
+    | false => v' <- stepf v ;; Some <{let x=v' in t}>
+    end
+  | <{ fix t }> =>
+    match t with
+    | <{\xf:T, t}> => Some <{ [xf:=fix (\xf:T, t)]t }>
+    | _ => t' <- stepf t ;; Some <{ fix t' }>
+    end
+  end.
+
+Hint Unfold stepf : core.
+
+Theorem sound_valueb : forall t,
+  valueb t = true -> value t.
+Proof.
+  intro. induction t; intro; eauto; try solve_by_invert.
+  - (* cons *)
+    inversion H. rewrite andb_true_iff in H1. destruct H1. eauto.
+  - (* pair *)
+    inversion H. rewrite andb_true_iff in H1. destruct H1. eauto.
+Qed.
+
+Theorem complete_valueb : forall t,
+  value t -> valueb t = true.
+Proof.
+  intros. induction H; auto; simpl; rewrite IHvalue1; rewrite IHvalue2; easy.
+Qed.
+
+Hint Resolve complete_valueb : core.
+Hint Resolve sound_valueb : core.
 
 (* Soundness of [stepf]. *)
 Theorem sound_stepf : forall t t',
     stepf t = Some t'  ->  t --> t'.
-Proof. (* FILL IN HERE *) Admitted.
+Proof.
+  intro.
+  induction t; intros; inversion H; clear H; auto.
+  - destruct (valueb t1) eqn:Hvt1.
 
+
+    destruct t1 eqn:Ht1; subst; simpl in *; try congruence;
+
+    unfold stepf in H. rewrite vt2 in *.
+
+Qed.
 (* Completeness of [stepf]. *)
 Theorem complete_stepf : forall t t',
     t --> t'  ->  stepf t = Some t'.
