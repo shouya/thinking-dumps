@@ -666,19 +666,38 @@ Qed.
 Hint Resolve complete_valueb : core.
 Hint Resolve sound_valueb : core.
 
+Theorem no_step_for_values : forall t,
+  value t -> stepf t = None.
+Proof.
+  intros. induction H; auto; simpl;
+          try (rewrite IHvalue; auto);
+          try (rewrite IHvalue1; rewrite IHvalue2; auto);
+          try (apply complete_valueb in H; apply complete_valueb in H0;
+               rewrite H; rewrite H0;
+               auto).
+Qed.
+
+Ltac analyze_term t H := destruct t; inversion H; subst; auto.
+Ltac analyze_value t := destruct (valueb t) eqn:Hvt2.
+Ltac analyze_step t := destruct (stepf t).
+Ltac invert_return H := inversion H; subst; try rewrite H; auto.
+
 (* Soundness of [stepf]. *)
 Theorem sound_stepf : forall t t',
     stepf t = Some t'  ->  t --> t'.
 Proof.
   intro.
-  induction t; intros; inversion H; clear H; auto.
-  - destruct (valueb t1) eqn:Hvt1.
+  induction t; intros t' H; inversion H; clear H; auto.
+  - (* App *)
+    analyze_step t1; analyze_term t1 H1.
+    + analyze_value t2.
+      * invert_return H1.
+      * analyze_step t2; invert_return H1.
+    + analyze_value t2.
+      * invert_return H1.
+      * analyze_step t2; invert_return H1.
 
-
-    destruct t1 eqn:Ht1; subst; simpl in *; try congruence;
-
-    unfold stepf in H. rewrite vt2 in *.
-
+  - (* Succ *)
 Qed.
 (* Completeness of [stepf]. *)
 Theorem complete_stepf : forall t t',
