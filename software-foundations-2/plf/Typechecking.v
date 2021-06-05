@@ -677,9 +677,13 @@ Proof.
                auto).
 Qed.
 
+From PLF Require Import MyTactics.
+
 Ltac analyze_term t H := destruct t; inversion H; subst; auto.
-Ltac analyze_value t := destruct (valueb t) eqn:Hvt2.
-Ltac analyze_step t := destruct (stepf t).
+Ltac analyze_value t := destruct (valueb t) eqn:Hvt2;
+                        MyTactics.auto_invert_return.
+Ltac analyze_step t := destruct (stepf t);
+                       MyTactics.auto_invert_return.
 Ltac invert_return H := inversion H; subst; try rewrite H; auto.
 
 (* Soundness of [stepf]. *)
@@ -690,13 +694,8 @@ Proof.
   induction t; intros t' H; inversion H; clear H; auto.
   - (* App *)
     analyze_step t1; analyze_term t1 H1.
-    + analyze_value t2.
-      * invert_return H1.
-      * analyze_step t2; invert_return H1.
-    + analyze_value t2.
-      * invert_return H1.
-      * analyze_step t2; invert_return H1.
-
+    + analyze_value t2. analyze_step t2.
+    + analyze_value t2. analyze_step t2.
   - (* Succ *)
 Qed.
 (* Completeness of [stepf]. *)
