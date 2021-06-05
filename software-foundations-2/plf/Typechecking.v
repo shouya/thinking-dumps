@@ -679,12 +679,8 @@ Qed.
 
 From PLF Require Import MyTactics.
 
-Ltac analyze_term t H := destruct t; inversion H; subst; auto.
-Ltac analyze_value t := destruct (valueb t) eqn:Hvt2;
-                        MyTactics.auto_invert_return.
-Ltac analyze_step t := destruct (stepf t);
-                       MyTactics.auto_invert_return.
-Ltac invert_return H := inversion H; subst; try rewrite H; auto.
+Ltac solve_stepf :=
+  repeat (MyTactics.solve_stepf_step tm stepf valueb).
 
 (* Soundness of [stepf]. *)
 Theorem sound_stepf : forall t t',
@@ -693,11 +689,38 @@ Proof.
   intro.
   induction t; intros t' H; inversion H; clear H; auto.
   - (* App *)
-    analyze_step t1; analyze_term t1 H1.
-    + analyze_value t2. analyze_step t2.
-    + analyze_value t2. analyze_step t2.
+    solve_stepf.
   - (* Succ *)
+    solve_stepf.
+  - (* Pred *)
+    solve_stepf.
+  - (* Mult *)
+    solve_stepf.
+  - (* If0 *)
+    solve_stepf.
+  - (* Inl *)
+    solve_stepf.
+  - (* Inr *)
+    solve_stepf.
+  - (* Case Either *)
+    admit.
+  - (* Cons *)
+    solve_stepf.
+  - (* Case List *)
+    solve_stepf.
+    admit.
+  - (* Pair *)
+    solve_stepf.
+  - (* Fst *)
+    solve_stepf.
+  - (* Snd *)
+    solve_stepf.
+  - (* Let *)
+    solve_stepf.
+  - (* Fix *)
+    solve_stepf.
 Qed.
+
 (* Completeness of [stepf]. *)
 Theorem complete_stepf : forall t t',
     t --> t'  ->  stepf t = Some t'.
