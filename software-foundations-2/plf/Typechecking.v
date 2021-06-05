@@ -615,9 +615,9 @@ Fixpoint stepf (t : tm) : option tm :=
   | <{ inr T1 t }> => t' <- stepf t ;; Some <{ inr T1 t' }>
   | <{ case t of | inl x1 => t1 | inr x2 => t2 }> =>
     match t with
-    | <{ inl T2 t' }> => Some <{[x1:=t']t1}>
-    | <{ inr T1 t' }> => Some <{[x2:=t']t2}>
-    | _ => t' <- stepf t ;; Some <{ t' }>
+    | <{ inl T2 t' }> => if valueb t' then Some <{[x1:=t']t1}> else fail
+    | <{ inr T1 t' }> => if valueb t' then Some <{[x2:=t']t2}> else fail
+    | _ => t' <- stepf t ;; Some <{ case t' of | inl x1 => t1 | inr x2 => t2  }>
     end
   | <{ nil T }> => fail
   | <{ h :: t }> =>
@@ -629,7 +629,11 @@ Fixpoint stepf (t : tm) : option tm :=
   | <{ case t0 of | nil => t1 | x21 :: x22 => t2 }> =>
     match t0 with
     | <{ nil _ }> => Some t1
-    | <{ h :: t }> => Some <{[x22 := t]([x21 := h]t2)}>
+    | <{ h :: t }> => if valueb h then
+                    if valueb t then
+                    Some <{[x22 := t]([x21 := h]t2)}>
+                    else fail
+                    else fail
     | _ => t0' <- stepf t0 ;; Some <{ case t0' of | nil => t1 | x21 :: x22 => t2 }>
     end
   | <{ unit }> => fail
@@ -703,12 +707,11 @@ Proof.
   - (* Inr *)
     solve_stepf.
   - (* Case Either *)
-    admit.
+    solve_stepf.
   - (* Cons *)
     solve_stepf.
   - (* Case List *)
     solve_stepf.
-    admit.
   - (* Pair *)
     solve_stepf.
   - (* Fst *)

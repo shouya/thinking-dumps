@@ -14,7 +14,7 @@ Ltac solve_stepf_step tm stepf valueb :=
   | H : (match (stepf ?t) with | Some _ => _ | None => _ end) |- _ =>
     destruct (stepf t)
   | H : (match (valueb ?t) with | _ => _ end) = _ |- _ =>
-    destruct (valueb t) eqn:Hvt
+    destruct (valueb t) eqn:?
   | H : (match (?t:tm) with | _ => _ end) = _ |- _ =>
     destruct t
   end.
