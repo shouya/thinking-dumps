@@ -1308,11 +1308,13 @@ Inductive step : tm -> tm -> Prop :=
       t --> t' ->
       <{t.fst}> --> <{t'.fst}>
   | ST_FstPair : forall t1 t2,
+      value <{(t1,t2)}> ->
       <{(t1,t2).fst}> --> <{t1}>
   | ST_Snd1 : forall t t',
       t --> t' ->
       <{t.snd}> --> <{t'.snd}>
   | ST_SndPair : forall t1 t2,
+      value <{(t1,t2)}> ->
       <{(t1,t2).snd}> --> <{t2}>
   (* let *)
   | ST_Let1 : forall x v v' t,
