@@ -2114,8 +2114,11 @@ Proof with eauto.
         assumption.
 
   (* Complete the proof. *)
-
-  (* FILL IN HERE *) Admitted.
+  - (* tm_let *)
+    destruct (eqb_stringP x s); subst.
+    + rewrite update_shadow in H6. eauto.
+    + rewrite update_permute in H6; auto. eauto.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_substitution_preserves_typing : option (nat*string) := None.
@@ -2162,12 +2165,16 @@ Proof with eauto.
   (* Complete the proof. *)
 
   (* fst and snd *)
-  (* FILL IN HERE *)
-  (* let *)
-  (* FILL IN HERE *)
-  (* fix *)
-  (* FILL IN HERE *)
-(* FILL IN HERE *) Admitted.
+  - inversion HT...
+  - inversion HT...
+
+  - (* let *)
+    eapply substitution_preserves_typing...
+
+  - (* fix *)
+    inversion HT; subst.
+    eapply substitution_preserves_typing...
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_preservation : option (nat*string) := None.
