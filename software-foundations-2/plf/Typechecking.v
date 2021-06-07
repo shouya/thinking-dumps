@@ -721,10 +721,7 @@ Ltac solve_stepf :=
 (* Soundness of [stepf]. *)
 Theorem sound_stepf : forall t t',
     stepf t = Some t'  ->  t --> t'.
-Proof. Admitted.
-(*
-(* The proof takes too long so I admitted it for now. *)
-
+Proof.
   intro.
   induction t; intros t' H; inversion H; clear H; auto.
   (* I intentionally split the cases manually because the proof
@@ -761,8 +758,6 @@ Proof. Admitted.
   - (* Fix *)
     solve_stepf.
 Qed.
-
-*)
 
 Ltac solve_stepf_converse_step := MyTactics.solve_stepf_converse_step
                                   tm step value stepf valueb
@@ -859,7 +854,9 @@ End StepFunction.
     and interpreter for this language. *)
 
 Module StlcImpl.
-Import StepFunction.
+  Import StepFunction.
+
+
 
 (* FILL IN HERE *)
 End StlcImpl.
