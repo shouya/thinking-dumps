@@ -401,7 +401,7 @@ Hint Constructors has_type : core.
 (* ================================================================= *)
 (** ** Examples *)
 
-(** **** Exercise: 2 stars, standard (examples) 
+(** **** Exercise: 2 stars, standard (examples)
 
     Finish the proofs below.  Feel free to use Coq's automation
     features in this proof.  However, if you are not confident about
@@ -415,7 +415,13 @@ Lemma typing_example_2 :
   empty |- (\a : ( i1 : (A -> A) :: i2 : (B -> B) :: nil), a --> i2)
             ( i1 := (\a : A, a) :: i2 := (\a : B,a ) :: nil )  \in (B -> B).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply T_App.
+  - constructor. constructor; auto. eapply T_Proj.
+    + constructor. unfold update. reflexivity. auto.
+    + simpl. reflexivity.
+
+  - constructor; auto.
+Qed.
 
 Example typing_nonexample :
   ~ exists T,
@@ -423,7 +429,11 @@ Example typing_nonexample :
        ( i1 := (\a : B, a) :: a ) \in
                T.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro.
+  destruct H.
+  inversion H; subst; clear H.
+  inversion H7.
+Qed.
 
 Example typing_nonexample_2 : forall y,
   ~ exists T,
@@ -431,8 +441,25 @@ Example typing_nonexample_2 : forall y,
      (\a : ( i1 : A  :: nil ), a --> i1 )
       ( i1 := y :: i2 := y :: nil )  \in T.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros y Hcontra.
+  inversion Hcontra; clear Hcontra.
 
+  inversion H; subst; clear H.
+
+  (* find out the T1 in T1 -> x *)
+  inversion H2; subst; clear H2.
+  inversion H7; subst; clear H7.
+  simpl in H5.
+  inversion H2; subst; clear H2.
+  unfold update in *; rewrite t_update_eq in H0.
+  inversion H0; subst; clear H0.
+  simpl in H5. inversion H5; subst; clear H5.
+  clear H1 H3.
+
+  (* find out T1 *)
+  inversion H4; subst; clear H4.
+  inversion H6.
+Qed.
 (* ================================================================= *)
 (** ** Properties of Typing *)
 
