@@ -857,8 +857,8 @@ Module StlcImpl.
   Import StepFunction.
 
 
+  (* I decided not to solve this problem *)
 
-(* FILL IN HERE *)
 End StlcImpl.
 (** [] *)
 
