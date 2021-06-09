@@ -436,15 +436,21 @@ Notation "t1 ; t2" := (tseq t1 t2) (in custom stlc at level 3).
       r2  // yields 1, not 2!
 *)
 
-(** **** Exercise: 1 star, standard, optional (store_draw) 
+(** **** Exercise: 1 star, standard, optional (store_draw)
 
     Draw (on paper) the contents of the store at the point in
     execution where the first two [let]s have finished and the third
     one is about to begin. *)
 
-(* FILL IN HERE
+(*
 
-    [] *)
+c1: (i, d), i and d both refers to a ref cell c.
+
+c1: (i, d), i and d both refers to a different ref cell c.
+
+ *)
+
+(* [] *)
 
 (* ================================================================= *)
 (** ** References to Compound Types *)
@@ -491,7 +497,7 @@ Notation "t1 ; t2" := (tseq t1 t2) (in custom stlc at level 3).
     useful, allowing us to define data structures such as mutable
     lists and trees. *)
 
-(** **** Exercise: 2 stars, standard, especially useful (compact_update) 
+(** **** Exercise: 2 stars, standard, especially useful (compact_update)
 
     If we defined [update] more compactly like this
 
@@ -500,7 +506,18 @@ Notation "t1 ; t2" := (tseq t1 t2) (in custom stlc at level 3).
 
 would it behave the same? *)
 
-(* FILL IN HERE *)
+(*
+
+Not the same.
+
+In the first version, oldf takes out a copy of the function
+in the refcell a, then when assigning a with a different function, it
+refers to the copy of the old function.
+
+In the second version, when n<>m, the else branch will try to get the current
+function inside refcell a. Effectively creating an infinite loop.
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_compact_update : option (nat*string) := None.
@@ -553,11 +570,21 @@ Definition manual_grade_for_compact_update : option (nat*string) := None.
     names for the same storage cell -- one with type [Ref Natural] and the
     other with type [Ref Bool]. *)
 
-(** **** Exercise: 2 stars, standard (type_safety_violation) 
+(** **** Exercise: 2 stars, standard (type_safety_violation)
 
     Show how this can lead to a violation of type safety. *)
 
-(* FILL IN HERE *)
+(*
+
+Say pointer A is created to refer to a refcell of type Nat, then the
+refcell gets deallocated.  Later a pointer B is created to refer to a
+refcell of type Bool. Suppose the refcell holding a Bool happens to
+overlap with the deallocated refcell holding the Nat. Then when we
+read from A (dangling pointer), it can may read out corrupted data
+because the underlying memory representation for Bool and Nat may be
+different.
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_type_safety_violation : option (nat*string) := None.
@@ -993,10 +1020,18 @@ Definition context := partial_map ty.
    [\x:Natural. (!(loc 1)) x, \x:Natural. (!(loc 0)) x]
 *)
 
-(** **** Exercise: 2 stars, standard (cyclic_store) 
+(** **** Exercise: 2 stars, standard (cyclic_store)
 
     Can you find a term whose reduction will create this particular
     cyclic store? *)
+
+(*
+
+let a = ref (\x:Nat, unit)
+in let b = ref (\x:Nat, (!a) x)
+   in a := ref (\x:Nat (!b) x)
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_cyclic_store : option (nat*string) := None.
@@ -1204,13 +1239,28 @@ Definition store_well_typed (ST:store_ty) (st:store) :=
     typing to the typing relation.  This allows us to type circular
     stores like the one we saw above. *)
 
-(** **** Exercise: 2 stars, standard (store_not_unique) 
+(** **** Exercise: 2 stars, standard (store_not_unique)
 
     Can you find a store [st], and two
     different store typings [ST1] and [ST2] such that both
     [ST1 |- st] and [ST2 |- st]? *)
 
-(* FILL IN HERE *)
+Example store_not_unique :
+  store_well_typed (<{Natural}> :: nil) (<{!(loc 0)}> :: nil) /\
+  store_well_typed (<{Unit}> :: nil) (<{!(loc 0)}> :: nil).
+Proof.
+  split.
+  - constructor; auto.
+    unfold store_lookup. unfold store_Tlookup.
+    intros. simpl in H. inversion H.
+    + simpl. constructor. constructor. simpl. apply le_n.
+    + subst. inversion H1.
+  - constructor; auto.
+    unfold store_lookup. unfold store_Tlookup.
+    intros. simpl in H. inversion H.
+    + simpl. constructor. constructor. simpl. apply le_n.
+    + subst. inversion H1.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_store_not_unique : option (nat*string) := None.
@@ -1353,7 +1403,7 @@ Lemma weakening : forall Gamma Gamma' ST t T,
      Gamma  ; ST |- t \in T  ->
      Gamma' ; ST |- t \in T.
 Proof.
-  intros Gamma Gamma' ST t T H Ht. 
+  intros Gamma Gamma' ST t T H Ht.
   generalize dependent Gamma'.
   induction Ht; eauto using inclusion_update.
 Qed.
@@ -1374,7 +1424,7 @@ Lemma substitution_preserves_typing : forall Gamma ST x U t v T,
 Proof.
   intros Gamma ST x U t v T Ht Hv.
   generalize dependent Gamma. generalize dependent T.
-  induction t; intros T Gamma H; 
+  induction t; intros T Gamma H;
   (* in each case, we'll want to get at the derivation of H *)
     inversion H; clear H; subst; simpl; eauto.
   - (* var *)
@@ -1597,7 +1647,7 @@ Proof with eauto using store_weakening, extends_refl.
     exists ST'...
 Qed.
 
-(** **** Exercise: 3 stars, standard (preservation_informal) 
+(** **** Exercise: 3 stars, standard (preservation_informal)
 
     Write a careful informal proof of the preservation theorem,
     concentrating on the [T_App], [T_Deref], [T_Assign], and [T_Ref]
@@ -1764,7 +1814,7 @@ Definition loop :=
 
 Lemma loop_typeable : exists T, empty; nil |- loop \in T.
 Proof with eauto.
-  eexists. unfold loop. unfold loop_fun. 
+  eexists. unfold loop. unfold loop_fun.
   eapply T_App...
   eapply T_Abs...
   eapply T_App...
@@ -1838,7 +1888,7 @@ Proof with eauto.
   eapply sc_one. compute. apply ST_AppAbs...
 Qed.
 
-(** **** Exercise: 4 stars, standard (factorial_ref) 
+(** **** Exercise: 4 stars, standard (factorial_ref)
 
     Use the above ideas to implement a factorial function in STLC with
     references.  (There is no need to prove formally that it really
@@ -1857,7 +1907,7 @@ Proof with eauto.
     uncomment the example below; the proof should be fully
     automatic using the [reduce] tactic. *)
 
-(* 
+(*
 Lemma factorial_4 : exists st,
   <{ factorial 4 }> / nil -->* tm_const 24 / st.
 Proof.
@@ -1869,7 +1919,7 @@ Qed.
 (* ################################################################# *)
 (** * Additional Exercises *)
 
-(** **** Exercise: 5 stars, standard, optional (garabage_collector) 
+(** **** Exercise: 5 stars, standard, optional (garabage_collector)
 
     Challenge problem: modify our formalization to include an account
     of garbage collection, and prove that it satisfies whatever nice
