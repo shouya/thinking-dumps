@@ -1653,7 +1653,8 @@ Qed.
     concentrating on the [T_App], [T_Deref], [T_Assign], and [T_Ref]
     cases.
 
-(* FILL IN HERE *)
+ (* SKIPPED *)
+
  *)
 
 (* Do not modify the following line: *)
@@ -1896,12 +1897,20 @@ Qed.
     sure it gives the correct result when applied to the argument
     [4].) *)
 
-Definition factorial : tm
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition factorial_fun :=
+  <{\y : Natural, if0 y then 1 else y * ((!r) (pred y))}>.
+Definition factorial : tm :=
+  <{(\y : Natural,
+         (\r : Ref (Natural -> Natural),
+               ((r := factorial_fun); (!r) y))
+         (ref (\z:Natural, z)))
+    }>.
 
 Lemma factorial_type : empty; nil |- factorial \in (Natural -> Natural).
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold factorial.
+  repeat econstructor.
+Qed.
 
 (** If your definition is correct, you should be able to just
     uncomment the example below; the proof should be fully
