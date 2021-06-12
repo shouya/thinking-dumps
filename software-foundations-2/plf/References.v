@@ -1916,13 +1916,13 @@ Qed.
     uncomment the example below; the proof should be fully
     automatic using the [reduce] tactic. *)
 
-(*
+
 Lemma factorial_4 : exists st,
   <{ factorial 4 }> / nil -->* tm_const 24 / st.
 Proof.
   eexists. unfold factorial. reduce.
 Qed.
-*)
+
 (** [] *)
 
 (* ################################################################# *)
@@ -1934,7 +1934,14 @@ Qed.
     of garbage collection, and prove that it satisfies whatever nice
     properties you can think to prove about it. *)
 
-(** [] *)
+(*
+
+I completed this problem in a separate file because the namespace in this file
+is contaminated with existing notations that I failed to fix.
+
+See my solution in ReferencesWithGC.v.
+
+ *)
 
 End RefsAndNontermination.
 End STLCRef.
