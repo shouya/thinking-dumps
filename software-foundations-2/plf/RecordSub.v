@@ -298,7 +298,15 @@ Example subtyping_example_1 :
   TRcd_kj <: TRcd_j.
 (* {k:A->A,j:B->B} <: {j:B->B} *)
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold TRcd_kj.
+  unfold TRcd_j.
+
+  eapply S_Trans.
+  apply S_RcdPerm; auto. easy.
+
+  apply S_RcdDepth; auto.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 1 star, standard (subtyping_example_2)  *)
@@ -306,7 +314,10 @@ Example subtyping_example_2 :
   <{{ Top -> TRcd_kj }}> <:
           <{{ (C -> C) -> TRcd_j }}>.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  apply S_Arrow.
+  auto.
+  apply subtyping_example_1.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (subtyping_example_3)  *)
@@ -315,15 +326,26 @@ Example subtyping_example_3 :
           <{{ (k : B :: nil) -> nil }}>.
 (* {}->{j:A} <: {k:B}->{} *)
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  auto.
+Qed.
 
 (** **** Exercise: 2 stars, standard (subtyping_example_4)  *)
 Example subtyping_example_4 :
   <{{ x : A :: y : B :: z : C :: nil }}> <:
   <{{ z : C :: y : B :: x : A :: nil }}>.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  eapply S_Trans.
+  apply S_RcdPerm... easy.
+
+  eapply S_Trans.
+  apply S_RcdDepth.
+  apply S_Refl. auto.
+  apply S_RcdPerm. auto. easy.
+  auto.
+  auto.
+
+  eapply S_RcdPerm... easy.
+Qed.
 (** [] *)
 
 End Examples.
@@ -404,12 +426,47 @@ Proof with (eauto using wf_rcd_lookup).
     + (* subtype *)
       inversion H. subst. inversion H5. subst...  Qed.
 
-(** **** Exercise: 3 stars, standard (rcd_types_match_informal) 
+(** **** Exercise: 3 stars, standard (rcd_types_match_informal)
 
     Write a careful informal proof of the [rcd_types_match]
     lemma. *)
 
-(* FILL IN HERE *)
+(*
+
+We want to prove that if a record type S is the subtype of record type
+T, then every field in T has a subtype as the field in S.
+
+We prove this by induction on the fact that [S <: T]. Most of the
+cases are trivial to prove, we will focus on those recursive cases.
+
+- In case where S <: U <: T for some U, By hypothesis, T include a
+  field i of type Ti, by the two IHs, U includes a field i of type Ui
+  and thus S includes field i of type Si.
+
+  Also by the IHs, Ui <: Ti and Si <: Ui, thus Si <: Ti.
+
+- In case where S and T both have an extra field k, the field's type
+  satisfies Sk <: Tk and the rest of the fields Sr <: Tr.
+
+  We do a case analysis on k = i:
+
+  + when k = i, then we already have this field (Sk) and have Sk <: Tk.
+  + when k <> i, by IH, there is some i in Sr that satisfies the conditions.
+
+- In case where S and T both have two permuted fields i1 and i2 of the same
+  type T1 and T2. By IH, T has field i of type Ti. We will find the same Ti
+  in S.
+
+  We do a case analysis on i:
+
+  + when i = i1, then Ti = T1. Because S have {i1 : T1}, therefore S contains i2.
+  + when i = i2, then Ti = T2. Because S have {i2 : T2}, therefore S contains i2.
+  + when i <> i1 and i <> i2, then {i:Ti} must be found in Tr.
+    because S also contains Tr, thus S can also find field i of type Ti.
+
+  In all cases, the type we found Ti is always a subtype of Ti by Sub_Refl.
+Qed.
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_rcd_types_match_informal : option (nat*string) := None.
