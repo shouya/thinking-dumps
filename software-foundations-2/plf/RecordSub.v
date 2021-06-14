@@ -484,7 +484,19 @@ Proof with eauto.
   intros U V1 V2 Hs.
   remember <{{ V1 -> V2 }}> as V.
   generalize dependent V2. generalize dependent V1.
-  (* FILL IN HERE *) Admitted.
+  induction Hs; intros; try solve_by_invert; subst.
+
+  - inversion H; subst.
+    exists V1. exists V2. eauto.
+
+  - edestruct IHHs2... destruct H. destruct H. destruct H0. subst.
+    edestruct IHHs1... destruct H. destruct H. destruct H2. subst.
+    clear IHHs2. clear IHHs1.
+    exists x1. exists x2. split...
+
+  - inversion HeqV; subst. eauto.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -545,7 +557,20 @@ Example typing_example_0 :
   empty |- trcd_kj \in TRcd_kj.
 (* empty |- {k=(\z:A.z), j=(\z:B.z)} : {k:A->A,j:B->B} *)
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold trcd_kj.
+  unfold TRcd_kj.
+  eapply T_Sub.
+
+  apply T_RCons; auto.
+  apply T_Abs; auto.
+  apply T_Var; auto. unfold update. rewrite t_update_eq. reflexivity.
+
+  apply T_RCons; auto.
+  apply T_Abs; auto.
+  apply T_Var; auto. unfold update. rewrite t_update_eq. reflexivity.
+
+  apply S_RcdDepth; unfold TRcd_j; auto.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (typing_example_1)  *)
@@ -555,7 +580,24 @@ Example typing_example_1 :
               {k=(\z:A.z), j=(\z:B.z)}
          : B->B *)
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold TRcd_j.
+  unfold trcd_kj.
+
+  econstructor.
+  constructor; auto.
+  econstructor.
+  constructor.
+  unfold update; rewrite t_update_eq. auto. auto. auto.
+
+  eapply T_Sub. constructor; auto.
+  apply T_Abs; auto; apply T_Var; auto; unfold update; rewrite t_update_eq; auto.
+  constructor; auto.
+  apply T_Abs; auto; apply T_Var; auto; unfold update; rewrite t_update_eq; auto.
+
+  eapply S_Trans.
+  eapply S_RcdPerm; auto. easy.
+  apply S_RcdDepth; auto.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (typing_example_2)  *)
@@ -566,7 +608,26 @@ Example typing_example_2 :
               (\z:C->C. {k=(\z:A.z), j=(\z:B.z)})
            : B->B *)
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  unfold TRcd_j.
+  unfold trcd_kj.
+
+  econstructor.
+  constructor. auto.
+  econstructor.
+  econstructor.
+  apply T_Var. constructor. auto.
+  apply T_Abs; auto; apply T_Var; auto; unfold update; rewrite t_update_eq; auto.
+  constructor.
+  constructor.
+  auto.
+
+  eapply T_Sub.
+  repeat constructor.
+  eapply S_Trans.
+  eapply S_RcdPerm; auto. easy.
+  apply S_RcdDepth; auto.
+Qed.
+
 (** [] *)
 
 End Examples2.
@@ -636,7 +697,20 @@ Lemma canonical_forms_of_arrow_types : forall Gamma s T1 T2,
      exists x S1 s2,
         s = <{ \ x  : S1, s2 }>.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent H0.
+  remember <{{T1 -> T2}}> as V.
+  generalize dependent HeqV.
+  generalize dependent T1.
+  generalize dependent T2.
+  induction H; intros T1' T2' HeqV; intros; subst; eauto;
+    try solve_by_invert.
+
+  apply sub_inversion_arrow in H0.
+  destruct H0. destruct H0. destruct H0. destruct H2.
+  eauto.
+Qed.
+
 (** [] *)
 
 Theorem progress : forall t T,
