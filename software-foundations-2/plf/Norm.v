@@ -886,7 +886,47 @@ Lemma vacuous_substitution : forall  t x,
      ~ appears_free_in x t  ->
      forall t', <{ [x:=t']t }> = t.
 Proof with eauto.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent t'.
+  induction t; intros; simpl...
+
+  - destruct (eqb_string x s) eqn:?; auto.
+    rewrite eqb_string_true_iff in Heqb. subst.
+    assert (appears_free_in s s) by auto. congruence.
+
+  - assert (~appears_free_in x t1) by auto.
+    assert (~appears_free_in x t2) by auto.
+    rewrite IHt1; auto. rewrite IHt2; auto.
+
+  - destruct (eqb_stringP s x); subst; auto.
+    rewrite <- eqb_string_refl. reflexivity.
+
+    assert (~appears_free_in x t0).
+    { intro. assert (appears_free_in x <{\s:t, t0}>); auto. }
+    rewrite IHt; auto.
+
+    assert (x <> s) by auto. apply eqb_string_false_iff in H1.
+    rewrite H1. auto.
+
+  - assert (~ appears_free_in x t1); auto.
+    assert (~ appears_free_in x t2); auto.
+    assert (~ appears_free_in x t3); auto.
+    rewrite IHt1; auto.
+    rewrite IHt2; auto.
+    rewrite IHt3; auto.
+
+  - assert (~ appears_free_in x t1); auto.
+    assert (~ appears_free_in x t2); auto.
+    rewrite IHt1; auto.
+    rewrite IHt2; auto.
+
+  - assert (~ appears_free_in x t); auto.
+    rewrite IHt; auto.
+
+  - assert (~ appears_free_in x t); auto.
+    rewrite IHt; auto.
+Qed.
+
 
 Lemma subst_closed: forall t,
      closed t  ->
