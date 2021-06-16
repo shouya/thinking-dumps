@@ -49,18 +49,26 @@ Hint Constructors multi : core.
     entirely trivial to prove, since each reduction of a term can
     duplicate redexes in subterms. *)
 
-(** **** Exercise: 2 stars, standard (norm_fail) 
+(** **** Exercise: 2 stars, standard (norm_fail)
 
     Where do we fail if we attempt to prove normalization by a
     straightforward induction on the size of a well-typed term? *)
 
-(* FILL IN HERE *)
+(*
+
+I'm guessing here with pure intuition.
+
+Lambda abstraction and application can make a term duplicated several
+times. This could make the final term size larger than the input term
+size.
+
+ *)
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_norm_fail : option (nat*string) := None.
 (** [] *)
 
-(** **** Exercise: 5 stars, standard, especially useful (norm) 
+(** **** Exercise: 5 stars, standard, especially useful (norm)
 
     The best ways to understand an intricate proof like this is
     are (1) to help fill it in and (2) to extend it.  We've left out some
@@ -103,7 +111,7 @@ Inductive tm : Type :=
   | tm_pair : tm -> tm -> tm
   | tm_fst : tm -> tm
   | tm_snd : tm -> tm.
- 
+
 Declare Custom Entry stlc.
 
 Notation "<{ e }>" := e (e custom stlc at level 99).
@@ -618,9 +626,8 @@ Fixpoint R (T:ty) (t:tm) : Prop :=
   (match T with
    | <{ Bool }>  => True
    | <{ T1 -> T2 }> => (forall s, R T1 s -> R T2 <{t s}> )
-
    (* ... edit the next line when dealing with products *)
-   | <{ T1 * T2 }> => False    (* FILL IN HERE *)
+   | <{ T1 * T2 }> => (forall t1 t2, R T1 t1 /\ R T2 t2)
    end).
 
 (** As immediate consequences of this definition, we have that every
@@ -697,7 +704,11 @@ Proof.
   eapply IHT2.
   apply  ST_App1. apply E.
   apply RRt; auto.
-  (* FILL IN HERE *) Admitted.
+  (* Pair *)
+  split. eapply preservation; eauto.
+  split. eapply step_preserves_halting in E. destruct E. auto.
+  apply RRt.
+Qed.
 
 (** The generalization to multiple steps is trivial: *)
 
@@ -715,7 +726,31 @@ Qed.
 Lemma step_preserves_R' : forall T t t',
   empty |- t \in T -> (t --> t') -> R T t' -> R T t.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent H0. generalize dependent H1.
+  generalize dependent t. generalize dependent t'.
+  induction T; intros.
+  - (* Bool *)
+   simpl in *. destruct H1. destruct H2.
+   split; auto. split; auto. apply step_preserves_halting in H0.
+   destruct H0. auto.
+
+  - (* Arrow *)
+   simpl in *.
+   destruct H1. destruct H2.
+   split; auto.
+   split. apply step_preserves_halting in H0. destruct H0; auto.
+   intros.
+
+   assert (empty |- s \in T1). unfold R in H4. destruct T1; destruct H4; auto.
+   apply H3 in H4.
+   eapply IHT2; eauto.
+
+  - (* Pair *)
+   simpl in *. destruct H1. destruct H2.
+   split; auto. split; auto.
+   eapply step_preserves_halting. apply H0. apply H2.
+Qed.
 
 Lemma multistep_preserves_R' : forall T t t',
   empty |- t \in T -> (t -->* t') -> R T t' -> R T t.
@@ -927,7 +962,7 @@ Fixpoint closed_env (env:env) :=
 
 (** Next come a series of lemmas charcterizing how [msubst] of closed terms
     distributes over [subst] and over each term form *)
-    
+
 Lemma subst_msubst: forall env x v t, closed v -> closed_env env ->
     msubst env <{ [x:=v]t }> = <{ [x:=v]  { msubst (drop x env) t }  }> .
 Proof.
@@ -963,7 +998,7 @@ Proof.
       simpl. destruct (eqb_string s x); simpl; auto.
 Qed.
 
-Lemma msubst_app : forall ss t1 t2, 
+Lemma msubst_app : forall ss t1 t2,
     msubst ss <{ t1 t2 }> = <{ {msubst ss t1} ({msubst ss t2}) }>.
 Proof.
  induction ss; intros.
