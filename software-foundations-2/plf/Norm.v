@@ -1077,6 +1077,16 @@ Qed.
 
 (** You'll need similar functions for the other term constructors. *)
 
+Lemma msubst_if : forall ss t1 t2 t3,
+    msubst ss <{ if t1 then t2 else t3 }> =
+    <{ if {msubst ss t1} then {msubst ss t2} else {msubst ss t3} }>.
+Proof.
+ induction ss; intros.
+   reflexivity.
+   destruct a.
+    simpl. rewrite <- IHss. auto.
+Qed.
+
 Lemma msubst_pair : forall ss t1 t2,
     msubst ss <{ (t1, t2) }> = <{ ({msubst ss t1}, {msubst ss t2}) }>.
 Proof.
@@ -1284,7 +1294,65 @@ Proof.
     destruct (IHHT1 c H env0 V) as [_ [_ P1]].
     pose proof (IHHT2 c H env0 V) as P2.  fold R in P1.  auto.
 
-  (* FILL IN HERE *) Admitted.
+  - (* T_Bool: true *)
+   simpl.
+   split; try split; auto.
+   + rewrite msubst_closed; auto; unfold closed; intro. intro. inversion H0.
+   + rewrite msubst_closed; auto using value_halts.
+     unfold closed; intro. intro. inversion H0.
+
+  - (* T_Bool: false *)
+   simpl.
+   split; try split; auto.
+   + rewrite msubst_closed; auto; unfold closed; intro. intro. inversion H0.
+   + rewrite msubst_closed; auto using value_halts.
+     unfold closed; intro. intro. inversion H0.
+
+  - (* T_If *)
+   specialize IHHT1 with c env0.
+   specialize IHHT2 with c env0.
+   specialize IHHT3 with c env0.
+   pose proof (IHHT1 H V) as H1.
+   pose proof (IHHT2 H V) as H2.
+   pose proof (IHHT3 H V) as H3.
+   clear IHHT1 IHHT2 IHHT3.
+
+   eapply instantiation_R in V.
+   apply V.
+   rewrite <- H.
+
+
+
+   rewrite msubst_if.
+   specialize IHHT1 with c env0.
+   specialize IHHT2 with c env0.
+   specialize IHHT3 with c env0.
+   pose proof (IHHT1 H V) as H1.
+   pose proof (IHHT2 H V) as H2.
+   pose proof (IHHT3 H V) as H3.
+
+   induction T1; simpl in *;
+     destruct H1 as [_ []];
+     destruct H2 as [_ []];
+     destruct H3 as [_ []];
+     split; try split; auto.
+   + constructor.
+     apply msubst_preserves_typing with (c := c); auto.
+     rewrite <- mupdate_lookup.
+
+
+   rewrite <- H.
+
+   induction T1.
+   + simpl in *.
+     split; try split; auto.
+     * constructor.
+
+
+
+
+
+Qed.
 
 (* ----------------------------------------------------------------- *)
 (** *** Normalization Theorem *)
