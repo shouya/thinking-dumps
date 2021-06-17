@@ -1077,7 +1077,34 @@ Qed.
 
 (** You'll need similar functions for the other term constructors. *)
 
-(* FILL IN HERE *)
+Lemma msubst_pair : forall ss t1 t2,
+    msubst ss <{ (t1, t2) }> = <{ ({msubst ss t1}, {msubst ss t2}) }>.
+Proof.
+ induction ss; intros.
+   reflexivity.
+   destruct a.
+   simpl. rewrite <- IHss. auto.
+Qed.
+
+
+Lemma msubst_fst : forall ss t,
+    msubst ss <{ t.fst }> = <{ {msubst ss t}.fst }>.
+Proof.
+ induction ss; intros.
+   reflexivity.
+   destruct a.
+   simpl. rewrite <- IHss. auto.
+Qed.
+
+Lemma msubst_snd : forall ss t,
+    msubst ss <{ t.snd }> = <{ {msubst ss t}.snd }>.
+Proof.
+ induction ss; intros.
+   reflexivity.
+   destruct a.
+   simpl. rewrite <- IHss. auto.
+Qed.
+
 
 (* ----------------------------------------------------------------- *)
 (** *** Properties of Multi-Extensions *)
