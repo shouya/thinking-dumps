@@ -973,15 +973,43 @@ Lemma swap_subst : forall t x x1 v v1,
     closed v -> closed v1 ->
     <{ [x1:=v1]([x:=v]t) }> = <{ [x:=v]([x1:=v1]t) }>.
 Proof with eauto.
- induction t; intros; simpl.
+ induction t; intros; simpl; try auto.
   - (* var *)
    destruct (eqb_stringP x s); destruct (eqb_stringP x1 s).
    + subst. exfalso...
    + subst. simpl. rewrite <- eqb_string_refl. apply subst_closed...
    + subst. simpl. rewrite <- eqb_string_refl. rewrite subst_closed...
    + simpl. rewrite false_eqb_string... rewrite false_eqb_string...
-  (* FILL IN HERE *) Admitted.
 
+  - (* app *)
+   rewrite IHt1; auto.
+   rewrite IHt2; auto.
+
+  - (* abs *)
+   destruct (eqb_stringP x s); destruct (eqb_stringP x1 s); subst; simpl;
+     try rewrite <- eqb_string_refl;
+     auto.
+   + apply eqb_string_false_iff in n. rewrite n. reflexivity.
+   + apply eqb_string_false_iff in n. rewrite n. reflexivity.
+   + apply eqb_string_false_iff in n. apply eqb_string_false_iff in n0.
+     rewrite n. rewrite n0.
+     f_equal. auto.
+
+  - (* if *)
+   rewrite IHt1; auto.
+   rewrite IHt2; auto.
+   rewrite IHt3; auto.
+
+  - (* pair *)
+   rewrite IHt1; auto.
+   rewrite IHt2; auto.
+
+  - (* fst *)
+   rewrite IHt; auto.
+
+  - (* snd *)
+   rewrite IHt; auto.
+Qed.
 (* ----------------------------------------------------------------- *)
 (** *** Properties of Multi-Substitutions *)
 
