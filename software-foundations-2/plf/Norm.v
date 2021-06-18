@@ -1207,6 +1207,49 @@ Proof.
      apply ST_App2; eauto.  auto.
 Qed.
 
+Lemma multistep_IfTrue : forall t1 t2 t3 t2',
+    (t1 -->* <{true}>) ->
+    (t2 -->* t2') ->
+    <{ if t1 then t2 else t3 }> -->* <{ t2' }>.
+Proof.
+  intros.
+  remember <{true}>.
+  induction H.
+  - subst. econstructor. auto. auto.
+  - pose proof IHmulti Heqt. eauto.
+Qed.
+
+Lemma multistep_IfFalse : forall t1 t2 t3 t2',
+    (t1 -->* <{false}>) ->
+    (t2 -->* t2') ->
+    <{ if t1 then t3 else t2 }> -->* <{ t2' }>.
+Proof.
+  intros.
+  remember <{false}>.
+  induction H.
+  - subst. econstructor. auto. auto.
+  - pose proof IHmulti Heqt. eauto.
+Qed.
+
+Lemma preservation_multistep : forall t t' T,
+  (empty |- t \in T) ->
+  (t -->* t') ->
+  (empty |- t' \in T).
+Proof.
+  intros.
+  induction H0; auto.
+  apply IHmulti. eapply preservation. apply H. apply H0.
+Qed.
+
+Lemma canonical_forms_bool : forall t,
+  empty |- t \in Bool ->
+  value t ->
+  (t = <{true}>) \/ (t = <{false}>).
+Proof.
+  intros t HT HVal.
+  destruct HVal; auto;
+  inversion HT.
+Qed.
 (* FILL IN HERE *)
 
 (* ----------------------------------------------------------------- *)
@@ -1309,49 +1352,51 @@ Proof.
      unfold closed; intro. intro. inversion H0.
 
   - (* T_If *)
-   specialize IHHT1 with c env0.
-   specialize IHHT2 with c env0.
-   specialize IHHT3 with c env0.
-   pose proof (IHHT1 H V) as H1.
-   pose proof (IHHT2 H V) as H2.
-   pose proof (IHHT3 H V) as H3.
+   pose proof (IHHT1 _ H _ V) as H1.
+   pose proof (IHHT2 _ H _ V) as H2.
+   pose proof (IHHT3 _ H _ V) as H3.
+   destruct H1 as [? [? ?]].
    clear IHHT1 IHHT2 IHHT3.
 
-   eapply instantiation_R in V.
-   apply V.
-   rewrite <- H.
-
-
-
    rewrite msubst_if.
-   specialize IHHT1 with c env0.
-   specialize IHHT2 with c env0.
-   specialize IHHT3 with c env0.
-   pose proof (IHHT1 H V) as H1.
-   pose proof (IHHT2 H V) as H2.
-   pose proof (IHHT3 H V) as H3.
+   destruct H1.
+   destruct H1.
 
-   induction T1; simpl in *;
-     destruct H1 as [_ []];
-     destruct H2 as [_ []];
-     destruct H3 as [_ []];
-     split; try split; auto.
-   + constructor.
-     apply msubst_preserves_typing with (c := c); auto.
-     rewrite <- mupdate_lookup.
+   remember (msubst env0 t1) as t1'.
+   remember (msubst env0 t2) as t2'.
+   remember (msubst env0 t3) as t3'.
+   clear Heqt1' Heqt2' Heqt3'.
+   pose proof preservation_multistep _ _ _ H0 H1.
+
+   apply canonical_forms_bool in H6; auto.
+
+   induction T1 eqn:HT1eq;
+   simpl in H2; destruct H2 as [? [? ?]];
+     simpl in H3; destruct H3 as [? [? ?]].
+
+   + split; try split; auto; destruct H6; subst;
+     unfold halts in *.
+     * destruct H7 as [t2'' [? ?]]. exists t2''.
+       split; auto using multistep_IfTrue.
+     * destruct H9 as [t3'' [? ?]]. exists t3''.
+       split; auto using multistep_IfFalse.
+   + split; try split; auto; destruct H6; subst;
+     unfold halts in *.
+     * destruct H7 as [t2'' [? ?]]. exists t2''.
+       split; auto using multistep_IfTrue.
+     * destruct H9 as [t3'' [? ?]]. exists t3''.
+       split; auto using multistep_IfFalse.
+     * intros. apply IHt2.
 
 
-   rewrite <- H.
-
-   induction T1.
-   + simpl in *.
-     split; try split; auto.
-     * constructor.
+   + intros.
 
 
-
-
-
+   + destruct H6; subst.
+     * destruct H7 as [t2'' [? ?]]. exists t2''.
+       split; auto using multistep_IfTrue.
+     * destruct H9 as [t3'' [? ?]]. exists t3''.
+       split; auto using multistep_IfFalse.
 Qed.
 
 (* ----------------------------------------------------------------- *)
