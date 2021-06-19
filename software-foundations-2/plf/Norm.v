@@ -627,7 +627,7 @@ Fixpoint R (T:ty) (t:tm) : Prop :=
    | <{ Bool }>  => True
    | <{ T1 -> T2 }> => (forall s, R T1 s -> R T2 <{t s}> )
    (* ... edit the next line when dealing with products *)
-   | <{ T1 * T2 }> => (forall t1 t2, R T1 t1 /\ R T2 t2)
+   | <{ T1 * T2 }> => (forall t1 t2, t = <{(t1, t2)}> -> R T1 t1 /\ R T2 t2)
    end).
 
 (** As immediate consequences of this definition, we have that every
@@ -707,7 +707,11 @@ Proof.
   (* Pair *)
   split. eapply preservation; eauto.
   split. eapply step_preserves_halting in E. destruct E. auto.
-  apply RRt.
+  intros. apply RRt. subst.
+  destruct RRt as [? [? [? [? ?]]]].
+
+  exists x. exists x0.
+  inversion H; subst. split; try split; auto. apply auto
 Qed.
 
 (** The generalization to multiple steps is trivial: *)
@@ -1231,6 +1235,31 @@ Proof.
   - pose proof IHmulti Heqt. eauto.
 Qed.
 
+Lemma multistep_Pair : forall t1 t2 t1' t2',
+    (t1 -->* t1') ->
+    value t1' ->
+    (t2 -->* t2') ->
+    value t2' ->
+    <{ (t1, t2) }> -->* <{ (t1', t2') }>
+    /\ value <{(t1', t2')}>.
+Proof.
+  intros.
+  induction H; induction H1.
+  - split. eapply multi_refl. auto.
+  - split. eapply multi_step.
+    apply ST_Pair2. auto. apply H.
+    apply IHmulti; auto.
+    apply IHmulti; auto.
+  - split. eapply multi_step.
+    apply ST_Pair1. apply H.
+    apply IHmulti; auto.
+    apply IHmulti; auto.
+  - split. eapply multi_step.
+    apply ST_Pair1. apply H.
+    apply IHmulti; auto.
+    apply IHmulti; auto.
+Qed.
+
 Lemma preservation_multistep : forall t t' T,
   (empty |- t \in T) ->
   (t -->* t') ->
@@ -1338,65 +1367,71 @@ Proof.
     pose proof (IHHT2 c H env0 V) as P2.  fold R in P1.  auto.
 
   - (* T_Bool: true *)
-   simpl.
-   split; try split; auto.
-   + rewrite msubst_closed; auto; unfold closed; intro. intro. inversion H0.
-   + rewrite msubst_closed; auto using value_halts.
-     unfold closed; intro. intro. inversion H0.
+    simpl.
+    split; try split; auto.
+    + rewrite msubst_closed; auto; unfold closed; intro. intro. inversion H0.
+    + rewrite msubst_closed; auto using value_halts.
+      unfold closed; intro. intro. inversion H0.
 
   - (* T_Bool: false *)
-   simpl.
-   split; try split; auto.
-   + rewrite msubst_closed; auto; unfold closed; intro. intro. inversion H0.
-   + rewrite msubst_closed; auto using value_halts.
-     unfold closed; intro. intro. inversion H0.
+    simpl.
+    split; try split; auto.
+    + rewrite msubst_closed; auto; unfold closed; intro. intro. inversion H0.
+    + rewrite msubst_closed; auto using value_halts.
+      unfold closed; intro. intro. inversion H0.
 
   - (* T_If *)
-   pose proof (IHHT1 _ H _ V) as H1.
-   pose proof (IHHT2 _ H _ V) as H2.
-   pose proof (IHHT3 _ H _ V) as H3.
-   destruct H1 as [? [? ?]].
-   clear IHHT1 IHHT2 IHHT3.
+    pose proof (IHHT1 _ H _ V) as H1.
+    pose proof (IHHT2 _ H _ V) as H2.
+    pose proof (IHHT3 _ H _ V) as H3.
+    destruct H1 as [? [? ?]].
+    clear IHHT1 IHHT2 IHHT3.
 
-   rewrite msubst_if.
-   destruct H1.
-   destruct H1.
+    rewrite msubst_if.
+    destruct H1.
+    destruct H1.
 
-   remember (msubst env0 t1) as t1'.
-   remember (msubst env0 t2) as t2'.
-   remember (msubst env0 t3) as t3'.
-   clear Heqt1' Heqt2' Heqt3'.
-   pose proof preservation_multistep _ _ _ H0 H1.
+    remember (msubst env0 t1) as t1'.
+    remember (msubst env0 t2) as t2'.
+    remember (msubst env0 t3) as t3'.
+    clear Heqt1' Heqt2' Heqt3'.
+    pose proof preservation_multistep _ _ _ H0 H1.
 
-   apply canonical_forms_bool in H6; auto.
+    apply canonical_forms_bool in H6; auto.
+    destruct H6; subst.
 
-   induction T1 eqn:HT1eq;
-   simpl in H2; destruct H2 as [? [? ?]];
-     simpl in H3; destruct H3 as [? [? ?]].
+    + apply multistep_preserves_R' with (t' := t2'); eauto.
+      * constructor; auto;
+          destruct T1; simpl in *; destruct H2; destruct H3; auto.
+      * eauto using multistep_IfTrue.
+    + apply multistep_preserves_R' with (t' := t3'); eauto.
+      * constructor; auto;
+          destruct T1; simpl in *; destruct H2; destruct H3; auto.
+      * eauto using multistep_IfFalse.
 
-   + split; try split; auto; destruct H6; subst;
-     unfold halts in *.
-     * destruct H7 as [t2'' [? ?]]. exists t2''.
-       split; auto using multistep_IfTrue.
-     * destruct H9 as [t3'' [? ?]]. exists t3''.
-       split; auto using multistep_IfFalse.
-   + split; try split; auto; destruct H6; subst;
-     unfold halts in *.
-     * destruct H7 as [t2'' [? ?]]. exists t2''.
-       split; auto using multistep_IfTrue.
-     * destruct H9 as [t3'' [? ?]]. exists t3''.
-       split; auto using multistep_IfFalse.
-     * intros. apply IHt2.
+  - (* T_Pair *)
+    pose proof (IHHT1 _ H _ V) as H1.
+    pose proof (IHHT2 _ H _ V) as H2.
+    clear IHHT1 IHHT2 H V.
 
+    rewrite msubst_pair.
+    remember (msubst env0 t1) as t1'.
+    remember (msubst env0 t2) as t2'.
+    clear Heqt1' Heqt2'.
 
-   + intros.
+    simpl.
+    split; try split.
 
-
-   + destruct H6; subst.
-     * destruct H7 as [t2'' [? ?]]. exists t2''.
-       split; auto using multistep_IfTrue.
-     * destruct H9 as [t3'' [? ?]]. exists t3''.
-       split; auto using multistep_IfFalse.
+    + constructor; auto;
+      destruct T1; simpl in *; destruct H1;
+        destruct T2; simpl in *; destruct H2;
+          auto.
+    + pose proof R_halts H1.
+      pose proof R_halts H2.
+      destruct H as [? [? ?]].
+      destruct H0 as [? [? ?]].
+      exists <{(x, x0)}>. apply multistep_Pair; auto.
+    + intros.
 Qed.
 
 (* ----------------------------------------------------------------- *)
