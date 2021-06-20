@@ -1301,6 +1301,44 @@ Proof.
       split; try solve [eapply multi_step; eauto]; assumption.
 Qed.
 
+Lemma multistep_Fst : forall t t1 t2,
+    (t -->* <{(t1, t2)}>) ->
+    value t1 ->
+    value t2 ->
+    (<{t.fst}> -->* t1).
+Proof.
+  intros.
+  remember <{(t1, t2)}> as t'.
+  generalize dependent t1.
+  generalize dependent t2.
+  induction H; intros; subst.
+  + eapply multi_step.
+    apply ST_FstPair; auto. eauto.
+  + eapply multi_step.
+    apply ST_Fst1.
+    apply H.
+    eauto.
+Qed.
+
+Lemma multistep_Snd : forall t t1 t2,
+    (t -->* <{(t1, t2)}>) ->
+    value t1 ->
+    value t2 ->
+    (<{t.snd}> -->* t2).
+Proof.
+  intros.
+  remember <{(t1, t2)}> as t'.
+  generalize dependent t1.
+  generalize dependent t2.
+  induction H; intros; subst.
+  + eapply multi_step.
+    apply ST_SndPair; auto. eauto.
+  + eapply multi_step.
+    apply ST_Snd1.
+    apply H.
+    eauto.
+Qed.
+
 Lemma canonical_forms_bool : forall t,
   empty |- t \in Bool ->
   value t ->
@@ -1466,6 +1504,31 @@ Proof.
       destruct (multistep_Pair_decompose _ _ _ _ H).
       split; eauto using multistep_preserves_R.
 
+  - (* Fst *)
+   rewrite msubst_fst.
+   pose proof IHHT _ H _ V as HR; clear IHHT H V.
+   destruct HR as [HT' [Hh HR]].
+   remember (msubst env0 t0) as t; clear Heqt.
+   inversion Hh. destruct H.
+   pose proof (preservation_multistep _ _ _ HT' H).
+   inversion H1; subst; inversion H0; subst; clear H0; clear H1.
+   destruct (HR _ _ H).
+
+   apply multistep_preserves_R' with (t' := t1); eauto;
+     apply multistep_Fst with (t2 := t2); auto.
+
+  - (* Snd *)
+   rewrite msubst_snd.
+   pose proof IHHT _ H _ V as HR; clear IHHT H V.
+   destruct HR as [HT' [Hh HR]].
+   remember (msubst env0 t0) as t; clear Heqt.
+   inversion Hh. destruct H.
+   pose proof (preservation_multistep _ _ _ HT' H).
+   inversion H1; subst; inversion H0; subst; clear H0; clear H1.
+   destruct (HR _ _ H).
+
+   apply multistep_preserves_R' with (t' := t2); eauto;
+     apply multistep_Snd with (t1 := t1); auto.
 Qed.
 
 (* ----------------------------------------------------------------- *)
