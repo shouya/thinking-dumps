@@ -627,7 +627,7 @@ Fixpoint R (T:ty) (t:tm) : Prop :=
    | <{ Bool }>  => True
    | <{ T1 -> T2 }> => (forall s, R T1 s -> R T2 <{t s}> )
    (* ... edit the next line when dealing with products *)
-   | <{ T1 * T2 }> => (forall t1 t2, t = <{(t1, t2)}> -> R T1 t1 /\ R T2 t2)
+   | <{ T1 * T2 }> => (forall t1 t2, t -->* <{(t1, t2)}> -> R T1 t1 /\ R T2 t2)
    end).
 
 (** As immediate consequences of this definition, we have that every
@@ -707,11 +707,8 @@ Proof.
   (* Pair *)
   split. eapply preservation; eauto.
   split. eapply step_preserves_halting in E. destruct E. auto.
-  intros. apply RRt. subst.
-  destruct RRt as [? [? [? [? ?]]]].
-
-  exists x. exists x0.
-  inversion H; subst. split; try split; auto. apply auto
+  intros. apply RRt.
+  eapply multi_step. apply E. auto.
 Qed.
 
 (** The generalization to multiple steps is trivial: *)
@@ -724,8 +721,20 @@ Proof.
   apply IHSTM. eapply step_preserves_R. apply H. assumption.
 Qed.
 
+
+
 (** In the reverse direction, we must add the fact that [t] has type
    [T] before stepping as an additional hypothesis. *)
+
+Lemma preservation_multistep : forall t t' T,
+  (empty |- t \in T) ->
+  (t -->* t') ->
+  (empty |- t' \in T).
+Proof.
+  intros.
+  induction H0; auto.
+  apply IHmulti. eapply preservation. apply H. apply H0.
+Qed.
 
 Lemma step_preserves_R' : forall T t t',
   empty |- t \in T -> (t --> t') -> R T t' -> R T t.
@@ -754,6 +763,17 @@ Proof.
    simpl in *. destruct H1. destruct H2.
    split; auto. split; auto.
    eapply step_preserves_halting. apply H0. apply H2.
+   intros. inversion H4; subst; clear H4.
+   inversion H; subst; clear H.
+   + inversion H0; subst; clear H0;
+       pose proof H3 _ _ (multi_refl _ _) as HR; destruct HR; clear H3;
+       split.
+     * eapply IHT1; eauto.
+     * auto.
+     * auto.
+     * eapply IHT2; eauto.
+   + pose proof step_deterministic _ _ _ H0 H5; subst.
+     apply H3 in H6. auto.
 Qed.
 
 Lemma multistep_preserves_R' : forall T t t',
@@ -1260,14 +1280,25 @@ Proof.
     apply IHmulti; auto.
 Qed.
 
-Lemma preservation_multistep : forall t t' T,
-  (empty |- t \in T) ->
-  (t -->* t') ->
-  (empty |- t' \in T).
+Lemma multistep_Pair_decompose : forall t1 t2 t1' t2',
+    (<{ (t1, t2) }> -->* <{ (t1', t2') }>) ->
+    (t1 -->* t1') /\ (t2 -->* t2').
 Proof.
   intros.
-  induction H0; auto.
-  apply IHmulti. eapply preservation. apply H. apply H0.
+  remember <{(t1, t2)}> as l;
+    remember <{(t1', t2')}> as r.
+  generalize dependent t1.
+  generalize dependent t2.
+  generalize dependent t1'.
+  generalize dependent t2'.
+  induction H; intros; subst.
+  - inversion Heql; subst. auto.
+  - pose proof IHmulti _ _ eq_refl; clear IHmulti.
+    inversion H; subst; clear H.
+    + destruct (H1 _ _ eq_refl).
+      split; try solve [eapply multi_step; eauto]; assumption.
+    + destruct (H1 _ _ eq_refl).
+      split; try solve [eapply multi_step; eauto]; assumption.
 Qed.
 
 Lemma canonical_forms_bool : forall t,
@@ -1432,6 +1463,9 @@ Proof.
       destruct H0 as [? [? ?]].
       exists <{(x, x0)}>. apply multistep_Pair; auto.
     + intros.
+      destruct (multistep_Pair_decompose _ _ _ _ H).
+      split; eauto using multistep_preserves_R.
+
 Qed.
 
 (* ----------------------------------------------------------------- *)
