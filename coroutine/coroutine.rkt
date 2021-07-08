@@ -3,7 +3,7 @@
 #lang racket
 
 
-(define curr-task-handle '())
+(define curr-task-handle 'main)
 (define queue '())
 (define joiners '())
 
@@ -81,13 +81,6 @@
 (define (sleep n)
   (sleep-until (+ (current-milliseconds) n)))
 
-(define (init-coroutine)
-  (set! queue '())
-  (set! joiners '())
-  (set! curr-task-handle 'main))
-
-(init-coroutine)
-;
 (let* ((N 1000)
        (task (lambda (i) (sleep 0) (* i 2)))
        (tasks (map (lambda (i) (spawn (lambda () (task i))))
