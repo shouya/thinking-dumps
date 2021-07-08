@@ -1,8 +1,5 @@
 #lang racket
 
-#lang racket
-
-
 (define curr-task-handle 'main)
 (define queue '())
 (define joiners '())
