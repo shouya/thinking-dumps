@@ -37,15 +37,10 @@
   (let ((joiner (pop-joiner handle)))
     (cond
       ((eq? joiner #f)
-       ;; joiner not found, wait forever till someone join me
+       ;; joiner not found, I'll wait here until someone joins me
        (yield)
        (return-val handle retval))
       (#t ((joiner-cont joiner) retval)))))
-
-(define (run-next-task)
-  (let* ((next-task (car queue))
-         (cont (task-cont next-task)))
-    (cont '())))
 
 (define (yield)
   (call/cc
