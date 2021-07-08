@@ -123,3 +123,70 @@ Proof.
   eapply Sterm_inclusion with (n := n3); auto.
   eauto.
 Qed.
+
+Inductive immediate_subterm : term -> term -> Type :=
+| IS_succ : forall t, immediate_subterm t (TSucc t)
+| IS_pred : forall t, immediate_subterm t (TPred t)
+| IS_iszero : forall t, immediate_subterm t (TIszero t)
+| IS_if1 : forall t1 t2 t3, immediate_subterm t1 (TIf t1 t2 t3)
+| IS_if2 : forall t1 t2 t3, immediate_subterm t2 (TIf t1 t2 t3)
+| IS_if3 : forall t1 t2 t3, immediate_subterm t3 (TIf t1 t2 t3)
+.
+
+Fixpoint size (t: term) : nat :=
+  match t with
+  | TTrue => 1
+  | TFalse => 1
+  | T0 => 1
+  | TSucc t' => S (size t')
+  | TPred t' => S (size t')
+  | TIszero t' => S (size t')
+  | TIf t1 t2 t3 => S (size t1 + size t2 + size t3)
+  end.
+
+Fixpoint depth (t: term) : nat :=
+  match t with
+  | TTrue => 1
+  | TFalse => 1
+  | T0 => 1
+  | TSucc t' => S (depth t')
+  | TPred t' => S (depth t')
+  | TIszero t' => S (depth t')
+  | TIf t1 t2 t3 => S (max3 (depth t1) (depth t2) (depth  t3))
+  end.
+
+Lemma ind_term_depth :
+  forall P,
+    (forall r s, (S (depth r) <= depth s -> P r) -> P s) ->
+    (forall s, P s).
+Proof.
+  intros P H s.
+  specialize H with (r := s).
+  induction s; simpl in *; apply H; simpl; try lia.
+Qed.
+
+Lemma ind_term_size :
+  forall P,
+    (forall r s, (S (size r) <= size s -> P r) -> P s) ->
+    (forall s, P s).
+Proof.
+  intros P H s.
+  specialize H with (r := s).
+  induction s; simpl in *; apply H; simpl; try lia.
+Qed.
+
+Lemma ind_term_subterm :
+  forall P,
+    (forall s, (forall r, immediate_subterm r s -> P r) -> P s) ->
+    (forall s, P s).
+Proof.
+  intros P H s.
+  induction s.
+  - apply H. intros. inversion H0.
+  - apply H. intros. inversion H0.
+  - apply H. intros. inversion H0.
+  - apply H. intros. inversion H0. subst. apply IHs.
+  - apply H. intros. inversion H0. subst. apply IHs.
+  - apply H. intros. inversion H0. subst. apply IHs.
+  - apply H. intros. inversion H0; subst; clear H0; auto.
+Qed.
