@@ -43,11 +43,7 @@
   (call/cc
    (lambda (new-cont)
      (enqueue (make-task curr-task-handle new-cont))
-     (let* ((next-task (dequeue))
-            (next-task-cont (task-cont next-task))
-            (next-task-handle (task-handle next-task)))
-       (set! curr-task-handle next-task-handle)
-       (next-task-cont '())))))
+     (run-next-task))))
 
 (define (spawn fn)
   (let* ((handle (gensym))
@@ -86,6 +82,7 @@
   (when (not (empty? queue))
     (run-next-task)
     (run-tasks)))
+
 (define (sleep-until t)
   (when (< (current-milliseconds) t)
     (yield)
