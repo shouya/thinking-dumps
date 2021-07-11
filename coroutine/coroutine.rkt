@@ -1,16 +1,36 @@
 #lang racket
 
 (define curr-task-handle 'main)
-(define queue '())
+(define queue (cons '() '()))
 (define joiners '())
 
+(define (set-queue-car! new-car)
+  (set! queue (cons new-car (cdr queue))))
+(define (set-queue-cdr! new-cdr)
+  (set! queue (cons (car queue) new-cdr)))
+
 (define (enqueue task)
-  (set! queue (append queue (list task))))
+  (set-queue-car! (cons task (car queue))))
 (define (dequeue)
-  (let ((head (car queue))
-        (tail (cdr queue)))
-    (set! queue tail)
-    head))
+  (if (empty? (cdr queue))
+      (begin
+        (set-queue-cdr! (reverse (car queue)))
+        (set-queue-car! '())
+        (dequeue))
+      (let ((head (car (cdr queue)))
+            (tail (cdr (cdr queue))))
+        (set-queue-cdr! tail)
+        head)))
+(define (queue-empty?)
+  (and (empty? (car queue)) (empty? (cdr queue))))
+
+(define (filter-queue! f)
+  (let ((new-car (filter f (car queue)))
+        (new-cdr (filter f (cdr queue))))
+    (set! queue (cons new-car new-cdr))))
+
+(define (queue-length)
+  (+ (length (car queue)) (length (cdr queue))))
 
 (define (make-task handle cont)
   (cons handle cont))
@@ -68,8 +88,7 @@
     retval))
 
 (define (cleanup-tasks handles)
-  (set! queue (filter (lambda (t) (not (member (task-handle t) handles)))
-                      queue)))
+  (filter-queue! (lambda (t) (not (member (task-handle t) handles)))))
 
 (define (run-next-task)
   (let* ((next-task (dequeue))
@@ -79,7 +98,7 @@
     (next-task-cont '())))
 
 (define (run-tasks)
-  (when (not (empty? queue))
+  (when (not (queue-empty?))
     (run-next-task)
     (run-tasks)))
 
