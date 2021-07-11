@@ -63,6 +63,17 @@
              (run-tasks)
              )))
 
+(define (select h1 h2)
+  (let ((retval (call/cc (lambda (cont)
+                           (register-joiner (make-joiner h1 cont))
+                           (register-joiner (make-joiner h2 cont))
+                           (run-tasks)))))
+    (cleanup-tasks (list h1 h2))
+    retval))
+
+(define (cleanup-tasks handles)
+  (set! queue (filter (lambda (t) (not (member (task-handle t) handles)))
+                      queue)))
 
 (define (run-next-task)
   (let* ((next-task (dequeue))
@@ -83,14 +94,19 @@
 (define (sleep n)
   (sleep-until (+ (current-milliseconds) n)))
 
-(let* ((N 1000)
-       (task (lambda (i) (sleep 0) (* i 2)))
+(select (spawn (lambda () (sleep 100) 1))
+        (spawn (lambda () (sleep 200) 2))
+        )
+
 (let* ((N 10)
        (task (lambda (i) (sleep 100) (* i 2)))
        (tasks (map (lambda (i) (spawn (lambda () (task i))))
                    (range 0 N)))
        (retvals (map (lambda (handle) (join handle)) tasks)))
   retvals)
+
+(println (length queue))
+
 ;
 ;(define t1 (spawn (lambda ()
 ;                    (sleep 1000)
