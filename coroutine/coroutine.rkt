@@ -102,36 +102,38 @@
     (run-next-task)
     (run-tasks)))
 
-(define (sleep-until t)
+(define (nap-until t)
   (when (< (current-milliseconds) t)
     (yield)
-    (sleep-until t)))
+    ;; racket sleep
+    (sleep (/ (max 0 (- t (current-milliseconds))) 1000))
+    (nap-until t)))
 
-(define (sleep n)
-  (sleep-until (+ (current-milliseconds) n)))
+(define (nap n)
+  (nap-until (+ (current-milliseconds) n)))
 
-(select (spawn (lambda () (sleep 100) 1))
-        (spawn (lambda () (sleep 200) 2))
+(select (spawn (lambda () (nap 100) 1))
+        (spawn (lambda () (nap 200) 2))
         )
 
-(let* ((N 10)
-       (task (lambda (i) (sleep 100) (* i 2)))
+(let* ((N 10000)
+       (task (lambda (i) (nap 1000) (* i 2)))
        (tasks (map (lambda (i) (spawn (lambda () (task i))))
                    (range 0 N)))
        (retvals (map (lambda (handle) (join handle)) tasks)))
-  retvals)
+  retvals
+  '())
 
-(println (length queue))
+(println (queue-length))
 
-;
-;(define t1 (spawn (lambda ()
-;                    (sleep 1000)
-;                    (print "task 1")
-;                    "task 1 ret")))
-;(define t2 (spawn (lambda ()
-;                    (sleep 2000)
-;                    (print "task 2")
-;                    "task 2 ret")))
+;; (define t1 (spawn (lambda ()
+;;                     (nap 1000)
+;;                     (print "task 1")
+;;                     "task 1 ret")))
+;; (define t2 (spawn (lambda ()
+;;                     (nap 2000)
+;;                     (print "task 2")
+;;                     "task 2 ret")))
 
 ;; (print queue)
 
