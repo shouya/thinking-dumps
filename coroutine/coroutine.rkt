@@ -57,13 +57,24 @@
     (enqueue task)
     handle))
 
-(define (join handle timeout)
+(define (join handle)
   (call/cc (lambda (cont)
              (register-joiner (make-joiner handle cont))
-             (sleep timeout)
-             'timeout
+             (run-tasks)
              )))
 
+
+(define (run-next-task)
+  (let* ((next-task (dequeue))
+         (next-task-cont (task-cont next-task))
+         (next-task-handle (task-handle next-task)))
+    (set! curr-task-handle next-task-handle)
+    (next-task-cont '())))
+
+(define (run-tasks)
+  (when (not (empty? queue))
+    (run-next-task)
+    (run-tasks)))
 (define (sleep-until t)
   (when (< (current-milliseconds) t)
     (yield)
@@ -74,9 +85,11 @@
 
 (let* ((N 1000)
        (task (lambda (i) (sleep 0) (* i 2)))
+(let* ((N 10)
+       (task (lambda (i) (sleep 100) (* i 2)))
        (tasks (map (lambda (i) (spawn (lambda () (task i))))
                    (range 0 N)))
-       (retvals (map (lambda (handle) (join handle 3000)) tasks)))
+       (retvals (map (lambda (handle) (join handle)) tasks)))
   retvals)
 ;
 ;(define t1 (spawn (lambda ()
