@@ -1247,7 +1247,7 @@ Definition store_well_typed (ST:store_ty) (st:store) :=
 
 Example store_not_unique :
   store_well_typed (<{Natural}> :: nil) (<{!(loc 0)}> :: nil) /\
-  store_well_typed (<{Unit}> :: nil) (<{!(loc 0)}> :: nil).
+  store_well_typed (<{Unit}>    :: nil) (<{!(loc 0)}> :: nil).
 Proof.
   split.
   - constructor; auto.
