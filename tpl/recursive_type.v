@@ -147,3 +147,70 @@ Proof.
     apply Union_f_consistent. auto.
   - apply H.
 Qed.
+
+Definition IsMin {T} (p: Pow T -> Prop) (x: Pow T) : Prop :=
+  p x /\ forall x', p x' -> x <: x'.
+Definition IsMax {T} (p: Pow T -> Prop) (x: Pow T) : Prop :=
+  p x /\ forall x', p x' -> x' <: x.
+
+
+Lemma knaster_tarski_1 : forall T (f: Gen T),
+    monotone f -> IsMin (f_fixpoint f) (Intersect (f_closed f)).
+Proof.
+  intros.
+  unfold IsMin.
+  split.
+  - apply closed_consistent_implies_fixpoint. split.
+    + apply Intersect_f_closed; easy.
+    + apply knaster_tarski_1_fixpoint; easy.
+  - intros.
+    apply Intersect_Subset.
+    apply fixpoint_implies_closed_consistent in H0. easy.
+Qed.
+
+Lemma knaster_tarski_2 : forall T (f: Gen T),
+    monotone f -> IsMax (f_fixpoint f) (Union (f_consistent f)).
+Proof.
+  intros.
+  unfold IsMax.
+  split.
+  - apply closed_consistent_implies_fixpoint. split.
+    + apply knaster_tarski_2_fixpoint; easy.
+    + apply Union_f_consistent; easy.
+  - intros.
+    apply Union_Subset.
+    apply fixpoint_implies_closed_consistent in H0. easy.
+Qed.
+
+Theorem knaster_tarski: forall T (f: Gen T),
+    monotone f ->
+    IsMin (f_fixpoint f) (Intersect (f_closed f)) /\
+    IsMax (f_fixpoint f) (Union (f_consistent f)).
+Proof.
+  auto using knaster_tarski_1, knaster_tarski_2.
+Qed.
+
+Lemma min_unique : forall T (p: Pow T -> Prop) (x1 x2: Pow T),
+    IsMin p x1 -> IsMin p x2 -> forall t, x1 t <-> x2 t.
+Proof.
+  unfold IsMin.
+  unfold Subset.
+  intros. destruct H; destruct H0.
+  split; intro.
+  - apply H1; eauto.
+  - apply H2; eauto.
+Qed.
+
+Lemma max_unique : forall T (p: Pow T -> Prop) (x1 x2: Pow T),
+    IsMax p x1 -> IsMax p x2 -> forall t, x1 t <-> x2 t.
+Proof.
+  unfold IsMax.
+  unfold Subset.
+  intros. destruct H; destruct H0.
+  split; intro.
+  - apply H2 with x1; eauto.
+  - apply H1 with x2; eauto.
+Qed.
+
+Definition MinFix {T} (f: Gen T) := (Intersect (f_closed f)).
+Definition MaxFix {T} (f: Gen T) := (Union (f_consistent f)).
