@@ -212,5 +212,21 @@ Proof.
   - apply H1 with x2; eauto.
 Qed.
 
-Definition MinFix {T} (f: Gen T) := (Intersect (f_closed f)).
-Definition MaxFix {T} (f: Gen T) := (Union (f_consistent f)).
+Definition MinFix {T} (f: Gen T) := Intersect (f_closed f).
+Definition MaxFix {T} (f: Gen T) := Union (f_consistent f).
+
+Corollary principle_of_induction : forall T (f: Gen T) (x : Pow T),
+    monotone f -> f_closed f x -> MinFix f <: x.
+Proof.
+  intros.
+  apply Intersect_Subset.
+  auto.
+Qed.
+
+Corollary principle_of_coinduction : forall T (f: Gen T) (x : Pow T),
+    monotone f -> f_consistent f x -> x <: MaxFix f.
+Proof.
+  intros.
+  apply Union_Subset.
+  auto.
+Qed.
