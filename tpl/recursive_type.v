@@ -1,3 +1,6 @@
+Require Import Coq.Lists.List.
+Require Import Coq.Logic.FunctionalExtensionality.
+Require Import Coq.Logic.PropExtensionality.
 
 (* power set *)
 Definition Pow T := T -> Prop.
@@ -33,12 +36,22 @@ Definition f_closed {T} (f: Gen T) (x: Pow T) := f x <: x.
 Definition f_consistent {T} (f: Gen T) (x: Pow T) := x <: f x.
 (* or [forall t, x t = f x t] because of prop_ext axiom. *)
 Definition f_fixpoint {T} (f: Gen T) (x: Pow T) := forall t, x t <-> f x t.
+Definition f_fixpoint' {T} (f: Gen T) (x: Pow T) := x = f x.
 
 Hint Unfold f_closed.
 Hint Unfold f_consistent.
 Hint Unfold f_fixpoint.
 
-Require Import Coq.Logic.FunctionalExtensionality.
+Lemma fixpoint_ext : forall T (f: Gen T) x, f_fixpoint' f x  <-> f_fixpoint f x.
+Proof.
+  unfold f_fixpoint, f_fixpoint'.
+  intros. split.
+  - intros. split; intro. rewrite <- H. auto. rewrite H. auto.
+  - intros.
+    apply functional_extensionality. intro t.
+    apply propositional_extensionality. specialize H with t. destruct H.
+    split; intro; auto.
+Qed.
 
 (* let's give it a try *)
 Theorem closed_consistent_implies_fixpoint : forall T (f: Gen T) (x: Pow T),
@@ -212,8 +225,8 @@ Proof.
   - apply H1 with x2; eauto.
 Qed.
 
-Definition MinFix {T} (f: Gen T) := Intersect (f_closed f).
-Definition MaxFix {T} (f: Gen T) := Union (f_consistent f).
+Definition MinFix {T} (f: Gen T) : Pow T := Intersect (f_closed f).
+Definition MaxFix {T} (f: Gen T) : Pow T := Union (f_consistent f).
 
 Corollary principle_of_induction : forall T (f: Gen T) (x : Pow T),
     monotone f -> f_closed f x -> MinFix f <: x.
@@ -229,4 +242,96 @@ Proof.
   intros.
   apply Union_Subset.
   auto.
+Qed.
+
+
+Inductive TypeTreeNode := TNTop | TNArrow | TNPair.
+
+(* a tree is a partial function from a list of branches to a node
+   branch mapping: false => left, true => right
+ *)
+Definition Tree : Type := list bool -> option TypeTreeNode.
+
+Definition is_some {T} (v: option T) : Prop := match v with
+                                            | Some _ => True
+                                            | _ => False
+                                            end.
+
+Import ListNotations.
+
+(* Assert whether or not t is defined for input pi *)
+Inductive tree_defined : Tree -> list bool -> Prop :=
+| TD_nil : forall t, tree_defined t nil
+(* i simplified the rule from the book to an equivalent form *)
+| TD_split : forall t p1 s, tree_defined t (p1 ++ [s]) -> tree_defined t p1
+| TD_arrow : forall t p1 s, t p1 = Some(TNArrow) -> tree_defined t (p1 ++ cons s nil)
+| TD_pair  : forall t p1 s, t p1 = Some(TNPair) -> tree_defined t (p1 ++ cons s nil)
+.
+
+Definition tree_valid (t: Tree) : Prop :=
+  forall path, tree_defined t path <-> is_some (t path).
+
+(* I used an alternative definition for a tree to be finite:
+
+  if a tree is undefined after a given path length, then this tree is finite.
+ *)
+Definition tree_finite (t: Tree): Prop :=
+  exists n, forall p, n <= length p -> t p = None.
+
+Definition tree_infinite (t: Tree): Prop := ~(tree_finite t).
+
+(* The tree: (Top -> Top, Top) *)
+Example tree1 : Tree :=
+  fun p => match p with
+        | [] => Some TNPair
+        | [false] => Some TNArrow
+        | [false; _] => Some TNTop
+        | [true] => Some TNTop
+        | _ => None
+        end.
+
+Inductive TypeTree : Type :=
+| TTop : TypeTree
+| TArrow (l r: TypeTree) : TypeTree
+| TPair (l r: TypeTree) : TypeTree.
+
+Fixpoint depth(t: TypeTree) : nat :=
+  match t with
+  | TTop => 1
+  | TArrow a b => max (depth a) (depth b)
+  | TPair a b => max (depth a) (depth b)
+  end.
+
+Definition FiniteTree (t: TypeTree) : Prop := exists d, depth t <= d.
+Definition InfiniteTree (t: TypeTree) : Prop := ~(FiniteTree t).
+
+Definition relation (T: Type) := Pow (T * T).
+
+Definition TR {U} (R: relation U) : relation U :=
+  fun pair => match pair with
+           | (x, y) => exists z, R (x, z) /\ R (z, y)
+           end.
+
+Definition Transitive {U} (R: relation U) := TR R <: R.
+
+
+Lemma fixpoint_transitive :
+  forall U (F : relation U -> relation U),
+    monotone F ->
+    (forall R, TR(F(R)) <: F(TR(R))) ->
+    Transitive (MaxFix F).
+Proof.
+  intros.
+  intro. intro.
+  assert (f_fixpoint' F (MaxFix F)).
+  { apply fixpoint_ext.
+    apply knaster_tarski_2.
+    apply H.
+  }
+  assert (f_consistent F (TR (MaxFix F))).
+  { intro. intro.
+    apply H0.
+    rewrite <- H2. apply H3.
+  }
+  apply principle_of_coinduction in H3; auto.
 Qed.
