@@ -165,8 +165,6 @@ Compute type_of empty_ctx {{ λ x: T, x }}.
 Compute type_of empty_ctx {{ λ x: T -> T, λ y: T, x y }}.
 Compute type_of empty_ctx {{ λ x: T, if tru then x else x }}.
 
-Definition typ_constraint := list (typ * typ).
-
 Definition typ_id := nat.
 
 Open Scope char_scope.
@@ -206,3 +204,55 @@ Definition gen_typ (id: typ_id) : typ * typ_id :=
   let prefix := "?X" in
   let id_str := writeNat id
   in (TyBase (append prefix id_str), S id).
+
+(* Now we define the algorithm to generate type constraint from a type *)
+Definition typ_constraint := list (typ * typ).
+
+Open Scope list_scope.
+
+Fixpoint reconstruct
+         (Γ: ctx)
+         (t: term)
+         (T: typ)
+         (s: typ_id)
+         (C: typ_constraint) : (typ_id * typ_constraint) :=
+  match t with
+  | TVar x => match Γ x with
+             | Some T' => (s, (T, T') :: C)
+             | None => match gen_typ s with
+                      | (T', s') => (s', (T, T') :: C)
+                      end
+             end
+  | TLam x A body =>
+    let (B, s') := gen_typ s in
+    let (s'', C') := reconstruct (add_ctx Γ x A) body B s' C in
+    (s'', (T, {: A -> B :}) :: C')
+  | TApp t1 t2 =>
+    let (A, s') := gen_typ s in
+    let (s'', C') := reconstruct Γ t1 {: A -> T :} s' C in
+    let (s''', C'') := reconstruct Γ t2 A s' C' in
+    (s''', C'')
+  | TIf cond then_ else_ =>
+    let (s', C') := reconstruct Γ cond TyBool s C in
+    let (s'', C'') := reconstruct Γ then_ T s' C' in
+    let (s''', C''') := reconstruct Γ else_ T s'' C'' in
+    (s''', C''')
+  | TTru => (s, (T ,TyBool) :: C)
+  | TFls => (s, (T, TyBool) :: C)
+  end.
+
+
+Fixpoint subst_typ (from: typ) (to: typ) (t: typ) : typ :=
+  match t with
+  | TyBool => match from with
+             | TyBool => to
+             | _ => from
+             end
+  | TyBase x => match from with
+               | TyBase y => if String.eqb x y then t else from
+               | _ => from
+               end
+  | TyFun a b => TyFun (subst_typ from to a) (subst_typ from to b)
+  end.
+
+Definition subst_typ_fun := typ -> typ.
