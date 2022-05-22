@@ -103,3 +103,27 @@ loop2 =
 fun (A : Type) (a : A) => loop (loop A a) (point_intro (a <~> a) (idpath a))
      : forall A : Type, A -> Type
  *)
+
+Definition ap {A B} (f : A -> B) {x y : A} : (x <~> y) -> (f x <~> f y).
+Proof. intros. induction X. auto. Defined.
+
+Lemma ap_functor_hor_comp :
+  forall A B (f : A -> B) (x y z : A) (p : x <~> y) (q : y <~> z),
+         ap f (p @ q) = (ap f p) @ (ap f q).
+Proof. intros. induction p. induction q. simpl. reflexivity. Qed.
+
+Lemma ap_functor_inv :
+  forall A B (f : A -> B) (x y : A) (p : x <~> y),
+         ap f (! p) = ! (ap f p).
+Proof. intros. induction p. simpl. reflexivity. Qed.
+
+Require Import Coq.Program.Basics.
+
+Lemma ap_functor_vert_comp :
+  forall A B C (f : A -> B) (g : B -> C) (x y : A) (p : x <~> y),
+           ap (compose g f) p = ap g (ap f p).
+Proof. intros. induction p. simpl. reflexivity. Qed.
+
+Lemma ap_functor_id :
+  forall A (x y : A) (p : x <~> y), ap id p = p.
+Proof. intros. induction p. simpl. reflexivity. Qed.
