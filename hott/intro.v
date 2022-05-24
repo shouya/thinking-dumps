@@ -127,3 +127,22 @@ Proof. intros. induction p. simpl. reflexivity. Qed.
 Lemma ap_functor_id :
   forall A (x y : A) (p : x <~> y), ap id p = p.
 Proof. intros. induction p. simpl. reflexivity. Qed.
+
+Definition transport {A} {P : A -> Type} {x y : A} (p : x <~> y) : P x -> P y.
+Proof.
+  intros.
+  induction p.
+  apply X.
+Defined.
+
+(* why isn't transport defined more strongly like this? *)
+Definition transport' {A} {P : A -> Type} {x y : A} (p : x <~> y) : P x <~> P y.
+Proof.
+  intros.
+  induction p.
+  constructor.
+Defined.
+
+Lemma path_lift {A} {P : A -> Type} {x y : A}
+      (u: P x) (p : x <~> y) : (x, u) <~> (y, transport p u).
+Proof. induction p. simpl. constructor. Qed.
