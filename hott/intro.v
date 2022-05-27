@@ -3,7 +3,7 @@ Inductive paths {A} : A -> A -> Type :=
 
 Notation "x <~> y" := (paths x y) (at level 70).
 
-Hint Resolve idpath.
+#[local] Hint Resolve idpath : core.
 
 Check paths_ind.
 
@@ -84,7 +84,7 @@ Require Import Coq.Init.Nat.
 Inductive pointed A (a : A) : Type :=
 | point_intro : pointed A a.
 
-Hint Resolve point_intro.
+#[local] Hint Resolve point_intro : core.
 
 Definition loop A (a : A) : Type := (pointed (a <~> a) (idpath a)).
 
@@ -146,3 +146,5 @@ Defined.
 Lemma path_lift {A} {P : A -> Type} {x y : A}
       (u: P x) (p : x <~> y) : (x, u) <~> (y, transport p u).
 Proof. induction p. simpl. constructor. Qed.
+
+Check path_lift.
