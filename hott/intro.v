@@ -148,3 +148,17 @@ Lemma path_lift {A} {P : A -> Type} {x y : A}
 Proof. induction p. simpl. constructor. Qed.
 
 Check path_lift.
+
+Definition dependent_map {A} {P : A -> Type} (f : forall (x:A), P x) :
+  forall {x y : A} (p : x <~> y), (@paths (P y) (transport p (f x)) (f y)).
+Proof. intros. induction p. auto. Defined.
+
+Print dependent_map.
+
+Lemma transport_const : forall {A B} {P : A -> Type} {K: forall x, P x = B}
+                          (x y : A) (p : x <~> y) (b : B), transport p b = b.
+Proof. intros. induction p. simpl. reflexivity. Qed.
+
+(* The condition {K: forall x, P x = B} seems redundant in the
+hypothesis, what did I miss?
+ *)
