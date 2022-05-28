@@ -128,37 +128,58 @@ Lemma ap_functor_id :
   forall A (x y : A) (p : x <~> y), ap id p = p.
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
-Definition transport {A} {P : A -> Type} {x y : A} (p : x <~> y) : P x -> P y.
+Definition transport {A} (P : A -> Type) {x y : A} (p : x <~> y) : P x -> P y.
 Proof.
   intros.
   induction p.
   apply X.
 Defined.
 
-(* why isn't transport defined more strongly like this? *)
-Definition transport' {A} {P : A -> Type} {x y : A} (p : x <~> y) : P x <~> P y.
-Proof.
-  intros.
-  induction p.
-  constructor.
-Defined.
 
-Lemma path_lift {A} {P : A -> Type} {x y : A}
-      (u: P x) (p : x <~> y) : (x, u) <~> (y, transport p u).
+(* For sigT type *)
+Require Import Coq.Init.Specif.
+
+Lemma test_sig : sigT (fun t => t).
+Proof.
+  exists nat. apply 1.
+Qed.
+
+Lemma test_sig2 : {a & a}.
+Proof.
+  exists nat. apply 1.
+Qed.
+
+Print test_sig.
+Print existT.
+(*
+Inductive sigT (A : Type) (P : A -> Type) : Type :=
+    existT : forall x : A, P x -> {x : A & P x}.
+
+Arguments sigT [A]%type_scope P%type_scope
+Arguments existT [A]%type_scope P%function_scope x _
+ *)
+
+Lemma path_lift {A} (P : A -> Type) {x y : A}
+      (u: P x) (p : x <~> y) :
+         (existT P x u) <~> (existT P y (transport P p u)).
 Proof. induction p. simpl. constructor. Qed.
 
 Check path_lift.
 
-Definition dependent_map {A} {P : A -> Type} (f : forall (x:A), P x) :
-  forall {x y : A} (p : x <~> y), (@paths (P y) (transport p (f x)) (f y)).
+(* dependent map *)
+Definition apd {A} (P : A -> Type) (f : forall (x:A), P x) :
+  forall {x y : A} (p : x <~> y), transport P p (f x) <~> f y.
 Proof. intros. induction p. auto. Defined.
 
-Print dependent_map.
+Print apd.
 
-Lemma transport_const : forall {A B} {P : A -> Type} {K: forall x, P x = B}
-                          (x y : A) (p : x <~> y) (b : B), transport p b = b.
-Proof. intros. induction p. simpl. reflexivity. Qed.
+Definition ConstTF A {B} : A -> Type := (fun _a => B).
 
-(* The condition {K: forall x, P x = B} seems redundant in the
-hypothesis, what did I miss?
- *)
+Definition transport_const : forall {A B} {x y : A} (p : x <~> y) (b : B),
+         (transport (ConstTF A) p b) <~> b.
+Proof. intros. induction p. simpl. apply idpath. Defined.
+
+Lemma apd_eq_transport_const :
+  forall {A B} {x y : A} (f : A -> B) (p : x <~> y) (P := ConstTF A),
+         apd P f p <~> (transport_const p (f x)) @ (ap f p).
+Proof. intros. unfold P. induction p. simpl. auto. Defined.
