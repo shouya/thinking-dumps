@@ -65,19 +65,19 @@ Qed.
 
 Notation "! p" := (inv p) (at level 50).
 
-Definition idpath_left_unit : forall A (x y : A) (p : x <~> y), (idpath x @ p) <~> p.
+Definition idpath_left_unit : forall {A} {x y : A} (p : x <~> y), (idpath x @ p) <~> p.
 Proof.
   intros.
   induction p.
   auto.
-Qed.
+Defined.
 
-Definition idpath_right_unit : forall A (x y : A) (p : x <~> y), (p @ idpath y) <~> p.
+Definition idpath_right_unit : forall {A} {x y : A} (p : x <~> y), p <~> (p @ idpath y).
 Proof.
   intros.
   induction p.
   auto.
-Qed.
+Defined.
 
 Require Import Coq.Init.Nat.
 
@@ -97,6 +97,24 @@ Print loop_concat.
 
 Definition loop2 A (a : A) : Type := loop (loop A a) (point_intro _ _).
 Print loop2.
+
+Definition whisker_right {A} {a b c : A} {p q : a <~> b}
+           (alpha : p <~> q) (r : b <~> c) : (p @ r) <~> (q @ r).
+Proof. intros. simpl. induction r. induction alpha. auto. Defined.
+
+Definition whisker_left {A} {a b c : A} {r s : b <~> c}
+           (p : a <~> b) (beta : r <~> s) : (p @ r) <~> (p @ s).
+Proof. intros. simpl. induction p. induction beta. auto. Defined.
+
+Lemma whisker_right_idpath : forall {A} {a b: A} {p q : a <~> b} (alpha : p <~> q),
+         whisker_right alpha (idpath b) =
+           (! idpath_right_unit p) @ alpha @ (idpath_right_unit q).
+Proof. intros. induction p. induction alpha. induction x0. simpl. auto. Qed.
+
+Lemma whisker_left_idpath : forall A {b c : A} {r s : b <~> c} (beta : r <~> s),
+         whisker_left (idpath b) beta =
+           (idpath_left_unit r) @ beta @ (! idpath_left_unit s).
+Proof. intros. induction r. induction beta. induction x0. simpl. auto. Qed.
 
 (*
 loop2 =
