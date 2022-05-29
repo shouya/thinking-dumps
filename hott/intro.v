@@ -201,3 +201,52 @@ Lemma apd_eq_transport_const :
   forall {A B} {x y : A} (f : A -> B) (p : x <~> y) (P := ConstTF A),
          apd P f p <~> (transport_const p (f x)) @ (ap f p).
 Proof. intros. unfold P. induction p. simpl. auto. Defined.
+
+Lemma transport_concat :
+  forall A (P : A -> Type) (x y z : A) (p : x <~> y) (q : y <~> z) (u : P x),
+         transport P q (transport P p u) <~> transport P (p @ q) u.
+Proof.
+  intros. induction p. induction q. simpl. auto.
+Qed.
+
+Lemma transport_comp :
+  forall A B (x y : A) (f : A -> B) (P : B -> Type) (p : x <~> y) (u : P (f x)),
+         transport (compose P f) p u <~> transport P (ap f p) u.
+Proof. intros. induction p. auto. Qed.
+
+Lemma transport_comp2 :
+  forall A (x y : A) (P Q : A -> Type) (f : forall x, P x -> Q x) (p : x <~> y) (u : P x),
+         transport Q p (f x u) <~> f y (transport P p u).
+Proof. intros. induction p. auto. Qed.
+
+
+(* homotopy between functions/paths *)
+
+Definition homotopy {A} {P : A -> Type} (f g : forall (x : A), P x)
+  := forall x, f x <~> g x.
+Check homotopy.
+(*
+homotopy
+     : (forall x : ?A, ?P x) -> (forall x : ?A, ?P x) -> Type
+ *)
+
+Notation "f ~ g" := (homotopy f g) (at level 30).
+
+Lemma ap_idpath :
+  forall A B (x : A) (f : A -> B), ap f (idpath x) = idpath (f x).
+Proof. intros. simpl. reflexivity. Qed.
+
+
+Lemma homotopy_comp :
+  forall A B (f g : A -> B) (H : f ~ g) (x y : A) (p : x <~> y),
+         H x @ ap g p <~> ap f p @ H y.
+Proof.
+  intros. induction p.
+  rewrite ap_idpath. rewrite ap_idpath. induction (H x).
+  auto.
+Qed.
+
+#[local] Hint Unfold id : core.
+
+Lemma paths_eq : forall {A} {x y : A} (p : x <~> y), x = y.
+Proof. intros. induction p. auto. Qed.
