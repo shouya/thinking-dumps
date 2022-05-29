@@ -18,6 +18,15 @@ Proof.
   apply X.
 Defined.
 
+Lemma paths_refl : forall {A} (x: A), x <~> x.
+Proof. auto. Qed.
+
+Lemma paths_symm : forall {A} (x y : A), x <~> y -> y <~> x.
+Proof. intros. induction X. auto. Qed.
+
+Lemma paths_trans : forall {A} (x y z : A), x <~> y -> y <~> z -> x <~> z.
+Proof. intros. induction X. auto. Qed.
+
 Definition inv: forall {A} {x y : A}, (x <~> y) -> (y <~> x).
 Proof.
   intros.
@@ -33,7 +42,11 @@ Proof.
   apply idpath.
 Defined.
 
-Definition concat: forall {A} {x y z : A}, (x <~> y) -> (y <~> z) -> (x <~> z) :=
+Definition concat: forall {A} {x y z : A}, (x <~> y) -> (y <~> z) -> (x <~> z).
+Proof. intros. induction X. apply X0. Defined.
+
+
+Definition concat': forall {A} {x y z : A}, (x <~> y) -> (y <~> z) -> (x <~> z) :=
   fun A x y z xy yz =>
     ind A
         (fun x y p => forall (z: A), (y <~> z) -> (x <~> z))
@@ -97,6 +110,15 @@ Print loop_concat.
 
 Definition loop2 A (a : A) : Type := loop (loop A a) (point_intro _ _).
 Print loop2.
+
+Lemma concat_same_right : forall {A} {x y z: A} (p q : x <~> y) (r : y <~> z),
+         p <~> q -> (p @ r) <~> (q @ r).
+Proof. intros. induction X. auto. Qed.
+
+Lemma concat_same_left : forall {A} {x y z: A} (p : x <~> y) (r s : y <~> z),
+         r <~> s -> (p @ r) <~> (p @ s).
+Proof. intros. induction X. auto. Qed.
+
 
 Definition whisker_right {A} {a b c : A} {p q : a <~> b}
            (alpha : p <~> q) (r : b <~> c) : (p @ r) <~> (q @ r).
@@ -236,9 +258,18 @@ Lemma ap_idpath :
   forall A B (x : A) (f : A -> B), ap f (idpath x) = idpath (f x).
 Proof. intros. simpl. reflexivity. Qed.
 
+Lemma homotopy_refl : forall A (f : A -> Type), f ~ f.
+Proof. intros. intro. auto. Qed.
+
+Lemma homotopy_symm : forall A (f g : A -> Type), f ~ g -> g ~ f.
+Proof. intros. intro. pose proof (X x). induction X0. auto. Qed.
+
+Lemma homotopy_trans : forall A (f g h : A -> Type), f ~ g -> g ~ h -> f ~ h.
+Proof. intros. intro. pose proof (X x). pose proof (X0 x).
+       induction X1. induction X2. auto. Qed.
 
 Lemma homotopy_comp :
-  forall A B (f g : A -> B) (H : f ~ g) (x y : A) (p : x <~> y),
+  forall {A B} (f g : A -> B) (H : f ~ g) (x y : A) (p : x <~> y),
          H x @ ap g p <~> ap f p @ H y.
 Proof.
   intros. induction p.
@@ -250,3 +281,22 @@ Qed.
 
 Lemma paths_eq : forall {A} {x y : A} (p : x <~> y), x = y.
 Proof. intros. induction p. auto. Qed.
+
+Lemma homotopy_comp_id :
+  forall A (f : A -> A) (H : f ~ id) (x : A), H (f x) <~> ap f (H x).
+Proof.
+  intros.
+  pose proof homotopy_comp f id H (f x) (f x) (idpath _).
+  rewrite ap_idpath in X.
+  rewrite ap_idpath in X.
+  unfold id in X.
+  simpl in X.
+  induction X.
+  auto.
+
+  pose proof H x.
+
+  apply (concat_same_right (H x)).
+
+  pose proof (H x). unfold id in X. pose proof (paths_eq X).
+  rewrite <- H0.
