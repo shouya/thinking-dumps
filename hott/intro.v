@@ -34,7 +34,7 @@ Proof.
   apply idpath.
 Defined.
 
-Definition inv_inv : forall {A} {x y : A} {p : x <~> y}, inv (inv p) <~> p.
+Definition inv_inv : forall {A} {x y : A} (p : x <~> y), inv (inv p) <~> p.
 Proof.
   intros.
   induction p.
@@ -172,10 +172,11 @@ Lemma ap_functor_inv :
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
 Require Import Coq.Program.Basics.
+Open Scope program_scope.
 
 Lemma ap_functor_vert_comp :
   forall A B C (f : A -> B) (g : B -> C) (x y : A) (p : x <~> y),
-           ap (compose g f) p = ap g (ap f p).
+           ap (g ∘ f) p = ap g (ap f p).
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
 Lemma ap_functor_id :
@@ -247,7 +248,7 @@ Qed.
 
 Lemma transport_comp :
   forall A B (x y : A) (f : A -> B) (P : B -> Type) (p : x <~> y) (u : P (f x)),
-         transport (compose P f) p u <~> transport P (ap f p) u.
+         transport (P ∘ f) p u <~> transport P (ap f p) u.
 Proof. intros. induction p. auto. Qed.
 
 Lemma transport_comp2 :
@@ -266,7 +267,7 @@ homotopy
      : (forall x : ?A, ?P x) -> (forall x : ?A, ?P x) -> Type
  *)
 
-Notation "f ~ g" := (homotopy f g) (at level 30).
+Notation "f ~ g" := (homotopy f g) (at level 40).
 
 Lemma ap_idpath :
   forall {A B} {x : A} (f : A -> B), ap f (idpath x) = idpath (f x).
@@ -327,4 +328,65 @@ Proof.
   rewrite <- (paths_eq (idpath_right_unit _)) in X.
   apply X.
   (* Phew! That's a tough proof! *)
+Qed.
+
+Check paths.
+Check @pair.
+
+(* quasi-inversion *)
+Record qinvT {A B} (f : A -> B) : Type :=
+  mkQinvT { g : B -> A
+          ; alpha : f ∘ g ~ id
+          ; beta : g ∘ f ~ id
+          }.
+
+Check qinvT.
+
+Example qinv_id : forall A, qinvT (@id A).
+Proof.
+  intro.
+  eapply mkQinvT with (g := id).
+  - intro. auto.
+  - intro. auto.
+Qed.
+
+Example qinv_invpath1 : forall {A} {x y z : A} {p : x <~> y},
+         qinvT (fun (q : y <~> z) => p @ q).
+(* y <~> z -> x <~> z *)
+Proof.
+  intros.
+  eapply mkQinvT with (g := (fun (q : x <~> z) => !p @ q)).
+  - induction p. intro. unfold compose. simpl.
+    auto.
+
+  - induction p. intro. unfold compose. simpl.
+    auto.
+Qed.
+
+Example qinv_invpath2 : forall {A} {x y z : A} {p : x <~> y},
+         qinvT (fun (q : z <~> x) => q @ p).
+(* z <~> x -> z <~> y *)
+Proof.
+  intros.
+  eapply mkQinvT with (g := (fun q : z <~> y => q @ !p)).
+  - induction p. intro. unfold compose. simpl.
+    rewrite <- (paths_eq (idpath_right_unit _)).
+    rewrite <- (paths_eq (idpath_right_unit _)).
+    auto.
+
+  - induction p. intro. unfold compose. simpl.
+    rewrite <- (paths_eq (idpath_right_unit _)).
+    rewrite <- (paths_eq (idpath_right_unit _)).
+    auto.
+Qed.
+
+
+Example qinv_transport : forall {A} {x y : A} {p : x <~> y} {P : A -> Type},
+         qinvT (fun px => transport P p px).
+(* P x -> P y *)
+Proof.
+  intros.
+  eapply mkQinvT with (g := (fun py => transport P (inv p) py)).
+  - induction p. simpl. unfold compose. intro. auto.
+  - induction p. simpl. unfold compose. intro. auto.
 Qed.
