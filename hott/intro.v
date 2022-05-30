@@ -18,13 +18,13 @@ Proof.
   apply X.
 Defined.
 
-Lemma paths_refl : forall {A} (x: A), x <~> x.
+Lemma paths_refl : forall {A} {x: A}, x <~> x.
 Proof. auto. Qed.
 
-Lemma paths_symm : forall {A} (x y : A), x <~> y -> y <~> x.
+Lemma paths_symm : forall {A} {x y : A}, x <~> y -> y <~> x.
 Proof. intros. induction X. auto. Qed.
 
-Lemma paths_trans : forall {A} (x y z : A), x <~> y -> y <~> z -> x <~> z.
+Lemma paths_trans : forall {A} {x y z : A}, x <~> y -> y <~> z -> x <~> z.
 Proof. intros. induction X. auto. Qed.
 
 Definition inv: forall {A} {x y : A}, (x <~> y) -> (y <~> x).
@@ -63,18 +63,32 @@ Print concat.
 
 Notation "p @ q" := (concat p q) (at level 60).
 
-Lemma concat_idpath : forall A {x: A}, (idpath x) @ (idpath x) = idpath x.
+Lemma concat_idpath : forall {A} {x: A}, (idpath x) @ (idpath x) = idpath x.
 Proof.
   intros.
   simpl.
   reflexivity.
 Qed.
 
-(* It's very weird that concat defined in Proof mode will be
-   un-expandable.  Proof. ... Qed. marks the definition
-   opaque. Whereas Proof. ... Defined. marks the definition
-   transparent.
-  *)
+Lemma concat_inv : forall {A} {x y : A} {p : x <~> y}, p @ inv p = idpath x.
+Proof.
+  intros.
+  induction p. simpl. reflexivity.
+Qed.
+
+Lemma concat_inv2 : forall {A} {x y : A} {p : x <~> y}, inv p @ p = idpath y.
+Proof.
+  intros.
+  induction p. simpl. reflexivity.
+Qed.
+
+Lemma concat_assoc : forall {A} (x y z w : A)
+                       (p : x <~> y) (q : y <~> z) (r : z <~> w),
+         (p @ q) @ r = p @ (q @ r).
+Proof.
+  intros.
+  induction p. induction q. induction r. simpl. reflexivity.
+Qed.
 
 Notation "! p" := (inv p) (at level 50).
 
@@ -255,20 +269,21 @@ homotopy
 Notation "f ~ g" := (homotopy f g) (at level 30).
 
 Lemma ap_idpath :
-  forall A B (x : A) (f : A -> B), ap f (idpath x) = idpath (f x).
+  forall {A B} {x : A} (f : A -> B), ap f (idpath x) = idpath (f x).
 Proof. intros. simpl. reflexivity. Qed.
 
-Lemma homotopy_refl : forall A (f : A -> Type), f ~ f.
+Lemma homotopy_refl : forall {A B} {f : A -> B}, f ~ f.
 Proof. intros. intro. auto. Qed.
 
-Lemma homotopy_symm : forall A (f g : A -> Type), f ~ g -> g ~ f.
-Proof. intros. intro. pose proof (X x). induction X0. auto. Qed.
+Lemma homotopy_symm : forall {A B} {f g : A -> B}, f ~ g -> g ~ f.
+Proof. intros. intro. pose proof (X x). apply (inv X0).
+Defined.
 
-Lemma homotopy_trans : forall A (f g h : A -> Type), f ~ g -> g ~ h -> f ~ h.
+Lemma homotopy_trans : forall {A B} {f g h : A -> B}, f ~ g -> g ~ h -> f ~ h.
 Proof. intros. intro. pose proof (X x). pose proof (X0 x).
        induction X1. induction X2. auto. Qed.
 
-Lemma homotopy_comp :
+Lemma homotopy_natural :
   forall {A B} (f g : A -> B) (H : f ~ g) (x y : A) (p : x <~> y),
          H x @ ap g p <~> ap f p @ H y.
 Proof.
@@ -282,21 +297,34 @@ Qed.
 Lemma paths_eq : forall {A} {x y : A} (p : x <~> y), x = y.
 Proof. intros. induction p. auto. Qed.
 
+Lemma ap_id :
+  forall {A} {x y : A} (p : x <~> y), ap id p = p.
+Proof. intros. induction p. simpl. reflexivity. Qed.
+
 Lemma homotopy_comp_id :
   forall A (f : A -> A) (H : f ~ id) (x : A), H (f x) <~> ap f (H x).
 Proof.
   intros.
-  pose proof homotopy_comp f id H (f x) (f x) (idpath _).
-  rewrite ap_idpath in X.
-  rewrite ap_idpath in X.
+  pose (Hinv := homotopy_symm H).
+  assert (Hcompinv : H x @ Hinv x = idpath (f x)).
+  { unfold Hinv. unfold homotopy_symm. apply concat_inv. }
+  pose proof homotopy_natural _ _ H (f x) x (H x).
+  rewrite ap_id in X.
+
+  apply (fun X => whisker_right X (Hinv x)) in X.
+  (* Set Printing All. *)
+  (* This line is necessary, otherwise the left hand side of the paths
+     contains dummy ids than H x @ Hinv x and cannot rewrite
+     therefore. Weirdly the id around some terms wasn't printed out unless
+     I Set Printing All.
+   *)
   unfold id in X.
-  simpl in X.
-  induction X.
-  auto.
-
-  pose proof H x.
-
-  apply (concat_same_right (H x)).
-
-  pose proof (H x). unfold id in X. pose proof (paths_eq X).
-  rewrite <- H0.
+  unfold id in Hcompinv.
+  rewrite concat_assoc in X.
+  rewrite concat_assoc in X.
+  repeat rewrite Hcompinv in X.
+  rewrite <- (paths_eq (idpath_right_unit _)) in X.
+  rewrite <- (paths_eq (idpath_right_unit _)) in X.
+  apply X.
+  (* Phew! That's a tough proof! *)
+Qed.
