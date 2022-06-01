@@ -334,28 +334,28 @@ Check paths.
 Check @pair.
 
 (* quasi-inversion *)
-Record qinvT {A B} (f : A -> B) : Type :=
-  mkQinvT { g : B -> A
+Record qinv {A B} (f : A -> B) : Type :=
+  mkQinv { g : B -> A
           ; alpha : f ∘ g ~ id
           ; beta : g ∘ f ~ id
           }.
 
-Check qinvT.
+Check qinv.
 
-Example qinv_id : forall A, qinvT (@id A).
+Example qinv_id : forall A, qinv (@id A).
 Proof.
   intro.
-  eapply mkQinvT with (g := id).
+  eapply mkQinv with (g := id).
   - intro. auto.
   - intro. auto.
 Qed.
 
 Example qinv_invpath1 : forall {A} {x y z : A} {p : x <~> y},
-         qinvT (fun (q : y <~> z) => p @ q).
+         qinv (fun (q : y <~> z) => p @ q).
 (* y <~> z -> x <~> z *)
 Proof.
   intros.
-  eapply mkQinvT with (g := (fun (q : x <~> z) => !p @ q)).
+  eapply mkQinv with (g := (fun (q : x <~> z) => !p @ q)).
   - induction p. intro. unfold compose. simpl.
     auto.
 
@@ -364,11 +364,11 @@ Proof.
 Qed.
 
 Example qinv_invpath2 : forall {A} {x y z : A} {p : x <~> y},
-         qinvT (fun (q : z <~> x) => q @ p).
+         qinv (fun (q : z <~> x) => q @ p).
 (* z <~> x -> z <~> y *)
 Proof.
   intros.
-  eapply mkQinvT with (g := (fun q : z <~> y => q @ !p)).
+  eapply mkQinv with (g := (fun q : z <~> y => q @ !p)).
   - induction p. intro. unfold compose. simpl.
     rewrite <- (paths_eq (idpath_right_unit _)).
     rewrite <- (paths_eq (idpath_right_unit _)).
@@ -382,11 +382,48 @@ Qed.
 
 
 Example qinv_transport : forall {A} {x y : A} {p : x <~> y} {P : A -> Type},
-         qinvT (fun px => transport P p px).
+         qinv (fun px => transport P p px).
 (* P x -> P y *)
 Proof.
   intros.
-  eapply mkQinvT with (g := (fun py => transport P (inv p) py)).
+  eapply mkQinv with (g := (fun py => transport P (inv p) py)).
   - induction p. simpl. unfold compose. intro. auto.
   - induction p. simpl. unfold compose. intro. auto.
 Qed.
+
+Definition isequiv {A B} (f : A -> B) : Type :=
+  {g : B -> A & f ∘ g ~ id} * {h : B -> A & h ∘ f ~ id}.
+
+Lemma qinv_implies_isequiv : forall {A B} (f : A -> B), qinv f -> isequiv f.
+Proof.
+  intros.
+  destruct X as [g alpha beta].
+  split.
+  - apply (existT _ g alpha).
+  - apply (existT _ g beta).
+Qed.
+
+
+Lemma isequiv_implies_qinv : forall {A B} (f : A -> B), isequiv f -> qinv f.
+Proof.
+  intros.
+  destruct X as [[g alpha] [h beta]].
+  split with (g := g).
+  - intro.
+    auto.
+  - intro.
+    eapply concat.
+    + eapply concat.
+      * apply inv.
+        apply beta.
+      * eapply (ap h).
+        apply alpha.
+    + unfold id at 1.
+      apply beta.
+Qed.
+
+Lemma isequiv_uniq : forall {A B} (f : A -> B) (e1 e2 : isequiv f),
+         e1 <~> e2.
+  (* It requires identifying the identity types for cartesian product
+  and dependent pair types, so we'll prove it later *)
+Admitted.
