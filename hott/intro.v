@@ -284,6 +284,10 @@ Lemma homotopy_trans : forall {A B} {f g h : A -> B}, f ~ g -> g ~ h -> f ~ h.
 Proof. intros. intro. pose proof (X x). pose proof (X0 x).
        induction X1. induction X2. auto. Qed.
 
+#[local] Hint Resolve homotopy_refl : core.
+#[local] Hint Resolve homotopy_symm : core.
+#[local] Hint Resolve homotopy_trans : core.
+
 Lemma homotopy_natural :
   forall {A B} (f g : A -> B) (H : f ~ g) (x y : A) (p : x <~> y),
          H x @ ap g p <~> ap f p @ H y.
@@ -301,6 +305,7 @@ Proof. intros. induction p. auto. Qed.
 Lemma ap_id :
   forall {A} {x y : A} (p : x <~> y), ap id p = p.
 Proof. intros. induction p. simpl. reflexivity. Qed.
+
 
 Lemma homotopy_comp_id :
   forall A (f : A -> A) (H : f ~ id) (x : A), H (f x) <~> ap f (H x).
@@ -427,3 +432,40 @@ Lemma isequiv_uniq : forall {A B} (f : A -> B) (e1 e2 : isequiv f),
   (* It requires identifying the identity types for cartesian product
   and dependent pair types, so we'll prove it later *)
 Admitted.
+
+(* an equivalence between A and B is a function f plus a proof isequiv f *)
+Notation "A ~= B" := {f : A -> B & isequiv f} (no associativity, at level 40).
+
+Lemma type_equiv_refl : forall A, A ~= A.
+Proof.
+  intros.
+  exists id. split.
+  - exists id. auto.
+  - exists id. auto.
+Qed.
+
+Lemma type_equiv_inv : forall A B, A ~= B -> B ~= A.
+Proof.
+  intros.
+  destruct X.
+  apply isequiv_implies_qinv in i.
+  destruct i.
+  exists g0. split.
+  - exists x. auto.
+  - exists x. auto.
+Qed.
+
+Lemma type_equiv_comp : forall {A B C} (f : A ~= B) (g : B ~= C), A ~= C.
+Proof.
+  intros.
+  destruct f, g0.
+  apply isequiv_implies_qinv in i, i0.
+  destruct i, i0.
+  exists (x0 ∘ x). split.
+  - exists (g0 ∘ g1). intro. eapply concat.
+    + eapply (ap x0). apply alpha0.
+    + unfold id. apply alpha1.
+  - exists (g0 ∘ g1). intro. eapply concat.
+    + eapply (ap g0). apply beta1.
+    + unfold id. apply beta0.
+Qed.
