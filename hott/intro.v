@@ -469,3 +469,31 @@ Proof.
     + eapply (ap g0). apply beta1.
     + unfold id. apply beta0.
 Qed.
+
+Lemma product_implication :  forall {A B} {x x' : A} {y y' : B},
+         ((x, y) <~> (x', y')) -> ((x <~> x') * (y <~> y')).
+Proof.
+  intros.
+  split.
+  - apply (ap fst) in X. apply X.
+  - apply (ap snd) in X. apply X.
+Defined.
+
+Lemma product_implication_converse :  forall {A B} {x x' : A} {y y' : B},
+         ((x <~> x') * (y <~> y')) -> ((x, y) <~> (x', y')).
+Proof.
+  intros.
+  destruct X. induction p, p0. apply idpath.
+Defined.
+
+Lemma product_equiv : forall {A B} {x x' : A} {y y' : B},
+         ((x, y) <~> (x', y')) ~= ((x <~> x') * (y <~> y')).
+Proof.
+  intros.
+  exists product_implication.
+  apply qinv_implies_isequiv.
+  exists product_implication_converse.
+  - intro.
+    destruct x0. induction p, p0. auto.
+  - intro.
+Admitted.
