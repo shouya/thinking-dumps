@@ -427,7 +427,7 @@ Proof.
       apply beta.
 Qed.
 
-Lemma isequiv_uniq : forall {A B} (f : A -> B) (e1 e2 : isequiv f),
+Lemma isequiv_uniq_attempt : forall {A B} (f : A -> B) (e1 e2 : isequiv f),
          e1 <~> e2.
   (* It requires identifying the identity types for cartesian product
   and dependent pair types, so we'll prove it later *)
@@ -496,4 +496,48 @@ Proof.
   - intro.
     destruct x0. induction p, p0. auto.
   - intro.
+    (* I failed to prove this clause, so I decided to go on *)
 Admitted.
+
+Lemma transport_product :
+  forall {A} (B C : A -> Type) (P := fun x => prod (B x) (C x)) {x y : A} (p : x <~> y)
+    (b : B x) (c : C x),
+         transport P p (b,c) <~> (transport B p b, transport C p c).
+Proof.
+  intros. induction p. simpl. apply idpath.
+Defined.
+
+Definition prod_map {A B} {x y : A * B} :
+  (x <~> y) -> ((fst x <~> fst y) * (snd x <~> snd y)).
+Proof.
+  intro. split; apply (ap _ X).
+Defined.
+
+Definition inv_prod_map {A B} {x y : A * B} :
+  ((fst x <~> fst y) * (snd x <~> snd y)) -> (x <~> y).
+Proof.
+  intros.
+  destruct X.
+  induction x, y.
+  simpl in p, p0.
+  induction p, p0. auto.
+Defined.
+
+Lemma prod_map_equiv {A B} {x y : A * B} : isequiv (@prod_map A B x y).
+Proof.
+  apply qinv_implies_isequiv.
+  exists inv_prod_map.
+  - intro. induction x0, x, y. simpl in a, b. induction a. induction b.
+    unfold prod_map, inv_prod_map, compose, id. simpl. auto.
+  - intro. induction x0, x.
+    unfold prod_map, inv_prod_map, compose, id. simpl. auto.
+Qed.
+
+Lemma transport_product' :
+  forall {Z} (A B : Z -> Type) (P := fun x => prod (A x) (B x))
+    {z w : Z} (p : z <~> w) (x : P z),
+         transport P p x  <~> (transport A p (fst x), transport B p (snd x)).
+Proof.
+  intros. induction p. simpl. unfold P in x. induction x. simpl.
+  apply idpath.
+Defined.
