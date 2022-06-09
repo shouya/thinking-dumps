@@ -513,7 +513,7 @@ Proof.
   intro. split; apply (ap _ X).
 Defined.
 
-Definition inv_prod_map {A B} {x y : A * B} :
+Definition pair_eq {A B} {x y : A * B} :
   ((fst x <~> fst y) * (snd x <~> snd y)) -> (x <~> y).
 Proof.
   intros.
@@ -526,11 +526,11 @@ Defined.
 Lemma prod_map_equiv {A B} {x y : A * B} : isequiv (@prod_map A B x y).
 Proof.
   apply qinv_implies_isequiv.
-  exists inv_prod_map.
+  exists pair_eq.
   - intro. induction x0, x, y. simpl in a, b. induction a. induction b.
-    unfold prod_map, inv_prod_map, compose, id. simpl. auto.
+    unfold prod_map, pair_eq, compose, id. simpl. auto.
   - intro. induction x0, x.
-    unfold prod_map, inv_prod_map, compose, id. simpl. auto.
+    unfold prod_map, pair_eq, compose, id. simpl. auto.
 Qed.
 
 Lemma transport_product' :
@@ -541,3 +541,32 @@ Proof.
   intros. induction p. simpl. unfold P in x. induction x. simpl.
   apply idpath.
 Defined.
+
+Lemma prop_uniq_pair_eq :
+  forall {A B} {x y : A * B} (r : x <~> y), r <~> pair_eq (ap fst r, ap snd r).
+Proof.
+  intros.
+  induction x, y.
+  induction r. induction x. simpl. auto.
+Qed.
+
+Ltac myauto :=
+  repeat intro;
+  repeat match goal with
+         | H : _ <~> _ |- _ => induction H
+         | x : _ * _ |- _ => induction x; simpl in *
+         end;
+  simpl;
+  auto.
+
+Lemma functoriality_pair_eq :
+  forall A B A' B' {g : A -> A'} {h : B -> B'}
+    (f : (A * B -> A' * B') := fun x => (g (fst x), h (snd x)))
+    {x y : A * B}
+    (p : fst x <~> fst y) (q : snd x <~> snd y),
+         @paths (f x <~> f y)
+                (ap f (pair_eq (p, q)))
+                (* this type hint is necessary for coq to figure out
+                the two types are equal *)
+                (pair_eq (ap g p : fst (f _) <~> fst (f _), ap h q)).
+Proof. myauto. Qed.
