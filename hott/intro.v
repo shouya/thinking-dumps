@@ -1,7 +1,7 @@
 Inductive paths {A} : A -> A -> Type :=
   idpath : forall x, paths x x.
 
-Notation "x <~> y" := (paths x y) (at level 70).
+Notation "x == y" := (paths x y) (at level 70).
 
 #[local] Hint Resolve idpath : core.
 
@@ -9,32 +9,32 @@ Check paths_ind.
 
 Definition ind :
   forall A
-         (D : forall (x y : A), (x <~> y) -> Type),
+         (D : forall (x y : A), (x == y) -> Type),
          (forall (a : A), D a a (idpath a)) ->
-         forall (x y : A) (p : (x <~> y)), D x y p.
+         forall (x y : A) (p : (x == y)), D x y p.
 Proof.
   intros.
   induction p.
   apply X.
 Defined.
 
-Lemma paths_refl : forall {A} {x: A}, x <~> x.
+Lemma paths_refl : forall {A} {x: A}, x == x.
 Proof. auto. Qed.
 
-Lemma paths_symm : forall {A} {x y : A}, x <~> y -> y <~> x.
+Lemma paths_symm : forall {A} {x y : A}, x == y -> y == x.
 Proof. intros. induction X. auto. Qed.
 
-Lemma paths_trans : forall {A} {x y z : A}, x <~> y -> y <~> z -> x <~> z.
+Lemma paths_trans : forall {A} {x y z : A}, x == y -> y == z -> x == z.
 Proof. intros. induction X. auto. Qed.
 
-Definition inv: forall {A} {x y : A}, (x <~> y) -> (y <~> x).
+Definition inv: forall {A} {x y : A}, (x == y) -> (y == x).
 Proof.
   intros.
   induction X.
   apply idpath.
 Defined.
 
-Definition inv_inv : forall {A} {x y : A} (p : x <~> y), inv (inv p) <~> p.
+Definition inv_inv : forall {A} {x y : A} (p : x == y), inv (inv p) == p.
 Proof.
   intros.
   induction p.
@@ -42,17 +42,17 @@ Proof.
   apply idpath.
 Defined.
 
-Definition concat: forall {A} {x y z : A}, (x <~> y) -> (y <~> z) -> (x <~> z).
+Definition concat: forall {A} {x y z : A}, (x == y) -> (y == z) -> (x == z).
 Proof. intros. induction X. apply X0. Defined.
 
 
-Definition concat': forall {A} {x y z : A}, (x <~> y) -> (y <~> z) -> (x <~> z) :=
+Definition concat': forall {A} {x y z : A}, (x == y) -> (y == z) -> (x == z) :=
   fun A x y z xy yz =>
     ind A
-        (fun x y p => forall (z: A), (y <~> z) -> (x <~> z))
+        (fun x y p => forall (z: A), (y == z) -> (x == z))
         (fun a =>
            ind A
-               (fun a b _ => a <~> b)
+               (fun a b _ => a == b)
                (fun w => idpath w)
                a
         )
@@ -70,20 +70,20 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma concat_inv : forall {A} {x y : A} {p : x <~> y}, p @ inv p = idpath x.
+Lemma concat_inv : forall {A} {x y : A} {p : x == y}, p @ inv p = idpath x.
 Proof.
   intros.
   induction p. simpl. reflexivity.
 Qed.
 
-Lemma concat_inv2 : forall {A} {x y : A} {p : x <~> y}, inv p @ p = idpath y.
+Lemma concat_inv2 : forall {A} {x y : A} {p : x == y}, inv p @ p = idpath y.
 Proof.
   intros.
   induction p. simpl. reflexivity.
 Qed.
 
 Lemma concat_assoc : forall {A} (x y z w : A)
-                       (p : x <~> y) (q : y <~> z) (r : z <~> w),
+                       (p : x == y) (q : y == z) (r : z == w),
          (p @ q) @ r = p @ (q @ r).
 Proof.
   intros.
@@ -92,14 +92,14 @@ Qed.
 
 Notation "! p" := (inv p) (at level 50).
 
-Definition idpath_left_unit : forall {A} {x y : A} (p : x <~> y), (idpath x @ p) <~> p.
+Definition idpath_left_unit : forall {A} {x y : A} (p : x == y), (idpath x @ p) == p.
 Proof.
   intros.
   induction p.
   auto.
 Defined.
 
-Definition idpath_right_unit : forall {A} {x y : A} (p : x <~> y), p <~> (p @ idpath y).
+Definition idpath_right_unit : forall {A} {x y : A} (p : x == y), p == (p @ idpath y).
 Proof.
   intros.
   induction p.
@@ -113,7 +113,7 @@ Inductive pointed A (a : A) : Type :=
 
 #[local] Hint Resolve point_intro : core.
 
-Definition loop A (a : A) : Type := (pointed (a <~> a) (idpath a)).
+Definition loop A (a : A) : Type := (pointed (a == a) (idpath a)).
 
 Print loop.
 
@@ -125,49 +125,49 @@ Print loop_concat.
 Definition loop2 A (a : A) : Type := loop (loop A a) (point_intro _ _).
 Print loop2.
 
-Lemma concat_same_right : forall {A} {x y z: A} (p q : x <~> y) (r : y <~> z),
-         p <~> q -> (p @ r) <~> (q @ r).
+Lemma concat_same_right : forall {A} {x y z: A} (p q : x == y) (r : y == z),
+         p == q -> (p @ r) == (q @ r).
 Proof. intros. induction X. auto. Qed.
 
-Lemma concat_same_left : forall {A} {x y z: A} (p : x <~> y) (r s : y <~> z),
-         r <~> s -> (p @ r) <~> (p @ s).
+Lemma concat_same_left : forall {A} {x y z: A} (p : x == y) (r s : y == z),
+         r == s -> (p @ r) == (p @ s).
 Proof. intros. induction X. auto. Qed.
 
 
-Definition whisker_right {A} {a b c : A} {p q : a <~> b}
-           (alpha : p <~> q) (r : b <~> c) : (p @ r) <~> (q @ r).
+Definition whisker_right {A} {a b c : A} {p q : a == b}
+           (alpha : p == q) (r : b == c) : (p @ r) == (q @ r).
 Proof. intros. simpl. induction r. induction alpha. auto. Defined.
 
-Definition whisker_left {A} {a b c : A} {r s : b <~> c}
-           (p : a <~> b) (beta : r <~> s) : (p @ r) <~> (p @ s).
+Definition whisker_left {A} {a b c : A} {r s : b == c}
+           (p : a == b) (beta : r == s) : (p @ r) == (p @ s).
 Proof. intros. simpl. induction p. induction beta. auto. Defined.
 
-Lemma whisker_right_idpath : forall {A} {a b: A} {p q : a <~> b} (alpha : p <~> q),
+Lemma whisker_right_idpath : forall {A} {a b: A} {p q : a == b} (alpha : p == q),
          whisker_right alpha (idpath b) =
            (! idpath_right_unit p) @ alpha @ (idpath_right_unit q).
 Proof. intros. induction p. induction alpha. induction x0. simpl. auto. Qed.
 
-Lemma whisker_left_idpath : forall A {b c : A} {r s : b <~> c} (beta : r <~> s),
+Lemma whisker_left_idpath : forall A {b c : A} {r s : b == c} (beta : r == s),
          whisker_left (idpath b) beta =
            (idpath_left_unit r) @ beta @ (! idpath_left_unit s).
 Proof. intros. induction r. induction beta. induction x0. simpl. auto. Qed.
 
 (*
 loop2 =
-fun (A : Type) (a : A) => loop (loop A a) (point_intro (a <~> a) (idpath a))
+fun (A : Type) (a : A) => loop (loop A a) (point_intro (a == a) (idpath a))
      : forall A : Type, A -> Type
  *)
 
-Definition ap {A B} (f : A -> B) {x y : A} : (x <~> y) -> (f x <~> f y).
+Definition ap {A B} (f : A -> B) {x y : A} : (x == y) -> (f x == f y).
 Proof. intros. induction X. auto. Defined.
 
 Lemma ap_functor_hor_comp :
-  forall A B (f : A -> B) (x y z : A) (p : x <~> y) (q : y <~> z),
+  forall A B (f : A -> B) (x y z : A) (p : x == y) (q : y == z),
          ap f (p @ q) = (ap f p) @ (ap f q).
 Proof. intros. induction p. induction q. simpl. reflexivity. Qed.
 
 Lemma ap_functor_inv :
-  forall A B (f : A -> B) (x y : A) (p : x <~> y),
+  forall A B (f : A -> B) (x y : A) (p : x == y),
          ap f (! p) = ! (ap f p).
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
@@ -175,15 +175,15 @@ Require Import Coq.Program.Basics.
 Open Scope program_scope.
 
 Lemma ap_functor_vert_comp :
-  forall A B C (f : A -> B) (g : B -> C) (x y : A) (p : x <~> y),
+  forall A B C (f : A -> B) (g : B -> C) (x y : A) (p : x == y),
            ap (g ∘ f) p = ap g (ap f p).
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
 Lemma ap_functor_id :
-  forall A (x y : A) (p : x <~> y), ap id p = p.
+  forall A (x y : A) (p : x == y), ap id p = p.
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
-Definition transport {A} (P : A -> Type) {x y : A} (p : x <~> y) : P x -> P y.
+Definition transport {A} (P : A -> Type) {x y : A} (p : x == y) : P x -> P y.
 Proof.
   intros.
   induction p.
@@ -215,52 +215,52 @@ Arguments existT [A]%type_scope P%function_scope x _
  *)
 
 Lemma path_lift {A} (P : A -> Type) {x y : A}
-      (u: P x) (p : x <~> y) :
-         (existT P x u) <~> (existT P y (transport P p u)).
+      (u: P x) (p : x == y) :
+         (existT P x u) == (existT P y (transport P p u)).
 Proof. induction p. simpl. constructor. Qed.
 
 Check path_lift.
 
 (* dependent map *)
 Definition apd {A} (P : A -> Type) (f : forall (x:A), P x) :
-  forall {x y : A} (p : x <~> y), transport P p (f x) <~> f y.
+  forall {x y : A} (p : x == y), transport P p (f x) == f y.
 Proof. intros. induction p. auto. Defined.
 
 Print apd.
 
 Definition ConstTF A {B} : A -> Type := (fun _a => B).
 
-Definition transport_const : forall {A B} {x y : A} (p : x <~> y) (b : B),
-         (transport (ConstTF A) p b) <~> b.
+Definition transport_const : forall {A B} {x y : A} (p : x == y) (b : B),
+         (transport (ConstTF A) p b) == b.
 Proof. intros. induction p. simpl. apply idpath. Defined.
 
 Lemma apd_eq_transport_const :
-  forall {A B} {x y : A} (f : A -> B) (p : x <~> y) (P := ConstTF A),
-         apd P f p <~> (transport_const p (f x)) @ (ap f p).
+  forall {A B} {x y : A} (f : A -> B) (p : x == y) (P := ConstTF A),
+         apd P f p == (transport_const p (f x)) @ (ap f p).
 Proof. intros. unfold P. induction p. simpl. auto. Defined.
 
 Lemma transport_concat :
-  forall A (P : A -> Type) (x y z : A) (p : x <~> y) (q : y <~> z) (u : P x),
-         transport P q (transport P p u) <~> transport P (p @ q) u.
+  forall A (P : A -> Type) (x y z : A) (p : x == y) (q : y == z) (u : P x),
+         transport P q (transport P p u) == transport P (p @ q) u.
 Proof.
   intros. induction p. induction q. simpl. auto.
 Qed.
 
 Lemma transport_comp :
-  forall A B (x y : A) (f : A -> B) (P : B -> Type) (p : x <~> y) (u : P (f x)),
-         transport (P ∘ f) p u <~> transport P (ap f p) u.
+  forall A B (x y : A) (f : A -> B) (P : B -> Type) (p : x == y) (u : P (f x)),
+         transport (P ∘ f) p u == transport P (ap f p) u.
 Proof. intros. induction p. auto. Qed.
 
 Lemma transport_comp2 :
-  forall A (x y : A) (P Q : A -> Type) (f : forall x, P x -> Q x) (p : x <~> y) (u : P x),
-         transport Q p (f x u) <~> f y (transport P p u).
+  forall A (x y : A) (P Q : A -> Type) (f : forall x, P x -> Q x) (p : x == y) (u : P x),
+         transport Q p (f x u) == f y (transport P p u).
 Proof. intros. induction p. auto. Qed.
 
 
 (* homotopy between functions/paths *)
 
 Definition homotopy {A} {P : A -> Type} (f g : forall (x : A), P x)
-  := forall x, f x <~> g x.
+  := forall x, f x == g x.
 Check homotopy.
 (*
 homotopy
@@ -289,8 +289,8 @@ Proof. intros. intro. pose proof (X x). pose proof (X0 x).
 #[local] Hint Resolve homotopy_trans : core.
 
 Lemma homotopy_natural :
-  forall {A B} (f g : A -> B) (H : f ~ g) (x y : A) (p : x <~> y),
-         H x @ ap g p <~> ap f p @ H y.
+  forall {A B} (f g : A -> B) (H : f ~ g) (x y : A) (p : x == y),
+         H x @ ap g p == ap f p @ H y.
 Proof.
   intros. induction p.
   rewrite ap_idpath. rewrite ap_idpath. induction (H x).
@@ -299,16 +299,16 @@ Qed.
 
 #[local] Hint Unfold id : core.
 
-Lemma paths_eq : forall {A} {x y : A} (p : x <~> y), x = y.
+Lemma paths_eq : forall {A} {x y : A} (p : x == y), x = y.
 Proof. intros. induction p. auto. Qed.
 
 Lemma ap_id :
-  forall {A} {x y : A} (p : x <~> y), ap id p = p.
+  forall {A} {x y : A} (p : x == y), ap id p = p.
 Proof. intros. induction p. simpl. reflexivity. Qed.
 
 
 Lemma homotopy_comp_id :
-  forall A (f : A -> A) (H : f ~ id) (x : A), H (f x) <~> ap f (H x).
+  forall A (f : A -> A) (H : f ~ id) (x : A), H (f x) == ap f (H x).
 Proof.
   intros.
   pose (Hinv := homotopy_symm H).
@@ -355,12 +355,12 @@ Proof.
   - intro. auto.
 Qed.
 
-Example qinv_invpath1 : forall {A} {x y z : A} {p : x <~> y},
-         qinv (fun (q : y <~> z) => p @ q).
-(* y <~> z -> x <~> z *)
+Example qinv_invpath1 : forall {A} {x y z : A} {p : x == y},
+         qinv (fun (q : y == z) => p @ q).
+(* y == z -> x == z *)
 Proof.
   intros.
-  eapply mkQinv with (g := (fun (q : x <~> z) => !p @ q)).
+  eapply mkQinv with (g := (fun (q : x == z) => !p @ q)).
   - induction p. intro. unfold compose. simpl.
     auto.
 
@@ -368,12 +368,12 @@ Proof.
     auto.
 Qed.
 
-Example qinv_invpath2 : forall {A} {x y z : A} {p : x <~> y},
-         qinv (fun (q : z <~> x) => q @ p).
-(* z <~> x -> z <~> y *)
+Example qinv_invpath2 : forall {A} {x y z : A} {p : x == y},
+         qinv (fun (q : z == x) => q @ p).
+(* z == x -> z == y *)
 Proof.
   intros.
-  eapply mkQinv with (g := (fun q : z <~> y => q @ !p)).
+  eapply mkQinv with (g := (fun q : z == y => q @ !p)).
   - induction p. intro. unfold compose. simpl.
     rewrite <- (paths_eq (idpath_right_unit _)).
     rewrite <- (paths_eq (idpath_right_unit _)).
@@ -386,7 +386,7 @@ Proof.
 Qed.
 
 
-Example qinv_transport : forall {A} {x y : A} {p : x <~> y} {P : A -> Type},
+Example qinv_transport : forall {A} {x y : A} {p : x == y} {P : A -> Type},
          qinv (fun px => transport P p px).
 (* P x -> P y *)
 Proof.
@@ -428,7 +428,7 @@ Proof.
 Qed.
 
 Lemma isequiv_uniq_attempt : forall {A B} (f : A -> B) (e1 e2 : isequiv f),
-         e1 <~> e2.
+         e1 == e2.
   (* It requires identifying the identity types for cartesian product
   and dependent pair types, so we'll prove it later *)
 Admitted.
@@ -471,7 +471,7 @@ Proof.
 Qed.
 
 Lemma product_implication :  forall {A B} {x x' : A} {y y' : B},
-         ((x, y) <~> (x', y')) -> ((x <~> x') * (y <~> y')).
+         ((x, y) == (x', y')) -> ((x == x') * (y == y')).
 Proof.
   intros.
   split.
@@ -480,14 +480,14 @@ Proof.
 Defined.
 
 Lemma product_implication_converse :  forall {A B} {x x' : A} {y y' : B},
-         ((x <~> x') * (y <~> y')) -> ((x, y) <~> (x', y')).
+         ((x == x') * (y == y')) -> ((x, y) == (x', y')).
 Proof.
   intros.
   destruct X. induction p, p0. apply idpath.
 Defined.
 
 Lemma product_equiv : forall {A B} {x x' : A} {y y' : B},
-         ((x, y) <~> (x', y')) ~= ((x <~> x') * (y <~> y')).
+         ((x, y) == (x', y')) ~= ((x == x') * (y == y')).
 Proof.
   intros.
   exists product_implication.
@@ -500,21 +500,21 @@ Proof.
 Admitted.
 
 Lemma transport_product :
-  forall {A} (B C : A -> Type) (P := fun x => prod (B x) (C x)) {x y : A} (p : x <~> y)
+  forall {A} (B C : A -> Type) (P := fun x => prod (B x) (C x)) {x y : A} (p : x == y)
     (b : B x) (c : C x),
-         transport P p (b,c) <~> (transport B p b, transport C p c).
+         transport P p (b,c) == (transport B p b, transport C p c).
 Proof.
   intros. induction p. simpl. apply idpath.
 Defined.
 
 Definition prod_map {A B} {x y : A * B} :
-  (x <~> y) -> ((fst x <~> fst y) * (snd x <~> snd y)).
+  (x == y) -> ((fst x == fst y) * (snd x == snd y)).
 Proof.
   intro. split; apply (ap _ X).
 Defined.
 
 Definition pair_eq {A B} {x y : A * B} :
-  ((fst x <~> fst y) * (snd x <~> snd y)) -> (x <~> y).
+  ((fst x == fst y) * (snd x == snd y)) -> (x == y).
 Proof.
   intros.
   destruct X.
@@ -535,15 +535,15 @@ Qed.
 
 Lemma transport_product' :
   forall {Z} (A B : Z -> Type) (P := fun x => prod (A x) (B x))
-    {z w : Z} (p : z <~> w) (x : P z),
-         transport P p x  <~> (transport A p (fst x), transport B p (snd x)).
+    {z w : Z} (p : z == w) (x : P z),
+         transport P p x  == (transport A p (fst x), transport B p (snd x)).
 Proof.
   intros. induction p. simpl. unfold P in x. induction x. simpl.
   apply idpath.
 Defined.
 
 Lemma prop_uniq_pair_eq :
-  forall {A B} {x y : A * B} (r : x <~> y), r <~> pair_eq (ap fst r, ap snd r).
+  forall {A B} {x y : A * B} (r : x == y), r == pair_eq (ap fst r, ap snd r).
 Proof.
   intros.
   induction x, y.
@@ -553,7 +553,7 @@ Qed.
 Ltac myauto :=
   repeat intro;
   repeat match goal with
-         | H : _ <~> _ |- _ => induction H
+         | H : _ == _ |- _ => induction H
          | x : _ * _ |- _ => induction x; simpl in *
          | x : {_ & _} |- _ => induction x; simpl in *
          end;
@@ -564,22 +564,22 @@ Lemma functoriality_path_eq :
   forall A B A' B' {g : A -> A'} {h : B -> B'}
     (f : (A * B -> A' * B') := fun x => (g (fst x), h (snd x)))
     {x y : A * B}
-    (p : fst x <~> fst y) (q : snd x <~> snd y),
-         @paths (f x <~> f y)
+    (p : fst x == fst y) (q : snd x == snd y),
+         @paths (f x == f y)
                 (ap f (pair_eq (p, q)))
                 (* this type hint is necessary for coq to figure out
                 the two types are equal *)
-                (pair_eq (ap g p : fst (f _) <~> fst (f _), ap h q)).
+                (pair_eq (ap g p : fst (f _) == fst (f _), ap h q)).
 Proof. myauto. Qed.
 
 Definition sigma_eq_proj1 {A} {P : A -> Type}
-           {w w' : {x : A & P x}} (p : w <~> w') : projT1 w <~> projT1 w'.
+           {w w' : {x : A & P x}} (p : w == w') : projT1 w == projT1 w'.
 Proof. myauto. Defined.
 
 
 Definition sigma_eq_proj2 {A} {P : A -> Type}
-           {w w' : {x : A & P x}} (p : w <~> w') :
-  transport _ (sigma_eq_proj1 p) (projT2 w) <~> projT2 w'.
+           {w w' : {x : A & P x}} (p : w == w') :
+  transport _ (sigma_eq_proj1 p) (projT2 w) == projT2 w'.
 Proof. myauto. Qed.
 
 (*
@@ -587,12 +587,13 @@ From the book:
 
 Remark 2.7.1. Note that if we have x : A and u, v : P(x) such that (x, u) = (x, v), it does not follow that u = v. All we can conclude is that there exists p : x = x such that p∗(u) = v.
 
-But indeed this is provable, why?
+But indeed this is provable. I think it's because (x, u) is not the same
+sigma type which I don't know how to express.
  *)
 Remark sigma_proj2_path : forall {A} {P : A -> Type} {x : A} {u v : P x},
-         (x, u) <~> (x, v) ->
-         u <~> v
-         (* {p : x <~> x & transport _ p u <~> v} *)
+         (x, u) == (x, v) ->
+         u == v
+         (* {p : x == x & transport _ p u == v} *)
 .
 Proof.
   intros.
