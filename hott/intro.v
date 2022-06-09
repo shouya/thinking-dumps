@@ -555,11 +555,12 @@ Ltac myauto :=
   repeat match goal with
          | H : _ <~> _ |- _ => induction H
          | x : _ * _ |- _ => induction x; simpl in *
+         | x : {_ & _} |- _ => induction x; simpl in *
          end;
   simpl;
   auto.
 
-Lemma functoriality_pair_eq :
+Lemma functoriality_path_eq :
   forall A B A' B' {g : A -> A'} {h : B -> B'}
     (f : (A * B -> A' * B') := fun x => (g (fst x), h (snd x)))
     {x y : A * B}
@@ -570,3 +571,31 @@ Lemma functoriality_pair_eq :
                 the two types are equal *)
                 (pair_eq (ap g p : fst (f _) <~> fst (f _), ap h q)).
 Proof. myauto. Qed.
+
+Definition sigma_eq_proj1 {A} {P : A -> Type}
+           {w w' : {x : A & P x}} (p : w <~> w') : projT1 w <~> projT1 w'.
+Proof. myauto. Defined.
+
+
+Definition sigma_eq_proj2 {A} {P : A -> Type}
+           {w w' : {x : A & P x}} (p : w <~> w') :
+  transport _ (sigma_eq_proj1 p) (projT2 w) <~> projT2 w'.
+Proof. myauto. Qed.
+
+(*
+From the book:
+
+Remark 2.7.1. Note that if we have x : A and u, v : P(x) such that (x, u) = (x, v), it does not follow that u = v. All we can conclude is that there exists p : x = x such that p∗(u) = v.
+
+But indeed this is provable, why?
+ *)
+Remark sigma_proj2_path : forall {A} {P : A -> Type} {x : A} {u v : P x},
+         (x, u) <~> (x, v) ->
+         u <~> v
+         (* {p : x <~> x & transport _ p u <~> v} *)
+.
+Proof.
+  intros.
+  apply product_equiv in X. induction X.
+  apply b.
+Qed.
