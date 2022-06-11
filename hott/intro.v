@@ -552,12 +552,20 @@ Qed.
 
 Ltac myauto :=
   repeat intro;
-  repeat match goal with
-         | H : _ == _ |- _ => induction H
-         | x : _ * _ |- _ => induction x; simpl in *
-         | x : {_ & _} |- _ => induction x; simpl in *
-         end;
-  simpl;
+  repeat (multimatch goal with
+          | [H : (?x == ?y) |- _] =>
+              lazymatch x with
+              | ?a ?b => fail
+              | _ => lazymatch y with
+                    | ?a ?b => fail
+                    | _ => induction H
+                    end
+              end
+          | x : _ * _ |- _ => induction x
+          | x : {_ & _} |- _ => induction x
+          | [ |- {_ : ?x == ?x & _}] => (exists (idpath _))
+          end;
+          simpl in *);
   auto.
 
 Lemma functoriality_path_eq :
@@ -586,17 +594,45 @@ Proof. myauto. Qed.
 From the book:
 
 Remark 2.7.1. Note that if we have x : A and u, v : P(x) such that (x, u) = (x, v), it does not follow that u = v. All we can conclude is that there exists p : x = x such that p∗(u) = v.
-
-But indeed this is provable. I think it's because (x, u) is not the same
-sigma type which I don't know how to express.
  *)
-Remark sigma_proj2_path : forall {A} {P : A -> Type} {x : A} {u v : P x},
-         (x, u) == (x, v) ->
-         u == v
-         (* {p : x == x & transport _ p u == v} *)
-.
+
+Import SigTNotations.
+(*
+Imported for syntaxes:
+
+- (a; b)
+- a.1
+- b.2
+ *)
+
+
+Lemma sigma_equiv_forward : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
+         (w == w') -> {p : w.1 == w'.1 & transport _ p (w.2) == w'.2 }.
+Proof. myauto. Defined.
+
+Lemma sigma_equiv_backward : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
+         {p : w.1 == w'.1 & transport _ p (w.2) == w'.2 } -> (w == w').
+Proof. myauto. Defined.
+
+Lemma sigma_equiv : forall {A} {P : A -> Type} {w w' : {x : A & P x}},
+         isequiv (@sigma_equiv_forward A P w w').
 Proof.
   intros.
-  apply product_equiv in X. induction X.
-  apply b.
+  unfold isequiv.
+  split.
+  - exists sigma_equiv_backward. myauto.
+  - exists sigma_equiv_backward. myauto.
+Qed.
+
+Lemma sigma_prop_uniq : forall {A P} (z : {x : A & P x}), z == (z.1 ; z.2).
+Proof. intros. myauto. Qed.
+
+Remark sigma_proj2_path : forall {A} {P : A -> Type} {x : A} {u v : P x},
+         (x ; u) == (x ; v) ->
+         {p : x == x & transport _ p u == v}.
+Proof.
+  intros.
+  apply sigma_equiv_forward in X.
+  induction X. simpl in *.
+  exists x0. auto.
 Qed.
