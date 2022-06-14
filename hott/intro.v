@@ -610,7 +610,7 @@ Lemma sigma_equiv_forward : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
          (w == w') -> {p : w.1 == w'.1 & transport _ p (w.2) == w'.2 }.
 Proof. myauto. Defined.
 
-Lemma sigma_equiv_backward : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
+Lemma sigma_path_eq : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
          {p : w.1 == w'.1 & transport _ p (w.2) == w'.2 } -> (w == w').
 Proof. myauto. Defined.
 
@@ -620,8 +620,8 @@ Proof.
   intros.
   unfold isequiv.
   split.
-  - exists sigma_equiv_backward. myauto.
-  - exists sigma_equiv_backward. myauto.
+  - exists sigma_path_eq. myauto.
+  - exists sigma_path_eq. myauto.
 Qed.
 
 Lemma sigma_prop_uniq : forall {A P} (z : {x : A & P x}), z == (z.1 ; z.2).
@@ -636,3 +636,18 @@ Proof.
   induction X. simpl in *.
   exists x0. auto.
 Qed.
+
+Definition sigma_pair_eq_transport {A P} {x y : A} (p : x == y) (u : P x) :
+  (x ; u) == (y ; transport P p u) :=
+  sigma_path_eq (w := (x ; u)) (w' := (y ; transport P p u))
+                (p; idpath (transport P p u)).
+
+Lemma sigma_sigma : forall {A P} {Q : {x : A & P x} -> Type}
+                      {x y : A}
+                      (p : x == y)
+                      (w : {u : P x & Q (x ; u)}),
+           (transport (fun x => {u : P x & Q (x ; u)}) p w)
+           ==
+           (transport P p w.1 ;
+            transport Q (sigma_pair_eq_transport p w.1) w.2).
+Proof. myauto. Qed.
