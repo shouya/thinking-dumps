@@ -637,7 +637,7 @@ Proof.
   exists x0. auto.
 Qed.
 
-Definition sigma_pair_eq_transport {A P} {x y : A} (p : x == y) (u : P x) :
+Definition sigma_path_eq_transport {A P} {x y : A} (p : x == y) (u : P x) :
   (x ; u) == (y ; transport P p u) :=
   sigma_path_eq (w := (x ; u)) (w' := (y ; transport P p u))
                 (p; idpath (transport P p u)).
@@ -649,5 +649,26 @@ Lemma sigma_sigma : forall {A P} {Q : {x : A & P x} -> Type}
            (transport (fun x => {u : P x & Q (x ; u)}) p w)
            ==
            (transport P p w.1 ;
-            transport Q (sigma_pair_eq_transport p w.1) w.2).
+            transport Q (sigma_path_eq_transport p w.1) w.2).
 Proof. myauto. Qed.
+
+Definition functoriality_path_eq_sigma_helper :
+  forall {A B A' B'} {g : A -> A'} {h : forall x x', B x -> B' x'}
+    (f : {x:A & B x} -> {x:A' & B' x} := fun w => (g w.1 ; h w.1 (g w.1) w.2))
+    {w w' : {x:A & B x}}
+    (p : w.1 == w'.1) (q : transport B p w.2 == w'.2),
+         transport B' (ap g p) (f w).2 == (f w').2.
+Proof. myauto. Defined.
+
+Print functoriality_path_eq_sigma_helper.
+
+Lemma functoriality_path_eq_sigma :
+  forall A B A' B' {g : A -> A'} {h : forall x x', B x -> B' x'}
+    (f : {x:A & B x} -> {x:A' & B' x} := fun w => (g w.1 ; h w.1 (g w.1) w.2))
+    {w w' : {x:A & B x}}
+    (p : w.1 == w'.1) (q : transport B p w.2 == w'.2),
+         @paths (f w == f w')
+                (ap f (sigma_path_eq (p ; q)))
+                (sigma_path_eq (ap g p : (f w).1 == (f w').1 ;
+                                functoriality_path_eq_sigma_helper p q)).
+Proof. intros. myauto. Qed.
