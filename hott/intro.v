@@ -712,3 +712,27 @@ Lemma unit_transport : forall {B} {x y : unit} {p : x == y} {u: B},
          transport (ConstTF unit) p u == u.
 Proof. myauto. Qed.
 
+
+(* function extensionality *)
+Axiom funext : forall {A B} (f g : forall (x : A), B x),
+         (f == g) ~= (forall (x : A), f x == g x).
+
+Definition happy : forall {A B} (f g : forall (x : A), B x),
+         (f == g) -> (forall (x : A), f x == g x).
+Proof. myauto. Qed.
+
+Definition pi_elim {A B} := happy (A := A) (B := B).
+
+Lemma pi_intro {A B} {f g : forall x, B x} : (forall (x : A), f x == g x) -> f == g.
+Proof.
+  intro. pose proof funext f g. destruct X0. destruct i. destruct s.
+  apply x0 in X. apply X.
+Defined.
+
+Definition pi_family {T} A B := fun (x : T) => (A x) -> (B x).
+
+Definition pi_transport : forall {T} {A B : T -> Type} {x y : T} (p : x == y)
+                            (f : pi_family A B x),
+         transport (pi_family A B) p f ==
+         fun x => transport B p (f (transport A (inv p) x)).
+Proof. myauto. Qed.
