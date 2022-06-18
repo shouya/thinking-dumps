@@ -507,13 +507,13 @@ Proof.
   intros. induction p. simpl. apply idpath.
 Defined.
 
-Definition prod_map {A B} {x y : A * B} :
+Definition prod_elim {A B} {x y : A * B} :
   (x == y) -> ((fst x == fst y) * (snd x == snd y)).
 Proof.
   intro. split; apply (ap _ X).
 Defined.
 
-Definition pair_eq {A B} {x y : A * B} :
+Definition prod_intro {A B} {x y : A * B} :
   ((fst x == fst y) * (snd x == snd y)) -> (x == y).
 Proof.
   intros.
@@ -523,17 +523,17 @@ Proof.
   induction p, p0. auto.
 Defined.
 
-Lemma prod_map_equiv {A B} {x y : A * B} : isequiv (@prod_map A B x y).
+Lemma prod_equiv {A B} {x y : A * B} : isequiv (@prod_elim A B x y).
 Proof.
   apply qinv_implies_isequiv.
-  exists pair_eq.
+  exists prod_intro.
   - intro. induction x0, x, y. simpl in a, b. induction a. induction b.
-    unfold prod_map, pair_eq, compose, id. simpl. auto.
+    unfold prod_elim, prod_intro, compose, id. simpl. auto.
   - intro. induction x0, x.
-    unfold prod_map, pair_eq, compose, id. simpl. auto.
+    unfold prod_elim, prod_intro, compose, id. simpl. auto.
 Qed.
 
-Lemma transport_product' :
+Lemma prod_pointwise_transport :
   forall {Z} (A B : Z -> Type) (P := fun x => prod (A x) (B x))
     {z w : Z} (p : z == w) (x : P z),
          transport P p x  == (transport A p (fst x), transport B p (snd x)).
@@ -542,8 +542,8 @@ Proof.
   apply idpath.
 Defined.
 
-Lemma prop_uniq_pair_eq :
-  forall {A B} {x y : A * B} (r : x == y), r == pair_eq (ap fst r, ap snd r).
+Lemma prod_prop_uniq :
+  forall {A B} {x y : A * B} (r : x == y), r == prod_intro (ap fst r, ap snd r).
 Proof.
   intros.
   induction x, y.
@@ -562,32 +562,33 @@ Ltac myauto :=
                     end
               end
           | x : _ * _ |- _ => induction x
+          | x : unit |- _ => induction x
           | x : {_ & _} |- _ => induction x
           | [ |- {_ : ?x == ?x & _}] => (exists (idpath _))
           end;
           simpl in *);
   auto.
 
-Lemma functoriality_path_eq :
+Lemma prod_functor :
   forall A B A' B' {g : A -> A'} {h : B -> B'}
     (f : (A * B -> A' * B') := fun x => (g (fst x), h (snd x)))
     {x y : A * B}
     (p : fst x == fst y) (q : snd x == snd y),
          @paths (f x == f y)
-                (ap f (pair_eq (p, q)))
+                (ap f (prod_intro (p, q)))
                 (* this type hint is necessary for coq to figure out
                 the two types are equal *)
-                (pair_eq (ap g p : fst (f _) == fst (f _), ap h q)).
+                (prod_intro (ap g p : fst (f _) == fst (f _), ap h q)).
 Proof. myauto. Qed.
 
-Definition sigma_eq_proj1 {A} {P : A -> Type}
+Definition sigma_proj1 {A} {P : A -> Type}
            {w w' : {x : A & P x}} (p : w == w') : projT1 w == projT1 w'.
 Proof. myauto. Defined.
 
 
-Definition sigma_eq_proj2 {A} {P : A -> Type}
+Definition sigma_proj2 {A} {P : A -> Type}
            {w w' : {x : A & P x}} (p : w == w') :
-  transport _ (sigma_eq_proj1 p) (projT2 w) == projT2 w'.
+  transport _ (sigma_proj1 p) (projT2 w) == projT2 w'.
 Proof. myauto. Qed.
 
 (*
@@ -606,22 +607,22 @@ Imported for syntaxes:
  *)
 
 
-Lemma sigma_equiv_forward : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
+Lemma sigma_elim : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
          (w == w') -> {p : w.1 == w'.1 & transport _ p (w.2) == w'.2 }.
 Proof. myauto. Defined.
 
-Lemma sigma_path_eq : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
+Lemma sigma_intro : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
          {p : w.1 == w'.1 & transport _ p (w.2) == w'.2 } -> (w == w').
 Proof. myauto. Defined.
 
 Lemma sigma_equiv : forall {A} {P : A -> Type} {w w' : {x : A & P x}},
-         isequiv (@sigma_equiv_forward A P w w').
+         isequiv (@sigma_elim A P w w').
 Proof.
   intros.
   unfold isequiv.
   split.
-  - exists sigma_path_eq. myauto.
-  - exists sigma_path_eq. myauto.
+  - exists sigma_intro. myauto.
+  - exists sigma_intro. myauto.
 Qed.
 
 Lemma sigma_prop_uniq : forall {A P} (z : {x : A & P x}), z == (z.1 ; z.2).
@@ -632,27 +633,27 @@ Remark sigma_proj2_path : forall {A} {P : A -> Type} {x : A} {u v : P x},
          {p : x == x & transport _ p u == v}.
 Proof.
   intros.
-  apply sigma_equiv_forward in X.
+  apply sigma_elim in X.
   induction X. simpl in *.
   exists x0. auto.
 Qed.
 
-Definition sigma_path_eq_transport {A P} {x y : A} (p : x == y) (u : P x) :
+Definition sigma_intro_transport {A P} {x y : A} (p : x == y) (u : P x) :
   (x ; u) == (y ; transport P p u) :=
-  sigma_path_eq (w := (x ; u)) (w' := (y ; transport P p u))
-                (p; idpath (transport P p u)).
+  sigma_intro (w := (x ; u)) (w' := (y ; transport P p u))
+              (p; idpath (transport P p u)).
 
-Lemma sigma_sigma : forall {A P} {Q : {x : A & P x} -> Type}
+Lemma sigma_transport : forall {A P} {Q : {x : A & P x} -> Type}
                       {x y : A}
                       (p : x == y)
                       (w : {u : P x & Q (x ; u)}),
            (transport (fun x => {u : P x & Q (x ; u)}) p w)
            ==
            (transport P p w.1 ;
-            transport Q (sigma_path_eq_transport p w.1) w.2).
+            transport Q (sigma_intro_transport p w.1) w.2).
 Proof. myauto. Qed.
 
-Definition functoriality_path_eq_sigma_helper :
+Definition sigma_functor_helper :
   forall {A B A' B'} {g : A -> A'} {h : forall x x', B x -> B' x'}
     (f : {x:A & B x} -> {x:A' & B' x} := fun w => (g w.1 ; h w.1 (g w.1) w.2))
     {w w' : {x:A & B x}}
@@ -660,15 +661,15 @@ Definition functoriality_path_eq_sigma_helper :
          transport B' (ap g p) (f w).2 == (f w').2.
 Proof. myauto. Defined.
 
-Print functoriality_path_eq_sigma_helper.
+Print sigma_functor_helper.
 
-Lemma functoriality_path_eq_sigma :
+Lemma sigma_functor :
   forall A B A' B' {g : A -> A'} {h : forall x x', B x -> B' x'}
     (f : {x:A & B x} -> {x:A' & B' x} := fun w => (g w.1 ; h w.1 (g w.1) w.2))
     {w w' : {x:A & B x}}
     (p : w.1 == w'.1) (q : transport B p w.2 == w'.2),
          @paths (f w == f w')
-                (ap f (sigma_path_eq (p ; q)))
-                (sigma_path_eq (ap g p : (f w).1 == (f w').1 ;
-                                functoriality_path_eq_sigma_helper p q)).
+                (ap f (sigma_intro (p ; q)))
+                (sigma_intro (ap g p : (f w).1 == (f w').1 ;
+                              sigma_functor_helper p q)).
 Proof. intros. myauto. Qed.
