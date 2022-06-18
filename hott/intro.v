@@ -673,3 +673,42 @@ Lemma sigma_functor :
                 (sigma_intro (ap g p : (f w).1 == (f w').1 ;
                               sigma_functor_helper p q)).
 Proof. intros. myauto. Qed.
+
+(* Unit type *)
+Theorem unit_equality_eqv_unit : forall {x y : unit}, (x == y) ~= unit.
+Proof.
+  intro. induction x. intro y. induction y.
+  exists (const tt). split.
+  - exists (const (idpath _)). intro. unfold const, compose. induction x. auto.
+  - exists (const (idpath _)). intro. unfold const, compose. unfold id. auto.
+    (* We are stuck here to prove idpath tt == x where x : tt == tt *)
+  Restart.
+  intros.
+  exists (const tt). split.
+  - induction x, y. exists (const (idpath _)). intro. induction x. auto.
+  - eexists. intro. induction x0. simpl. induction x. unfold compose, const, id.
+    Unshelve. Focus 2.
+    + induction x, y. auto.
+    + simpl. auto.
+Qed.
+
+(* if you know x == y, then you know nothing. it is a tautology. *)
+Lemma unit_intro : forall {x y : unit}, x == y -> unit.
+Proof. intros. apply tt. Defined.
+
+Lemma unit_elim : forall {x y : unit}, unit -> x == y.
+Proof. myauto. Defined.
+
+Lemma unit_equiv : forall {x y}, isequiv (@unit_intro x y).
+Proof.
+  intros.
+  split.
+  - exists unit_elim. myauto.
+  - exists unit_elim. myauto.
+Qed.
+
+(* the same as transport_const *)
+Lemma unit_transport : forall {B} {x y : unit} {p : x == y} {u: B},
+         transport (ConstTF unit) p u == u.
+Proof. myauto. Qed.
+
