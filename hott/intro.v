@@ -721,11 +721,11 @@ Proof. myauto. Qed.
 Axiom funext : forall {A B} (f g : forall (x : A), B x),
          (f == g) ~= (forall (x : A), f x == g x).
 
-Definition happy : forall {A B} (f g : forall (x : A), B x),
+Definition happly : forall {A B} (f g : forall (x : A), B x),
          (f == g) -> (forall (x : A), f x == g x).
 Proof. myauto. Qed.
 
-Definition pi_elim {A B} := happy (A := A) (B := B).
+Definition pi_elim {A B} := happly (A := A) (B := B).
 
 Lemma pi_intro {A B} {f g : forall x, B x} : (forall (x : A), f x == g x) -> f == g.
 Proof.
@@ -757,3 +757,25 @@ Definition pi_transport : forall {T} {A : T -> Type} {B : forall x: T, A x -> Ty
                    (! (sigma_path_lift (! p) a))
                    (f (transport A (inv p) a)).
 Proof. myauto. Qed.
+
+Notation "p '⋆' '(' u ')'" := (transport _ p u)
+                         (no associativity, at level 50).
+
+Definition func_transport_equiv :
+  forall {T} {A B : T -> Type} {x y : T} (p : x == y)
+    (f : A x -> B x) (g : A y -> B y),
+         (transport (fun x => A x -> B x) p f == g) ~=
+         (forall a, transport B p (f a) == g (transport A p a)).
+Proof. intros. myauto. apply funext. Qed.
+
+
+Definition pi_transport_equiv :
+  forall {T} {A : T -> Type} {B : forall x, A x -> Type} {x1 x2 : T} (p : x1 == x2)
+    (f : forall a, B x1 a) (g : forall a, B x2 a),
+         (transport (fun x => forall a, B x a) p f == g)
+           ~= (forall a, transport (fun w => B w.1 w.2)
+                              (sigma_path_lift p a)
+                              (f a)
+                              ==
+                              g (transport A p a)).
+Proof. intros. myauto. apply funext. Qed.
