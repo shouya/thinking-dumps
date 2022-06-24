@@ -436,15 +436,15 @@ Admitted.
 (* an equivalence between A and B is a function f plus a proof isequiv f *)
 Notation "A ~= B" := {f : A -> B & isequiv f} (no associativity, at level 40).
 
-Lemma type_equiv_refl : forall A, A ~= A.
+Definition type_equiv_refl : forall A, A ~= A.
 Proof.
   intros.
   exists id. split.
   - exists id. auto.
   - exists id. auto.
-Qed.
+Defined.
 
-Lemma type_equiv_inv : forall A B, A ~= B -> B ~= A.
+Definition type_equiv_inv : forall A B, A ~= B -> B ~= A.
 Proof.
   intros.
   destruct X.
@@ -453,9 +453,9 @@ Proof.
   exists g0. split.
   - exists x. auto.
   - exists x. auto.
-Qed.
+Defined.
 
-Lemma type_equiv_comp : forall {A B C} (f : A ~= B) (g : B ~= C), A ~= C.
+Definition type_equiv_comp : forall {A B C} (f : A ~= B) (g : B ~= C), A ~= C.
 Proof.
   intros.
   destruct f, g0.
@@ -468,7 +468,7 @@ Proof.
   - exists (g0 ∘ g1). intro. eapply concat.
     + eapply (ap g0). apply beta1.
     + unfold id. apply beta0.
-Qed.
+Defined.
 
 Lemma product_implication :  forall {A B} {x x' : A} {y y' : B},
          ((x, y) == (x', y')) -> ((x == x') * (y == y')).
@@ -779,3 +779,12 @@ Definition pi_transport_equiv :
                               ==
                               g (transport A p a)).
 Proof. intros. myauto. apply funext. Qed.
+
+Definition id2eqv {A B} : (A == B) -> (A ~= B).
+Proof.
+  intro. induction X.
+  apply type_equiv_refl.
+Qed.
+
+(* univalence axiom *)
+Axiom ua : forall {A B}, (A ~= B) -> (A == B).
