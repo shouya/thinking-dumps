@@ -214,10 +214,10 @@ Arguments sigT [A]%type_scope P%type_scope
 Arguments existT [A]%type_scope P%function_scope x _
  *)
 
-Lemma path_lift {A} (P : A -> Type) {x y : A}
+Definition path_lift {A} (P : A -> Type) {x y : A}
       (u: P x) (p : x == y) :
          (existT P x u) == (existT P y (transport P p u)).
-Proof. induction p. simpl. constructor. Qed.
+Proof. induction p. simpl. constructor. Defined.
 
 Check path_lift.
 
@@ -638,6 +638,11 @@ Proof.
   exists x0. auto.
 Qed.
 
+Definition sigma_path_lift : forall {A} {P : A -> Type} {x y : A}
+                          (p : x == y) (u : P x),
+         (x; u) == (y; transport P p u).
+Proof. intros. apply path_lift. Defined.
+
 Definition sigma_intro_transport {A P} {x y : A} (p : x == y) (u : P x) :
   (x ; u) == (y ; transport P p u) :=
   sigma_intro (w := (x ; u)) (w' := (y ; transport P p u))
@@ -687,9 +692,8 @@ Proof.
   exists (const tt). split.
   - induction x, y. exists (const (idpath _)). intro. induction x. auto.
   - eexists. intro. induction x0. simpl. induction x. unfold compose, const, id.
-    Unshelve. Focus 2.
-    + induction x, y. auto.
-    + simpl. auto.
+    Unshelve. 2: { induction x, y. auto. }
+    simpl. auto.
 Qed.
 
 (* if you know x == y, then you know nothing. it is a tautology. *)
@@ -729,10 +733,27 @@ Proof.
   apply x0 in X. apply X.
 Defined.
 
-Definition pi_family {T} A B := fun (x : T) => (A x) -> (B x).
+Definition pi_func_family {T} A B := fun (x : T) => (A x) -> (B x).
 
-Definition pi_transport : forall {T} {A B : T -> Type} {x y : T} (p : x == y)
-                            (f : pi_family A B x),
-         transport (pi_family A B) p f ==
+Definition pi_func_transport : forall {T} {A B : T -> Type} {x y : T} (p : x == y)
+                            (f : pi_func_family A B x),
+         transport (pi_func_family A B) p f ==
          fun x => transport B p (f (transport A (inv p) x)).
+Proof. myauto. Qed.
+
+Definition pi_family {T} A B : T -> Type :=
+  fun (x : T) => (forall a: A x, B x a).
+Check pi_family.
+(* forall A : ?T -> Type, (forall x : ?T, A x -> Type) -> ?T -> Type *)
+
+Definition pi_sigma_family {T A} (B : forall x: T, A x -> Type) : {x: T & A x} -> Type :=
+  fun w => B w.1 w.2.
+
+Definition pi_transport : forall {T} {A : T -> Type} {B : forall x: T, A x -> Type}
+                            {x1 x2 : T} {f : forall a: A x1, B x1 a} (p : x1 == x2)
+                            (a : A x2),
+         transport (pi_family A B) p f a ==
+         transport (fun w => B w.1 w.2)
+                   (! (sigma_path_lift (! p) a))
+                   (f (transport A (inv p) a)).
 Proof. myauto. Qed.
