@@ -806,14 +806,41 @@ Axiom ua : forall {A B}, (A ~= B) ~= (A == B).
 
 Definition transport_equiv {A B : Type} (p : A == B) : A ~= B := id2eqv p.
 
-Definition ua_refl : forall x, idpath x == ua (type_equiv_refl x).
+Lemma type_intro {A B} : A ~= B -> A == B.
+Proof. apply ua. Defined.
+
+Definition ua_map {A B} := @type_intro A B.
+
+Lemma type_elim {A B} : A == B -> A ~= B.
+Proof. apply id2eqv. Defined.
+
+Lemma type_prop_uniq : forall {A B} (p : A == B), p == ua (id2eqv p).
 Proof.
   intros.
+  apply ua_map.
 
+
+Lemma type_prop_comp :forall {A B} (f : A ~= B) (x : A), id2eqv (ua f) x == f x.
+Proof.
+  pose proof type_intro f.
+  pose proof f x.
+  apply type_intro.
+
+
+Lemma transport_eq_transport_ap :
+  forall A (B : A -> Type) (x y : A) (p : x == y) (u: B x),
+         transport B p u == transport_type (ap B p) u.
+Proof. myauto. Defined.
 
 Definition eqv_prop_computation :
   forall A B (x : A) (f : A ~= B),
-         (transport_equiv (ua f)) x == f x.
+         (transport_type (ua f)) x == f x.
 Proof.
   intros.
-  induction f, p, s, s0.
+  unfold transport_type.
+  destruct f as [f []]. simpl in *.
+  unfold homotopy in *.
+
+Definition ua_refl : forall x, idpath x == ua (type_type_refl x).
+Proof.
+  intros.
