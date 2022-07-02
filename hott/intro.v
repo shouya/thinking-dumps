@@ -339,28 +339,28 @@ Check paths.
 Check @pair.
 
 (* quasi-inversion *)
-Record qinv {A B} (f : A -> B) : Type :=
-  mkQinv { g : B -> A
-          ; alpha : f ∘ g ~ id
-          ; beta : g ∘ f ~ id
-          }.
+Class QInv {A B} (f : A -> B) :=
+  { qinv_g : B -> A
+  ; qinv_fg : f ∘ qinv_g ~ id
+  ; qinv_gf : qinv_g ∘ f ~ id
+  }.
 
-Check qinv.
+Check QInv.
 
-Example qinv_id : forall A, qinv (@id A).
+Example qinv_id : forall A, QInv (@id A).
 Proof.
   intro.
-  eapply mkQinv with (g := id).
+  split with (qinv_g := id).
   - intro. auto.
   - intro. auto.
 Qed.
 
 Example qinv_invpath1 : forall {A} {x y z : A} {p : x == y},
-         qinv (fun (q : y == z) => p @ q).
+         QInv (fun (q : y == z) => p @ q).
 (* y == z -> x == z *)
 Proof.
   intros.
-  eapply mkQinv with (g := (fun (q : x == z) => !p @ q)).
+  split with (qinv_g := (fun (q : x == z) => !p @ q)).
   - induction p. intro. unfold compose. simpl.
     auto.
 
@@ -369,11 +369,11 @@ Proof.
 Qed.
 
 Example qinv_invpath2 : forall {A} {x y z : A} {p : x == y},
-         qinv (fun (q : z == x) => q @ p).
+         QInv (fun (q : z == x) => q @ p).
 (* z == x -> z == y *)
 Proof.
   intros.
-  eapply mkQinv with (g := (fun q : z == y => q @ !p)).
+  split with (qinv_g := (fun q : z == y => q @ !p)).
   - induction p. intro. unfold compose. simpl.
     rewrite <- (paths_eq (idpath_right_unit _)).
     rewrite <- (paths_eq (idpath_right_unit _)).
@@ -387,35 +387,42 @@ Qed.
 
 
 Example qinv_transport : forall {A} {x y : A} {p : x == y} {P : A -> Type},
-         qinv (fun px => transport P p px).
+         QInv (fun px => transport P p px).
 (* P x -> P y *)
 Proof.
   intros.
-  eapply mkQinv with (g := (fun py => transport P (inv p) py)).
+  split with (qinv_g := (fun py => transport P (inv p) py)).
   - induction p. simpl. unfold compose. intro. auto.
   - induction p. simpl. unfold compose. intro. auto.
 Qed.
 
-Definition isequiv {A B} (f : A -> B) : Type :=
-  {g : B -> A & f ∘ g ~ id} * {h : B -> A & h ∘ f ~ id}.
 
-Lemma qinv_implies_isequiv : forall {A B} (f : A -> B), qinv f -> isequiv f.
+Class Eqv {A B} (f : A -> B) :=
+  { eqv_g : B -> A
+  ; eqv_fg : f ∘ eqv_g ~ id
+  ; eqv_h : B -> A
+  ; eqv_hf : eqv_h ∘ f ~ id
+  }.
+
+(* Definition isequiv {A B} (f : A -> B) : Type := *)
+(*   {g : B -> A & f ∘ g ~ id} * {h : B -> A & h ∘ f ~ id}. *)
+
+Lemma qinv_implies_isequiv : forall {A B} (f : A -> B), QInv f -> Eqv f.
 Proof.
   intros.
   destruct X as [g alpha beta].
-  split.
-  - apply (existT _ g alpha).
-  - apply (existT _ g beta).
+  esplit.
+  - apply alpha.
+  - apply beta.
 Qed.
 
 
-Lemma isequiv_implies_qinv : forall {A B} (f : A -> B), isequiv f -> qinv f.
+Lemma isequiv_implies_qinv : forall {A B} (f : A -> B), Eqv f -> QInv f.
 Proof.
   intros.
-  destruct X as [[g alpha] [h beta]].
-  split with (g := g).
-  - intro.
-    auto.
+  destruct X as [g alpha h beta].
+  esplit.
+  - apply alpha.
   - intro.
     eapply concat.
     + eapply concat.
@@ -427,47 +434,53 @@ Proof.
       apply beta.
 Qed.
 
-Lemma isequiv_uniq_attempt : forall {A B} (f : A -> B) (e1 e2 : isequiv f),
+Lemma isequiv_uniq_attempt : forall {A B} (f : A -> B) (e1 e2 : Eqv f),
          e1 == e2.
   (* It requires identifying the identity types for cartesian product
   and dependent pair types, so we'll prove it later *)
 Admitted.
 
 (* an equivalence between A and B is a function f plus a proof isequiv f *)
-Notation "A ~= B" := {f : A -> B & isequiv f} (no associativity, at level 40).
+Definition Equivalence A B : Type := {f : A -> B & Eqv f}.
+Notation "A ~= B" := (Equivalence A B) (no associativity, at level 40).
+
+Definition eqv_to_fn A B (f : A ~= B) : A -> B := projT1 f.
+Coercion eqv_to_fn : Equivalence >-> Funclass.
+
+(* Set Printing Coercion eqv_to_fn. *)
+Print Graph.
 
 Definition type_equiv_refl : forall A, A ~= A.
 Proof.
   intros.
-  exists id. split.
-  - exists id. auto.
-  - exists id. auto.
+  exists id. esplit.
+  - intro. apply idpath.
+  - intro. apply idpath.
 Defined.
 
 Definition type_equiv_inv : forall A B, A ~= B -> B ~= A.
 Proof.
   intros.
   destruct X.
-  apply isequiv_implies_qinv in i.
-  destruct i.
-  exists g0. split.
-  - exists x. auto.
-  - exists x. auto.
+  apply isequiv_implies_qinv in e.
+  destruct e.
+  exists qinv_g0. split with (1 := qinv_gf0) (2 := qinv_fg0).
 Defined.
 
 Definition type_equiv_comp : forall {A B C} (f : A ~= B) (g : B ~= C), A ~= C.
 Proof.
   intros.
-  destruct f, g0.
-  apply isequiv_implies_qinv in i, i0.
-  destruct i, i0.
-  exists (x0 ∘ x). split.
-  - exists (g0 ∘ g1). intro. eapply concat.
-    + eapply (ap x0). apply alpha0.
-    + unfold id. apply alpha1.
-  - exists (g0 ∘ g1). intro. eapply concat.
-    + eapply (ap g0). apply beta1.
-    + unfold id. apply beta0.
+  destruct f, g.
+  apply isequiv_implies_qinv in e, e0.
+  destruct e, e0.
+  exists (x0 ∘ x).
+  split with (eqv_g := qinv_g0 ∘ qinv_g1) (eqv_h := qinv_g0 ∘ qinv_g1).
+  - intro. eapply concat.
+    + eapply (ap x0). apply qinv_fg0.
+    + unfold id. apply qinv_fg1.
+  - intro. eapply concat.
+    + eapply (ap qinv_g0). apply qinv_gf1.
+    + unfold id. apply qinv_gf0.
 Defined.
 
 Lemma product_implication :  forall {A B} {x x' : A} {y y' : B},
@@ -496,6 +509,7 @@ Proof.
   - intro.
     destruct x0. induction p, p0. auto.
   - intro.
+    unfold product_implication_converse, product_implication.
     (* I failed to prove this clause, so I decided to go on *)
 Admitted.
 
@@ -523,7 +537,7 @@ Proof.
   induction p, p0. auto.
 Defined.
 
-Lemma prod_equiv {A B} {x y : A * B} : isequiv (@prod_elim A B x y).
+Lemma prod_equiv {A B} {x y : A * B} : Eqv (@prod_elim A B x y).
 Proof.
   apply qinv_implies_isequiv.
   exists prod_intro.
@@ -616,13 +630,12 @@ Lemma sigma_intro : forall {A} {P: A -> Type} {w w' : {x : A & P x}},
 Proof. myauto. Defined.
 
 Lemma sigma_equiv : forall {A} {P : A -> Type} {w w' : {x : A & P x}},
-         isequiv (@sigma_elim A P w w').
+         Eqv (@sigma_elim A P w w').
 Proof.
   intros.
-  unfold isequiv.
-  split.
-  - exists sigma_intro. myauto.
-  - exists sigma_intro. myauto.
+  split with (eqv_g := sigma_intro) (eqv_h := sigma_intro).
+  - myauto.
+  - myauto.
 Qed.
 
 Lemma sigma_prop_uniq : forall {A P} (z : {x : A & P x}), z == (z.1 ; z.2).
@@ -683,18 +696,20 @@ Proof. intros. myauto. Qed.
 Theorem unit_equality_eqv_unit : forall {x y : unit}, (x == y) ~= unit.
 Proof.
   intro. induction x. intro y. induction y.
-  exists (const tt). split.
-  - exists (const (idpath _)). intro. unfold const, compose. induction x. auto.
-  - exists (const (idpath _)). intro. unfold const, compose. unfold id. auto.
+  exists (const tt). split with (eqv_h := const (idpath _)) (eqv_g := const (idpath _)).
+  - intro. unfold const, compose. induction x. auto.
+  - intro. unfold const, compose. unfold id. auto.
     (* We are stuck here to prove idpath tt == x where x : tt == tt *)
   Restart.
   intros.
-  exists (const tt). split.
-  - induction x, y. exists (const (idpath _)). intro. induction x. auto.
-  - eexists. intro. induction x0. simpl. induction x. unfold compose, const, id.
+  exists (const tt).
+  esplit.
+  - induction x, y. intro. induction x. auto.
+  - intro. induction x0. induction x. unfold compose, const, id.
+    Unshelve. 2: { induction x, y. auto. }
     Unshelve. 2: { induction x, y. auto. }
     simpl. auto.
-Qed.
+Defined.
 
 (* if you know x == y, then you know nothing. it is a tautology. *)
 Lemma unit_intro : forall {x y : unit}, x == y -> unit.
@@ -703,12 +718,12 @@ Proof. intros. apply tt. Defined.
 Lemma unit_elim : forall {x y : unit}, unit -> x == y.
 Proof. myauto. Defined.
 
-Lemma unit_equiv : forall {x y}, isequiv (@unit_intro x y).
+Lemma unit_equiv : forall {x y}, Eqv (@unit_intro x y).
 Proof.
   intros.
-  split.
-  - exists unit_elim. myauto.
-  - exists unit_elim. myauto.
+  split with (eqv_h := unit_elim) (eqv_g := unit_elim).
+  - myauto.
+  - myauto.
 Qed.
 
 (* the same as transport_const *)
@@ -729,8 +744,8 @@ Definition pi_elim {A B} := happly (A := A) (B := B).
 
 Lemma pi_intro {A B} {f g : forall x, B x} : (forall (x : A), f x == g x) -> f == g.
 Proof.
-  intro. pose proof funext f g. destruct X0. destruct i. destruct s.
-  apply x0 in X. apply X.
+  intro. pose proof funext f g. destruct X0. destruct e.
+  auto.
 Defined.
 
 Definition pi_func_family {T} A B := fun (x : T) => (A x) -> (B x).
@@ -784,7 +799,21 @@ Definition id2eqv {A B} : (A == B) -> (A ~= B).
 Proof.
   intro. induction X.
   apply type_equiv_refl.
-Qed.
+Defined.
 
 (* univalence axiom *)
-Axiom ua : forall {A B}, (A ~= B) -> (A == B).
+Axiom ua : forall {A B}, (A ~= B) ~= (A == B).
+
+Definition transport_equiv {A B : Type} (p : A == B) : A ~= B := id2eqv p.
+
+Definition ua_refl : forall x, idpath x == ua (type_equiv_refl x).
+Proof.
+  intros.
+
+
+Definition eqv_prop_computation :
+  forall A B (x : A) (f : A ~= B),
+         (transport_equiv (ua f)) x == f x.
+Proof.
+  intros.
+  induction f, p, s, s0.
