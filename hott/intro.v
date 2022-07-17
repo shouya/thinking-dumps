@@ -414,7 +414,7 @@ Proof.
   esplit.
   - apply alpha.
   - apply beta.
-Qed.
+Defined.
 
 
 Lemma isequiv_implies_qinv : forall {A B} (f : A -> B), Eqv f -> QInv f.
@@ -432,7 +432,7 @@ Proof.
         apply alpha.
     + unfold id at 1.
       apply beta.
-Qed.
+Defined.
 
 Lemma isequiv_uniq_attempt : forall {A B} (f : A -> B) (e1 e2 : Eqv f),
          e1 == e2.
@@ -441,7 +441,7 @@ Lemma isequiv_uniq_attempt : forall {A B} (f : A -> B) (e1 e2 : Eqv f),
 Admitted.
 
 (* an equivalence between A and B is a function f plus a proof isequiv f *)
-Definition Equivalence A B : Type := {f : A -> B & Eqv f}.
+Definition Equivalence A B := {f : A -> B & Eqv f}.
 Notation "A ~= B" := (Equivalence A B) (no associativity, at level 40).
 
 Definition eqv_to_fn A B (f : A ~= B) : A -> B := projT1 f.
@@ -801,45 +801,113 @@ Proof.
   apply type_equiv_refl.
 Defined.
 
+Lemma qinv_equiv_equiv :
+  forall A B (f : A -> B), Eqv (@qinv_implies_isequiv A B f).
+Proof.
+  intros.
+  exists (eqv_g := isequiv_implies_qinv f) (eqv_h := isequiv_implies_qinv f).
+  - intro. destruct x.
+    unfold isequiv_implies_qinv, qinv_implies_isequiv, compose.
+
+
 (* univalence axiom *)
-Axiom ua : forall {A B}, (A ~= B) ~= (A == B).
+Axiom ua : forall {A B}, QInv (@id2eqv A B).
+Coercion qinv_g : QInv >-> Funclass.
 
 Definition transport_equiv {A B : Type} (p : A == B) : A ~= B := id2eqv p.
 
 Lemma type_intro {A B} : A ~= B -> A == B.
 Proof. apply ua. Defined.
 
-Definition ua_map {A B} := @type_intro A B.
-
 Lemma type_elim {A B} : A == B -> A ~= B.
 Proof. apply id2eqv. Defined.
 
-Lemma type_prop_uniq : forall {A B} (p : A == B), p == ua (id2eqv p).
+Definition ua_map : forall {A B}, A ~= B -> A == B.
+Proof. intros. apply ua. apply X. Defined.
+
+Lemma type_prop_uniq :
+  forall {A B} (p : A == B) (e := @ua A B), e (id2eqv p) == p.
 Proof.
   intros.
-  apply ua_map.
+  destruct e.
+  pose proof qinv_gf0 p.
+  unfold id, compose, homotopy, ua_map in *.
+  simpl. apply X.
+  clear qinv_fg0 qinv_gf0.
 
+
+  induction X.
+  unfold ua_map.
+
+
+Lemma type_prop_uniq :
+  forall {A B} (p : A == B)
+         (e := @ua A B),
+         p == e (id2eqv p).
+Proof.
+  intros.
+  destruct e.
+  simpl.
+  apply paths_symm.
+  pose proof eqv_fg0 (id2eqv p).
+  unfold id, compose, homotopy in *.
+
+  pose proof eqv_hf0 p.
+  induction X0.
+  induction x. induction X. simpl.
+
+  eapply whisker_right.
+  eapply concat.
+  - apply whis
+
+  induction p as [X].
+  pose proof eqv_hf0 (idpath X).
+  pose proof eqv_fg0 (type_equiv_refl X).
+  unfold homotopy, compose, id in *.
+  simpl in *.
+  apply paths_symm.
+  induction X0.
+  induction X1.
+
+
+
+  pose proof isequiv_implies_qinv id2eqv e.
+  destruct X.
+  induction p. simpl.
+  unfold homotopy, compose, id in eqv_hf0, eqv_fg0.
+  pose proof eqv_hf0 (idpath x).
+  apply paths_symm.
+
+
+
+
+  (* apply ua_map. *)
+  (*
+     Unable to unify
+     "@paths Type ?A ?B"
+     with
+     "@paths (@paths Type A B) p (eqv_to_fn (Equivalence A B) (@paths Type A B) (@ua A B) (@id2eqv A B p))".
+   *)
+
+Admitted.
 
 Lemma type_prop_comp :forall {A B} (f : A ~= B) (x : A), id2eqv (ua f) x == f x.
+Proof. Admitted.
+
+Lemma ua_refl : forall A, (ua (type_equiv_refl A)) == idpath A.
+Proof. Admitted.
+
+Lemma ua_concat : forall A B C (f : A ~= B) (g : B ~= C),
+         (ua f) @ (ua g) == ua (type_equiv_comp f g).
 Proof.
-  pose proof type_intro f.
-  pose proof f x.
-  apply type_intro.
+  intros.
+  destruct f as [f []], g as [g []].
 
 
 Lemma transport_eq_transport_ap :
   forall A (B : A -> Type) (x y : A) (p : x == y) (u: B x),
-         transport B p u == transport_type (ap B p) u.
+         transport B p u == id2eqv (ap B p) u.
 Proof. myauto. Defined.
-
-Definition eqv_prop_computation :
-  forall A B (x : A) (f : A ~= B),
-         (transport_type (ua f)) x == f x.
-Proof.
-  intros.
-  unfold transport_type.
-  destruct f as [f []]. simpl in *.
-  unfold homotopy in *.
 
 Definition ua_refl : forall x, idpath x == ua (type_type_refl x).
 Proof.
