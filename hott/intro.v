@@ -801,18 +801,10 @@ Proof.
   apply type_equiv_refl.
 Defined.
 
-Lemma qinv_equiv_equiv :
-  forall A B (f : A -> B), Eqv (@qinv_implies_isequiv A B f).
-Proof.
-  intros.
-  exists (eqv_g := isequiv_implies_qinv f) (eqv_h := isequiv_implies_qinv f).
-  - intro. destruct x.
-    unfold isequiv_implies_qinv, qinv_implies_isequiv, compose.
-
-
 (* univalence axiom *)
-Axiom ua : forall {A B}, QInv (@id2eqv A B).
+Axiom ua : forall {A B}, (A ~= B) ~= (A == B).
 Coercion qinv_g : QInv >-> Funclass.
+Coercion eqv_g : Eqv >-> Funclass.
 
 Definition transport_equiv {A B : Type} (p : A == B) : A ~= B := id2eqv p.
 
@@ -825,90 +817,23 @@ Proof. apply id2eqv. Defined.
 Definition ua_map : forall {A B}, A ~= B -> A == B.
 Proof. intros. apply ua. apply X. Defined.
 
-Lemma type_prop_uniq :
-  forall {A B} (p : A == B) (e := @ua A B), e (id2eqv p) == p.
-Proof.
-  intros.
-  destruct e.
-  pose proof qinv_gf0 p.
-  unfold id, compose, homotopy, ua_map in *.
-  simpl. apply X.
-  clear qinv_fg0 qinv_gf0.
+(* it is useful to break this equivalence into:
 
+  - induction rule for A==B, ua (aka eqv2id)
+  - elimination rule, id2eqv
+  - prop computation rule, id2eqv(eqv2id(f), x) = f x
+  - prop uniqueness rule, eqv2id(id2eqv(p)) = p
 
-  induction X.
-  unfold ua_map.
+I tried hard but still cannot prove them. So I'll simply state them as axioms.
+ *)
 
+Axiom ua_id_is_refl : forall A, (ua (type_equiv_refl A)) == idpath A.
 
 Lemma type_prop_uniq :
-  forall {A B} (p : A == B)
-         (e := @ua A B),
-         p == e (id2eqv p).
+  forall {A B} (p : A == B), ua (id2eqv p) == p.
 Proof.
   intros.
-  destruct e.
-  simpl.
-  apply paths_symm.
-  pose proof eqv_fg0 (id2eqv p).
-  unfold id, compose, homotopy in *.
+  unfold id2eqv. induction p. simpl. apply ua_id_is_refl.
+Qed.
 
-  pose proof eqv_hf0 p.
-  induction X0.
-  induction x. induction X. simpl.
-
-  eapply whisker_right.
-  eapply concat.
-  - apply whis
-
-  induction p as [X].
-  pose proof eqv_hf0 (idpath X).
-  pose proof eqv_fg0 (type_equiv_refl X).
-  unfold homotopy, compose, id in *.
-  simpl in *.
-  apply paths_symm.
-  induction X0.
-  induction X1.
-
-
-
-  pose proof isequiv_implies_qinv id2eqv e.
-  destruct X.
-  induction p. simpl.
-  unfold homotopy, compose, id in eqv_hf0, eqv_fg0.
-  pose proof eqv_hf0 (idpath x).
-  apply paths_symm.
-
-
-
-
-  (* apply ua_map. *)
-  (*
-     Unable to unify
-     "@paths Type ?A ?B"
-     with
-     "@paths (@paths Type A B) p (eqv_to_fn (Equivalence A B) (@paths Type A B) (@ua A B) (@id2eqv A B p))".
-   *)
-
-Admitted.
-
-Lemma type_prop_comp :forall {A B} (f : A ~= B) (x : A), id2eqv (ua f) x == f x.
-Proof. Admitted.
-
-Lemma ua_refl : forall A, (ua (type_equiv_refl A)) == idpath A.
-Proof. Admitted.
-
-Lemma ua_concat : forall A B C (f : A ~= B) (g : B ~= C),
-         (ua f) @ (ua g) == ua (type_equiv_comp f g).
-Proof.
-  intros.
-  destruct f as [f []], g as [g []].
-
-
-Lemma transport_eq_transport_ap :
-  forall A (B : A -> Type) (x y : A) (p : x == y) (u: B x),
-         transport B p u == id2eqv (ap B p) u.
-Proof. myauto. Defined.
-
-Definition ua_refl : forall x, idpath x == ua (type_type_refl x).
-Proof.
-  intros.
+Axiom type_prop_comp :forall {A B} (f : A ~= B) (x : A), id2eqv (ua f) x == f x.
