@@ -308,7 +308,7 @@ Proof. intros. induction p. simpl. reflexivity. Qed.
 
 
 Lemma homotopy_comp_id :
-  forall A (f : A -> A) (H : f ~ id) (x : A), H (f x) == ap f (H x).
+  forall {A} {f : A -> A} (H : f ~ id) (x : A), H (f x) == ap f (H x).
 Proof.
   intros.
   pose (Hinv := homotopy_symm H).
@@ -467,20 +467,64 @@ Proof.
   exists qinv_g0. split with (1 := qinv_gf0) (2 := qinv_fg0).
 Defined.
 
-Definition type_equiv_comp : forall {A B C} (f : A ~= B) (g : B ~= C), A ~= C.
+Lemma comp_assoc : forall {A B C D} {f : A -> B} {g : B -> C} {h : C -> D},
+         (h ∘ g ∘ f) ~ (h ∘ (g ∘ f)).
+Proof.
+  intros.
+  unfold compose.
+  intro.
+  auto.
+Qed.
+
+Lemma comp_id_cancel : forall {A B C} {f : A -> B} {g : B -> B} {h : B -> C} (H : g ~ id),
+         (h ∘ g ∘ f) ~ (h ∘ f).
+Proof.
+  intros. intro.
+  pose proof H (f x).
+  unfold compose. unfold id in X.
+  induction X.
+  pose proof H x0.
+  unfold id in X.
+  induction X.
+  auto.
+Qed.
+
+Lemma comp_retract : forall {A B C} {f1 f2 : A -> B} {g : B -> C} (H : f1 ~ f2),
+         (g ∘ f2) ~ (g ∘ f1).
+Proof.
+  intros.
+  unfold compose.
+  intro.
+  induction (H x).
+  auto.
+Qed.
+
+Definition type_equiv_comp : forall {A B C} (g : B ~= C) (f : A ~= B), A ~= C.
 Proof.
   intros.
   destruct f, g.
-  apply isequiv_implies_qinv in e, e0.
   destruct e, e0.
-  exists (x0 ∘ x).
-  split with (eqv_g := qinv_g0 ∘ qinv_g1) (eqv_h := qinv_g0 ∘ qinv_g1).
-  - intro. eapply concat.
-    + eapply (ap x0). apply qinv_fg0.
-    + unfold id. apply qinv_fg1.
-  - intro. eapply concat.
-    + eapply (ap qinv_g0). apply qinv_gf1.
-    + unfold id. apply qinv_gf0.
+  split with (x := x0 ∘ x).
+  split with (eqv_g := eqv_g0 ∘ eqv_g1) (eqv_h := eqv_h0 ∘ eqv_h1).
+  eapply homotopy_trans.
+  - eapply comp_assoc.
+  - eapply homotopy_trans.
+    + eapply comp_retract.
+      apply homotopy_symm.
+      apply (homotopy_symm comp_assoc).
+    + eapply homotopy_trans.
+      * apply (comp_id_cancel eqv_fg0).
+      * apply eqv_fg1.
+
+  - eapply homotopy_trans.
+    + eapply comp_assoc.
+    + eapply homotopy_trans.
+      * eapply comp_retract.
+        apply homotopy_symm.
+        apply (homotopy_symm comp_assoc).
+      * eapply homotopy_trans.
+        -- apply (comp_id_cancel eqv_hf1).
+        -- apply eqv_hf0.
 Defined.
 
 Lemma product_implication :  forall {A B} {x x' : A} {y y' : B},
