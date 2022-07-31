@@ -282,7 +282,7 @@ Defined.
 
 Lemma homotopy_trans : forall {A B} {f g h : A -> B}, f ~ g -> g ~ h -> f ~ h.
 Proof. intros. intro. pose proof (X x). pose proof (X0 x).
-       induction X1. induction X2. auto. Qed.
+       induction X1. induction X2. auto. Defined.
 
 #[local] Hint Resolve homotopy_refl : core.
 #[local] Hint Resolve homotopy_symm : core.
@@ -295,12 +295,18 @@ Proof.
   intros. induction p.
   rewrite ap_idpath. rewrite ap_idpath. induction (H x).
   auto.
-Qed.
+Defined.
 
 #[local] Hint Unfold id : core.
 
 Lemma paths_eq : forall {A} {x y : A} (p : x == y), x = y.
 Proof. intros. induction p. auto. Qed.
+
+Lemma eq_paths : forall {A} {x y : A} (p : x = y), x == y.
+Proof. intros. induction p. auto. Qed.
+
+#[local] Hint Resolve paths_eq : core.
+#[local] Hint Resolve eq_paths : core.
 
 Lemma ap_id :
   forall {A} {x y : A} (p : x == y), ap id p = p.
@@ -474,7 +480,7 @@ Proof.
   unfold compose.
   intro.
   auto.
-Qed.
+Defined.
 
 Lemma comp_id_cancel : forall {A B C} {f : A -> B} {g : B -> B} {h : B -> C} (H : g ~ id),
          (h ∘ g ∘ f) ~ (h ∘ f).
@@ -487,7 +493,7 @@ Proof.
   unfold id in X.
   induction X.
   auto.
-Qed.
+Defined.
 
 Lemma comp_retract : forall {A B C} {f1 f2 : A -> B} {g : B -> C} (H : f1 ~ f2),
          (g ∘ f2) ~ (g ∘ f1).
@@ -497,7 +503,7 @@ Proof.
   intro.
   induction (H x).
   auto.
-Qed.
+Defined.
 
 Definition type_equiv_comp : forall {A B C} (g : B ~= C) (f : A ~= B), A ~= C.
 Proof.
@@ -871,13 +877,44 @@ Proof. intros. apply ua. apply X. Defined.
 I tried hard but still cannot prove them. So I'll simply state them as axioms.
  *)
 
-Axiom ua_id_is_refl : forall A, (ua (type_equiv_refl A)) == idpath A.
+Axiom type_prop_uniq : forall {A B} (p : A == B), ua (id2eqv p) == p.
+Axiom type_prop_comp :forall {A B} (f : A ~= B), id2eqv (ua f) == f.
 
-Lemma type_prop_uniq :
-  forall {A B} (p : A == B), ua (id2eqv p) == p.
+Lemma type_equiv_comp_id2eqv :
+  forall {A B C} {p: A == B} {q : B == C},
+         type_equiv_comp (id2eqv q) (id2eqv p) == id2eqv (p @ q).
 Proof.
   intros.
-  unfold id2eqv. induction p. simpl. apply ua_id_is_refl.
+  unfold id2eqv, type_equiv_comp. simpl.
+  induction p, q. simpl. unfold id, compose, type_equiv_refl, id.
+  unfold homotopy_trans, comp_assoc, comp_retract, comp_id_cancel. simpl.
+  auto.
 Qed.
 
-Axiom type_prop_comp :forall {A B} (f : A ~= B) (x : A), id2eqv (ua f) x == f x.
+Lemma ua_id : forall {A}, ua (type_equiv_refl A) == idpath A.
+Proof.
+  intro.
+  apply (type_prop_uniq (idpath A)).
+Qed.
+
+
+Lemma ua_comp :forall {A B C} (f : A ~= B) (g : B ~= C),
+         ua (type_equiv_comp g f) == ua(f) @ ua(g).
+Proof.
+  intros.
+  pose (p := ua f).
+  pose (q := ua g).
+  replace (ua f) with p by auto.
+  replace (ua g) with q by auto.
+  eapply concat.
+  - eapply (ap ua).
+    replace g with (id2eqv q).
+    Focus 2. apply paths_eq. unfold q. apply type_prop_comp.
+    replace f with (id2eqv p).
+    Focus 2. apply paths_eq. unfold p. apply type_prop_comp.
+    apply idpath.
+  - eapply concat.
+    + eapply (ap ua).
+      apply type_equiv_comp_id2eqv.
+    + apply type_prop_uniq.
+Qed.
