@@ -456,22 +456,24 @@ Coercion eqv_to_fn : Equivalence >-> Funclass.
 (* Set Printing Coercion eqv_to_fn. *)
 Print Graph.
 
-Definition type_equiv_refl : forall A, A ~= A.
-Proof.
-  intros.
-  exists id. esplit.
-  - intro. apply idpath.
-  - intro. apply idpath.
-Defined.
+Definition type_equiv_refl : forall A, A ~= A :=
+  fun A : Type =>
+    existT (fun f : A -> A => Eqv f) (fun x => x)
+           {|
+             eqv_g := fun x => x;
+             eqv_fg := (fun x => idpath x) : (id ∘ (fun x : A => x)) ~ id;
+             eqv_h := fun x => x;
+             eqv_hf := (fun x => idpath x) : (id ∘ id) ~ id
+           |}.
 
-Definition type_equiv_inv : forall A B, A ~= B -> B ~= A.
-Proof.
-  intros.
-  destruct X.
-  apply isequiv_implies_qinv in e.
-  destruct e.
-  exists qinv_g0. split with (1 := qinv_gf0) (2 := qinv_fg0).
-Defined.
+(* Proof. *)
+(*   intros. *)
+(*   exists id. esplit. *)
+(*   - intro. apply idpath. *)
+(*   - intro. apply idpath. *)
+(* Defined. *)
+
+Definition idequiv := type_equiv_refl.
 
 Lemma comp_assoc : forall {A B C D} {f : A -> B} {g : B -> C} {h : C -> D},
          (h ∘ g ∘ f) ~ (h ∘ (g ∘ f)).
@@ -495,7 +497,20 @@ Proof.
   auto.
 Defined.
 
-Lemma comp_retract : forall {A B C} {f1 f2 : A -> B} {g : B -> C} (H : f1 ~ f2),
+Lemma comp_id_cancel_2 : forall {A B C} {f : A -> B} {g : B -> B} {h : B -> C} (H : g ~ id),
+         (h ∘ (g ∘ f)) ~ (h ∘ f).
+Proof.
+  intros. intro.
+  pose proof H (f x).
+  unfold compose. unfold id in X.
+  induction X.
+  pose proof H x0.
+  unfold id in X.
+  induction X.
+  auto.
+Defined.
+
+Lemma comp_retract_right : forall {A B C} {f1 f2 : A -> B} {g : B -> C} (H : f1 ~ f2),
          (g ∘ f2) ~ (g ∘ f1).
 Proof.
   intros.
@@ -503,6 +518,36 @@ Proof.
   intro.
   induction (H x).
   auto.
+Defined.
+
+Lemma comp_retract_left : forall {A B C} {f : A -> B} {g1 g2 : B -> C} (H : g1 ~ g2),
+         (g1 ∘ f) ~ (g2 ∘ f).
+Proof.
+  intros.
+  unfold compose.
+  intro.
+  induction (H (f x)).
+  auto.
+Defined.
+
+Definition type_equiv_inv : forall {A B}, A ~= B -> B ~= A.
+Proof.
+  intros.
+  destruct X as [f []].
+  exists (eqv_h0 ∘ f ∘ eqv_g0).
+  split with (eqv_g := f) (eqv_h := f).
+  - eapply homotopy_trans.
+    + apply comp_assoc.
+    + eapply homotopy_trans.
+      * apply comp_assoc.
+      * eapply homotopy_trans.
+        eapply comp_retract_right.
+        apply homotopy_symm.
+        apply (homotopy_symm comp_assoc).
+        eapply homotopy_trans.
+        eapply comp_id_cancel_2. assumption. assumption.
+  - eapply homotopy_trans.
+    eapply comp_id_cancel_2. assumption. assumption.
 Defined.
 
 Definition type_equiv_comp : forall {A B C} (g : B ~= C) (f : A ~= B), A ~= C.
@@ -515,7 +560,7 @@ Proof.
   eapply homotopy_trans.
   - eapply comp_assoc.
   - eapply homotopy_trans.
-    + eapply comp_retract.
+    + eapply comp_retract_right.
       apply homotopy_symm.
       apply (homotopy_symm comp_assoc).
     + eapply homotopy_trans.
@@ -525,7 +570,7 @@ Proof.
   - eapply homotopy_trans.
     + eapply comp_assoc.
     + eapply homotopy_trans.
-      * eapply comp_retract.
+      * eapply comp_retract_right.
         apply homotopy_symm.
         apply (homotopy_symm comp_assoc).
       * eapply homotopy_trans.
@@ -878,7 +923,7 @@ I tried hard but still cannot prove them. So I'll simply state them as axioms.
  *)
 
 Axiom type_prop_uniq : forall {A B} (p : A == B), ua (id2eqv p) == p.
-Axiom type_prop_comp :forall {A B} (f : A ~= B), id2eqv (ua f) == f.
+Axiom type_prop_comp : forall {A B} (f : A ~= B), id2eqv (ua f) == f.
 
 Lemma type_equiv_comp_id2eqv :
   forall {A B C} {p: A == B} {q : B == C},
@@ -887,7 +932,7 @@ Proof.
   intros.
   unfold id2eqv, type_equiv_comp. simpl.
   induction p, q. simpl. unfold id, compose, type_equiv_refl, id.
-  unfold homotopy_trans, comp_assoc, comp_retract, comp_id_cancel. simpl.
+  unfold homotopy_trans, comp_assoc, comp_retract_right, comp_id_cancel. simpl.
   auto.
 Qed.
 
@@ -898,7 +943,7 @@ Proof.
 Qed.
 
 
-Lemma ua_comp :forall {A B C} (f : A ~= B) (g : B ~= C),
+Lemma ua_comp : forall {A B C} (f : A ~= B) (g : B ~= C),
          ua (type_equiv_comp g f) == ua(f) @ ua(g).
 Proof.
   intros.
@@ -909,12 +954,37 @@ Proof.
   eapply concat.
   - eapply (ap ua).
     replace g with (id2eqv q).
-    Focus 2. apply paths_eq. unfold q. apply type_prop_comp.
+    2: {apply paths_eq. unfold q. apply type_prop_comp.}
     replace f with (id2eqv p).
-    Focus 2. apply paths_eq. unfold p. apply type_prop_comp.
+    2: {apply paths_eq. unfold p. apply type_prop_comp.}
     apply idpath.
   - eapply concat.
     + eapply (ap ua).
       apply type_equiv_comp_id2eqv.
     + apply type_prop_uniq.
+Qed.
+
+Lemma ua_inv : forall {A B} (f : A ~= B),
+         ! (ua f) == ua (type_equiv_inv f).
+Proof.
+  intros.
+  pose (p := ua f).
+  replace f with (id2eqv p).
+  2 : { apply paths_eq. unfold p. apply type_prop_comp. }
+  induction p. clear f.
+  simpl. unfold id, compose, type_equiv_inv.
+  unfold homotopy_symm, comp_assoc, homotopy_trans,
+    comp_id_cancel, comp_id_cancel_2, id.
+  simpl.
+
+  replace (eqv_to_fn (Equivalence x x) (@paths Type x x) (@ua x x)
+       (@existT (forall _ : x, x) (fun f : forall _ : x, x => @Eqv x x f)
+          (fun x0 : x => x0)
+          (Build_Eqv x x (fun x0 : x => x0) (fun x0 : x => x0)
+             (fun x0 : x => @idpath x x0) (fun x0 : x => x0)
+             (fun x0 : x => @idpath x x0)))) with
+    (eqv_to_fn (Equivalence x x) (@paths Type x x) (@ua x x) (type_equiv_refl x)).
+
+  rewrite (paths_eq ua_id). auto.
+  auto.
 Qed.
