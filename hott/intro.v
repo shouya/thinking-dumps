@@ -289,7 +289,7 @@ Proof. intros. intro. pose proof (X x). pose proof (X0 x).
 #[local] Hint Resolve homotopy_trans : core.
 
 Lemma homotopy_natural :
-  forall {A B} (f g : A -> B) (H : f ~ g) (x y : A) (p : x == y),
+  forall {A B} {f g : A -> B} (H : f ~ g) {x y : A} (p : x == y),
          H x @ ap g p == ap f p @ H y.
 Proof.
   intros. induction p.
@@ -314,13 +314,13 @@ Proof. intros. induction p. simpl. reflexivity. Qed.
 
 
 Lemma homotopy_comp_id :
-  forall {A} {f : A -> A} (H : f ~ id) (x : A), H (f x) == ap f (H x).
+  forall {A} {f : A -> A} (H : f ~ id) {x : A}, H (f x) == ap f (H x).
 Proof.
   intros.
   pose (Hinv := homotopy_symm H).
   assert (Hcompinv : H x @ Hinv x = idpath (f x)).
   { unfold Hinv. unfold homotopy_symm. apply concat_inv. }
-  pose proof homotopy_natural _ _ H (f x) x (H x).
+  pose proof @homotopy_natural _ _ _ _ H (f x) x (H x).
   rewrite ap_id in X.
 
   apply (fun X => whisker_right X (Hinv x)) in X.
@@ -987,4 +987,10 @@ Proof.
 
   rewrite (paths_eq ua_id). auto.
   auto.
+Qed.
+
+Lemma transport_is_ap {A} {B : A -> Type} {x y : A} {p : x == y} {u : B x} :
+  transport B p u == id2eqv (ap B p) u.
+Proof.
+  induction p. simpl. auto.
 Qed.
