@@ -5,7 +5,7 @@ import Control.Arrow
 
 import Prelude hiding (id, (.))
 
--- Exerciser 1: Write Arrow instances for the following types
+-- Exercise 1: Write Arrow instances for the following types
 newtype Reader s i o = R ((s,i) -> o)
 newtype Writer i o = W (i -> (String, o))
 
@@ -41,7 +41,7 @@ instance Arrow Writer where
   first (W f) = W $ \(i,b) -> let (s, o) = f i
                               in (s, (o, b))
 
--- Exerciser 2: The following is almost an arrow type, what goes wrong?
+-- Exercise 2: The following is almost an arrow type, what goes wrong?
 newtype ListMap i o = LM ([i] -> [o])
 
 -- Solution: we just try it!
@@ -63,7 +63,7 @@ instance Arrow ListMap where
     --- so the zip is not working. this is the problem.
     in zip (f is) os
 
--- Exerciser 3: Define the following as an arrow type
+-- Exercise 3: Define the following as an arrow type
 data Stream a = Cons a (Stream a)
 newtype StreamMap i o = SM (Stream i -> Stream o)
 
@@ -91,6 +91,62 @@ instance Arrow StreamMap where
       zipStream :: Stream a -> Stream b -> Stream (a, b)
       zipStream (Cons a as) (Cons b bs) = Cons (a, b) (zipStream as bs)
 
--- Exerciser 4: Show that the following is a functor:
+-- Exercise 4: Show that the following is a functor:
 zipRf :: (Arrow y) => y a b -> (c -> c') -> y (a, c) (b, c')
-zipRf f g = first f >>> arr (id *** g)
+zipRf f g = first f >>> (id *** arr g)
+
+-- Solution:
+
+{-
+-- We first show zipRf preserves id by showing that
+-- zipRf f id = first f
+
+zipRf f id = first f >>> (id *** arr id)
+           = first f >>> (id *** id)
+           = first f >>> id
+           = first f
+
+-- We then show zipRf preserves composition by showing that
+-- zipRf f (g >>> g') = zipRf f g >>> zipRf f g'
+
+zipRf f g >>> zipRf f g' = first f >>> (id *** arr g) >>>
+                           first f >>> (id *** arr g')
+
+zipRf f (g >>> g') = first f >>> (id *** arr (g >>> g'))
+                   = first f >>> (first id >>> second (arr (g >>> g'))
+                   = first f >>> first id >>> second (arr g >>> arr g')
+                   = first f >>> first id >>> second (arr g) >>> second (arr g')
+                   = first f >>> (first id >>> second (arr g)) >>> second (arr g')
+                   = first f >>> (id *** arr g) >>> second (arr g')
+                   = zipRf f g >>> second (arr g')
+
+
+Now we must prove zipRf f g' = second (arr g').
+
+zipRf f g' = first f >>> (id *** arr g')
+           = first f >>> (first id >>> second (arr g'))
+           = first f >>> first id >>> second (arr g')
+           = first (f >>> id) >>> second (arr g')
+           = first f >>> second (arr g')
+
+So no. this function is not a functor.
+
+There is an extra `first f` in `zipRf f g >>> zipRf f g'`
+comparing to `zipRf f (g >>> g')`.
+
+Let me find a counter example to show it is not a functor.
+-}
+
+ex4CounterExample :: IO ()
+ex4CounterExample = let f = arr (+1) :: Int -> Int
+                        g = (+2)
+                        g' = (+3)
+                        lhs = zipRf f (g >>> g')
+                        rhs = zipRf f g >>> zipRf f g'
+                    in do
+  print (lhs (10,10))
+  print (rhs (10,10))
+
+-- prints: (11,15) and (12,15)
+-- so zipRf f (g >>> g') /= zipRf f g >>> zipRf f g'
+
