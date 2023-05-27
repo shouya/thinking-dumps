@@ -157,8 +157,9 @@ ex4CounterExample = let f = arr (+1) :: Int -> Int
 
 curryA :: Arrow y => y (a, b) c -> a -> y b c
 curryA f a = mkPair a >>> f
-  where mkPair :: (Arrow y) => a -> y b (a, b)
-        mkPair a = arr $ \b -> (a, b)
+
+mkPair :: (Arrow y) => a -> y b (a, b)
+mkPair a = arr $ \b -> (a, b)
 
 uncurryA :: forall y a b c. ArrowApply y => (a -> y b c) -> y (a, b) c
 uncurryA f = (arr (\(a, b) -> (f a :: y b c, b :: b)) :: y (a, b) (y b c, b))
@@ -239,3 +240,38 @@ instance Category Auto where
   (Auto g) . (Auto f) = Auto $ \a -> let (b, ab) = f a
                                          (c, bc) = g b
                                      in (c, bc . ab)
+
+
+-- Exercise 5: verify the ArrowApply axioms for pure functions
+-- Solution:
+--
+-- composition:
+{-
+arr ((>>> h) *** id) >>> app = ((>>> h) *** id) >>> app
+                             = app . ((h.) *** id)
+                             = app . (\(f,a) -> ((h.f), a))
+                             = (\(f,a) -> (h.f) a)
+                             = (\(f,a) -> h (f a))
+
+app >>> h                    = h . app
+                             = h . (\(f,a) -> f a)
+                             = (\(f,a) -> h (f a)
+
+-}
+
+-- reduction:
+{-
+arr (mkPair *** id) >>> app = (mkPair *** id) >>> app
+                            = (\(a,b) -> (mkPair a, b)) >>> app
+                            = (\(a,b) -> (\c -> (a,c), b)) >>> app
+                            = (\(a,b) -> (a,b))
+                            = id
+                            = pure id
+-}
+
+-- extensionality:
+{-
+mkPair f >>> app = (\a -> (f, a)) >>> app
+                 = (\a -> f a)
+                 = f
+-}
