@@ -1,4 +1,5 @@
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 import Control.Category
 import Control.Arrow
@@ -150,3 +151,12 @@ ex4CounterExample = let f = arr (+1) :: Int -> Int
 -- prints: (11,15) and (12,15)
 -- so zipRf f (g >>> g') /= zipRf f g >>> zipRf f g'
 
+
+curryA :: Arrow y => y (a, b) c -> a -> y b c
+curryA f a = mkPair a >>> f
+  where mkPair :: (Arrow y) => a -> y b (a, b)
+        mkPair a = arr $ \b -> (a, b)
+
+uncurryA :: forall y a b c. ArrowApply y => (a -> y b c) -> y (a, b) c
+uncurryA f = (arr (\(a, b) -> (f a :: y b c, b :: b)) :: y (a, b) (y b c, b))
+             >>> app
