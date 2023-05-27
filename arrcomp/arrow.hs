@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -152,6 +153,8 @@ ex4CounterExample = let f = arr (+1) :: Int -> Int
 -- so zipRf f (g >>> g') /= zipRf f g >>> zipRf f g'
 
 
+-- implementing curryA and uncurryA
+
 curryA :: Arrow y => y (a, b) c -> a -> y b c
 curryA f a = mkPair a >>> f
   where mkPair :: (Arrow y) => a -> y b (a, b)
@@ -160,3 +163,79 @@ curryA f a = mkPair a >>> f
 uncurryA :: forall y a b c. ArrowApply y => (a -> y b c) -> y (a, b) c
 uncurryA f = (arr (\(a, b) -> (f a :: y b c, b :: b)) :: y (a, b) (y b c, b))
              >>> app
+
+-- implementing the arrows: State, NonDet, MapTrans and Auto
+
+-- State
+newtype State s i o = State ((s, i) -> (s, o))
+instance Category (State s) where
+  id :: State s a a
+  id = State id
+
+  (.) :: State s b c -> State s a b -> State s a c
+  (State g) . (State f) = State (g . f)
+
+assoc :: (a, (b, c)) -> ((a, b), c)
+assoc (a, (b, c)) = ((a, b), c)
+
+unassoc :: ((a, b), c) -> (a, (b, c))
+unassoc ((a, b), c) = (a, (b, c))
+
+swap :: (a,b) -> (b,a)
+swap (a,b) = (b,a)
+
+instance Arrow (State s) where
+  arr :: (i -> o) -> State s i o
+  arr f = State $ fmap f
+
+  first :: State s i o -> State s (i, d) (o, d)
+  first (State f) = State $ unassoc . swap . fmap f . swap . assoc
+
+-- NonDet
+newtype NonDet i o = NonDet (i -> [o])
+
+instance Category NonDet where
+  id :: NonDet a a
+  id = NonDet (\x -> [x])
+
+  (.) :: NonDet b c -> NonDet a b -> NonDet a c
+  (NonDet g) . (NonDet f) = NonDet $ concat . fmap g . f
+
+instance Arrow NonDet where
+  arr :: (i -> o) -> NonDet i o
+  arr f = NonDet $ (\x -> [x]) . f
+
+  first :: NonDet i o -> NonDet (i, d) (o, d)
+  first (NonDet f) = NonDet $ \(i,d) -> map (,d) (f i)
+
+-- MapTrans
+newtype MapTrans s i o = MapTrans ((s -> i) -> (s -> o))
+
+instance Category (MapTrans s) where
+  id = MapTrans id
+
+  (.) :: MapTrans s b c -> MapTrans s a b -> MapTrans s a c
+  (MapTrans g) . (MapTrans f) = MapTrans $ g . f
+
+instance Arrow (MapTrans s) where
+  arr :: (i -> o) -> MapTrans s i o
+  arr f = MapTrans $ fmap f
+
+  first :: MapTrans s i o -> MapTrans s (i,d) (o,d)
+  first (MapTrans f) = MapTrans $ zip . (f *** id) . unzip
+    where unzip :: (s -> (i,d)) -> (s -> i, s -> d)
+          unzip f = (fst . f, snd . f)
+
+          zip :: (s -> o, s -> d) -> (s -> (o,d))
+          zip (f, g) s = (f s, g s)
+
+-- Auto
+newtype Auto i o = Auto (i -> (o, Auto i o))
+
+instance Category Auto where
+  id = Auto $ \i -> (i, id)
+
+  (.) :: Auto b c -> Auto a b -> Auto a c
+  (Auto g) . (Auto f) = Auto $ \a -> let (b, ab) = f a
+                                         (c, bc) = g b
+                                     in (c, bc . ab)
