@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -5,7 +6,7 @@
 import Control.Category
 import Control.Arrow
 
-import Prelude hiding (id, (.))
+import Prelude hiding (id, (.), repeat)
 
 -- Exercise 1: Write Arrow instances for the following types
 newtype Reader s i o = R ((s,i) -> o)
@@ -66,7 +67,7 @@ instance Arrow ListMap where
     in zip (f is) os
 
 -- Exercise 3: Define the following as an arrow type
-data Stream a = Cons a (Stream a)
+data Stream a = Cons a (Stream a) deriving Functor
 newtype StreamMap i o = SM (Stream i -> Stream o)
 
 -- Solution:
@@ -241,6 +242,13 @@ instance Category Auto where
                                          (c, bc) = g b
                                      in (c, bc . ab)
 
+instance Arrow Auto where
+  arr :: (i -> o) -> Auto i o
+  arr f = Auto $ \i -> (f i, arr f)
+
+  first :: Auto i o -> Auto (i, d) (o, d)
+  first (Auto f) = Auto $ \(i,d) -> let (o, io) = f i
+                                    in ((o,d), first io)
 
 -- Exercise 5: verify the ArrowApply axioms for pure functions
 -- Solution:
@@ -275,3 +283,85 @@ mkPair f >>> app = (\a -> (f, a)) >>> app
                  = (\a -> f a)
                  = f
 -}
+
+
+-- Exercise 6: The following instance has the correct type but fails at extensionality axiom. Show it.
+{-
+instance ArrowApply Auto where
+  app = arr (\(Auto f, x) -> fst (f x))
+-}
+
+-- Solution:
+{-
+mkPair f >>> app = arr (\c -> (f, c)) >>> app
+                 = arr (\c -> (f, c)) >>> arr (\(Auto g, x) -> fst (g x))
+                 = arr ((\(Auto g, x) -> fst (g x) . (\c -> (f, c)))
+                 = arr (\c -> let (Auto g, x) = (f, c) in fst (g x))
+                 = arr (\c -> let Auto g = f in fst (g c))
+
+Let Auto g = f.
+
+mkPair f >>> app = arr (\c -> fst (g c))
+                 = arr (fst . g)
+
+How to show this thing does not equal to f?
+-}
+
+-- Implementation of ArrowApply on State and NonDet
+
+instance ArrowApply (State s) where
+  app :: State s (State s i o, i) o
+  app = State $ \(s, (State f, i)) -> f (s, i)
+
+
+instance ArrowApply NonDet where
+  app :: NonDet (NonDet i o, i) o
+  app = NonDet $ \(NonDet f, i) -> f i
+
+-- Exercise 7: Implement the ArrowChoice instance for NonDet, State, and StreamMap
+-- Solution:
+
+-- recall
+-- either :: (a -> c) -> (b -> c) -> Either a b -> c
+singleton :: a -> [a]
+singleton x = [x]
+
+instance ArrowChoice NonDet where
+  left :: NonDet i o -> NonDet (Either i d) (Either o d)
+  left (NonDet f) = NonDet $ either (fmap Left . f) (pure . Right)
+
+instance ArrowChoice (State s) where
+  left :: State s i o -> State s (Either i d) (Either o d)
+  left (State f) = State $ \(s,iOd) -> case iOd of
+    Left i  -> fmap Left $ f (s,i)
+    Right d -> (s, Right d)
+
+interleave :: Stream a -> Stream a -> Stream a
+interleave (Cons a as) (Cons b bs) = Cons a $ Cons b $ interleave as bs
+
+repeat :: a -> Stream a
+repeat a = Cons a (repeat a)
+
+instance ArrowChoice StreamMap where
+  -- newtype StreamMap i o = SM (Stream i -> Stream o)
+  left :: forall i o d. StreamMap i o -> StreamMap (Either i d) (Either o d)
+  left (SM f) = SM lf
+    where lf :: Stream (Either i d) -> Stream (Either o d)
+          lf s = interleave l r
+            where l = fmap Left $ f (filterLeft s)
+                  r = fmap Right $ filterRight s
+
+          filterLeft :: Stream (Either i d) -> Stream i
+          filterLeft (Cons (Left i) s) = Cons i (filterLeft s)
+          filterLeft (Cons _ s) = filterLeft s
+
+          filterRight :: Stream (Either i d) -> Stream d
+          filterRight (Cons (Right d) s) = Cons d (filterRight s)
+          filterRight (Cons _ s) = filterRight s
+
+  -- there is an alternative sensible implementation
+  -- left :: forall i o d. StreamMap i o -> StreamMap (Either i d) (Either o d)
+  -- left (SM f) = SM lf
+  --   where lf :: Stream (Either i d) -> Stream (Either o d)
+  --         lf (Cons (Left i)  s) = interleave (fmap Left (f (repeat i))) (lf s)
+  --         lf (Cons (Right d) s) = Cons (Right d) (lf s)
