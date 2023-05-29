@@ -6,7 +6,7 @@
 import Control.Category
 import Control.Arrow
 
-import Prelude hiding (id, (.), repeat)
+import Prelude hiding (id, (.), repeat, take)
 
 -- Exercise 1: Write Arrow instances for the following types
 newtype Reader s i o = R ((s,i) -> o)
@@ -83,7 +83,7 @@ instance Category StreamMap where
 
 instance Arrow StreamMap where
   arr :: (i -> o) -> StreamMap i o
-  arr f = SM $ \(Cons i s) -> Cons (f i) (runSM (arr f) s)
+  arr f = SM $ fmap f
 
   first :: StreamMap i o -> StreamMap (i, b) (o, b)
   first (SM f) = SM $ lift f
@@ -336,32 +336,101 @@ instance ArrowChoice (State s) where
     Left i  -> fmap Left $ f (s,i)
     Right d -> (s, Right d)
 
-interleave :: Stream a -> Stream a -> Stream a
-interleave (Cons a as) (Cons b bs) = Cons a $ Cons b $ interleave as bs
+interleaveS :: Stream a -> Stream a -> Stream a
+interleaveS (Cons a as) ~(Cons b bs) = Cons a $ Cons b $ interleaveS as bs
 
-repeat :: a -> Stream a
-repeat a = Cons a (repeat a)
+repeatS :: a -> Stream a
+repeatS a = Cons a (repeatS a)
+
+takeS :: Int -> Stream a -> [a]
+takeS 0 _ = []
+takeS n (Cons a as) = a : takeS (n-1) as
 
 instance ArrowChoice StreamMap where
   -- newtype StreamMap i o = SM (Stream i -> Stream o)
+  -- this is the first idea that came to me...
+  {-
   left :: forall i o d. StreamMap i o -> StreamMap (Either i d) (Either o d)
   left (SM f) = SM lf
     where lf :: Stream (Either i d) -> Stream (Either o d)
-          lf s = interleave l r
-            where l = fmap Left $ f (filterLeft s)
-                  r = fmap Right $ filterRight s
+          lf s = let ~(is, ds) = unzipEither s
+                 in interleaveS (fmap Left $ f is) (fmap Right ds)
 
-          filterLeft :: Stream (Either i d) -> Stream i
-          filterLeft (Cons (Left i) s) = Cons i (filterLeft s)
-          filterLeft (Cons _ s) = filterLeft s
+          unzipEither :: Stream (Either i d) -> (Stream i, Stream d)
+          unzipEither ~(Cons x s)  = let ~(is, ds) = unzipEither s
+                                     in case x of
+                                          Left i  -> (Cons i is, ds)
+                                          Right d -> (is, Cons d ds)
+  -}
+  -- it would stuck when the input is made of only left.
 
-          filterRight :: Stream (Either i d) -> Stream d
-          filterRight (Cons (Right d) s) = Cons d (filterRight s)
-          filterRight (Cons _ s) = filterRight s
+  -- this one seems also legit
+  {-
+  left :: forall i o d. StreamMap i o -> StreamMap (Either i d) (Either o d)
+  left (SM f) = SM lf
+    where lf :: Stream (Either i d) -> Stream (Either o d)
+          lf (Cons (Left i)  s) = interleaveS (f (repeatS i)) (lf s)
+          lf (Cons (Right d) s) = Cons (Right d) (lf s)
+  -}
+  -- because of the interleaving, it doesn't pass the extension law either.
+  -- Note: you need a stream of non-homogeneous elements to see the difference,
+  -- e.g. from 1
 
   -- there is an alternative sensible implementation
-  -- left :: forall i o d. StreamMap i o -> StreamMap (Either i d) (Either o d)
-  -- left (SM f) = SM lf
-  --   where lf :: Stream (Either i d) -> Stream (Either o d)
-  --         lf (Cons (Left i)  s) = interleave (fmap Left (f (repeat i))) (lf s)
-  --         lf (Cons (Right d) s) = Cons (Right d) (lf s)
+
+  left :: forall i o d. StreamMap i o -> StreamMap (Either i d) (Either o d)
+  left (SM f) = SM lf
+    where lf :: Stream (Either i d) -> Stream (Either o d)
+          lf (Cons (Left i)  s) = Cons (Left $ headS $ f (repeatS i)) (lf s)
+          lf (Cons (Right d) s) = Cons (Right d) (lf s)
+
+          headS (Cons x _) = x
+  -- this one passes the extension law (because the law only concern
+  -- linear mapping), it doesn't pass the unit law `arr Left >>> left f = f >>> pure Left` if f considers multiple elements in its input at once.
+
+  {-
+  By implementing these instances, I realize there are several places where a choice can be made:
+
+  - first, what should be the input of f
+    + we can feed it (repeat currElem)
+    + we can feed it all Left elements
+  - second, what to do with f's output
+    + we can only take the first element and discard the rest
+    + we can interleave it with the rest of mapping. but how to interleave is another aspect of consideration.
+  -}
+
+  {-
+  Overall, I have yet to find one implementation that satisfies all
+  laws. I'm not even sure if such implementation is possible.
+  -}
+
+
+{-
+Here are some code I used to verify the law breaking. They're useless now but I
+keep them here for future reference.
+
+plus :: (a -> a') -> (b -> b') -> Either a b -> Either a' b'
+plus f _ (Left a)  = Left (f a)
+plus _ g (Right b) = Right (g b)
+
+from :: Int -> Stream Int
+from i = Cons i (from (i+1))
+
+main :: IO ()
+main = do
+  print $ (takeS 10 $ runSM rhs s :: [Either Int Int])
+  print $ (takeS 10 $ runSM lhs s :: [Either Int Int])
+    where lhs = arr Left >>> left y
+          rhs = y >>> arr Left
+          f = (+2)
+          s = from (1 :: Int)
+
+          y :: StreamMap Int Int
+          y = SM $ \s -> case s of
+            (Cons 1 (Cons 2 x)) -> Cons 2 (Cons 1 x)
+            x -> x
+          y2 :: StreamMap Int Int
+          y2 = SM $ \s -> case s of
+            (Cons 3 (Cons 4 x)) -> Cons 1 (Cons 2 x)
+            x -> x
+-}
