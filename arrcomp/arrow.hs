@@ -6,7 +6,7 @@
 import Control.Category
 import Control.Arrow
 
-import Prelude hiding (id, (.), repeat, take)
+import Prelude hiding (id, (.))
 
 -- Exercise 1: Write Arrow instances for the following types
 newtype Reader s i o = R ((s,i) -> o)
@@ -234,6 +234,10 @@ instance Arrow (MapTrans s) where
 -- Auto
 newtype Auto i o = Auto (i -> (o, Auto i o))
 
+runAuto :: Auto i o -> [i] -> [o]
+runAuto _ [] = []
+runAuto (Auto f) (x:xs) = let (o, g) = f x in o : runAuto g xs
+
 instance Category Auto where
   id = Auto $ \i -> (i, id)
 
@@ -434,3 +438,37 @@ main = do
             (Cons 3 (Cons 4 x)) -> Cons 1 (Cons 2 x)
             x -> x
 -}
+
+--- ArrowChoice instance for Auto
+instance ArrowChoice Auto where
+  -- newtype Auto i o = Auto (i -> (o, Auto i o))
+  left :: forall i o d. Auto i o -> Auto (Either i d) (Either o d)
+  left (Auto f) = Auto lf
+    where lf :: Either i d -> (Either o d, Auto (Either i d) (Either o d))
+          lf (Left i)  = let (o, g) = f i in (Left o, left g)
+          lf (Right d) = (Right d, left (Auto f))
+
+-- Exercise 8: show the equation fails for Auto and StreamMap:
+-- (f ||| g) >>> h = (f >>> h) ||| (g >>> h)
+
+-- Solution:
+-- I don't have a working ArrowChoice implementation for StreamMap, so
+-- I'll only show it for Auto.
+
+ex8CounterExample :: IO ()
+ex8CounterExample = do
+  let f = id
+      g = id
+      h = Auto (\x -> (x+1, id))
+
+  let lhs = (f ||| g) >>> h
+  let rhs = (f >>> h) ||| (g >>> h)
+
+  let input = [Left 1, Right 1]
+
+  print (take 10 $ runAuto lhs input)
+  print (take 10 $ runAuto rhs input)
+  -- prints [2,2] vs [2,3]
+
+  -- the reason it fails is because h runs twice in the RHS, but only
+  -- once in the first.
