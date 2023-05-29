@@ -472,3 +472,24 @@ ex8CounterExample = do
 
   -- the reason it fails is because h runs twice in the RHS, but only
   -- once in the first.
+
+-- Exercise 9: Given the following definition
+newtype Exp y i o = Exp (y i (Either String o))
+-- define the Arrow instance
+
+-- Solution:
+instance ArrowChoice y => Category (Exp y) where
+  id = Exp $ id >>^ Right
+  (Exp g) . (Exp f) = Exp $ f >>> right g >>^ collapse
+    where collapse (Left x)          = Left  x
+          collapse (Right (Left  x)) = Left  x
+          collapse (Right (Right x)) = Right x
+
+instance ArrowChoice y => Arrow (Exp y) where
+  arr :: (i -> o) -> Exp y i o
+  arr f = Exp $ arr f >>^ Right
+
+  first :: Exp y i o -> Exp y (i,d) (o,d)
+  first (Exp f) = Exp $ first f >>^ rearrange
+    where rearrange (Left e,  d) = Left  e
+          rearrange (Right o, d) = Right (o, d)
