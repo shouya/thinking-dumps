@@ -528,18 +528,18 @@ instance ArrowLoop (State s) where
   -- recall that type State s i o = (s, i) -> (s, o)
   loop :: State s (i,d) (o,d) -> State s i o
   loop (State f) = State $ \ ~(s, i) ->
-    let (s', (o, d)) = f (s, (i, d))
+    let ~(s', ~(o, d)) = f (s, (i, d))
     in (s', o)
 
 instance ArrowLoop (MapTrans s) where
   -- recall that type MapTrans i o = (s -> i) -> (s -> o)
   loop :: MapTrans s (i,d) (o,d) -> MapTrans s i o
   loop (MapTrans f) = MapTrans $ \si s ->
-    let (o, d) = f ((,d) . si) s
+    let ~(o, d) = f ((,d) . si) s
     in o
 
 instance ArrowLoop Auto where
   loop :: Auto (i,d) (o,d) -> Auto i o
   loop (Auto f) = Auto $ \i ->
-    let ((o, d), Auto g) = f (i, d)
+    let (~(o, d), Auto g) = f (i, d)
     in (o, loop (Auto g))
