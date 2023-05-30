@@ -481,7 +481,8 @@ newtype Exp y i o = Exp (y i (Either String o))
 instance ArrowChoice y => Category (Exp y) where
   id = Exp $ id >>^ Right
   (Exp g) . (Exp f) = Exp $ f >>> right g >>^ collapse
-    where collapse (Left x)          = Left  x
+    where
+          collapse (Left x)          = Left  x
           collapse (Right (Left  x)) = Left  x
           collapse (Right (Right x)) = Right x
 
@@ -510,8 +511,35 @@ instance ArrowChoice y => Arrow (Exp y) where
 LHS = first (f >>> g)
     = Exp $ first (f >>> g) >>^ distr >>> left (arr fst)
     = Exp $ first f >>> first g >>^ distr >>> left (arr fst)
-
+    = ???
 RHS = first f >>> first g
     = Exp $ first f >>> right (first g) >>^ collapse
-    = Exp $ first f >>>
+    = ???
 -}
+
+trace :: ((b,d) -> (c,d)) -> (b -> c)
+trace f b = let (c, d) = f (b, d) in c
+
+fix :: (a -> a) -> a
+fix f = f (fix f)
+
+-- ArrowLoop instances for State, MapTrans, Auto, StreamMap
+instance ArrowLoop (State s) where
+  -- recall that type State s i o = (s, i) -> (s, o)
+  loop :: State s (i,d) (o,d) -> State s i o
+  loop (State f) = State $ \ ~(s, i) ->
+    let (s', (o, d)) = f (s, (i, d))
+    in (s', o)
+
+instance ArrowLoop (MapTrans s) where
+  -- recall that type MapTrans i o = (s -> i) -> (s -> o)
+  loop :: MapTrans s (i,d) (o,d) -> MapTrans s i o
+  loop (MapTrans f) = MapTrans $ \si s ->
+    let (o, d) = f ((,d) . si) s
+    in o
+
+instance ArrowLoop Auto where
+  loop :: Auto (i,d) (o,d) -> Auto i o
+  loop (Auto f) = Auto $ \i ->
+    let ((o, d), Auto g) = f (i, d)
+    in (o, loop (Auto g))
