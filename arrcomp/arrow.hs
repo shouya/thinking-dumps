@@ -485,11 +485,33 @@ instance ArrowChoice y => Category (Exp y) where
           collapse (Right (Left  x)) = Left  x
           collapse (Right (Right x)) = Right x
 
+distr :: (Either a b, c) -> Either (a,c) (b,c)
+distr (Left a,  c) = Left  (a, c)
+distr (Right b, c) = Right (b, c)
+
 instance ArrowChoice y => Arrow (Exp y) where
   arr :: (i -> o) -> Exp y i o
   arr f = Exp $ arr f >>^ Right
 
   first :: Exp y i o -> Exp y (i,d) (o,d)
-  first (Exp f) = Exp $ first f >>^ rearrange
+  first (Exp f) = Exp $ first f >>^ distr >>> left (arr fst)
     where rearrange (Left e,  d) = Left  e
           rearrange (Right o, d) = Right (o, d)
+
+-- Exercise 10: prove the functor axiom for `first`
+-- Solution:
+
+-- We need to show that
+-- first (f >>> g) = first f >>> first g
+-- Given distribution axiom:
+-- first (left f) >>> arr distr = arr distr >>> left (first f)
+
+{-
+LHS = first (f >>> g)
+    = Exp $ first (f >>> g) >>^ distr >>> left (arr fst)
+    = Exp $ first f >>> first g >>^ distr >>> left (arr fst)
+
+RHS = first f >>> first g
+    = Exp $ first f >>> right (first g) >>^ collapse
+    = Exp $ first f >>>
+-}
