@@ -561,3 +561,19 @@ instance ArrowLoop StreamMap where
   -- recall that type StreamMap i o = Stream i -> Stream o
   loop :: StreamMap (i,d) (o,d) -> StreamMap i o
   loop (SM f) = SM $ trace (unzipS. f . zipS)
+
+-- Exercise 12: Prove that loop (first f) = f
+-- Solution:
+
+-- We need to show that for any f, loop (first f) = f
+{-
+LHS = loop (first f)
+    = loop (first f >>> id)
+    = f >>> loop id
+    = f >>> loop (pure id)
+    = f >>> pure (trace id)
+    = f >>> pure id
+    = f >>> id
+    = f
+    = RHS
+-}
