@@ -5,6 +5,7 @@
 
 import Control.Category
 import Control.Arrow
+import Data.Function ((&))
 
 import Prelude hiding (id, (.))
 
@@ -543,3 +544,22 @@ instance ArrowLoop Auto where
   loop (Auto f) = Auto $ \i ->
     let (~(o, d), Auto g) = f (i, d)
     in (o, loop (Auto g))
+
+-- Exercise 11: Define an ArrowLoop instance for StreamMap
+-- Solution:
+
+zipS :: (Stream a, Stream b) -> Stream (a, b)
+zipS ~(Cons a as, Cons b bs) = Cons (a,b) (zipS (as,bs))
+
+unzipS :: Stream (a,b) -> (Stream a, Stream b)
+unzipS ~(Cons ~(a,b) abs) = let ~(as, bs) = unzipS abs
+                            in (Cons a as, Cons b bs)
+
+instance ArrowLoop StreamMap where
+  -- recall that type StreamMap i o = Stream i -> Stream o
+  loop :: StreamMap (i,d) (o,d) -> StreamMap i o
+  loop (SM f) = SM $ \is ->
+    fix (\ods -> let ~(os, ds) = unzipS ods
+                 in f (zipS (is, ds)))
+    & unzipS
+    & \(os, _) -> os
