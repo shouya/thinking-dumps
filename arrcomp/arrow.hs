@@ -528,22 +528,24 @@ fix f = f (fix f)
 instance ArrowLoop (State s) where
   -- recall that type State s i o = (s, i) -> (s, o)
   loop :: State s (i,d) (o,d) -> State s i o
-  loop (State f) = State $ \ ~(s, i) ->
-    let ~(s', ~(o, d)) = f (s, (i, d))
-    in (s', o)
+  loop (State f) = State $ trace (assoc . f . unassoc)
+
+zipMap :: (a -> b, a -> c) -> a -> (b, c)
+zipMap (f, g) a = (f a, g a)
+
+unzipMap :: (a -> (b, c)) -> (a -> b, a -> c)
+unzipMap f = (fst . f, snd . f)
 
 instance ArrowLoop (MapTrans s) where
   -- recall that type MapTrans i o = (s -> i) -> (s -> o)
   loop :: MapTrans s (i,d) (o,d) -> MapTrans s i o
-  loop (MapTrans f) = MapTrans $ \si s ->
-    let ~(o, d) = f ((,d) . si) s
-    in o
+  loop (MapTrans f) = MapTrans $ trace (unzipMap . f . zipMap)
 
 instance ArrowLoop Auto where
   loop :: Auto (i,d) (o,d) -> Auto i o
-  loop (Auto f) = Auto $ \i ->
-    let (~(o, d), Auto g) = f (i, d)
-    in (o, loop (Auto g))
+  loop (Auto f) = Auto $ trace (foo . f)
+    where foo :: ((o, d), Auto (i, d) (o, d)) -> ((o, Auto i o), d)
+          foo ((o, d), Auto g) = ((o, loop (Auto g)), d)
 
 -- Exercise 11: Define an ArrowLoop instance for StreamMap
 -- Solution:
@@ -558,8 +560,4 @@ unzipS ~(Cons ~(a,b) abs) = let ~(as, bs) = unzipS abs
 instance ArrowLoop StreamMap where
   -- recall that type StreamMap i o = Stream i -> Stream o
   loop :: StreamMap (i,d) (o,d) -> StreamMap i o
-  loop (SM f) = SM $ \is ->
-    fix (\ods -> let ~(os, ds) = unzipS ods
-                 in f (zipS (is, ds)))
-    & unzipS
-    & \(os, _) -> os
+  loop (SM f) = SM $ trace (unzipS. f . zipS)
