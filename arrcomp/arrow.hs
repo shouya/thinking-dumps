@@ -2,6 +2,7 @@
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE Arrows #-}
 
 import Control.Category
 import Control.Arrow
@@ -577,3 +578,88 @@ LHS = loop (first f)
     = f
     = RHS
 -}
+
+-- genSym and arrow syntax
+fetch :: State s () s
+fetch = State $ \(s, ()) -> (s, s)
+
+store :: State s s ()
+store = State $ \(_, s) -> (s, ())
+
+genSym :: State Int () Int
+genSym = proc () -> do
+  i <- fetch -< ()
+  store -< i+1
+  returnA -< i
+
+-- Exercise 13: translate the definition of genSym from arrow syntax
+-- Solution:
+
+{-
+genSym = proc () -> do
+  i <- fetch -< ()
+  store -< i+1
+  returnA -< i
+-}
+
+genSym01 :: State Int () Int
+genSym01 = ((proc () -> fetch -< ()) &&& returnA) >>>
+           (proc (i, ()) -> do
+              store -< i+1
+              returnA -< i)
+
+genSym02 :: State Int () Int
+genSym02 = ((proc () -> fetch -< ()) &&& returnA) >>>
+            (proc (i, ()) -> do
+               _ <- store -< i+1
+               returnA -< i)
+
+genSym03 :: State Int () Int
+genSym03 = ((proc () -> fetch -< ()) &&& returnA) >>>
+           ((proc (i, ()) -> store -< i+1) &&& returnA) >>>
+           ((proc (_, (i, ())) -> returnA -< i))
+
+genSym04 :: State Int () Int
+genSym04 = ((arr (\() -> ()) >>> fetch) &&& returnA) >>>
+           ((proc (i, ()) -> store -< i+1) &&& returnA) >>>
+           ((proc (_, (i, ())) -> returnA -< i))
+
+genSym05 :: State Int () Int
+genSym05 = ((arr (\() -> ()) >>> fetch) &&& returnA) >>>
+           ((arr (\(i, ()) -> i+1) >>> store) &&& returnA) >>>
+           ((proc (_, (i, ())) -> returnA -< i))
+
+genSym06 :: State Int () Int
+genSym06 = ((arr (\() -> ()) >>> fetch) &&& returnA) >>>
+           ((arr (\(i, ()) -> i+1) >>> store) &&& returnA) >>>
+           ((arr (\(_, (i, ())) -> i)) >>> returnA)
+
+-- now it's fully de-sugared. Let me simplify.
+
+genSym07 :: State Int () Int
+genSym07 = ((arr id >>> fetch) &&& returnA) >>>
+           ((arr (\(i, ()) -> i+1) >>> store) &&& returnA) >>>
+           ((arr (\(_, (i, ())) -> i)) >>> returnA)
+
+genSym08 :: State Int () Int
+genSym08 = (fetch &&& returnA) >>>
+           ((arr (\(i, ()) -> i+1) >>> store) &&& returnA) >>>
+           ((arr (\(_, (i, ())) -> i)) >>> returnA)
+
+genSym09 :: State Int () Int
+genSym09 = fetch >>>
+           ((arr (\i -> i+1) >>> store) &&& returnA) >>>
+           ((arr (\(_, i) -> i)) >>> returnA)
+
+genSym10 :: State Int () Int
+genSym10 = fetch >>>
+           ((arr (+1) >>> store) &&& id) >>>
+           ((arr (\(_, i) -> i)) >>> returnA)
+
+genSym11 :: State Int () Int
+genSym11 = fetch >>>
+           ((arr (+1) >>> store) &&& id) >>>
+           (arr (\(_, i) -> i))
+
+genSym12 :: State Int () Int
+genSym12 = fetch >>> (((+1) ^>> store) &&& id) >>^ snd
