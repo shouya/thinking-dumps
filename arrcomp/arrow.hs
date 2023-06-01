@@ -76,6 +76,15 @@ newtype StreamMap i o = SM (Stream i -> Stream o)
 runSM :: StreamMap i o -> Stream i -> Stream o
 runSM (SM f) = f
 
+sFromL :: [a] -> Stream a
+sFromL (x:xs) = Cons x (sFromL xs)
+
+sToL :: Stream a -> [a]
+sToL (Cons x xs) = x : (sToL xs)
+
+runSM' :: StreamMap i o -> [i] -> [o]
+runSM' (SM f) = sToL . f . sFromL
+
 instance Category StreamMap where
   id :: StreamMap i i
   id = SM id
@@ -705,3 +714,37 @@ proc p -> if exp then cmd1 else cmd2 =>
    (proc \p -> cmd1) ||| (proc \p -> cmd2)
 (otherwise)
 -}
+
+-- ArrowCircuit
+class ArrowLoop y => ArrowCircuit y where
+  delay :: a -> y a a
+
+-- Sample arrow circuit for the resettable counter circuit
+counter :: ArrowCircuit y => y Bool Int
+counter = proc reset -> do
+  rec output <- returnA -< if reset then 0 else next
+      next <- delay 0 -< output + 1
+  returnA -< output
+
+-- ArrowCircuit instance for Auto
+instance ArrowCircuit Auto where
+  delay :: a -> Auto a a
+  delay x = Auto $ \x' -> (x, delay x')
+
+testAutoDelay :: IO ()
+testAutoDelay = do
+  let a = delay 0
+  print $ runAuto a [1,2,3,4,5]
+
+
+-- Exercise 16: Define an ArrowCircuit instance for StreamMap
+
+-- Solution:
+instance ArrowCircuit StreamMap where
+  delay :: a -> StreamMap a a
+  delay x = SM $ \s -> (Cons x s)
+
+testStreamMapDelay :: IO ()
+testStreamMapDelay = do
+  let a = delay 0
+  print $ take 5 $ runSM' a [1,2,3,4,5]
