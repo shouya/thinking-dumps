@@ -685,3 +685,23 @@ LHS = pure (\p -> a) >>> f
     = pure (\p -> (f,a)) >>> app
     = RHS
 -}
+
+-- Exercise 15: Extend the syntax with a new form of command:
+--
+-- if exp then cmd else cmd
+--
+-- Suggest a translation for the new form using ArrowChoice.
+
+-- Solution:
+
+{-
+
+proc p -> if exp then cmd1 else cmd2 =>
+
+1. pure (\p -> if exp then Left () else Right ()) >>> (cmd1 ||| cmd2)
+(if FV(p) \cap FV(cmd1) = \emptyset and FV(p) \cap FV(cmd2) = \emptyset)
+
+2. (pure (\p -> if exp then Left p else Right p)) >>>
+   (proc \p -> cmd1) ||| (proc \p -> cmd2)
+(otherwise)
+-}
