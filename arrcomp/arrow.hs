@@ -663,3 +663,25 @@ genSym11 = fetch >>>
 
 genSym12 :: State Int () Int
 genSym12 = fetch >>> (((+1) ^>> store) &&& id) >>^ snd
+
+-- Exercise 14: Prove that when both translations of
+-- `proc p -> f -< a` are possible, they are equal.
+
+-- Solution:
+
+{-
+We show
+
+pure (\p -> a) >>> f = pure (\p -> (f,a)) >>> app
+
+when FV(p) \cap FV(f) = \emptyset.
+
+Proof:
+
+LHS = pure (\p -> a) >>> f
+    = pure (\p -> a) >>> mkPair f >>> app\
+    = pure (\p -> a) >>> pure (\a -> (f,a)) >>> app
+    = pure ((\p -> a) >>> (\a -> (f,a))) >>> app
+    = pure (\p -> (f,a)) >>> app
+    = RHS
+-}
