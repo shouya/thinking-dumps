@@ -1,12 +1,16 @@
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE Arrows #-}
+{-# LANGUAGE BangPatterns #-}
 
 import Control.Category
 import Control.Arrow
 import Data.Function ((&))
+-- tracing
+import Debug.Trace hiding (trace)
 
 import Prelude hiding (id, (.))
 
@@ -748,3 +752,119 @@ testStreamMapDelay :: IO ()
 testStreamMapDelay = do
   let a = delay 0
   print $ take 5 $ runSM' a [1,2,3,4,5]
+
+-- Homogeneous functions
+type Pair a = (a, a)
+data BalTree a = BTZ a | BTS (BalTree (Pair a)) deriving Show
+
+data Hom i o where
+  (:&:) :: (i -> o) -> Hom (Pair i) (Pair o) -> Hom i o
+
+{-
+data Hom i o = H (i -> o)
+                 ((i,i) -> (o,o))
+                 (((i,i),(i,i)) -> ((o,o),(o,o)))
+                 ...
+
+data Hom (i,i) (o,o) = H ((i,i) -> (o,o))
+                         (((i,i),(i,i)) -> ((o,o),(o,o)))
+                         ...
+-}
+
+-- Hom i o = (f0, f1, ...)
+-- where f_n = (2^n -> i) -> (2^n -> o)
+
+applyHom :: Hom i o -> BalTree i -> BalTree o
+applyHom (f :&: fs) (BTZ x) = BTZ (f x)
+applyHom (f :&: fs) (BTS t) = BTS (applyHom fs t)
+
+-- Arrow instance for Hom
+instance Category Hom where
+  id :: Hom a a
+  id = id :&: id
+
+  (.) :: Hom b c -> Hom a b -> Hom a c
+  (g :&: gs) . (f :&: fs) = (g . f) :&: (gs . fs)
+
+instance Arrow Hom where
+  arr :: (i -> o) -> Hom i o
+  arr f = f :&: arr (f *** f)
+
+  first :: Hom i o -> Hom (i,d) (o,d)
+  first (f :&: fs) = (f *** id) :&: (transpose ^>> first fs >>^ transpose)
+
+transpose :: ((a,b),(c,d)) -> ((a,c),(b,d))
+transpose ((i1,d1),(i2,d2)) = ((i1,i2),(d1,d2))
+
+scan :: (Show a, Num a) => Hom a a
+scan = id :&: proc (o,e) -> do
+  e' <- scan -< o + e
+  e'' <- rsh 0 -< e'
+  returnA -< (e'', e')
+
+rsh :: a -> Hom a a
+rsh v = const v :&: proc (o,e) -> do
+  e' <- rsh v -< e
+  returnA -< (e', o)
+
+-- rsh :: (Show a) => a -> Hom a a
+-- rsh v = const v :&:
+--   (((arr (\(a,b) -> b) >>> rsh v) &&& id) >>>
+--     arr (\(x, (a,b)) -> (x, a)))
+
+-- phew! it's really difficult to get my head around how this function
+-- even works.
+--
+-- Javran's note has been helpful: https://github.com/Javran/Thinking-dumps/blob/master/paper-and-tutorial/arrows-and-computation/Hom.hs#L138
+
+butterfly :: (Pair a -> Pair a) -> Hom a a
+butterfly f = id :&: proc (o,e) -> do
+  o' <- butterfly f -< o
+  e' <- butterfly f -< e
+  returnA -< f (o',e')
+
+rev :: Hom a a
+rev = butterfly swap
+
+unriffle :: Hom (Pair a) (Pair a)
+unriffle = butterfly transpose
+
+bisort :: (Ord a) => Hom a a
+bisort = id :&: proc (o,e) -> do
+  o' <- bisort -< o
+  e' <- bisort -< e
+  returnA -< (min e' o', max e' o')
+
+-- Exercise 17: Define sort using the above combinators
+-- Solution:
+
+sort' :: (Ord a) => Hom a a
+sort' = id :&: proc (o,e) -> do
+  -- sort the even terms in reverse order, so o' is in increasing order
+  o' <- sort -< o
+  -- sort the old terms, so e' is in decreasing order
+  e' <- rev <<< sort -< e
+  -- transform the pairs so odd and even terms are grouped together
+  -- ((o1,e1), (o2,e2)) -> ((o1,o2), (e1,e2))
+  unriffle -< (o', e')
+
+-- I couldn't figure out the last step myself.
+-- capn-freako's solution provided some insight here.
+sort :: (Ord a) => Hom a a
+sort = sort' >>> bisort
+
+btFromList :: [a] -> BalTree a
+btFromList [] = error "empty list"
+btFromList [x] = BTZ x
+btFromList xs = BTS (btFromList (pairs xs))
+  where pairs :: [a] -> [Pair a]
+        pairs [] = []
+        pairs [x] = error "odd number of elements"
+        pairs (x:y:xs) = (x,y) : pairs xs
+
+listFromBT :: BalTree a -> [a]
+listFromBT (BTZ x) = [x]
+listFromBT (BTS t) = unpairs (listFromBT t)
+  where unpairs :: [Pair a] -> [a]
+        unpairs [] = []
+        unpairs ((x,y):ps) = x : y : unpairs ps
