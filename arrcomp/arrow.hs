@@ -868,3 +868,51 @@ listFromBT (BTS t) = unpairs (listFromBT t)
   where unpairs :: [Pair a] -> [a]
         unpairs [] = []
         unpairs ((x,y):ps) = x : y : unpairs ps
+
+data StateT y s a b = StateT (y (s,a) (s,b))
+
+instance Category y => Category (StateT y s) where
+  id :: StateT y s a a
+  id = StateT id
+
+  (.) :: StateT y s b c -> StateT y s a b -> StateT y s a c
+  (StateT g) . (StateT f) = StateT (g . f)
+
+-- Exercise 18: Implement the Arrow instance for StateT without arrow notation
+-- Solution:
+
+instance Arrow y => Arrow (StateT y s) where
+  arr :: (a -> b) -> StateT y s a b
+  arr f = StateT (arr (second f))
+
+  first :: StateT y s a b -> StateT y s (a,d) (b,d)
+  first (StateT f) = StateT (assoc ^>> first f >>^ unassoc)
+
+-- Exercise 19: Given the following definition
+newtype AutoFunctor y i o = AutoFunctor (y i (o, AutoFunctor y i o))
+-- implement the Arrow instance for AutoFunctor
+
+
+-- Solution:
+instance Arrow y => Category (AutoFunctor y) where
+  id :: AutoFunctor y a a
+  id = AutoFunctor $ proc i -> do
+    o <- id -< i
+    returnA -< (o, id)
+
+  (.) :: AutoFunctor y b c -> AutoFunctor y a b -> AutoFunctor y a c
+  (AutoFunctor g) . (AutoFunctor f) = AutoFunctor $ proc a -> do
+    (b, yab) <- f -< a
+    (c, ybc) <- g -< b
+    returnA -< (c, ybc . yab)
+
+instance Arrow y => Arrow (AutoFunctor y) where
+  arr :: (a -> b) -> AutoFunctor y a b
+  arr f = AutoFunctor $ proc a -> do
+    b <- arr f -< a
+    returnA -< (b, arr f)
+
+  first :: AutoFunctor y i o -> AutoFunctor y (i,d) (o,d)
+  first (AutoFunctor f) = AutoFunctor $ proc (i,d) -> do
+    ((o,yio),d') <- first f -< (i,d)
+    returnA -< ((o, d'), first yio)
