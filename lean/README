@@ -1,0 +1,11 @@
+Books:
+
+- Theorem Proving in Lean 4 (https://lean-lang.org/theorem_proving_in_lean4/title_page.html)
+- The Mechanics of Proof (https://hrmacbeth.github.io/math2001/index.html)
+- Functional Programming in Lean (https://lean-lang.org/functional_programming_in_lean/title.html)
+- The Hitchhiker’s Guide to Logical Verification (https://github.com/blanchette/logical_verification_2023)
+
+Other resources:
+
+- https://leanprover-community.github.io/mathlib4_docs
+- https://loogle.lean-lang.org/
