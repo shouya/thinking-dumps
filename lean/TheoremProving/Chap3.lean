@@ -96,15 +96,40 @@ example : ((p ∨ q) → r) ↔ (p → r) ∧ (q → r) := by
   . intro ⟨pr, qr⟩ pq
     apply Or.elim pq pr qr
 
-example : ¬(p ∨ q) ↔ ¬p ∧ ¬q := sorry
-example : ¬p ∨ ¬q → ¬(p ∧ q) := sorry
-example : ¬(p ∧ ¬p) := sorry
-example : p ∧ ¬q → ¬(p → q) := sorry
-example : ¬p → (p → q) := sorry
-example : (¬p ∨ q) → (p → q) := sorry
-example : p ∨ False ↔ p := sorry
-example : p ∧ False ↔ False := sorry
-example : (p → q) → (¬q → ¬p) := sorry
+example : ¬(p ∨ q) ↔ ¬p ∧ ¬q := by
+  apply Iff.intro
+  . intro f; apply And.intro
+    . intro p; exact f (Or.inl p)
+    . intro q; exact f (Or.inr q)
+  . intro f; intro g; cases g
+    . apply f.left; assumption
+    . apply f.right; assumption
+
+example : ¬p ∨ ¬q → ¬(p ∧ q) := fun h ⟨hp, hq⟩ =>
+  Or.elim h (fun np => np hp) (fun nq => nq hq)
+
+example : ¬(p ∧ ¬p) := fun ⟨p, np⟩ => np p
+example : p ∧ ¬q → ¬(p → q) := fun ⟨p, nq⟩ pq => nq (pq p)
+example : ¬p → (p → q) := fun np p => False.elim (np p)
+example : (¬p ∨ q) → (p → q) :=
+  fun npq p => Or.elim npq (fun np => absurd p np) id
+example : p ∨ False ↔ p := by
+  apply Iff.intro
+  . intro
+    | Or.inl p => exact p
+    | Or.inr f => exact f.elim
+  . apply Or.inl
+
+example : p ∧ False ↔ False := by
+  apply Iff.intro
+  . intro h; exact h.right.elim
+  . intro h; exact h.elim
+
+example : (p → q) → (¬q → ¬p) := fun pq nq p => nq (pq p)
+
+example : ¬(p ↔ ¬p) := fun ⟨p'np, np'p⟩ =>
+  (fun np => absurd (np'p np) np)
+  (fun p => absurd p (p'np p))
 
 open Classical
 
