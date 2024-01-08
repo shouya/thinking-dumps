@@ -135,10 +135,41 @@ open Classical
 
 variable (p q r : Prop)
 
-example : (p → q ∨ r) → ((p → q) ∨ (p → r)) := sorry
-example : ¬(p ∧ q) → ¬p ∨ ¬q := sorry
-example : ¬(p → q) → p ∧ ¬q := sorry
-example : (p → q) → (¬p ∨ q) := sorry
-example : (¬q → ¬p) → (p → q) := sorry
-example : p ∨ ¬p := sorry
-example : (((p → q) → p) → p) := sorry
+example : (p → q ∨ r) → ((p → q) ∨ (p → r)) := by
+  intro p'qr
+  by_cases hp : p
+  . apply Or.elim (p'qr hp)
+    . intro q; apply Or.inl; intro; assumption
+    . intro r; apply Or.inr; intro; assumption
+  . apply Or.inl
+    intro p
+    contradiction -- p vs np
+
+example : ¬(p ∧ q) → ¬p ∨ ¬q := by
+  intro np'q
+  by_cases hp : p
+  . apply Or.inr; intro hq
+    exact np'q ⟨hp, hq⟩
+  . apply Or.inl; assumption
+
+example : ¬(p → q) → p ∧ ¬q :=
+  match em p with
+  | Or.inl hp => fun npq => ⟨hp, fun hq => npq (fun _ => hq)⟩
+  | Or.inr hnp => fun npq => (npq (fun hp => absurd hp hnp)).elim
+
+example : (p → q) → (¬p ∨ q) := fun hpq =>
+  match em p with
+  | Or.inl hp => Or.inr (hpq hp)
+  | Or.inr hnp => Or.inl hnp
+
+example : (¬q → ¬p) → (p → q) := fun nq'np =>
+  match em q with
+  | Or.inl hq => fun _ => hq
+  | Or.inr hnq => fun p => absurd p (nq'np hnq)
+
+example : p ∨ ¬p := em p
+
+example : (((p → q) → p) → p) := fun pqpp =>
+  match em p with
+  | Or.inl hp  => hp
+  | Or.inr hnp => pqpp (fun hp => absurd hp hnp)
