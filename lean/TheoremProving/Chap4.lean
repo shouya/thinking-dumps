@@ -81,4 +81,77 @@ def Goldbach's_weak_conjecture : Prop :=
   prime p ∧ prime q ∧ prime r ∧ n = p + q + r
 
 def Fermat's_last_theorem : Prop :=
-  ∀ n, n > 3 → ¬∃ (a b c : Nat), a ^ n + b ^ n = c ^ n
+  ∀ n, n > 2 → ¬∃ (a b c : Nat), a ^ n + b ^ n = c ^ n
+
+
+open Classical
+
+variable (α : Type) (p q : α → Prop)
+variable (r : Prop)
+
+example : (∃ _x : α, r) → r := fun ⟨_x, hr⟩ => hr
+example (a : α) : r → (∃ _x : α, r) := fun r => ⟨a, r⟩
+example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r := Iff.intro
+  (fun ⟨x, ⟨hp, hr⟩⟩ => ⟨⟨x, hp⟩, hr⟩)
+  (fun ⟨⟨x, hp⟩, hr⟩ => ⟨x, ⟨hp, hr⟩⟩)
+example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) := Iff.intro
+  (fun ⟨x, hpq⟩ => match hpq with
+    | Or.inl hp => Or.inl ⟨x, hp⟩
+    | Or.inr hq => Or.inr ⟨x, hq⟩)
+  (fun h => match h with
+    | Or.inl ⟨x, hp⟩ => ⟨x, Or.inl hp⟩
+    | Or.inr ⟨x, hq⟩ => ⟨x, Or.inr hq⟩)
+
+theorem not_exist_nonred_apple_iff_all_apples_red
+  : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) := Iff.intro
+  (fun h ⟨x₀, px⟩ => absurd (h x₀) px)
+  (fun h x => match Classical.em (p x) with
+    | Or.inl hpx => hpx
+    | Or.inr hnp => absurd ⟨x, hnp⟩ h)
+
+example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) :=
+  not_exist_nonred_apple_iff_all_apples_red _ p
+
+example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) := Iff.intro
+  (fun ⟨x₀, px⟩ h => absurd px (h x₀))
+  (fun h => match Classical.em (∃ x, p x) with
+    | Or.inl h' => h'
+    | Or.inr h' =>
+      let h'' : ∀ x, ¬p x := fun x px => h' ⟨x, px⟩
+      absurd h'' h)
+
+example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) := Iff.intro
+  (fun h x px => h ⟨x, px⟩)
+  (fun h ⟨x, px⟩ => absurd px (h x))
+
+theorem not_all_apple_is_read_iff_exists_nonred_apple :
+  (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) := Iff.intro
+  (fun h => match Classical.em (∃ x, ¬p x) with
+    | Or.inl h' => h'
+    | Or.inr h' =>
+      let h'' : ∀ x, p x :=
+        (not_exist_nonred_apple_iff_all_apples_red _ p).mpr h'
+      absurd h'' h)
+  (fun ⟨x, npx⟩ h => absurd (h x) npx)
+
+example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) :=
+  not_all_apple_is_read_iff_exists_nonred_apple _ p
+
+example : (∀ x, (p x → r)) ↔ ((∃ x, p x) → r) := Iff.intro
+  (fun h ⟨x, h'⟩ => h x h')
+  (fun h x h' => h ⟨x, h'⟩)
+
+example (a : α) : (∃ x, (p x → r)) ↔ ((∀ x, p x) → r) := Iff.intro
+  (fun ⟨x, h⟩ h' => h (h' x))
+  (fun h => match Classical.em (∀ x, p x) with
+    | Or.inl all_px => ⟨a, fun _ => h all_px⟩
+    | Or.inr not_all_px =>
+      let ⟨x, npx⟩ := (not_all_apple_is_read_iff_exists_nonred_apple _ _).mp not_all_px
+      ⟨x, fun px => absurd px npx⟩
+  )
+
+example (a : α) : (∃ x, (r → p x)) ↔ (r → (∃ x, p x)) := Iff.intro
+  (fun ⟨x, h⟩ r => ⟨x, h r⟩)
+  (fun h => match Classical.em r with
+    | Or.inl r => let ⟨x, px⟩ := h r; ⟨x, fun _ => px⟩
+    | Or.inr nr => ⟨a, fun r => absurd r nr⟩)
