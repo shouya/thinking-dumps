@@ -1,7 +1,6 @@
 import empiricaldist as emp
 import pandas as pd
 
-
 # my monkey patches on the empiricaldist.Pmf class
 class Pmf(emp.Pmf):
     # the bind operator is a better version of the "mix" function
@@ -38,3 +37,11 @@ class Pmf(emp.Pmf):
     def map(self, f):
         new_qs = [f(q) for q in self.qs]
         return Pmf(self.ps, new_qs)
+
+
+def make_joint(pmf1, pmf2):
+    X, Y = np.meshgrid(pmf1, pmf2)
+    return pd.DataFrame(X * Y, columns=pmf1.qs, index=pmf2.qs)
+
+def marginal(joint_distr, axis):
+    return Pmf(compared_joint.sum(axis=1))
