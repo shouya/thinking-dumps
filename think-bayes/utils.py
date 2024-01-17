@@ -1,5 +1,8 @@
 import empiricaldist as emp
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
 
 # my monkey patches on the empiricaldist.Pmf class
 class Pmf(emp.Pmf):
@@ -43,5 +46,29 @@ def make_joint(pmf1, pmf2):
     X, Y = np.meshgrid(pmf1, pmf2)
     return pd.DataFrame(X * Y, columns=pmf1.qs, index=pmf2.qs)
 
-def marginal(joint_distr, axis):
-    return Pmf(compared_joint.sum(axis=1))
+def marginal(joint, axis):
+    return Pmf(joint.sum(axis=axis))
+
+def plot_joint(joint, cmap='Blues', **kwargs):
+    """Plot a joint distribution with a color mesh."""
+    vmax = joint.to_numpy().max() * 1.1
+    plt.pcolormesh(joint.columns, joint.index, joint,
+        cmap=cmap,
+        vmax=vmax,
+        shading='nearest',
+        **kwargs
+    )
+    plt.colorbar()
+
+def plot_contour(joint, **kwargs):
+    """Plot a joint distribution with a contour."""
+    plt.contour(joint.columns, joint.index, joint, linewidths=2, **kwargs)
+
+def kde_from_pmf(pmf, n=101):
+    """Make a kernel density estimate for a PMF."""
+    kde = gaussian_kde(pmf.qs, weights=pmf.ps)
+    qs = np.linspace(pmf.qs.min(), pmf.qs.max(), n)
+    ps = kde.evaluate(qs)
+    pmf = Pmf(ps, qs)
+    pmf.normalize()
+    return pmf
