@@ -64,6 +64,16 @@ def plot_contour(joint, **kwargs):
     """Plot a joint distribution with a contour."""
     plt.contour(joint.columns, joint.index, joint, linewidths=2, **kwargs)
 
+def normalize_joint(joint):
+    """Normalize a joint distribution."""
+    prob_data = joint.to_numpy().sum()
+    joint /= prob_data
+    return joint
+
+def normalize_pmf(pmf):
+    pmf.normalize()
+    return pmf
+
 def kde_from_pmf(pmf, n=101):
     """Make a kernel density estimate for a PMF."""
     kde = gaussian_kde(pmf.qs, weights=pmf.ps)
