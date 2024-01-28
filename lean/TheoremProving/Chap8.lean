@@ -176,6 +176,40 @@ noncomputable def div (n m : Nat) : Nat :=
 
 #reduce div 8 2
 
+-- Lean will automatically resort to well-founded recursion if
+-- structural recursion fails and it's given the hint for the
+-- decreasing condition.
+def div2 (n m : Nat) : Nat :=
+  if h : 0 < n ∧ 0 < m then
+    have : n - m < n := div_sub_lt n m h
+    (div2 (n - m) m) + 1
+  else
+    0
+
+def natToBin : Nat → List Nat
+ | 0 => [0]
+ | 1 => [1]
+ | n+2 =>
+   -- the hint can be admitted if you don't want to bother providing a proof.
+   have : (n+2)/2 < n+2 := sorry
+   natToBin ((n+2)/2) ++ [n % 2]
+
+#eval natToBin 10
+
+def ack : Nat → Nat → Nat
+ | 0, y     => y+1
+ | x+1, 0   => ack x 1
+ | x+1, y+1 => ack x (ack (x+1) y)
+
+#eval ack 2 3
+
+-- one can also use deceasing tactic to prove the decreasing condition.
+def div3 (n m : Nat) : Nat :=
+  if h : 0 < n ∧ 0 < m then
+    (div3 (n - m) m) + 1
+  else
+    0
+  decreasing_by sorry
 
 end WF_Usage
 
@@ -204,5 +238,58 @@ theorem length_replicate (n : Nat) (a : α) : (replicate n a).length = n := by
   | zero => rfl
   | succ n ih => simp [replicate, ih]
 
-
 end List
+
+section Expr
+inductive Expr where
+  | const : Nat → Expr
+  | var : Nat → Expr
+  | plus : Expr → Expr → Expr
+  | times : Expr → Expr → Expr
+deriving Repr
+
+open Expr
+
+def eval (v : Nat → Nat) : Expr → Nat
+  | const n     => n
+  | var n       => v n
+  | plus e₁ e₂  => eval v e₁ + eval v e₂
+  | times e₁ e₂ => eval v e₁ * eval v e₂
+
+def sampleVal : Nat → Nat
+  | 0 => 5
+  | 1 => 6
+  | _ => 0
+
+def sampleExpr : Expr :=
+  plus (times (var 0) (const 7)) (times (const 2) (var 1))
+
+#eval eval sampleVal sampleExpr
+
+def simpConst : Expr → Expr
+  | plus (const n₁) (const n₂)  => const (n₁ + n₂)
+  | times (const n₁) (const n₂) => const (n₁ * n₂)
+  | e                           => e
+
+def fuse : Expr → Expr
+  | plus e₁ e₂ => simpConst (plus (fuse e₁) (fuse e₂))
+  | times e₁ e₂ => simpConst (times (fuse e₁) (fuse e₂))
+  | e => e
+
+#eval fuse (plus (const 1) (plus (const 2) (const 3)))
+
+theorem simpConst_eq (v : Nat → Nat)
+        : ∀ e : Expr, eval v (simpConst e) = eval v e := by
+   intro e; cases e; any_goals simp [simpConst, eval]
+   . rename_i e₁ e₂; cases e₁; cases e₂; all_goals simp [eval, simpConst]
+   . rename_i e₁ e₂; cases e₁; cases e₂; all_goals simp [eval, simpConst]
+
+theorem fuse_eq (v : Nat → Nat)
+        : ∀ e : Expr, eval v (fuse e) = eval v e := by
+  intro e; induction e with
+  | const n => simp [fuse, eval]
+  | var n => simp [fuse, eval]
+  | plus e₁ e₂ ih₁ ih₂ => simp [fuse, eval, simpConst_eq, ih₁, ih₂]
+  | times e₁ e₂ ih₁ ih₂ => simp [fuse, eval, simpConst_eq, ih₁, ih₂]
+
+end Expr
