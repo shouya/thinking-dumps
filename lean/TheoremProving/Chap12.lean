@@ -63,5 +63,143 @@ theorem diaconescu (p : Prop) : p ∨ ¬p := by
     match eq_or_not with
     | Or.inl huv => exact Or.inl (uv_implies_p huv)
     | Or.inr huv => exact Or.inr (uv_implies_np huv)
-
 end Diaconescu
+
+-- the lean framework is based on the system of universes, dependent type, inductive types with the following components:
+--
+-- 1. axiom of propositional extensionality
+-- 2. quotient construct (with implies function extensionality)
+-- 3. choice principle
+
+-- In the Diaconescu namespace I proved the law of excluded middle is a result of 1,2,3.
+
+namespace Quotient
+
+#check propext
+
+#check Quot.mk
+-- ⊢ {α : Sort u} → (r : α → α → Prop) → α → Quot r
+
+#check Quot.ind
+-- ⊢ ∀ {α : Sort u} {r : α → α → Prop}
+--     {β : Quot r → Prop},
+--     (∀ (a : α), β (Quot.mk r a)) →
+--     ∀ (q : Quot r), β q
+
+#check Quot.lift
+-- ⊢ {α : Sort u} → {r : α → α → Prop} → {β : Sort v} →
+--   (f : α → β) →
+--   (∀ (a b : α), r a b → f a = f b) →
+--   Quot r → β
+
+#check Quot.sound
+-- ⊢ ∀ {α : Sort u} {r : α → α → Prop} {a b : α}, r a b → Quot.mk r a = Quot.mk r b
+
+variable (r s r' r'' : α → α → Prop)
+
+def liftR (a b : α) : Prop := Quot.mk r a = Quot.mk r b
+
+def Rcontains (s : α → α → Prop) : Prop := ∀ (a b : α), s a b → r a b
+
+infix:50 " ⊆ " => Rcontains
+
+theorem liftR_contains_R : liftR r ⊆ r :=
+  fun _a _b h => Quot.sound h
+
+-- forall b, quot r a = quot r b -> r a b
+-- β := λ b => Quot.mk r a = Quot.mk r b -> r a b
+-- induction gives
+
+-- theorem R_contains_liftR : r ⊆ liftR r :=
+--   fun a b h =>
+--     have β := λ qb => Quot.mk r a = qb -> r a b
+--     have f : ∀ b', Quot.mk r a = Quot.mk r b' -> r a b' := by sorry
+--     f b h
+-- this is not provable without the constraint that r is an equivalence relation.
+--
+-- here's a counter example: Let r a b := False. Quot.mk r a = Quot.mk r a is always true, which implies r a a (contradiction).
+
+-- theorem liftR_smallest : (r'' ⊆ r) → (r'' ⊆ liftR r) :=
+--   fun r'' h a b r' => by
+--     simp [Rcontains, liftR] at *;
+--     have : r a b := sorry
+--     exact h _ _ this
+
+end Quotient
+
+
+namespace UProd
+variable {α : Type u}
+
+-- unordered pair
+def eqv (p₁ p₂ : α × α) : Prop := p₁.1 = p₂.1 ∧ p₁.2 = p₂.2 ∨ p₁.1 = p₂.2 ∧ p₁.2 = p₂.1
+infix:50 " ~ " => eqv
+
+theorem eqv.refl (p : α × α) : p ~ p := by cases p; simp [eqv]
+theorem eqv.symm {p₁ p₂ : α × α} : p₁ ~ p₂ → p₂ ~ p₁ :=
+  by intro h; cases h <;> rename_i h <;> cases h <;> simp [eqv, *]
+theorem eqv.trans {p₁ p₂ p₃ : α × α} : p₁ ~ p₂ → p₂ ~ p₃ → p₁ ~ p₃ :=
+  by intro h₁ h₂; cases h₁ <;> rename_i h₁ <;> cases h₁ <;> cases h₂ <;> rename_i h₂ <;> cases h₂ <;> simp [eqv, *]
+
+instance uprodSetoid : Setoid (α × α) where
+  r := eqv
+  iseqv := ⟨eqv.refl, eqv.symm, eqv.trans⟩
+
+def UProd (α : Type u) := Quotient (@uprodSetoid α)
+
+def mk (a b : α) : UProd α := Quotient.mk' (a, b)
+
+notation "{{" a ", " b "}}" => mk a b
+
+theorem mk_eq_mk (a b : α) : {{a,  b}} = {{b, a}} := by
+  apply Quotient.sound; apply Or.inr; simp
+
+def mem_fn (a : α) (p : α × α) : Prop := a = p.1 ∨ a = p.2
+
+def mem_respects {p₁ p₂ : α × α} (h : p₁ ~ p₂) : ∀ a, mem_fn a p₁ = mem_fn a p₂ :=
+  fun a => by match h with
+    | Or.inl ⟨h₁, h₂⟩ => congr; rw [←Prod.eta p₁, ←Prod.eta p₂, h₁, h₂]
+    | Or.inr ⟨h₁, h₂⟩ =>
+      unfold mem_fn; simp; apply Iff.intro
+      . intro h; cases h <;> simp [*]
+      . intro h; cases h <;> simp [*]
+
+def mem (a : α) (p : UProd α) : Prop :=
+  Quotient.lift (mem_fn a) (fun _p₁ _p₂ h => mem_respects h a) p
+
+infix:50 (priority := high) " ∈ " => mem
+
+end UProd
+
+namespace Funext
+
+def f_eqv {α β} (f g : α → β) : Prop := ∀ x, f x = g x
+
+theorem f_eqv.id (f : α → β) : f_eqv f f := fun x => rfl
+theorem f_eqv.symm {f g : α → β} : f_eqv f g → f_eqv g f := fun h x => (h x).symm
+theorem f_eqv.trans {f g h : α → β} : f_eqv f g → f_eqv g h → f_eqv f h :=
+  fun fg gh x => Eq.trans (fg x) (gh x)
+
+instance extfunSetoid α β : Setoid (α → β) where
+  r := f_eqv
+  iseqv := ⟨f_eqv.id, f_eqv.symm, f_eqv.trans⟩
+
+def Extfun α β := Quotient (extfunSetoid α β)
+
+def Extfun.app {α β} (f : Extfun α β) (x : α) : β := by
+  apply Quotient.liftOn f (fun g => g x)
+  intro g₁ g₂ heqv
+  exact heqv x
+
+def Extfun.mk {α β} (f : α → β) : Extfun α β := Quotient.mk' f
+
+def funext {f g : α → β} (h : ∀ x, f x = g x) : f = g := by
+  let fext : Extfun α β := Extfun.mk f
+  let gext : Extfun α β := Extfun.mk g
+  let heq : fext = gext := Quotient.sound h
+  let heq1 : f = Extfun.app fext := by rfl
+  let heq2 : Extfun.app fext = Extfun.app gext := by rw [heq]
+  let heq3 : Extfun.app gext = g := by rfl
+  exact heq1 ▸ heq2 ▸ heq3
+
+end Funext
