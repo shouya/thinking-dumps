@@ -171,6 +171,9 @@ infix:50 (priority := high) " ∈ " => mem
 
 end UProd
 
+-- Let me prove the non dependent-type version of function
+-- extensionality. The type is cleaner this way. but the same proof
+-- applies to the dependent type version as well.
 namespace Funext
 
 def f_eqv {α β} (f g : α → β) : Prop := ∀ x, f x = g x
@@ -196,10 +199,13 @@ def Extfun.mk {α β} (f : α → β) : Extfun α β := Quotient.mk' f
 def funext {f g : α → β} (h : ∀ x, f x = g x) : f = g := by
   let fext : Extfun α β := Extfun.mk f
   let gext : Extfun α β := Extfun.mk g
-  let heq : fext = gext := Quotient.sound h
   let heq1 : f = Extfun.app fext := by rfl
-  let heq2 : Extfun.app fext = Extfun.app gext := by rw [heq]
+  let heq2' : fext = gext := Quotient.sound h
+  let heq2 : Extfun.app fext = Extfun.app gext := by rw [heq2']
   let heq3 : Extfun.app gext = g := by rfl
   exact heq1 ▸ heq2 ▸ heq3
+
+#check funext
+-- |- {f g : α → β} (h : ∀ (x : α), f x = g x) : f = g
 
 end Funext

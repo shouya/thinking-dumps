@@ -9,3 +9,10 @@ Other resources:
 
 - https://leanprover-community.github.io/mathlib4_docs
 - https://loogle.lean-lang.org/
+
+----------
+
+Project setup:
+
+  1. install lake
+  2. run "lake run"

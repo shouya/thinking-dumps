@@ -130,8 +130,12 @@ My notes for "Category Theory Lecture Notes" by Daniele Turi.
 
 http://www.dcs.ed.ac.uk/home/dt/CT/
 
+### [lean](lean)
+
+My notes on "Theorem Proving in Lean 4" by Jeremy Avigad, et al.
+
+https://lean-lang.org/theorem_proving_in_lean4/
+
 ### [wys48h](wys48h)
 
 [Write Yourself a Scheme for 48 hours](http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours)
-
-
