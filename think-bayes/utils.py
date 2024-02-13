@@ -74,6 +74,13 @@ def normalize_pmf(pmf):
     pmf.normalize()
     return pmf
 
+def kde_from_samples(samples, qs):
+    kde = gaussian_kde(samples)
+    ps = kde.evaluate(qs)
+    pmf = Pmf(ps, qs)
+    pmf.normalize()
+    return pmf
+
 def kde_from_pmf(pmf, n=101):
     """Make a kernel density estimate for a PMF."""
     kde = gaussian_kde(pmf.qs, weights=pmf.ps)
