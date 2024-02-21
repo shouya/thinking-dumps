@@ -14,7 +14,7 @@ struct Cache<T> {
   values: Box<[Option<T>]>,
 }
 
-impl<T: PartialEq> Cache<T> {
+impl<T> Cache<T> {
   fn new(size: usize) -> Self {
     let mut values = vec![];
     for _ in 0..size {
@@ -99,15 +99,15 @@ enum Action {
 
 trait ReplacementStrategy<T> {
   fn init(&mut self, _cache: &Cache<T>) {}
-  fn on_hit(&mut self, _key: &T, _cache: &Cache<T>) {}
+  fn on_hit(&mut self, _key: &T, _slot: usize) {}
   fn on_miss(&mut self, key: &T, cache: &Cache<T>) -> Action;
 
   fn visit(&mut self, key: &T, cache: &Cache<T>) -> Option<Action>
   where
     T: PartialEq,
   {
-    if cache.contains(key) {
-      self.on_hit(key, cache);
+    if let Some(slot) = cache.find(key) {
+      self.on_hit(key, slot);
       return None;
     }
 
@@ -234,10 +234,9 @@ mod strategies {
       self.last_visit = vec![0; cache.size()];
     }
 
-    fn on_hit(&mut self, key: &T, cache: &Cache<T>) {
+    fn on_hit(&mut self, _key: &T, slot: usize) {
       self.tick += 1;
-      let i = cache.find(key).unwrap();
-      self.last_visit[i] = self.tick;
+      self.last_visit[slot] = self.tick;
     }
 
     fn on_miss(&mut self, _key: &T, cache: &Cache<T>) -> Action {
@@ -283,7 +282,7 @@ mod strategies {
   }
 
   impl<T: PartialEq + Clone + Debug> ReplacementStrategy<T> for BeladyOptimal<T> {
-    fn on_hit(&mut self, key: &T, _cache: &Cache<T>) {
+    fn on_hit(&mut self, key: &T, _slot: usize) {
       assert!(self.future_values.remove(0) == *key);
     }
 
@@ -353,16 +352,16 @@ mod strategies {
     }
   }
 
-  impl ReplacementStrategy<usize> for Clock {
-    fn init(&mut self, cache: &Cache<usize>) {
+  impl<T> ReplacementStrategy<T> for Clock {
+    fn init(&mut self, cache: &Cache<T>) {
       self.used = vec![false; cache.size()];
     }
 
-    fn on_hit(&mut self, key: &usize, cache: &Cache<usize>) {
-      self.used[cache.find(key).unwrap()] = true;
+    fn on_hit(&mut self, _key: &T, slot: usize) {
+      self.used[slot] = true;
     }
 
-    fn on_miss(&mut self, _key: &usize, cache: &Cache<usize>) -> Action {
+    fn on_miss(&mut self, _key: &T, cache: &Cache<T>) -> Action {
       if !cache.is_full() {
         let slot = cache.find_empty_slot().unwrap();
         self.used[slot] = true;
