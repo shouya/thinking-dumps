@@ -40,37 +40,44 @@ impl<T: PartialEq> Cache<T> {
   where
     T: PartialEq,
   {
-    self.iter().any(|x| x == v)
+    self.find(v).is_some()
   }
 
-  fn replace(&mut self, old: T, new: T) -> bool {
-    for val in self.values.iter_mut().filter_map(|x| x.as_mut()) {
-      if val == &old {
-        *val = new;
-        return true;
-      }
-    }
-    false
+  fn find(&self, v: &T) -> Option<usize>
+  where
+    T: PartialEq,
+  {
+    self.iter().position(|x| x == v)
   }
 
-  fn insert(&mut self, v: T) -> bool {
-    let slot = self.values.iter_mut().find(|x| x.is_none());
-    if let Some(slot) = slot {
-      let _ = slot.insert(v);
+  fn find_empty_slot(&self) -> Option<usize> {
+    self.values.iter().position(|x| x.is_none())
+  }
+
+  fn insert(&mut self, v: T, i: usize) -> bool {
+    if self.values[i].is_none() {
+      self.values[i] = Some(v);
       return true;
     }
+
     false
   }
 
   // returns whether the action is valid.
-  fn take_action(&mut self, action: Action<T>, new: T) -> bool {
-    match action {
-      Action::Insert => self.insert(new),
+  fn take_action(&mut self, action: &Action, new: T) -> bool {
+    match *action {
+      Action::Insert => self
+        .find_empty_slot()
+        .is_some_and(|loc| self.insert(new, loc)),
+      Action::InsertAt(loc) => self.insert(new, loc),
       Action::ReplaceAt(loc) => {
         self.values[loc] = Some(new);
         true
       }
-      Action::ReplaceBecauseFull(old) => self.replace(old, new),
+      Action::ReplaceBecauseFull(loc) => {
+        self.values[loc] = Some(new);
+        true
+      }
     }
   }
 
@@ -83,14 +90,29 @@ impl<T: PartialEq> Cache<T> {
 // the difference between ReplaceAt and ReplaceBecauseFull is that the
 // first may count as conflict miss or cold miss, and the second
 // always as capacity miss.
-enum Action<T> {
-  ReplaceAt(usize),
-  ReplaceBecauseFull(T),
+enum Action {
   Insert,
+  InsertAt(usize),
+  ReplaceAt(usize),
+  ReplaceBecauseFull(usize),
 }
 
 trait ReplacementStrategy<T> {
-  fn visit(&mut self, input: &T, cache: &Cache<T>) -> Option<Action<T>>;
+  fn init(&mut self, _cache: &Cache<T>) {}
+  fn on_hit(&mut self, _key: &T, _cache: &Cache<T>) {}
+  fn on_miss(&mut self, key: &T, cache: &Cache<T>) -> Action;
+
+  fn visit(&mut self, key: &T, cache: &Cache<T>) -> Option<Action>
+  where
+    T: PartialEq,
+  {
+    if cache.contains(key) {
+      self.on_hit(key, cache);
+      return None;
+    }
+
+    Some(self.on_miss(key, cache))
+  }
 }
 
 #[derive(Clone)]
@@ -128,9 +150,9 @@ impl EvaluationReport {
 }
 
 impl<T: Debug> Evaluator<T> {
-  fn update_report(&self, report: &mut EvaluationReport, action: &Action<T>) {
+  fn update_report(&self, report: &mut EvaluationReport, action: &Action) {
     match action {
-      Action::Insert => {
+      Action::Insert | Action::InsertAt(_) => {
         report.misses.cold += 1;
       }
       Action::ReplaceBecauseFull(_) => {
@@ -155,6 +177,8 @@ impl<T: Debug> Evaluator<T> {
     let mut report = EvaluationReport::new();
     let mut cache = Cache::new(cache_size);
 
+    strategy.init(&cache);
+
     for input in self.input.iter() {
       let Some(action) = strategy.visit(input, &cache) else {
         report.hits += 1;
@@ -163,7 +187,7 @@ impl<T: Debug> Evaluator<T> {
 
       self.update_report(&mut report, &action);
 
-      if !cache.take_action(action.clone(), input.clone()) {
+      if !cache.take_action(&action, input.clone()) {
         eprintln!("Invalid action {:?}", action);
       }
     }
@@ -181,48 +205,58 @@ mod strategies {
   // whatosever.
 
   #[derive(Default)]
-  pub struct FIFO<T> {
-    queue: Vec<T>,
+  pub struct FIFO {
+    i: usize,
   }
 
-  impl<T: PartialEq + Clone + Debug> ReplacementStrategy<T> for FIFO<T> {
-    fn visit(&mut self, input: &T, cache: &Cache<T>) -> Option<Action<T>> {
-      if cache.contains(input) {
-        return None;
-      }
-
+  impl<T: PartialEq + Clone + Debug> ReplacementStrategy<T> for FIFO {
+    fn on_miss(&mut self, _key: &T, cache: &Cache<T>) -> Action {
       if !cache.is_full() {
-        self.queue.push(input.clone());
-        return Some(Action::Insert);
+        return Action::Insert;
       }
 
-      let to_remove = self.queue.remove(0);
-      self.queue.push(input.clone());
-      Some(Action::ReplaceBecauseFull(to_remove))
+      let to_remove = self.i;
+      self.i += 1;
+      self.i %= cache.size();
+      Action::ReplaceBecauseFull(to_remove)
     }
   }
 
   #[derive(Default)]
-  pub struct LRU<T> {
-    queue: Vec<T>,
+  pub struct LRU {
+    last_visit: Vec<usize>,
+    tick: usize,
   }
 
-  impl<T: PartialEq + Clone + Debug> ReplacementStrategy<T> for LRU<T> {
-    fn visit(&mut self, input: &T, cache: &Cache<T>) -> Option<Action<T>> {
-      if cache.contains(input) {
-        self.queue.retain(|x| x != input);
-        self.queue.push(input.clone());
-        return None;
-      }
+  impl<T: PartialEq + Clone + Debug> ReplacementStrategy<T> for LRU {
+    fn init(&mut self, cache: &Cache<T>) {
+      self.last_visit = vec![0; cache.size()];
+    }
+
+    fn on_hit(&mut self, key: &T, cache: &Cache<T>) {
+      self.tick += 1;
+      let i = cache.find(key).unwrap();
+      self.last_visit[i] = self.tick;
+    }
+
+    fn on_miss(&mut self, _key: &T, cache: &Cache<T>) -> Action {
+      self.tick += 1;
 
       if !cache.is_full() {
-        self.queue.push(input.clone());
-        return Some(Action::Insert);
+        let slot = cache.find_empty_slot().unwrap();
+        self.last_visit[slot] = self.tick;
+        return Action::InsertAt(slot);
       }
 
-      let to_remove = self.queue.remove(0);
-      self.queue.push(input.clone());
-      Some(Action::ReplaceBecauseFull(to_remove))
+      let oldest_entry = self
+        .last_visit
+        .iter()
+        .enumerate()
+        .min_by_key(|x| x.1)
+        .unwrap()
+        .0;
+      self.last_visit[oldest_entry] = self.tick;
+      Action::ReplaceBecauseFull(oldest_entry)
     }
   }
 
@@ -248,32 +282,43 @@ mod strategies {
   }
 
   impl<T: PartialEq + Clone + Debug> ReplacementStrategy<T> for BeladyOptimal<T> {
-    fn visit(&mut self, input: &T, cache: &Cache<T>) -> Option<Action<T>> {
-      assert!(self.future_values.remove(0) == *input);
+    fn on_hit(&mut self, key: &T, _cache: &Cache<T>) {
+      assert!(self.future_values.remove(0) == *key);
+    }
 
-      if cache.contains(input) {
-        return None;
-      }
+    fn on_miss(&mut self, key: &T, cache: &Cache<T>) -> Action {
+      assert!(self.future_values.remove(0) == *key);
 
       if !cache.is_full() {
-        return Some(Action::Insert);
+        return Action::Insert;
       }
 
       let max = cache
         .iter()
         .max_by_key(|x| self.future_distance(x).unwrap_or(usize::MAX))
         .unwrap();
-      Some(Action::ReplaceBecauseFull(max.clone()))
+      let loc = cache.find(max).unwrap();
+      Action::ReplaceBecauseFull(loc)
     }
   }
 
   #[derive(Default)]
-  pub struct HashSlot<T> {
-    marker: std::marker::PhantomData<T>,
-  }
+  pub struct HashSlot {}
 
-  impl<T: Hash + PartialEq> ReplacementStrategy<T> for HashSlot<T> {
-    fn visit(&mut self, input: &T, cache: &Cache<T>) -> Option<Action<T>> {
+  impl<T: Hash + PartialEq> ReplacementStrategy<T> for HashSlot {
+    fn on_miss(&mut self, key: &T, cache: &Cache<T>) -> Action {
+      let mut hasher = DefaultHasher::new();
+      key.hash(&mut hasher);
+      let index = hasher.finish() % cache.size() as u64;
+
+      if !cache.is_full() {
+        return Action::InsertAt(index as usize);
+      }
+
+      Action::ReplaceAt(index as usize)
+    }
+
+    fn visit(&mut self, input: &T, cache: &Cache<T>) -> Option<Action> {
       if cache.contains(input) {
         return None;
       }
