@@ -166,6 +166,7 @@ impl<T: Debug> Evaluator<T> {
       }
     }
   }
+
   fn evaluate(
     &mut self,
     mut strategy: impl ReplacementStrategy<T>,
@@ -329,6 +330,50 @@ mod strategies {
       Some(Action::ReplaceAt(index as usize))
     }
   }
+
+  // The clock algorithm is a replacement strategy approximating LRU
+  // with a lower (amortized) time and space complexity.
+  #[derive(Default)]
+  pub struct Clock {
+    used: Vec<bool>,
+    hand: usize,
+  }
+
+  impl Clock {
+    fn next(&mut self) -> usize {
+      loop {
+        if self.used[self.hand] {
+          self.used[self.hand] = false;
+          self.hand += 1;
+          self.hand %= self.used.len();
+        } else {
+          return self.hand;
+        }
+      }
+    }
+  }
+
+  impl ReplacementStrategy<usize> for Clock {
+    fn init(&mut self, cache: &Cache<usize>) {
+      self.used = vec![false; cache.size()];
+    }
+
+    fn on_hit(&mut self, key: &usize, cache: &Cache<usize>) {
+      self.used[cache.find(key).unwrap()] = true;
+    }
+
+    fn on_miss(&mut self, _key: &usize, cache: &Cache<usize>) -> Action {
+      if !cache.is_full() {
+        let slot = cache.find_empty_slot().unwrap();
+        self.used[slot] = true;
+        return Action::InsertAt(slot);
+      }
+
+      let slot = self.next();
+      self.used[slot] = true;
+      Action::ReplaceAt(slot)
+    }
+  }
 }
 
 pub mod demo {
@@ -352,7 +397,12 @@ pub mod demo {
       print!("FIFO({:.2}) ", report.hit_rate());
 
       let report = evaluator.evaluate(LRU::default(), cache_size);
-      println!("LRU({:.2}) ", report.hit_rate());
+      print!("LRU({:.2}) ", report.hit_rate());
+
+      let report = evaluator.evaluate(Clock::default(), cache_size);
+      print!("Clock({:.2}) ", report.hit_rate());
+
+      println!();
     }
   }
 
